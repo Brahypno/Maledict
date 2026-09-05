@@ -19,3 +19,7 @@ hs_err_pid*
 
 # Common working directory
 run
+run-data/
+
+# Forge data generator cache (generated resource JSON remains tracked)
+src/generated/resources/.cache/

@@ -61,3 +61,15 @@ description='''${mod_description}'''
    versionRange="${minecraft_version_range}"
    ordering="NONE"
    side="BOTH"
+[[dependencies."${mod_id}"]]
+   modId="malum"
+   mandatory=true
+   versionRange="[1.20.1-1.6.7,)"
+   ordering="AFTER"
+   side="BOTH"
+[[dependencies."${mod_id}"]]
+   modId="lodestone"
+   mandatory=true
+   versionRange="[1.20.1-1.6.4.1,)"
+   ordering="AFTER"
+   side="BOTH"
