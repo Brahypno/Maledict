@@ -2,8 +2,11 @@ package org.brahypno.maledict.data;
 
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraftforge.client.model.generators.ItemModelBuilder;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
+import net.minecraftforge.client.model.generators.loaders.SeparateTransformsModelBuilder;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
 
@@ -13,8 +16,20 @@ public final class MaledictItemModels extends ItemModelProvider {
     }
 
     @Override
+    @SuppressWarnings({"removal"})
     protected void registerModels() {
-        getBuilder("incursus_blade").parent(new ModelFile.UncheckedModelFile(
-                new ResourceLocation("malum", "item/soul_stained_steel_scythe")));
+        ItemModelBuilder handheld = getBuilder("incursus_blade_handheld")
+                .parent(new ModelFile.UncheckedModelFile(
+                        new ResourceLocation("malum", "item/handheld_large")))
+                .texture("layer0", modLoc("item/incursus_blade_huge"));
+        ItemModelBuilder gui = withExistingParent("incursus_blade_gui", "item/handheld")
+                .texture("layer0", modLoc("item/incursus_blade"));
+
+        getBuilder("incursus_blade")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/handheld")))
+                .customLoader(SeparateTransformsModelBuilder::begin)
+                .base(handheld)
+                .perspective(ItemDisplayContext.GUI, gui)
+                .perspective(ItemDisplayContext.FIXED, gui);
     }
 }

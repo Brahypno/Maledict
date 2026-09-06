@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.sammy.malum.common.item.curiosities.weapons.scythe.MagicScytheItem;
 import com.sammy.malum.common.item.spirit.SpiritShardItem;
+import com.sammy.malum.common.capability.MalumPlayerDataCapability;
 import com.sammy.malum.registry.common.AttributeRegistry;
 import com.sammy.malum.registry.common.DamageTypeRegistry;
 import com.sammy.malum.registry.common.DamageTypeTagRegistry;
@@ -178,9 +179,14 @@ public final class IncursusBladeItem extends MagicScytheItem {
         }
         float absorptionCap = (float) absorptionPercent;
         float gainedAbsorption = damage * (float) (absorptionPercent / 100.0);
-        attacker.setAbsorptionAmount(Math.min(
-                absorptionCap,
-                attacker.getAbsorptionAmount() + gainedAbsorption));
+        float currentAbsorption = attacker.getAbsorptionAmount();
+        float newAbsorption = Math.min(absorptionCap, currentAbsorption + gainedAbsorption);
+        if (newAbsorption > currentAbsorption){
+            attacker.setAbsorptionAmount(newAbsorption);
+        }
+        if (attacker instanceof Player player){
+            MalumPlayerDataCapability.getCapability(player).soulWardHandler.soulWardProgress = 0.0;
+        }
     }
 
     private static String getSpiritStatKey(String spiritType) {

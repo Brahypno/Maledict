@@ -7,13 +7,14 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.brahypno.maledict.config.MaledictConfig;
-import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.network.MaledictNetwork;
+import org.brahypno.maledict.registry.MaledictItems;
 
 @Mod(Maledict.MODID)
 public final class Maledict {
     public static final String MODID = "maledict";
 
+    @SuppressWarnings({"removal"})
     public Maledict() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
 
@@ -24,7 +25,7 @@ public final class Maledict {
     }
 
     private void addCreativeTabContents(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == net.minecraft.world.item.CreativeModeTabs.COMBAT) {
+        if (event.getTabKey() == net.minecraft.world.item.CreativeModeTabs.COMBAT){
             event.accept(MaledictItems.INCURSUS_BLADE);
         }
     }

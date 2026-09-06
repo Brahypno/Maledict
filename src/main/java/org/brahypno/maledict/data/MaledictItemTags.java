@@ -15,16 +15,14 @@ import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.concurrent.CompletableFuture;
 
+@SuppressWarnings({"removal"})
 public final class MaledictItemTags extends ItemTagsProvider {
     private static final TagKey<Item> MALUM_SCYTHE =
             ItemTags.create(new ResourceLocation("malum", "scythe"));
     private static final TagKey<Item> MALUM_SOUL_HUNTER_WEAPON =
             ItemTags.create(new ResourceLocation("malum", "soul_hunter_weapon"));
 
-    public MaledictItemTags(PackOutput output,
-                            CompletableFuture<HolderLookup.Provider> lookupProvider,
-                            CompletableFuture<TagsProvider.TagLookup<Block>> blockTags,
-                            ExistingFileHelper existingFiles) {
+    public MaledictItemTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagsProvider.TagLookup<Block>> blockTags, ExistingFileHelper existingFiles) {
         super(output, lookupProvider, blockTags, Maledict.MODID, existingFiles);
     }
 

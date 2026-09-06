@@ -1,6 +1,5 @@
 package org.brahypno.maledict.registry;
 
-import com.sammy.malum.registry.common.item.ItemTiers;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.minecraftforge.registries.DeferredRegister;
@@ -14,7 +13,7 @@ public final class MaledictItems {
 
     public static final RegistryObject<Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
             new IncursusBladeItem(
-                    ItemTiers.ItemTierEnum.MALIGNANT_ALLOY,
+                    MaledictItemTiers.INCURSUS,
                     new Item.Properties().rarity(Rarity.EPIC)));
 
     private MaledictItems() {

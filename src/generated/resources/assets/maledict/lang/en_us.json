@@ -8,7 +8,7 @@
   "tooltip.maledict.incursus_blade.spirit.aqueous": "Aqueous %s (%s/%s): Freezing damage",
   "tooltip.maledict.incursus_blade.spirit.arcane": "Arcane %s (%s/%s): Magic damage",
   "tooltip.maledict.incursus_blade.spirit.earthen": "Earthen %s (%s/%s): Attack damage",
-  "tooltip.maledict.incursus_blade.spirit.eldritch": "Eldritch %s%% (%s/%s): Damage becomes absorption, capped at the same value",
+  "tooltip.maledict.incursus_blade.spirit.eldritch": "Eldritch %s%% (%s/%s): Damage grants capped absorption and immediately recovers Soul Ward",
   "tooltip.maledict.incursus_blade.spirit.infernal": "Infernal %s (%s/%s): Additional looting level",
   "tooltip.maledict.incursus_blade.spirit.sacred": "Sacred %s%% (%s/%s): Shorten enemy benefits; extend or inflict harmful effects",
   "tooltip.maledict.incursus_blade.spirit.wicked": "Wicked %s%% (%s/%s): Critical damage"
