@@ -2,9 +2,9 @@ package org.brahypno.maledict.common.item;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.sammy.malum.common.capability.MalumPlayerDataCapability;
 import com.sammy.malum.common.item.curiosities.weapons.scythe.MagicScytheItem;
 import com.sammy.malum.common.item.spirit.SpiritShardItem;
-import com.sammy.malum.common.capability.MalumPlayerDataCapability;
 import com.sammy.malum.registry.common.AttributeRegistry;
 import com.sammy.malum.registry.common.DamageTypeRegistry;
 import com.sammy.malum.registry.common.DamageTypeTagRegistry;
@@ -27,6 +27,7 @@ import net.minecraft.world.item.Tier;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
+import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
@@ -68,7 +69,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
                 BASE_ATTACK_DAMAGE_UUID, "Incursus blade damage", getStat(stack, ATTACK_DAMAGE),
                 AttributeModifier.Operation.ADDITION));
         attributes.put(Attributes.ATTACK_SPEED, new AttributeModifier(
-                BASE_ATTACK_SPEED_UUID, "Incursus blade speed", -3.1,
+                BASE_ATTACK_SPEED_UUID, "Incursus blade speed", -3.3,
                 AttributeModifier.Operation.ADDITION));
         attributes.put(LodestoneAttributeRegistry.MAGIC_DAMAGE.get(), new AttributeModifier(
                 LodestoneAttributeRegistry.UUIDS.get(LodestoneAttributeRegistry.MAGIC_DAMAGE),
@@ -237,17 +238,18 @@ public final class IncursusBladeItem extends MagicScytheItem {
     }
 
     public static int getNextUpgradeCost(ItemStack stack, String key) {
-        return switch (key) {
-            case "earthen", "aqueous", "arcane", "infernal" -> 4 * Math.max(1, (int) Math.floor(getStat(stack, key)) + 1);
-
-            case "sacred" -> Math.max(1, (int) Math.floor(getStat(stack, key)) + 1);
-            /*
-            case "aerial" -> AERIAL_PROGRESS;
-            case "eldritch" -> ELDRITCH_ABSORPTION;
-            case "wicked" -> WICKED_CRITICAL_DAMAGE;
-             */
-            default -> Math.max(1, (int) Math.floor(getStat(stack, key) / 2) + 1);
+        int coefficient = switch (key) {
+            case ATTACK_DAMAGE -> MaledictConfig.EARTHEN_UPGRADE_COST_COEFFICIENT.get();
+            case POWDER_SNOW_DAMAGE -> MaledictConfig.AQUEOUS_UPGRADE_COST_COEFFICIENT.get();
+            case MAGIC_DAMAGE -> MaledictConfig.ARCANE_UPGRADE_COST_COEFFICIENT.get();
+            case AERIAL_PROGRESS -> MaledictConfig.AERIAL_UPGRADE_COST_COEFFICIENT.get();
+            case SACRED_POWER -> MaledictConfig.SACRED_UPGRADE_COST_COEFFICIENT.get();
+            case INFERNAL_POWER -> MaledictConfig.INFERNAL_UPGRADE_COST_COEFFICIENT.get();
+            case ELDRITCH_ABSORPTION -> MaledictConfig.ELDRITCH_UPGRADE_COST_COEFFICIENT.get();
+            case WICKED_CRITICAL_DAMAGE -> MaledictConfig.WICKED_UPGRADE_COST_COEFFICIENT.get();
+            default -> throw new IllegalArgumentException("Unknown Incursus Blade stat: " + key);
         };
+        return coefficient * Math.max(1, (int) Math.floor(getStat(stack, key)) + 1);
     }
 
     private static void addUpgradeProgress(ItemStack stack, String key, int amount) {

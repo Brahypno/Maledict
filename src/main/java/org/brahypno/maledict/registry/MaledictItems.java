@@ -12,9 +12,7 @@ public final class MaledictItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Maledict.MODID);
 
     public static final RegistryObject<Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
-            new IncursusBladeItem(
-                    MaledictItemTiers.INCURSUS,
-                    new Item.Properties().rarity(Rarity.EPIC)));
+            new IncursusBladeItem(MaledictItemTiers.INCURSUS, new Item.Properties().rarity(Rarity.EPIC)));
 
     private MaledictItems() {
     }
