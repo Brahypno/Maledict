@@ -20,6 +20,7 @@ public final class MaledictDataGenerators {
         generator.addProvider(event.includeClient(), new MaledictLanguage(output, "en_us"));
         generator.addProvider(event.includeClient(), new MaledictLanguage(output, "zh_cn"));
 
+        generator.addProvider(event.includeServer(), new MaledictRecipes(output));
         MaledictBlockTags blockTags = new MaledictBlockTags(output, event.getLookupProvider(), existingFiles);
         generator.addProvider(event.includeServer(), blockTags);
         generator.addProvider(event.includeServer(), new MaledictItemTags(

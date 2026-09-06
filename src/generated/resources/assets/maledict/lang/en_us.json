@@ -1,4 +1,15 @@
 {
-  "attribute.name.maledict.powder_snow_damage": "Powder Snow Damage",
-  "item.maledict.incursus_blade": "The Incursus Blade"
+  "attribute.name.maledict.powder_snow_damage": "Freezing Damage",
+  "item.maledict.incursus_blade": "The Incursus Blade",
+  "tooltip.maledict.incursus_blade.description": "A magic scythe that devours spirits and strikes all around its wielder.",
+  "tooltip.maledict.incursus_blade.hold_shift": "Hold Shift for spirit details",
+  "tooltip.maledict.incursus_blade.infusion": "Right-click this item with spirits in the inventory to infuse them permanently:",
+  "tooltip.maledict.incursus_blade.spirit.aerial": "Aerial %s%% (%s/%s): Cleanse random negatives and gain random beneficial effects",
+  "tooltip.maledict.incursus_blade.spirit.aqueous": "Aqueous %s (%s/%s): Freezing damage",
+  "tooltip.maledict.incursus_blade.spirit.arcane": "Arcane %s (%s/%s): Magic damage",
+  "tooltip.maledict.incursus_blade.spirit.earthen": "Earthen %s (%s/%s): Attack damage",
+  "tooltip.maledict.incursus_blade.spirit.eldritch": "Eldritch %s%% (%s/%s): Damage becomes absorption, capped at the same value",
+  "tooltip.maledict.incursus_blade.spirit.infernal": "Infernal %s (%s/%s): Additional looting level",
+  "tooltip.maledict.incursus_blade.spirit.sacred": "Sacred %s%% (%s/%s): Shorten enemy benefits; extend or inflict harmful effects",
+  "tooltip.maledict.incursus_blade.spirit.wicked": "Wicked %s%% (%s/%s): Critical damage"
 }

@@ -1,4 +1,15 @@
 {
-  "attribute.name.maledict.powder_snow_damage": "细雪伤害",
-  "item.maledict.incursus_blade": "神侵恶刃"
+  "attribute.name.maledict.powder_snow_damage": "冻结伤害",
+  "item.maledict.incursus_blade": "神侵恶刃",
+  "tooltip.maledict.incursus_blade.description": "吞噬精魂成长，向周身挥出镰刃的魔法镰刀。",
+  "tooltip.maledict.incursus_blade.hold_shift": "按住 Shift 查看精魂详情",
+  "tooltip.maledict.incursus_blade.infusion": "在背包中拿精魂右键此物品以永久注入：",
+  "tooltip.maledict.incursus_blade.spirit.aerial": "澄空 %s%%（%s/%s）：净化随机负面并获得随机正面效果",
+  "tooltip.maledict.incursus_blade.spirit.aqueous": "碧水 %s（%s/%s）：冻结伤害",
+  "tooltip.maledict.incursus_blade.spirit.arcane": "奥术 %s（%s/%s）：魔法伤害",
+  "tooltip.maledict.incursus_blade.spirit.earthen": "大地 %s（%s/%s）：攻击力",
+  "tooltip.maledict.incursus_blade.spirit.eldritch": "邪术 %s%%（%s/%s）：伤害比例转化为黄心，上限为同值吸收点数",
+  "tooltip.maledict.incursus_blade.spirit.infernal": "狱火 %s（%s/%s）：额外抢夺等级",
+  "tooltip.maledict.incursus_blade.spirit.sacred": "神圣 %s%%（%s/%s）：缩短敌方正面效果，延长或施加负面效果",
+  "tooltip.maledict.incursus_blade.spirit.wicked": "邪恶 %s%%（%s/%s）：暴击伤害"
 }

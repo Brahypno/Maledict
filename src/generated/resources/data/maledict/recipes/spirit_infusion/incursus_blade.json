@@ -1,0 +1,61 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 6,
+      "item": "minecraft:nether_star"
+    },
+    {
+      "count": 6,
+      "item": "minecraft:golden_apple"
+    },
+    {
+      "count": 6,
+      "item": "minecraft:ender_eye"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "malum:edge_of_deliverance"
+  },
+  "output": {
+    "item": "maledict:incursus_blade"
+  },
+  "spirits": [
+    {
+      "type": "sacred",
+      "count": 64
+    },
+    {
+      "type": "wicked",
+      "count": 64
+    },
+    {
+      "type": "arcane",
+      "count": 64
+    },
+    {
+      "type": "eldritch",
+      "count": 64
+    },
+    {
+      "type": "aerial",
+      "count": 64
+    },
+    {
+      "type": "aqueous",
+      "count": 64
+    },
+    {
+      "type": "earthen",
+      "count": 64
+    },
+    {
+      "type": "infernal",
+      "count": 64
+    },
+    {
+      "type": "umbral"
+    }
+  ]
+}
