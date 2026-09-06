@@ -7,11 +7,15 @@
     },
     {
       "count": 6,
-      "item": "minecraft:golden_apple"
+      "item": "malum:fused_consciousness"
     },
     {
       "count": 6,
       "item": "minecraft:ender_eye"
+    },
+    {
+      "count": 1,
+      "item": "malum:umbral_spirit"
     }
   ],
   "input": {
@@ -53,9 +57,6 @@
     {
       "type": "infernal",
       "count": 64
-    },
-    {
-      "type": "umbral"
     }
   ]
 }
