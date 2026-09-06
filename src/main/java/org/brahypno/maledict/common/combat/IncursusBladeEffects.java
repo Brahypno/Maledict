@@ -7,6 +7,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LootingLevelEvent;
+import net.minecraftforge.event.entity.player.CriticalHitEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -22,6 +23,17 @@ import java.util.Set;
 
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class IncursusBladeEffects {
+    @SubscribeEvent
+    public static void applyWickedCriticalDamage(CriticalHitEvent event) {
+        ItemStack weapon = event.getEntity().getMainHandItem();
+        if (!(weapon.getItem() instanceof IncursusBladeItem)) {
+            return;
+        }
+        float bonus = (float) IncursusBladeItem.getStat(
+                weapon, IncursusBladeItem.WICKED_CRITICAL_DAMAGE) / 100.0f;
+        event.setDamageModifier(event.getDamageModifier() + bonus);
+    }
+
     @SubscribeEvent
     public static void applyInfernalLooting(LootingLevelEvent event) {
         if (event.getDamageSource() == null

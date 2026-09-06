@@ -25,6 +25,7 @@ public final class IncursusBladeInputHandler {
         event.setCanceled(true);
         event.setSwingHand(true);
         MaledictNetwork.sendRadialAttack();
+        minecraft.player.resetAttackStrengthTicker();
     }
 
     private IncursusBladeInputHandler() {

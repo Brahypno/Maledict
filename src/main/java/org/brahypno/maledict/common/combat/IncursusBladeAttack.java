@@ -6,7 +6,6 @@ import com.sammy.malum.registry.common.ParticleEffectTypeRegistry;
 import com.sammy.malum.registry.common.SoundRegistry;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -54,10 +53,7 @@ public final class IncursusBladeAttack {
         player.swing(InteractionHand.MAIN_HAND, true);
         playSlashEffect(player);
 
-        float attackStrength = Mth.clamp(
-                (player.attackStrengthTicker + 0.5f) / player.getCurrentItemAttackStrengthDelay(),
-                0.0f,
-                1.0f);
+        float attackStrength = player.getAttackStrengthScale(0.5f);
         boolean attacked = false;
         for (LivingEntity target : targets) {
             float damage = calculateDamage(player, weapon, target, attackStrength);
@@ -73,8 +69,8 @@ public final class IncursusBladeAttack {
         }
         if (attacked){
             IncursusBladeEffects.applyAerialEffect(player, weapon);
-            player.resetAttackStrengthTicker();
         }
+        player.resetAttackStrengthTicker();
     }
 
     private static float calculateDamage(ServerPlayer player, ItemStack weapon, LivingEntity target, float attackStrength) {
@@ -93,9 +89,7 @@ public final class IncursusBladeAttack {
                                   && !player.isPassenger()
                                   && !player.isSprinting();
         CriticalHitEvent criticalHit =
-                ForgeHooks.getCriticalHit(player, target, vanillaCritical,
-                                          vanillaCritical ?
-                                          1.5f + (float) IncursusBladeItem.getStat(weapon, IncursusBladeItem.WICKED_CRITICAL_DAMAGE) / 100.0f : 1.0f);
+                ForgeHooks.getCriticalHit(player, target, vanillaCritical, vanillaCritical ? 1.5f : 1.0f);
         if (criticalHit != null){
             damage *= criticalHit.getDamageModifier();
             player.crit(target);
@@ -111,14 +105,13 @@ public final class IncursusBladeAttack {
                 1.0f,
                 RandomHelper.randomBetween(player.getRandom(), 1.0f, 1.5f));
         ParticleHelper.createSlashingEffect(ParticleEffectTypeRegistry.SCYTHE_SLASH)
-                      .setSpiritType(SpiritTypeRegistry.ARCANE_SPIRIT)
+                      .setSpiritType(SpiritTypeRegistry.UMBRAL_SPIRIT)
                       .setSlashAngle(0.0f)
                       .spawnForwardSlashingParticle(player);
     }
 
     private static boolean isValidTarget(ServerPlayer player, LivingEntity target, double reach) {
-        if (target == player || !target.isAlive() || !target.isAttackable()
-            || target.skipAttackInteraction(player) || !player.hasLineOfSight(target)){
+        if (target == player || !target.isAlive() || !target.isAttackable() || target.skipAttackInteraction(player) || !player.hasLineOfSight(target)){
             return false;
         }
         if (target instanceof Player otherPlayer && !player.canHarmPlayer(otherPlayer)){
