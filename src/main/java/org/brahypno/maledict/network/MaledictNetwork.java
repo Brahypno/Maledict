@@ -11,6 +11,7 @@ import java.util.Optional;
 
 public final class MaledictNetwork {
     private static final String PROTOCOL = "1";
+    @SuppressWarnings({"removal"})
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(Maledict.MODID, "main"),
             () -> PROTOCOL,
