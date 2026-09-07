@@ -26,22 +26,21 @@ public final class IncursusBladeEffects {
     @SubscribeEvent
     public static void applyWickedCriticalDamage(CriticalHitEvent event) {
         ItemStack weapon = event.getEntity().getMainHandItem();
-        if (!(weapon.getItem() instanceof IncursusBladeItem)) {
+        if (!(weapon.getItem() instanceof IncursusBladeItem)){
             return;
         }
-        float bonus = (float) IncursusBladeItem.getStat(
-                weapon, IncursusBladeItem.WICKED_CRITICAL_DAMAGE) / 100.0f;
+        float bonus = (float) IncursusBladeItem.getStat(weapon, IncursusBladeItem.WICKED_CRITICAL_DAMAGE) / 100.0f;
         event.setDamageModifier(event.getDamageModifier() + bonus);
     }
 
     @SubscribeEvent
     public static void applyInfernalLooting(LootingLevelEvent event) {
         if (event.getDamageSource() == null
-                || !(event.getDamageSource().getEntity() instanceof LivingEntity attacker)) {
+            || !(event.getDamageSource().getEntity() instanceof LivingEntity attacker)){
             return;
         }
         ItemStack weapon = attacker.getMainHandItem();
-        if (!(weapon.getItem() instanceof IncursusBladeItem)) {
+        if (!(weapon.getItem() instanceof IncursusBladeItem)){
             return;
         }
         int bonus = Math.max(0, (int) Math.floor(IncursusBladeItem.getStat(
@@ -53,7 +52,7 @@ public final class IncursusBladeEffects {
         double progress = Math.max(0.0, IncursusBladeItem.getStat(
                 weapon, IncursusBladeItem.AERIAL_PROGRESS));
         EffectScaling scaling = getEffectScaling(player, progress);
-        if (scaling == null) {
+        if (scaling == null){
             return;
         }
 
@@ -66,17 +65,17 @@ public final class IncursusBladeEffects {
         double progress = Math.max(0.0, IncursusBladeItem.getStat(
                 weapon, IncursusBladeItem.SACRED_POWER));
         EffectScaling scaling = getEffectScaling(player, progress);
-        if (scaling == null) {
+        if (scaling == null){
             return;
         }
 
         int duration = scaling.durationSteps * 200;
         shortenRandomEffects(player, target, MobEffectCategory.BENEFICIAL, scaling.effectCount, duration);
         List<MobEffectInstance> harmfulEffects = getActiveEffects(target, MobEffectCategory.HARMFUL);
-        if (harmfulEffects.isEmpty()) {
+        if (harmfulEffects.isEmpty()){
             grantRandomNegativeEffects(
                     player, target, scaling.effectCount, duration, scaling.amplifier);
-        } else {
+        }else {
             changeRandomEffectDurations(
                     player, target, harmfulEffects, scaling.effectCount, duration, false);
         }
@@ -85,7 +84,7 @@ public final class IncursusBladeEffects {
     private static EffectScaling getEffectScaling(ServerPlayer player, double progress) {
         int guaranteed = (int) Math.floor(progress / 100.0);
         double remainder = progress % 100.0;
-        if (guaranteed == 0) {
+        if (guaranteed == 0){
             return roll(player, remainder) ? new EffectScaling(1, 1, 0) : null;
         }
         return new EffectScaling(
@@ -100,20 +99,21 @@ public final class IncursusBladeEffects {
 
     private static void removeRandomNegativeEffects(ServerPlayer player, int count) {
         List<MobEffect> negativeEffects = player.getActiveEffects().stream()
-                .map(MobEffectInstance::getEffect)
-                .filter(effect -> effect.getCategory() == MobEffectCategory.HARMFUL)
-                .distinct()
-                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+                                                .map(MobEffectInstance::getEffect)
+                                                .filter(effect -> effect.getCategory() == MobEffectCategory.HARMFUL)
+                                                .distinct()
+                                                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         for (int i = 0; i < count && !negativeEffects.isEmpty(); i++) {
             MobEffect effect = negativeEffects.remove(player.getRandom().nextInt(negativeEffects.size()));
             player.removeEffect(effect);
         }
     }
 
-    private static void grantRandomPositiveEffects(ServerPlayer player,
-                                                   int count,
-                                                   int duration,
-                                                   int amplifier) {
+    private static void grantRandomPositiveEffects(
+            ServerPlayer player,
+            int count,
+            int duration,
+            int amplifier) {
         List<MobEffect> candidates = new ArrayList<>(getPositiveEffectPool());
         for (int i = 0; i < count && !candidates.isEmpty(); i++) {
             MobEffect effect = candidates.remove(player.getRandom().nextInt(candidates.size()));
@@ -121,49 +121,53 @@ public final class IncursusBladeEffects {
         }
     }
 
-    private static void shortenRandomEffects(ServerPlayer player,
-                                             LivingEntity target,
-                                             MobEffectCategory category,
-                                             int count,
-                                             int duration) {
+    private static void shortenRandomEffects(
+            ServerPlayer player,
+            LivingEntity target,
+            MobEffectCategory category,
+            int count,
+            int duration) {
         changeRandomEffectDurations(
                 player, target, getActiveEffects(target, category), count, duration, true);
     }
 
-    private static void changeRandomEffectDurations(ServerPlayer player,
-                                                    LivingEntity target,
-                                                    List<MobEffectInstance> effects,
-                                                    int count,
-                                                    int duration,
-                                                    boolean shorten) {
+    private static void changeRandomEffectDurations(
+            ServerPlayer player,
+            LivingEntity target,
+            List<MobEffectInstance> effects,
+            int count,
+            int duration,
+            boolean shorten) {
         for (int i = 0; i < count && !effects.isEmpty(); i++) {
             MobEffectInstance effect = effects.remove(player.getRandom().nextInt(effects.size()));
-            if (shorten) {
+            if (shorten){
                 EntityHelper.shortenEffect(effect, target, duration);
-            } else {
+            }else {
                 EntityHelper.extendEffect(effect, target, duration);
             }
         }
     }
 
-    private static List<MobEffectInstance> getActiveEffects(LivingEntity target,
-                                                            MobEffectCategory category) {
+    private static List<MobEffectInstance> getActiveEffects(
+            LivingEntity target,
+            MobEffectCategory category) {
         return target.getActiveEffects().stream()
-                .filter(effect -> effect.getEffect().getCategory() == category)
-                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+                     .filter(effect -> effect.getEffect().getCategory() == category)
+                     .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
     }
 
-    private static void grantRandomNegativeEffects(ServerPlayer player,
-                                                   LivingEntity target,
-                                                   int count,
-                                                   int duration,
-                                                   int amplifier) {
+    private static void grantRandomNegativeEffects(
+            ServerPlayer player,
+            LivingEntity target,
+            int count,
+            int duration,
+            int amplifier) {
         List<MobEffect> candidates = new ArrayList<>();
         ForgeRegistries.POTIONS.getValues().forEach(potion -> potion.getEffects().stream()
-                .map(MobEffectInstance::getEffect)
-                .filter(effect -> effect.getCategory() == MobEffectCategory.HARMFUL)
-                .filter(effect -> !candidates.contains(effect))
-                .forEach(candidates::add));
+                                                                    .map(MobEffectInstance::getEffect)
+                                                                    .filter(effect -> effect.getCategory() == MobEffectCategory.HARMFUL)
+                                                                    .filter(effect -> !candidates.contains(effect))
+                                                                    .forEach(candidates::add));
         for (int i = 0; i < count && !candidates.isEmpty(); i++) {
             MobEffect effect = candidates.remove(player.getRandom().nextInt(candidates.size()));
             target.addEffect(new MobEffectInstance(effect, duration, amplifier), player);
@@ -172,15 +176,15 @@ public final class IncursusBladeEffects {
 
     private static Set<MobEffect> getPositiveEffectPool() {
         Set<MobEffect> effects = new LinkedHashSet<>();
-        if (MaledictConfig.AERIAL_POTION_EFFECTS_ONLY.get()) {
+        if (MaledictConfig.AERIAL_POTION_EFFECTS_ONLY.get()){
             ForgeRegistries.POTIONS.getValues().forEach(potion -> potion.getEffects().stream()
-                    .map(MobEffectInstance::getEffect)
-                    .filter(effect -> effect.getCategory() == MobEffectCategory.BENEFICIAL)
-                    .forEach(effects::add));
-        } else {
+                                                                        .map(MobEffectInstance::getEffect)
+                                                                        .filter(effect -> effect.getCategory() == MobEffectCategory.BENEFICIAL)
+                                                                        .forEach(effects::add));
+        }else {
             ForgeRegistries.MOB_EFFECTS.getValues().stream()
-                    .filter(effect -> effect.getCategory() == MobEffectCategory.BENEFICIAL)
-                    .forEach(effects::add);
+                                       .filter(effect -> effect.getCategory() == MobEffectCategory.BENEFICIAL)
+                                       .forEach(effects::add);
         }
         return effects;
     }

@@ -13,7 +13,9 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
@@ -42,12 +44,16 @@ public final class IncursusBladeAttack {
         }
         player.getPersistentData().putLong(LAST_ATTACK_TICK, gameTime);
 
-        double reach = player.getAttributeValue(ForgeMod.ENTITY_REACH.get());
-        AABB searchArea = player.getBoundingBox().inflate(reach);
+        int sweepingLevel = weapon.getEnchantmentLevel(Enchantments.SWEEPING_EDGE);
+        double reach = player.getAttributeValue(ForgeMod.ENTITY_REACH.get()) + 0.5
+                       + sweepingLevel * 0.25;
+        Vec3 attackOffset = player.getLookAngle().scale(0.4);
+        Vec3 attackOrigin = player.position().add(attackOffset);
+        AABB searchArea = player.getBoundingBox().move(attackOffset).inflate(reach);
         List<LivingEntity> targets = player.level().getEntitiesOfClass(
                 LivingEntity.class,
                 searchArea,
-                target -> isValidTarget(player, target, reach));
+                target -> isValidTarget(player, target, attackOrigin, reach));
         targets.sort(Comparator.comparingDouble(player::distanceToSqr));
 
         player.swing(InteractionHand.MAIN_HAND, true);
@@ -56,7 +62,7 @@ public final class IncursusBladeAttack {
         float attackStrength = player.getAttackStrengthScale(0.5f);
         boolean attacked = false;
         for (LivingEntity target : targets) {
-            float damage = calculateDamage(player, weapon, target, attackStrength);
+            float damage = calculateDamage(player, weapon, target, attackStrength, sweepingLevel);
             if (damage > 0.0f){
                 DamageProbe.mediumDamageMethod(
                         target,
@@ -73,12 +79,15 @@ public final class IncursusBladeAttack {
         player.resetAttackStrengthTicker();
     }
 
-    private static float calculateDamage(ServerPlayer player, ItemStack weapon, LivingEntity target, float attackStrength) {
+    private static float calculateDamage(
+            ServerPlayer player, ItemStack weapon, LivingEntity target,
+            float attackStrength, int sweepingLevel) {
         float baseDamage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
         float enchantmentDamage = EnchantmentHelper.getDamageBonus(weapon, target.getMobType());
         baseDamage *= 0.2f + attackStrength * attackStrength * 0.8f;
         enchantmentDamage *= attackStrength;
-        float damage = baseDamage + enchantmentDamage;
+        float sweepingDamageMultiplier = 1.0f + (float) sweepingLevel / (sweepingLevel + 4.0f);
+        float damage = (baseDamage + enchantmentDamage) * sweepingDamageMultiplier;
 
         boolean vanillaCritical = attackStrength > 0.9f
                                   && player.fallDistance > 0.0f
@@ -110,7 +119,8 @@ public final class IncursusBladeAttack {
                       .spawnForwardSlashingParticle(player);
     }
 
-    private static boolean isValidTarget(ServerPlayer player, LivingEntity target, double reach) {
+    private static boolean isValidTarget(
+            ServerPlayer player, LivingEntity target, Vec3 attackOrigin, double reach) {
         if (target == player || !target.isAlive() || !target.isAttackable() || target.skipAttackInteraction(player) || !player.hasLineOfSight(target)){
             return false;
         }
@@ -118,7 +128,7 @@ public final class IncursusBladeAttack {
             return false;
         }
         double inclusiveReach = reach + target.getBbWidth() * 0.5;
-        return player.distanceToSqr(target) <= inclusiveReach * inclusiveReach;
+        return attackOrigin.distanceToSqr(target.position()) <= inclusiveReach * inclusiveReach;
     }
 
     private IncursusBladeAttack() {

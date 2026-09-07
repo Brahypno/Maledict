@@ -5,9 +5,11 @@ import com.google.common.collect.Multimap;
 import com.sammy.malum.common.capability.MalumPlayerDataCapability;
 import com.sammy.malum.common.item.curiosities.weapons.scythe.MagicScytheItem;
 import com.sammy.malum.common.item.spirit.SpiritShardItem;
+import com.sammy.malum.core.systems.spirit.MalumSpiritType;
 import com.sammy.malum.registry.common.AttributeRegistry;
 import com.sammy.malum.registry.common.DamageTypeRegistry;
 import com.sammy.malum.registry.common.DamageTypeTagRegistry;
+import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -238,7 +240,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
     }
 
     public static int getNextUpgradeCost(ItemStack stack, String key) {
-        int coefficient = switch (key) {
+        double coefficient = switch (key) {
             case ATTACK_DAMAGE -> MaledictConfig.EARTHEN_UPGRADE_COST_COEFFICIENT.get();
             case POWDER_SNOW_DAMAGE -> MaledictConfig.AQUEOUS_UPGRADE_COST_COEFFICIENT.get();
             case MAGIC_DAMAGE -> MaledictConfig.ARCANE_UPGRADE_COST_COEFFICIENT.get();
@@ -249,7 +251,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
             case WICKED_CRITICAL_DAMAGE -> MaledictConfig.WICKED_UPGRADE_COST_COEFFICIENT.get();
             default -> throw new IllegalArgumentException("Unknown Incursus Blade stat: " + key);
         };
-        return coefficient * Math.max(1, (int) Math.floor(getStat(stack, key)) + 1);
+        return (int) (coefficient * Math.max(1, (int) Math.floor(getStat(stack, key)) + 1));
     }
 
     private static void addUpgradeProgress(ItemStack stack, String key, int amount) {
@@ -261,5 +263,10 @@ public final class IncursusBladeItem extends MagicScytheItem {
             cost = getNextUpgradeCost(stack, key);
         }
         stack.getOrCreateTagElement(UPGRADE_PROGRESS_TAG).putInt(key, progress);
+    }
+
+    @Override
+    public MalumSpiritType getDefiningSpiritType() {
+        return SpiritTypeRegistry.UMBRAL_SPIRIT;
     }
 }
