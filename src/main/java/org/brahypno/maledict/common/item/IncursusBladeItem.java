@@ -35,6 +35,8 @@ import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 import team.lodestar.lodestone.registry.common.tag.LodestoneDamageTypeTags;
 
+import java.util.function.Consumer;
+
 /**
  * A Malum magic scythe whose per-stack combat values are stored in NBT.
  */
@@ -268,5 +270,11 @@ public final class IncursusBladeItem extends MagicScytheItem {
     @Override
     public MalumSpiritType getDefiningSpiritType() {
         return SpiritTypeRegistry.UMBRAL_SPIRIT;
+    }
+
+    public boolean canDisableShield(ItemStack stack, ItemStack shield, LivingEntity entity, LivingEntity attacker) {return true;}
+
+    public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
+        return Math.min(amount, 20);
     }
 }
