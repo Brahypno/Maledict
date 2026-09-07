@@ -16,6 +16,7 @@ public final class MaledictLanguage extends LanguageProvider {
     @Override
     protected void addTranslations() {
         if ("zh_cn".equals(locale)){
+            add("itemGroup.maledict", "咒邪");
             addItem(MaledictItems.INCURSUS_BLADE, "神侵恶刃");
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
             add("tooltip.maledict.incursus_blade.description", "吞噬精魂成长，向周身挥出镰刃的魔法镰刀。");
@@ -37,6 +38,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.2",
                 "最后我得到了这种武器，挽魂 锋镰本身的意志被虚空吞噬殆 尽，这片空无渴求着吞并一切 ，而八种精魂完全受其操控， 甚至脉动被扭曲，从而对外展 现出意料之外的能力。随着投 入精魂数量的增加，这柄武器 也更加的难以捉摸。我将之成 为神侵恶刃，并希望这片虚空 能够满足于脉动。");
         }else {
+            add("itemGroup.maledict", "Maledict");
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
             add("attribute.name.maledict.powder_snow_damage", "Freezing Damage");
             add("tooltip.maledict.incursus_blade.description", "A magic scythe that devours spirits and strikes all around its wielder.");
