@@ -10,8 +10,11 @@ import com.sammy.malum.registry.common.AttributeRegistry;
 import com.sammy.malum.registry.common.DamageTypeRegistry;
 import com.sammy.malum.registry.common.DamageTypeTagRegistry;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import com.sammy.malum.registry.common.item.EnchantmentRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -29,6 +32,7 @@ import net.minecraft.world.item.Tier;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
+import org.brahypno.maledict.common.combat.IncursusBladeEnchantments;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
@@ -60,6 +64,20 @@ public final class IncursusBladeItem extends MagicScytheItem {
 
     public IncursusBladeItem(Tier tier, Item.Properties properties) {
         super(tier, -3.0f - tier.getAttackDamageBonus(), 0.1f, 0.0f, properties);
+    }
+
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (stack.getEnchantmentLevel(EnchantmentRegistry.REBOUND.get()) > 0){
+            IncursusBladeEnchantments.throwScythe(level, player, hand, stack);
+            return InteractionResultHolder.success(stack);
+        }
+        if (stack.getEnchantmentLevel(EnchantmentRegistry.ASCENSION.get()) > 0){
+            IncursusBladeEnchantments.triggerAscension(level, player, hand, stack);
+            return InteractionResultHolder.success(stack);
+        }
+        return super.use(level, player, hand);
     }
 
     @Override
