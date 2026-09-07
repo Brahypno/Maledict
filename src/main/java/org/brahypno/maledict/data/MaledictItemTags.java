@@ -31,6 +31,15 @@ public final class MaledictItemTags extends ItemTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
+        tag(ItemTags.ARROWS)
+                .add(MaledictItems.SACRED_SPIRIT_ARROW.get())
+                .add(MaledictItems.WICKED_SPIRIT_ARROW.get())
+                .add(MaledictItems.ARCANE_SPIRIT_ARROW.get())
+                .add(MaledictItems.ELDRITCH_SPIRIT_ARROW.get())
+                .add(MaledictItems.AERIAL_SPIRIT_ARROW.get())
+                .add(MaledictItems.AQUEOUS_SPIRIT_ARROW.get())
+                .add(MaledictItems.EARTHEN_SPIRIT_ARROW.get())
+                .add(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
         tag(FORGE_SCYTHE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(ItemTagRegistry.SCYTHE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(ItemTagRegistry.SOUL_HUNTER_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": {
+      "item": "minecraft:stick"
+    },
+    "F": {
+      "item": "minecraft:feather"
+    },
+    "S": {
+      "item": "malum:sacred_spirit"
+    }
+  },
+  "pattern": [
+    "S",
+    "#",
+    "F"
+  ],
+  "result": {
+    "item": "maledict:sacred_spirit_arrow"
+  },
+  "show_notification": true
+}

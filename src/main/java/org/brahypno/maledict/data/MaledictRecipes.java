@@ -6,11 +6,14 @@ import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.item.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.function.Consumer;
@@ -23,6 +26,21 @@ public final class MaledictRecipes extends RecipeProvider {
     @Override
     @SuppressWarnings({"removal"})
     protected void buildRecipes(Consumer<FinishedRecipe> recipes) {
+        for (SpiritArrowType arrowType : SpiritArrowType.values()) {
+            ShapedRecipeBuilder.shaped(
+                                       RecipeCategory.COMBAT,
+                                       MaledictItems.getSpiritArrow(arrowType).get(),
+                                       1)
+                               .define('S', arrowType.getSpiritType().spiritShard.get())
+                               .define('#', Items.STICK)
+                               .define('F', Items.FEATHER)
+                               .pattern("S")
+                               .pattern("#")
+                               .pattern("F")
+                               .unlockedBy("has_spirit", has(arrowType.getSpiritType().spiritShard.get()))
+                               .save(recipes);
+        }
+
         new SpiritInfusionRecipeBuilder(
                 ItemRegistry.EDGE_OF_DELIVERANCE.get(), 1,
                 MaledictItems.INCURSUS_BLADE.get(), 1)

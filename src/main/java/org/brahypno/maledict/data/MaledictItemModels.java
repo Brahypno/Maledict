@@ -9,6 +9,8 @@ import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.client.model.generators.loaders.SeparateTransformsModelBuilder;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.item.SpiritArrowType;
+import org.brahypno.maledict.registry.MaledictItems;
 
 public final class MaledictItemModels extends ItemModelProvider {
     public MaledictItemModels(PackOutput output, ExistingFileHelper existingFiles) {
@@ -18,6 +20,12 @@ public final class MaledictItemModels extends ItemModelProvider {
     @Override
     @SuppressWarnings({"removal"})
     protected void registerModels() {
+        for (SpiritArrowType arrowType : SpiritArrowType.values()) {
+            getBuilder(arrowType.name().toLowerCase() + "_spirit_arrow")
+                    .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                    .texture("layer0", mcLoc("item/arrow"));
+        }
+
         ItemModelBuilder handheld = getBuilder("incursus_blade_handheld")
                 .parent(new ModelFile.UncheckedModelFile(
                         new ResourceLocation("malum", "item/handheld_large")))

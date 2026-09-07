@@ -18,6 +18,14 @@ public final class MaledictLanguage extends LanguageProvider {
         if ("zh_cn".equals(locale)){
             add("itemGroup.maledict", "咒邪");
             addItem(MaledictItems.INCURSUS_BLADE, "神侵恶刃");
+            addItem(MaledictItems.SACRED_SPIRIT_ARROW, "神圣精魂箭");
+            addItem(MaledictItems.WICKED_SPIRIT_ARROW, "邪恶精魂箭");
+            addItem(MaledictItems.ARCANE_SPIRIT_ARROW, "奥术精魂箭");
+            addItem(MaledictItems.ELDRITCH_SPIRIT_ARROW, "邪术精魂箭");
+            addItem(MaledictItems.AERIAL_SPIRIT_ARROW, "澄空精魂箭");
+            addItem(MaledictItems.AQUEOUS_SPIRIT_ARROW, "碧水精魂箭");
+            addItem(MaledictItems.EARTHEN_SPIRIT_ARROW, "大地精魂箭");
+            addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "狱火精魂箭");
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
             add("tooltip.maledict.incursus_blade.description", "吞噬精魂成长，向周身挥出镰刃的魔法镰刀。");
             add("tooltip.maledict.incursus_blade.hold_shift", "按住 Shift 查看精魂详情");
@@ -40,6 +48,14 @@ public final class MaledictLanguage extends LanguageProvider {
         }else {
             add("itemGroup.maledict", "Maledict");
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
+            addItem(MaledictItems.SACRED_SPIRIT_ARROW, "Sacred Spirit Arrow");
+            addItem(MaledictItems.WICKED_SPIRIT_ARROW, "Wicked Spirit Arrow");
+            addItem(MaledictItems.ARCANE_SPIRIT_ARROW, "Arcane Spirit Arrow");
+            addItem(MaledictItems.ELDRITCH_SPIRIT_ARROW, "Eldritch Spirit Arrow");
+            addItem(MaledictItems.AERIAL_SPIRIT_ARROW, "Aerial Spirit Arrow");
+            addItem(MaledictItems.AQUEOUS_SPIRIT_ARROW, "Aqueous Spirit Arrow");
+            addItem(MaledictItems.EARTHEN_SPIRIT_ARROW, "Earthen Spirit Arrow");
+            addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "Infernal Spirit Arrow");
             add("attribute.name.maledict.powder_snow_damage", "Freezing Damage");
             add("tooltip.maledict.incursus_blade.description", "A magic scythe that devours spirits and strikes all around its wielder.");
             add("tooltip.maledict.incursus_blade.hold_shift", "Hold Shift for spirit details");

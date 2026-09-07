@@ -15,7 +15,17 @@ public final class MaledictCreativeTabs {
             CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.maledict"))
                     .icon(() -> MaledictItems.INCURSUS_BLADE.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> output.accept(MaledictItems.INCURSUS_BLADE.get()))
+                    .displayItems((parameters, output) -> {
+                        output.accept(MaledictItems.INCURSUS_BLADE.get());
+                        output.accept(MaledictItems.SACRED_SPIRIT_ARROW.get());
+                        output.accept(MaledictItems.WICKED_SPIRIT_ARROW.get());
+                        output.accept(MaledictItems.ARCANE_SPIRIT_ARROW.get());
+                        output.accept(MaledictItems.ELDRITCH_SPIRIT_ARROW.get());
+                        output.accept(MaledictItems.AERIAL_SPIRIT_ARROW.get());
+                        output.accept(MaledictItems.AQUEOUS_SPIRIT_ARROW.get());
+                        output.accept(MaledictItems.EARTHEN_SPIRIT_ARROW.get());
+                        output.accept(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
+                    })
                     .build());
 
     private MaledictCreativeTabs() {
