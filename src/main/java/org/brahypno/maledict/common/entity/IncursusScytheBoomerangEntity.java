@@ -18,7 +18,9 @@ import team.lodestar.lodestone.helpers.ItemHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.helpers.SoundHelper;
 
-/** Malum's rebound projectile with the Incursus Blade's frozen damage channel. */
+/**
+ * Malum's rebound projectile with the Incursus Blade's frozen damage channel.
+ */
 public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
     private final float frozenDamage;
 
@@ -46,23 +48,23 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
                     target,
                     DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, owner),
                     damage).success();
-            if (hit && target instanceof LivingEntity livingTarget){
-                ItemHelper.applyEnchantments(owner, livingTarget, scythe);
+            if (hit){
+                ItemHelper.applyEnchantments(owner, target, scythe);
                 int fireAspect = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FIRE_ASPECT, scythe);
-                if (fireAspect > 0){
+                if (fireAspect > 0 && target instanceof LivingEntity livingTarget){
                     livingTarget.setSecondsOnFire(fireAspect * 4);
                 }
-                if (magicDamage > 0.0f && !livingTarget.isDeadOrDying()){
-                    livingTarget.invulnerableTime = 0;
+                if (magicDamage > 0.0f && canTakeAdditionalDamage(target)){
+                    target.invulnerableTime = 0;
                     DamageProbe.mediumDamageMethod(
-                            livingTarget,
+                            target,
                             DamageTypeHelper.create(level(), DamageTypeRegistry.VOODOO, this, owner),
                             magicDamage);
                 }
-                if (frozenDamage > 0.0f && !livingTarget.isDeadOrDying()){
-                    livingTarget.invulnerableTime = 0;
+                if (frozenDamage > 0.0f && canTakeAdditionalDamage(target)){
+                    target.invulnerableTime = 0;
                     DamageProbe.mediumDamageMethod(
-                            livingTarget,
+                            target,
                             DamageTypeHelper.create(level(), DamageTypes.FREEZE, this, owner),
                             frozenDamage);
                 }
@@ -85,5 +87,9 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
                 flyBack(owner);
             }
         }
+    }
+
+    private static boolean canTakeAdditionalDamage(Entity target) {
+        return !(target instanceof LivingEntity livingTarget) || !livingTarget.isDeadOrDying();
     }
 }

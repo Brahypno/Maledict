@@ -37,8 +37,8 @@ import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 public final class IncursusBladeEnchantments {
     public static void throwScythe(Level level, Player player, InteractionHand hand, ItemStack stack) {
         int slot = hand == InteractionHand.OFF_HAND
-                ? player.getInventory().getContainerSize() - 1
-                : player.getInventory().selected;
+                   ? player.getInventory().getContainerSize() - 1
+                   : player.getInventory().selected;
         if (!(player instanceof ServerPlayer serverPlayer)){
             return;
         }
@@ -92,8 +92,8 @@ public final class IncursusBladeEnchantments {
                 float z = Mth.cos(rotation);
                 motion = player.getDeltaMovement();
                 motion = enhanced
-                        ? motion.subtract(x * 0.6f, 0.0, z * 0.6f)
-                        : motion.add(x * 0.75f, 0.0, z * 0.75f);
+                         ? motion.subtract(x * 0.6f, 0.0, z * 0.6f)
+                         : motion.add(x * 0.75f, 0.0, z * 0.75f);
                 player.setDeltaMovement(motion);
             }
             player.hasImpulse = true;
@@ -142,23 +142,23 @@ public final class IncursusBladeEnchantments {
                     target,
                     DamageTypeHelper.create(level, DamageTypeRegistry.SCYTHE_SWEEP, player),
                     damage).success();
-            if (hit && target instanceof LivingEntity livingTarget){
-                ItemHelper.applyEnchantments(player, livingTarget, stack);
+            if (hit){
+                ItemHelper.applyEnchantments(player, target, stack);
                 int fireAspect = stack.getEnchantmentLevel(Enchantments.FIRE_ASPECT);
-                if (fireAspect > 0){
+                if (fireAspect > 0 && target instanceof LivingEntity livingTarget){
                     livingTarget.setSecondsOnFire(fireAspect * 4);
                 }
-                if (magicDamage > 0.0f && !livingTarget.isDeadOrDying()){
-                    livingTarget.invulnerableTime = 0;
+                if (magicDamage > 0.0f && canTakeAdditionalDamage(target)){
+                    target.invulnerableTime = 0;
                     DamageProbe.mediumDamageMethod(
-                            livingTarget,
+                            target,
                             DamageTypeHelper.create(level, DamageTypeRegistry.VOODOO, player),
                             magicDamage);
                 }
-                if (frozenDamage > 0.0f && !livingTarget.isDeadOrDying()){
-                    livingTarget.invulnerableTime = 0;
+                if (frozenDamage > 0.0f && canTakeAdditionalDamage(target)){
+                    target.invulnerableTime = 0;
                     DamageProbe.mediumDamageMethod(
-                            livingTarget,
+                            target,
                             DamageTypeHelper.create(level, DamageTypes.FREEZE, player),
                             frozenDamage);
                 }
@@ -191,6 +191,10 @@ public final class IncursusBladeEnchantments {
         return entity.canBeHitByProjectile()
                && entity != player
                && !player.isPassengerOfSameVehicle(entity);
+    }
+
+    private static boolean canTakeAdditionalDamage(Entity target) {
+        return !(target instanceof LivingEntity livingTarget) || !livingTarget.isDeadOrDying();
     }
 
     private IncursusBladeEnchantments() {

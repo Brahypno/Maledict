@@ -8,7 +8,9 @@ import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -50,8 +52,8 @@ public final class IncursusBladeAttack {
         Vec3 attackOffset = player.getLookAngle().scale(0.4);
         Vec3 attackOrigin = player.position().add(attackOffset);
         AABB searchArea = player.getBoundingBox().move(attackOffset).inflate(reach);
-        List<LivingEntity> targets = player.level().getEntitiesOfClass(
-                LivingEntity.class,
+        List<Entity> targets = player.level().getEntities(
+                player,
                 searchArea,
                 target -> isValidTarget(player, target, attackOrigin, reach));
         targets.sort(Comparator.comparingDouble(player::distanceToSqr));
@@ -61,15 +63,17 @@ public final class IncursusBladeAttack {
 
         float attackStrength = player.getAttackStrengthScale(0.5f);
         boolean attacked = false;
-        for (LivingEntity target : targets) {
+        for (Entity target : targets) {
             float damage = calculateDamage(player, weapon, target, attackStrength, sweepingLevel);
             if (damage > 0.0f){
                 DamageProbe.mediumDamageMethod(
                         target,
                         DamageTypeHelper.create(player.level(), DamageTypeRegistry.SCYTHE_MELEE, player),
                         damage);
-                weapon.hurtEnemy(target, player);
-                IncursusBladeEffects.applySacredEffect(player, target, weapon);
+                if (target instanceof LivingEntity livingTarget){
+                    weapon.hurtEnemy(livingTarget, player);
+                    IncursusBladeEffects.applySacredEffect(player, livingTarget, weapon);
+                }
                 attacked = true;
             }
         }
@@ -80,10 +84,13 @@ public final class IncursusBladeAttack {
     }
 
     private static float calculateDamage(
-            ServerPlayer player, ItemStack weapon, LivingEntity target,
+            ServerPlayer player, ItemStack weapon, Entity target,
             float attackStrength, int sweepingLevel) {
         float baseDamage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        float enchantmentDamage = EnchantmentHelper.getDamageBonus(weapon, target.getMobType());
+        MobType mobType = target instanceof LivingEntity livingTarget
+                          ? livingTarget.getMobType()
+                          : MobType.UNDEFINED;
+        float enchantmentDamage = EnchantmentHelper.getDamageBonus(weapon, mobType);
         baseDamage *= 0.2f + attackStrength * attackStrength * 0.8f;
         enchantmentDamage *= attackStrength;
         float sweepingDamageMultiplier = 1.0f + (float) sweepingLevel / (sweepingLevel + 4.0f);
@@ -120,7 +127,7 @@ public final class IncursusBladeAttack {
     }
 
     private static boolean isValidTarget(
-            ServerPlayer player, LivingEntity target, Vec3 attackOrigin, double reach) {
+            ServerPlayer player, Entity target, Vec3 attackOrigin, double reach) {
         if (target == player || !target.isAlive() || !target.isAttackable() || target.skipAttackInteraction(player) || !player.hasLineOfSight(target)){
             return false;
         }
