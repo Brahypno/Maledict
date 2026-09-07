@@ -17,6 +17,7 @@ public final class MaledictLanguage extends LanguageProvider {
     protected void addTranslations() {
         if ("zh_cn".equals(locale)){
             add("itemGroup.maledict", "咒邪");
+            add("enchantment.maledict.ectoplasm", "灵质");
             addItem(MaledictItems.INCURSUS_BLADE, "神侵恶刃");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "神圣精魂箭");
             addItem(MaledictItems.WICKED_SPIRIT_ARROW, "邪恶精魂箭");
@@ -47,6 +48,7 @@ public final class MaledictLanguage extends LanguageProvider {
                 "最后我得到了这种武器，挽魂 锋镰本身的意志被虚空吞噬殆 尽，这片空无渴求着吞并一切 ，而八种精魂完全受其操控， 甚至脉动被扭曲，从而对外展 现出意料之外的能力。随着投 入精魂数量的增加，这柄武器 也更加的难以捉摸。我将之成 为神侵恶刃，并希望这片虚空 能够满足于脉动。");
         }else {
             add("itemGroup.maledict", "Maledict");
+            add("enchantment.maledict.ectoplasm", "Ectoplasm");
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "Sacred Spirit Arrow");
             addItem(MaledictItems.WICKED_SPIRIT_ARROW, "Wicked Spirit Arrow");
