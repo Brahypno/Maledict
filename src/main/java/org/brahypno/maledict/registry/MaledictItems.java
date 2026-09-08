@@ -6,15 +6,29 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
+import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
 import org.brahypno.maledict.common.item.SpiritArrowItem;
 import org.brahypno.maledict.common.item.SpiritArrowType;
+import team.lodestar.lodestone.systems.multiblock.MultiBlockItem;
 
 public final class MaledictItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Maledict.MODID);
 
     public static final RegistryObject<Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
             new IncursusBladeItem(MaledictItemTiers.INCURSUS, new Item.Properties().rarity(Rarity.EPIC)));
+
+    public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
+            new MultiBlockItem(
+                    MaledictBlocks.MNEMONIC_OBELISK.get(),
+                    new Item.Properties(),
+                    MnemonicObeliskBlockEntity.STRUCTURE));
+    public static final RegistryObject<Item> SOULWOOD_OBELISK = ITEMS.register("soulwood_obelisk", () ->
+            new MultiBlockItem(
+                    MaledictBlocks.SOULWOOD_OBELISK.get(),
+                    new Item.Properties(),
+                    SoulwoodObeliskBlockEntity.STRUCTURE));
 
     public static final RegistryObject<Item> SACRED_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.SACRED);
     public static final RegistryObject<Item> WICKED_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.WICKED);

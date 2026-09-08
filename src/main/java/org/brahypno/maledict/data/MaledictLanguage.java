@@ -4,6 +4,7 @@ import net.minecraft.data.PackOutput;
 import net.minecraftforge.common.data.LanguageProvider;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.registry.MaledictItems;
+import org.brahypno.maledict.registry.MaledictBlocks;
 
 public final class MaledictLanguage extends LanguageProvider {
     private final String locale;
@@ -19,6 +20,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("itemGroup.maledict", "咒邪");
             add("enchantment.maledict.ectoplasm", "灵质");
             addItem(MaledictItems.INCURSUS_BLADE, "神侵恶刃");
+            addBlock(MaledictBlocks.MNEMONIC_OBELISK, "回忆方尖碑");
+            addBlock(MaledictBlocks.SOULWOOD_OBELISK, "灵魂木方尖碑");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "神圣精魂箭");
             addItem(MaledictItems.WICKED_SPIRIT_ARROW, "邪恶精魂箭");
             addItem(MaledictItems.ARCANE_SPIRIT_ARROW, "奥术精魂箭");
@@ -50,6 +53,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("itemGroup.maledict", "Maledict");
             add("enchantment.maledict.ectoplasm", "Ectoplasm");
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
+            addBlock(MaledictBlocks.MNEMONIC_OBELISK, "Mnemonic Obelisk");
+            addBlock(MaledictBlocks.SOULWOOD_OBELISK, "Soulwood Obelisk");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "Sacred Spirit Arrow");
             addItem(MaledictItems.WICKED_SPIRIT_ARROW, "Wicked Spirit Arrow");
             addItem(MaledictItems.ARCANE_SPIRIT_ARROW, "Arcane Spirit Arrow");

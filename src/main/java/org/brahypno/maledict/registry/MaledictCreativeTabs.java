@@ -17,6 +17,8 @@ public final class MaledictCreativeTabs {
                     .icon(() -> MaledictItems.INCURSUS_BLADE.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         output.accept(MaledictItems.INCURSUS_BLADE.get());
+                        output.accept(MaledictItems.MNEMONIC_OBELISK.get());
+                        output.accept(MaledictItems.SOULWOOD_OBELISK.get());
                         output.accept(MaledictItems.SACRED_SPIRIT_ARROW.get());
                         output.accept(MaledictItems.WICKED_SPIRIT_ARROW.get());
                         output.accept(MaledictItems.ARCANE_SPIRIT_ARROW.get());

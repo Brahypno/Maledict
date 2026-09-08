@@ -10,6 +10,8 @@ import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictCreativeTabs;
 import org.brahypno.maledict.registry.MaledictEnchantments;
 import org.brahypno.maledict.registry.MaledictEntities;
+import org.brahypno.maledict.registry.MaledictBlockEntities;
+import org.brahypno.maledict.registry.MaledictBlocks;
 import org.brahypno.maledict.registry.MaledictItems;
 
 @Mod(Maledict.MODID)
@@ -23,6 +25,8 @@ public final class Maledict {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, MaledictConfig.COMMON_SPEC);
         MaledictEnchantments.ENCHANTMENTS.register(modBus);
         MaledictEntities.ENTITY_TYPES.register(modBus);
+        MaledictBlocks.BLOCKS.register(modBus);
+        MaledictBlockEntities.BLOCK_ENTITY_TYPES.register(modBus);
         MaledictItems.ITEMS.register(modBus);
         MaledictCreativeTabs.CREATIVE_TABS.register(modBus);
         MaledictNetwork.register();

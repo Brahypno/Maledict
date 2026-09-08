@@ -39,5 +39,14 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .base(handheld)
                 .perspective(ItemDisplayContext.GUI, gui)
                 .perspective(ItemDisplayContext.FIXED, gui);
+
+        getBuilder("mnemonic_obelisk")
+                .parent(new ModelFile.UncheckedModelFile(
+                        ResourceLocation.fromNamespaceAndPath("malum", "item/runewood_obelisk")))
+                .texture("0", modLoc("block/mnemonic_obelisk"));
+        getBuilder("soulwood_obelisk")
+                .parent(new ModelFile.UncheckedModelFile(
+                        ResourceLocation.fromNamespaceAndPath("malum", "item/runewood_obelisk")))
+                .texture("0", modLoc("block/runewood_obelisk"));
     }
 }

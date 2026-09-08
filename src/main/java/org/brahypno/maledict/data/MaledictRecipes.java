@@ -27,10 +27,7 @@ public final class MaledictRecipes extends RecipeProvider {
     @SuppressWarnings({"removal"})
     protected void buildRecipes(Consumer<FinishedRecipe> recipes) {
         for (SpiritArrowType arrowType : SpiritArrowType.values()) {
-            ShapedRecipeBuilder.shaped(
-                                       RecipeCategory.COMBAT,
-                                       MaledictItems.getSpiritArrow(arrowType).get(),
-                                       1)
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, MaledictItems.getSpiritArrow(arrowType).get(), 1)
                                .define('S', arrowType.getSpiritType().spiritShard.get())
                                .define('#', Items.STICK)
                                .define('F', Items.FEATHER)
@@ -41,9 +38,7 @@ public final class MaledictRecipes extends RecipeProvider {
                                .save(recipes);
         }
 
-        new SpiritInfusionRecipeBuilder(
-                ItemRegistry.EDGE_OF_DELIVERANCE.get(), 1,
-                MaledictItems.INCURSUS_BLADE.get(), 1)
+        new SpiritInfusionRecipeBuilder(ItemRegistry.EDGE_OF_DELIVERANCE.get(), 1, MaledictItems.INCURSUS_BLADE.get(), 1)
                 .addExtraItem(Items.NETHER_STAR, 6)
                 .addExtraItem(ItemRegistry.FUSED_CONSCIOUSNESS.get(), 6)
                 .addExtraItem(Items.ENDER_EYE, 6)
@@ -66,7 +61,24 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.AQUEOUS_SPIRIT, 4)
                 .addSpirit(SpiritTypeRegistry.EARTHEN_SPIRIT, 4)
                 .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 4)
-                .build(recipes, ResourceLocation.fromNamespaceAndPath(
-                        Maledict.MODID, "spirit_repair/incursus_blade"));
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/incursus_blade"));
+
+        new SpiritInfusionRecipeBuilder(ItemRegistry.BRILLIANT_OBELISK.get(), 1, MaledictItems.MNEMONIC_OBELISK.get(), 1)
+                .addExtraItem(ItemRegistry.MNEMONIC_FRAGMENT.get(), 2)
+                .addExtraItem(ItemRegistry.VOID_SALTS.get(), 2)
+                .addExtraItem(ItemRegistry.BLOCK_OF_NULL_SLATE.get(), 2)
+                .addExtraItem(ItemRegistry.SOULWOOD_PLANKS.get(), 2)
+                .addSpirit(SpiritTypeRegistry.AERIAL_SPIRIT, 16)
+                .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 16)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/mnemonic_obelisk"));
+
+        new SpiritInfusionRecipeBuilder(ItemRegistry.RUNEWOOD_OBELISK.get(), 1, MaledictItems.SOULWOOD_OBELISK.get(), 1)
+                .addExtraItem(ItemRegistry.MALIGNANT_LEAD.get(), 2)
+                .addExtraItem(ItemRegistry.VOID_SALTS.get(), 2)
+                .addExtraItem(ItemRegistry.SOULWOOD_PLANKS.get(), 2)
+                .addSpirit(SpiritTypeRegistry.AERIAL_SPIRIT, 16)
+                .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 8)
+                .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 8)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/soulwood_obelisk"));
     }
 }

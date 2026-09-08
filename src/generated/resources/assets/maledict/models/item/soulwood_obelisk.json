@@ -1,0 +1,6 @@
+{
+  "parent": "malum:item/runewood_obelisk",
+  "textures": {
+    "0": "maledict:block/runewood_obelisk"
+  }
+}

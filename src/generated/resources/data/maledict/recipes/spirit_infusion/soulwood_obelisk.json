@@ -1,0 +1,38 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 2,
+      "item": "malum:malignant_lead"
+    },
+    {
+      "count": 2,
+      "item": "malum:void_salts"
+    },
+    {
+      "count": 2,
+      "item": "malum:soulwood_planks"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "malum:runewood_obelisk"
+  },
+  "output": {
+    "item": "maledict:soulwood_obelisk"
+  },
+  "spirits": [
+    {
+      "type": "aerial",
+      "count": 16
+    },
+    {
+      "type": "eldritch",
+      "count": 8
+    },
+    {
+      "type": "infernal",
+      "count": 8
+    }
+  ]
+}

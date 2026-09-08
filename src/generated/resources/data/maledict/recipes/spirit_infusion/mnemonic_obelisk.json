@@ -1,0 +1,38 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 2,
+      "item": "malum:mnemonic_fragment"
+    },
+    {
+      "count": 2,
+      "item": "malum:void_salts"
+    },
+    {
+      "count": 2,
+      "item": "malum:block_of_null_slate"
+    },
+    {
+      "count": 2,
+      "item": "malum:soulwood_planks"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "malum:brilliant_obelisk"
+  },
+  "output": {
+    "item": "maledict:mnemonic_obelisk"
+  },
+  "spirits": [
+    {
+      "type": "aerial",
+      "count": 16
+    },
+    {
+      "type": "eldritch",
+      "count": 16
+    }
+  ]
+}
