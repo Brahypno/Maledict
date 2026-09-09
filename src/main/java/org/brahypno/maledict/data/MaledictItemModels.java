@@ -26,6 +26,18 @@ public final class MaledictItemModels extends ItemModelProvider {
                     .texture("layer0", mcLoc("item/arrow"));
         }
 
+        ItemModelBuilder pulling0 = withExistingParent("remembrance_bow_pulling_0", mcLoc("item/bow"))
+                .texture("layer0", modLoc("item/remembrance_bow_pulling_0"));
+        ItemModelBuilder pulling1 = withExistingParent("remembrance_bow_pulling_1", mcLoc("item/bow"))
+                .texture("layer0", modLoc("item/remembrance_bow_pulling_1"));
+        ItemModelBuilder pulling2 = withExistingParent("remembrance_bow_pulling_2", mcLoc("item/bow"))
+                .texture("layer0", modLoc("item/remembrance_bow_pulling_2"));
+        withExistingParent("remembrance_bow", mcLoc("item/bow"))
+                .texture("layer0", modLoc("item/remembrance_bow"))
+                .override().predicate(mcLoc("pulling"), 1.0F).model(pulling0).end()
+                .override().predicate(mcLoc("pulling"), 1.0F).predicate(mcLoc("pull"), 0.65F).model(pulling1).end()
+                .override().predicate(mcLoc("pulling"), 1.0F).predicate(mcLoc("pull"), 0.9F).model(pulling2).end();
+
         ItemModelBuilder handheld = getBuilder("incursus_blade_handheld")
                 .parent(new ModelFile.UncheckedModelFile(
                         new ResourceLocation("malum", "item/handheld_large")))

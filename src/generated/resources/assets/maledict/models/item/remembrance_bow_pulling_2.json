@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/bow",
+  "textures": {
+    "layer0": "maledict:item/remembrance_bow_pulling_2"
+  }
+}

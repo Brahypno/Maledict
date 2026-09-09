@@ -6,6 +6,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.enchantment.EctoplasmEnchantment;
+import org.brahypno.maledict.common.enchantment.ReminiscenceEnchantment;
 
 public final class MaledictEnchantments {
     public static final DeferredRegister<Enchantment> ENCHANTMENTS =
@@ -13,6 +14,8 @@ public final class MaledictEnchantments {
 
     public static final RegistryObject<Enchantment> ECTOPLASM =
             ENCHANTMENTS.register("ectoplasm", EctoplasmEnchantment::new);
+    public static final RegistryObject<Enchantment> REMINISCENCE =
+            ENCHANTMENTS.register("reminiscence", ReminiscenceEnchantment::new);
 
     private MaledictEnchantments() {
     }

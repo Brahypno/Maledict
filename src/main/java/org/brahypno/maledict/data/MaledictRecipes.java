@@ -80,5 +80,13 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 8)
                 .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 8)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/soulwood_obelisk"));
+
+        new SpiritInfusionRecipeBuilder(ItemRegistry.SOULWOOD_LOG.get(), 3, MaledictItems.REMEMBRANCE_BOW.get(), 1)
+                .addExtraItem(ItemRegistry.WARP_FLUX.get(), 11)
+                .addExtraItem(ItemRegistry.ASTRAL_WEAVE.get(), 11)
+                .addSpirit(SpiritTypeRegistry.AERIAL_SPIRIT, 11)
+                .addSpirit(SpiritTypeRegistry.SACRED_SPIRIT, 11)
+                .addSpirit(SpiritTypeRegistry.AQUEOUS_SPIRIT, 11)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/remembrance_bow"));
     }
 }

@@ -1,0 +1,34 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 11,
+      "item": "malum:warp_flux"
+    },
+    {
+      "count": 11,
+      "item": "malum:astral_weave"
+    }
+  ],
+  "input": {
+    "count": 3,
+    "item": "malum:soulwood_log"
+  },
+  "output": {
+    "item": "maledict:remembrance_bow"
+  },
+  "spirits": [
+    {
+      "type": "aerial",
+      "count": 11
+    },
+    {
+      "type": "sacred",
+      "count": 11
+    },
+    {
+      "type": "aqueous",
+      "count": 11
+    }
+  ]
+}

@@ -9,6 +9,7 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
+import org.brahypno.maledict.common.item.RemembranceBowItem;
 import org.brahypno.maledict.common.item.SpiritArrowItem;
 import org.brahypno.maledict.common.item.SpiritArrowType;
 import team.lodestar.lodestone.systems.multiblock.MultiBlockItem;
@@ -18,6 +19,8 @@ public final class MaledictItems {
 
     public static final RegistryObject<Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
             new IncursusBladeItem(MaledictItemTiers.INCURSUS, new Item.Properties().rarity(Rarity.EPIC)));
+    public static final RegistryObject<Item> REMEMBRANCE_BOW = ITEMS.register("remembrance_bow", () ->
+            new RemembranceBowItem(new Item.Properties().durability(384).rarity(Rarity.RARE)));
 
     public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.MNEMONIC_OBELISK.get(), new Item.Properties(), MnemonicObeliskBlockEntity.STRUCTURE));
