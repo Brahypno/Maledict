@@ -24,10 +24,9 @@ public final class MaledictBlocks {
     public static final RegistryObject<Block> MNEMONIC_OBELISK_COMPONENT = BLOCKS.register("mnemonic_obelisk_component", () ->
             new ObeliskComponentBlock(OBELISK_PROPERTIES, MaledictItems.MNEMONIC_OBELISK));
 
-    public static final RegistryObject<Block> SOULWOOD_OBELISK = BLOCKS.register("soulwood_obelisk", () ->
-            new SoulwoodObeliskCoreBlock(OBELISK_PROPERTIES));
-    public static final RegistryObject<Block> SOULWOOD_OBELISK_COMPONENT = BLOCKS.register("soulwood_obelisk_component", () ->
-            new ObeliskComponentBlock(OBELISK_PROPERTIES, MaledictItems.SOULWOOD_OBELISK));
+    public static final RegistryObject<Block> SOULWOOD_OBELISK = BLOCKS.register("soulwood_obelisk", () -> new SoulwoodObeliskCoreBlock(OBELISK_PROPERTIES));
+    public static final RegistryObject<Block> SOULWOOD_OBELISK_COMPONENT =
+            BLOCKS.register("soulwood_obelisk_component", () -> new ObeliskComponentBlock(OBELISK_PROPERTIES, MaledictItems.SOULWOOD_OBELISK));
 
     private MaledictBlocks() {
     }

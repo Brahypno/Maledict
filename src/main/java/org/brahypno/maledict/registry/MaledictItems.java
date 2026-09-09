@@ -20,15 +20,9 @@ public final class MaledictItems {
             new IncursusBladeItem(MaledictItemTiers.INCURSUS, new Item.Properties().rarity(Rarity.EPIC)));
 
     public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
-            new MultiBlockItem(
-                    MaledictBlocks.MNEMONIC_OBELISK.get(),
-                    new Item.Properties(),
-                    MnemonicObeliskBlockEntity.STRUCTURE));
+            new MultiBlockItem(MaledictBlocks.MNEMONIC_OBELISK.get(), new Item.Properties(), MnemonicObeliskBlockEntity.STRUCTURE));
     public static final RegistryObject<Item> SOULWOOD_OBELISK = ITEMS.register("soulwood_obelisk", () ->
-            new MultiBlockItem(
-                    MaledictBlocks.SOULWOOD_OBELISK.get(),
-                    new Item.Properties(),
-                    SoulwoodObeliskBlockEntity.STRUCTURE));
+            new MultiBlockItem(MaledictBlocks.SOULWOOD_OBELISK.get(), new Item.Properties(), SoulwoodObeliskBlockEntity.STRUCTURE));
 
     public static final RegistryObject<Item> SACRED_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.SACRED);
     public static final RegistryObject<Item> WICKED_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.WICKED);

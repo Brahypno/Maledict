@@ -4,6 +4,7 @@ import com.sammy.malum.client.screen.codex.BookEntry;
 import com.sammy.malum.client.screen.codex.BookWidgetStyle;
 import com.sammy.malum.client.screen.codex.PlacedBookEntryBuilder;
 import com.sammy.malum.client.screen.codex.pages.recipe.SpiritInfusionPage;
+import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextPage;
 import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextItemPage;
 import com.sammy.malum.client.screen.codex.pages.text.TextPage;
 import com.sammy.malum.client.screen.codex.screens.VoidProgressionScreen;
@@ -17,12 +18,39 @@ import org.brahypno.maledict.registry.MaledictItems;
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class MaledictCodexEntries {
     private static final String INCURSUS_BLADE_ENTRY = "void.maledict.incursus_blade";
+    private static final String OBELISKS_ENTRY = "void.maledict.obelisks";
+    private static final String SOULWOOD_OBELISK_PAGE = OBELISKS_ENTRY + ".soulwood_obelisk";
+    private static final String MNEMONIC_OBELISK_PAGE = OBELISKS_ENTRY + ".mnemonic_obelisk";
 
     @SubscribeEvent
     public static void setupEntries(SetupMalumCodexEntriesEvent event) {
-        boolean alreadyAdded = VoidProgressionScreen.VOID_ENTRIES.stream()
-                .anyMatch(entry -> INCURSUS_BLADE_ENTRY.equals(entry.identifier));
-        if (alreadyAdded) {
+        addObelisksEntry();
+        addIncursusBladeEntry();
+    }
+
+    private static void addObelisksEntry() {
+        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, OBELISKS_ENTRY)) {
+            return;
+        }
+
+        PlacedBookEntryBuilder builder = BookEntry.build(OBELISKS_ENTRY, -1, 8);
+        builder.configureWidget(widget -> widget
+                .setIcon(MaledictItems.SOULWOOD_OBELISK)
+                .setStyle(BookWidgetStyle.SOULWOOD));
+        builder.addPage(new HeadlineTextPage(
+                SOULWOOD_OBELISK_PAGE,
+                SOULWOOD_OBELISK_PAGE + ".1"));
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.SOULWOOD_OBELISK.get()));
+        builder.addPage(new HeadlineTextPage(
+                MNEMONIC_OBELISK_PAGE,
+                MNEMONIC_OBELISK_PAGE + ".1"));
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.MNEMONIC_OBELISK.get()));
+
+        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+    }
+
+    private static void addIncursusBladeEntry() {
+        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, INCURSUS_BLADE_ENTRY)) {
             return;
         }
 
@@ -39,6 +67,15 @@ public final class MaledictCodexEntries {
         builder.afterUmbralCrystal();
 
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+    }
+
+    private static boolean containsEntry(Iterable<? extends BookEntry> entries, String identifier) {
+        for (BookEntry entry : entries) {
+            if (identifier.equals(entry.identifier)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private MaledictCodexEntries() {

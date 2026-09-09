@@ -27,6 +27,11 @@ On Windows:
 
 Build artifacts are written to `build/libs`.
 
+## Development Notes
+
+- Chinese text for Malum codex body pages must contain a literal space after every 13 visible characters. Punctuation counts toward the 13-character limit; the inserted layout spaces do not.
+- Write the Chinese codex copy first, then derive the English localization from its meaning.
+
 ## License
 
 Maledict is licensed under the [GNU Lesser General Public License v3.0 only](LICENSE) (`LGPL-3.0-only`).
