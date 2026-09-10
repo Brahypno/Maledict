@@ -1,5 +1,6 @@
 package org.brahypno.maledict.common.combat;
 
+import com.sammy.malum.common.enchantment.scythe.AscensionEnchantment;
 import com.sammy.malum.common.item.ISpiritAffiliatedItem;
 import com.sammy.malum.common.item.curiosities.TemporarilyDisabledItem;
 import com.sammy.malum.common.item.curiosities.weapons.scythe.MalumScytheItem;
@@ -11,7 +12,6 @@ import com.sammy.malum.registry.common.SoundRegistry;
 import com.sammy.malum.registry.common.item.EnchantmentRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
-import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -24,7 +24,6 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.ForgeHooks;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.common.entity.IncursusScytheBoomerangEntity;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
@@ -80,24 +79,7 @@ public final class IncursusBladeEnchantments {
         boolean enhanced = !MalumScytheItem.canSweep(player);
         player.resetFallDistance();
         if (level.isClientSide()){
-            Vec3 motion = player.getDeltaMovement();
-            double verticalMotion = player.getJumpPower() * 2.0f;
-            if (level.getRandom().nextBoolean()){
-                verticalMotion = -verticalMotion;
-            }
-            player.setDeltaMovement(motion.x, verticalMotion, motion.z);
-            if (player.isSprinting()){
-                float rotation = player.getYRot() * Mth.DEG_TO_RAD;
-                float x = -Mth.sin(rotation);
-                float z = Mth.cos(rotation);
-                motion = player.getDeltaMovement();
-                motion = enhanced
-                         ? motion.subtract(x * 0.6f, 0.0, z * 0.6f)
-                         : motion.add(x * 0.75f, 0.0, z * 0.75f);
-                player.setDeltaMovement(motion);
-            }
-            player.hasImpulse = true;
-            ForgeHooks.onLivingJump(player);
+            AscensionEnchantment.triggerAscension(level, player, hand, stack);
         }else {
             performAscensionAttack(level, player, stack, enhanced);
         }
