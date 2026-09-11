@@ -121,10 +121,23 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
         return 100;
     }
 
+    /** Called for a valid server-side damage attempt before immunity/cooldown checks. */
+    protected void onIncomingAttack(DamageSource source, float amount) {
+    }
+
+    /** Phase implementations can reject an otherwise valid hit without losing attacker information. */
+    protected boolean isDamageImmune(DamageSource source) {
+        return false;
+    }
+
     @Override
     public final boolean hurt(DamageSource source, float amount) {
         if (level().isClientSide || !vitality.joined || vitality.receiving
                 || Float.isNaN(amount) || amount <= 0.0F) {
+            return false;
+        }
+        onIncomingAttack(source, amount);
+        if (isDamageImmune(source)) {
             return false;
         }
         VicissitudeVitality state = verifiedVitality();
@@ -299,6 +312,17 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
     public final void setUUID(UUID identity) {
         // Allow normal construction/loading, then bind this instance to its original record.
         super.setUUID(vitality != null && vitality.joined ? vitality.identity : identity);
+    }
+
+    /** Vicissitude bosses must remain functional even if NoAI is supplied through commands or NBT. */
+    @Override
+    public final void setNoAi(boolean noAi) {
+        super.setNoAi(false);
+    }
+
+    @Override
+    public final boolean isNoAi() {
+        return false;
     }
 
     @Override
