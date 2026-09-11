@@ -4,6 +4,7 @@ import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -18,22 +19,28 @@ public final class MaledictItemProperties {
     @SuppressWarnings("removal")
     public static void registerItemProperties(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            ItemProperties.register(MaledictItems.REMEMBRANCE_BOW.get(), new ResourceLocation("pull"),
-                    (stack, level, entity, seed) -> {
-                        if (entity == null || entity.getUseItem() != stack
-                                || !(stack.getItem() instanceof RemembranceBowItem bow)) {
-                            return 0.0F;
-                        }
-                        int usedTicks = stack.getUseDuration() - entity.getUseItemRemainingTicks();
-                        return Mth.clamp(
-                                usedTicks * bow.getDrawSpeedMultiplier(stack) / BowItem.MAX_DRAW_DURATION,
-                                0.0F, 1.0F);
-                    });
-            ItemProperties.register(MaledictItems.REMEMBRANCE_BOW.get(), new ResourceLocation("pulling"),
-                    (stack, level, entity, seed) -> entity != null
-                            && entity.isUsingItem()
-                            && entity.getUseItem() == stack ? 1.0F : 0.0F);
+            registerBowProperties(MaledictItems.REMEMBRANCE_BOW.get());
+            registerBowProperties(MaledictItems.ELEGY_BOW.get());
         });
+    }
+
+    @SuppressWarnings("removal")
+    private static void registerBowProperties(Item item) {
+        ItemProperties.register(item, new ResourceLocation("pull"),
+                (stack, level, entity, seed) -> {
+                    if (entity == null || entity.getUseItem() != stack
+                            || !(stack.getItem() instanceof RemembranceBowItem bow)) {
+                        return 0.0F;
+                    }
+                    int usedTicks = stack.getUseDuration() - entity.getUseItemRemainingTicks();
+                    return Mth.clamp(
+                            usedTicks * bow.getDrawSpeedMultiplier(stack) / BowItem.MAX_DRAW_DURATION,
+                            0.0F, 1.0F);
+                });
+        ItemProperties.register(item, new ResourceLocation("pulling"),
+                (stack, level, entity, seed) -> entity != null
+                        && entity.isUsingItem()
+                        && entity.getUseItem() == stack ? 1.0F : 0.0F);
     }
 
     private MaledictItemProperties() {

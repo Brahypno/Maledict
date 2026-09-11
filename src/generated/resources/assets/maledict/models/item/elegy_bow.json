@@ -1,0 +1,46 @@
+{
+  "parent": "minecraft:item/bow",
+  "base": {
+    "parent": "minecraft:item/bow",
+    "textures": {
+      "layer0": "maledict:item/elegy_bow_huge"
+    }
+  },
+  "loader": "forge:separate_transforms",
+  "overrides": [
+    {
+      "model": "maledict:item/elegy_bow_pulling_0",
+      "predicate": {
+        "minecraft:pulling": 1.0
+      }
+    },
+    {
+      "model": "maledict:item/elegy_bow_pulling_1",
+      "predicate": {
+        "minecraft:pull": 0.65,
+        "minecraft:pulling": 1.0
+      }
+    },
+    {
+      "model": "maledict:item/elegy_bow_pulling_2",
+      "predicate": {
+        "minecraft:pull": 0.9,
+        "minecraft:pulling": 1.0
+      }
+    }
+  ],
+  "perspectives": {
+    "fixed": {
+      "parent": "minecraft:item/bow",
+      "textures": {
+        "layer0": "maledict:item/elegy_bow"
+      }
+    },
+    "gui": {
+      "parent": "minecraft:item/bow",
+      "textures": {
+        "layer0": "maledict:item/elegy_bow"
+      }
+    }
+  }
+}

@@ -86,12 +86,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Override
     protected boolean isDamageImmune(DamageSource source) {
-        return isPhaseOne();
+        return isPhaseOne() || source.getEntity() == null;
     }
 
     @Override
     public boolean isInvulnerableTo(DamageSource source) {
-        return isPhaseOne() || super.isInvulnerableTo(source);
+        return isDamageImmune(source) || super.isInvulnerableTo(source);
     }
 
     @Override

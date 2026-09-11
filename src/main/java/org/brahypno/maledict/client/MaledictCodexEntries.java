@@ -19,6 +19,9 @@ import org.brahypno.maledict.registry.MaledictItems;
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class MaledictCodexEntries {
     private static final String REMEMBRANCE_BOW_ENTRY = "maledict.remembrance_bow";
+    private static final String ELEGY_BOW_ENTRY = "void.maledict.elegy_bow";
+    private static final int REMEMBRANCE_BOW_X = 2;
+    private static final int REMEMBRANCE_BOW_Y = 13;
     private static final String INCURSUS_BLADE_ENTRY = "void.maledict.incursus_blade";
     private static final String OBELISKS_ENTRY = "void.maledict.obelisks";
     private static final String SOULWOOD_OBELISK_PAGE = OBELISKS_ENTRY + ".soulwood_obelisk";
@@ -27,6 +30,7 @@ public final class MaledictCodexEntries {
     @SubscribeEvent
     public static void setupEntries(SetupMalumCodexEntriesEvent event) {
         addRemembranceBowEntry();
+        addElegyBowEntry();
         addObelisksEntry();
         addIncursusBladeEntry();
     }
@@ -36,7 +40,8 @@ public final class MaledictCodexEntries {
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(REMEMBRANCE_BOW_ENTRY, 2, 13);
+        PlacedBookEntryBuilder builder = BookEntry.build(
+                REMEMBRANCE_BOW_ENTRY, REMEMBRANCE_BOW_X, REMEMBRANCE_BOW_Y);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.REMEMBRANCE_BOW)
                 .setStyle(BookWidgetStyle.SOULWOOD));
@@ -47,6 +52,26 @@ public final class MaledictCodexEntries {
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.REMEMBRANCE_BOW.get()));
 
         ArcanaProgressionScreen.ENTRIES.add(builder.build());
+    }
+
+    private static void addElegyBowEntry() {
+        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, ELEGY_BOW_ENTRY)) {
+            return;
+        }
+
+        PlacedBookEntryBuilder builder = BookEntry.build(
+                ELEGY_BOW_ENTRY, REMEMBRANCE_BOW_X, REMEMBRANCE_BOW_Y);
+        builder.configureWidget(widget -> widget
+                .setIcon(MaledictItems.ELEGY_BOW)
+                .setStyle(BookWidgetStyle.DARK_SOULWOOD));
+        builder.addPage(new HeadlineTextItemPage(
+                ELEGY_BOW_ENTRY,
+                ELEGY_BOW_ENTRY + ".1",
+                MaledictItems.ELEGY_BOW.get()));
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.ELEGY_BOW.get()));
+        builder.afterUmbralCrystal();
+
+        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
     }
 
     private static void addObelisksEntry() {

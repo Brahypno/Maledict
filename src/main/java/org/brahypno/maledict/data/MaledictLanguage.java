@@ -22,11 +22,17 @@ public final class MaledictLanguage extends LanguageProvider {
             add("enchantment.maledict.reminiscence", "追忆");
             addItem(MaledictItems.INCURSUS_BLADE, "神侵恶刃");
             addItem(MaledictItems.REMEMBRANCE_BOW, "思念弓");
+            addItem(MaledictItems.ELEGY_BOW, "哀歌弓");
             add("malum.gui.book.entry.maledict.remembrance_bow", "思念弓");
             add("malum.gui.book.entry.maledict.remembrance_bow.description", "穿越阻隔的思念");
             add("malum.gui.book.entry.page.headline.maledict.remembrance_bow", "思念弓");
             add("malum.gui.book.entry.page.text.maledict.remembrance_bow.1",
                 "若能汇集末影人的魔法并以星 灵织物承载，就能使灵魂木产 生奇妙的性质。拉动这种材质 的弓只需要一般弓一半的时间 ，射出的箭矢不仅更快，还可 以有限度的穿过方块。");
+            add("malum.gui.book.entry." + ELEGY_BOW_ENTRY, "哀歌弓");
+            add("malum.gui.book.entry." + ELEGY_BOW_ENTRY + ".description", "停不下的思念");
+            add("malum.gui.book.entry.page.headline." + ELEGY_BOW_ENTRY, "哀歌弓");
+            add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".1",
+                "停不下的思念迫使我倾注在制 作上。于是，思念弓具有了满 蓄力自动发射的功能，我将其 称为哀歌之弓");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "回忆方尖碑");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "灵魂木方尖碑");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "神圣精魂箭");
@@ -72,11 +78,17 @@ public final class MaledictLanguage extends LanguageProvider {
             add("enchantment.maledict.reminiscence", "Reminiscence");
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
             addItem(MaledictItems.REMEMBRANCE_BOW, "Remembrance Bow");
+            addItem(MaledictItems.ELEGY_BOW, "Elegy Bow");
             add("malum.gui.book.entry.maledict.remembrance_bow", "Remembrance Bow");
             add("malum.gui.book.entry.maledict.remembrance_bow.description", "Longing Beyond Barriers");
             add("malum.gui.book.entry.page.headline.maledict.remembrance_bow", "Remembrance Bow");
             add("malum.gui.book.entry.page.text.maledict.remembrance_bow.1",
                 "If the magic of endermen could be gathered and borne by astral weave, it might lend soulwood wondrous properties. A bow made from this material takes only half as long to draw as an ordinary bow; its arrows fly faster and can pass through blocks to a limited extent.");
+            add("malum.gui.book.entry." + ELEGY_BOW_ENTRY, "Elegy Bow");
+            add("malum.gui.book.entry." + ELEGY_BOW_ENTRY + ".description", "Remembrance Without Respite");
+            add("malum.gui.book.entry.page.headline." + ELEGY_BOW_ENTRY, "Elegy Bow");
+            add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".1",
+                "Longing that would not cease compelled me to pour myself into the work. Thus, the Remembrance Bow gained the ability to fire automatically at full draw. I call it the Elegy Bow.");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "Mnemonic Obelisk");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "Soulwood Obelisk");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "Sacred Spirit Arrow");
@@ -121,6 +133,7 @@ public final class MaledictLanguage extends LanguageProvider {
     }
 
     private static final String OBELISKS_ENTRY = "void.maledict.obelisks";
+    private static final String ELEGY_BOW_ENTRY = "void.maledict.elegy_bow";
     private static final String SOULWOOD_OBELISK_PAGE = OBELISKS_ENTRY + ".soulwood_obelisk";
     private static final String MNEMONIC_OBELISK_PAGE = OBELISKS_ENTRY + ".mnemonic_obelisk";
 }

@@ -17,7 +17,8 @@ public final class RemembranceBowFovHandler {
     public static void adjustFovWhileDrawing(ComputeFovModifierEvent event) {
         Player player = event.getPlayer();
         ItemStack stack = player.getUseItem();
-        if (!player.isUsingItem() || !(stack.getItem() instanceof RemembranceBowItem bow)) {
+        if (!player.isUsingItem() || !(stack.getItem() instanceof RemembranceBowItem bow)
+                || bow.shouldAutoReleaseAtFullCharge()) {
             return;
         }
 

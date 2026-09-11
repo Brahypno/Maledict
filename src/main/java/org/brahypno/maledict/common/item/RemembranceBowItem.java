@@ -35,6 +35,10 @@ public final class RemembranceBowItem extends BowItem {
         return DRAW_SPEED_MULTIPLIER;
     }
 
+    public boolean shouldAutoReleaseAtFullCharge() {
+        return autoReleaseAtFullCharge;
+    }
+
     @Override
     public void onUseTick(Level level, LivingEntity livingEntity, ItemStack bow, int remainingUseDuration) {
         if (!autoReleaseAtFullCharge || !(livingEntity instanceof Player player)) {

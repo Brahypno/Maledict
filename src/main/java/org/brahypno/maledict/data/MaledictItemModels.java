@@ -26,17 +26,8 @@ public final class MaledictItemModels extends ItemModelProvider {
                     .texture("layer0", mcLoc("item/arrow"));
         }
 
-        ItemModelBuilder pulling0 = withExistingParent("remembrance_bow_pulling_0", mcLoc("item/bow"))
-                .texture("layer0", modLoc("item/remembrance_bow_pulling_0"));
-        ItemModelBuilder pulling1 = withExistingParent("remembrance_bow_pulling_1", mcLoc("item/bow"))
-                .texture("layer0", modLoc("item/remembrance_bow_pulling_1"));
-        ItemModelBuilder pulling2 = withExistingParent("remembrance_bow_pulling_2", mcLoc("item/bow"))
-                .texture("layer0", modLoc("item/remembrance_bow_pulling_2"));
-        withExistingParent("remembrance_bow", mcLoc("item/bow"))
-                .texture("layer0", modLoc("item/remembrance_bow"))
-                .override().predicate(mcLoc("pulling"), 1.0F).model(pulling0).end()
-                .override().predicate(mcLoc("pulling"), 1.0F).predicate(mcLoc("pull"), 0.65F).model(pulling1).end()
-                .override().predicate(mcLoc("pulling"), 1.0F).predicate(mcLoc("pull"), 0.9F).model(pulling2).end();
+        registerBowModel("remembrance_bow");
+        registerSeparateBowModel("elegy_bow");
 
         ItemModelBuilder handheld = getBuilder("incursus_blade_handheld")
                 .parent(new ModelFile.UncheckedModelFile(
@@ -60,5 +51,42 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .parent(new ModelFile.UncheckedModelFile(
                         ResourceLocation.fromNamespaceAndPath("malum", "item/runewood_obelisk")))
                 .texture("0", modLoc("block/runewood_obelisk"));
+    }
+
+    private void registerBowModel(String name) {
+        ItemModelBuilder pulling0 = withExistingParent(name + "_pulling_0", mcLoc("item/bow"))
+                .texture("layer0", modLoc("item/" + name + "_pulling_0"));
+        ItemModelBuilder pulling1 = withExistingParent(name + "_pulling_1", mcLoc("item/bow"))
+                .texture("layer0", modLoc("item/" + name + "_pulling_1"));
+        ItemModelBuilder pulling2 = withExistingParent(name + "_pulling_2", mcLoc("item/bow"))
+                .texture("layer0", modLoc("item/" + name + "_pulling_2"));
+        withExistingParent(name, mcLoc("item/bow"))
+                .texture("layer0", modLoc("item/" + name))
+                .override().predicate(mcLoc("pulling"), 1.0F).model(pulling0).end()
+                .override().predicate(mcLoc("pulling"), 1.0F).predicate(mcLoc("pull"), 0.65F).model(pulling1).end()
+                .override().predicate(mcLoc("pulling"), 1.0F).predicate(mcLoc("pull"), 0.9F).model(pulling2).end();
+    }
+
+    private void registerSeparateBowModel(String name) {
+        ItemModelBuilder pulling0 = separateBowModel(name + "_pulling_0");
+        ItemModelBuilder pulling1 = separateBowModel(name + "_pulling_1");
+        ItemModelBuilder pulling2 = separateBowModel(name + "_pulling_2");
+        separateBowModel(name)
+                .override().predicate(mcLoc("pulling"), 1.0F).model(pulling0).end()
+                .override().predicate(mcLoc("pulling"), 1.0F).predicate(mcLoc("pull"), 0.65F).model(pulling1).end()
+                .override().predicate(mcLoc("pulling"), 1.0F).predicate(mcLoc("pull"), 0.9F).model(pulling2).end();
+    }
+
+    private ItemModelBuilder separateBowModel(String name) {
+        ItemModelBuilder inventory = withExistingParent(name + "_inventory", mcLoc("item/bow"))
+                .texture("layer0", modLoc("item/" + name));
+        ItemModelBuilder handheld = withExistingParent(name + "_handheld", mcLoc("item/bow"))
+                .texture("layer0", modLoc("item/" + name + "_huge"));
+        ItemModelBuilder model = withExistingParent(name, mcLoc("item/bow"));
+        model.customLoader(SeparateTransformsModelBuilder::begin)
+                .base(handheld)
+                .perspective(ItemDisplayContext.GUI, inventory)
+                .perspective(ItemDisplayContext.FIXED, inventory);
+        return model;
     }
 }

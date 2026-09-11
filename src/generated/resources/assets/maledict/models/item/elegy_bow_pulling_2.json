@@ -1,0 +1,24 @@
+{
+  "parent": "minecraft:item/bow",
+  "base": {
+    "parent": "minecraft:item/bow",
+    "textures": {
+      "layer0": "maledict:item/elegy_bow_pulling_2_huge"
+    }
+  },
+  "loader": "forge:separate_transforms",
+  "perspectives": {
+    "fixed": {
+      "parent": "minecraft:item/bow",
+      "textures": {
+        "layer0": "maledict:item/elegy_bow_pulling_2"
+      }
+    },
+    "gui": {
+      "parent": "minecraft:item/bow",
+      "textures": {
+        "layer0": "maledict:item/elegy_bow_pulling_2"
+      }
+    }
+  }
+}

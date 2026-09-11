@@ -253,6 +253,12 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
 
     @Override
     public void tick() {
+        if (isPassenger()) {
+            stopRiding();
+        }
+        if (isVehicle()) {
+            ejectPassengers();
+        }
         if (!level().isClientSide && vitality.joined) {
             if (getHealth() > 0.0F) {
                 dead = false;
@@ -322,6 +328,23 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
 
     @Override
     public final boolean isNoAi() {
+        return false;
+    }
+
+    /** Boss movement cannot be disabled by boats, minecarts, mounts or forced passengers. */
+    @Override
+    public final boolean startRiding(net.minecraft.world.entity.Entity vehicle, boolean force) {
+        return false;
+    }
+
+    @Override
+    protected final boolean canAddPassenger(net.minecraft.world.entity.Entity passenger) {
+        return false;
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    protected final boolean couldAcceptPassenger() {
         return false;
     }
 
