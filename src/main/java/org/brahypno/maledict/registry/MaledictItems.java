@@ -20,7 +20,7 @@ public final class MaledictItems {
     public static final RegistryObject<Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
             new IncursusBladeItem(MaledictItemTiers.INCURSUS, new Item.Properties().rarity(Rarity.EPIC)));
     public static final RegistryObject<Item> REMEMBRANCE_BOW = ITEMS.register("remembrance_bow", () ->
-            new RemembranceBowItem(new Item.Properties().durability(384).rarity(Rarity.RARE)));
+            new RemembranceBowItem(new Item.Properties().durability(384).rarity(Rarity.RARE), false));
 
     public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.MNEMONIC_OBELISK.get(), new Item.Properties(), MnemonicObeliskBlockEntity.STRUCTURE));

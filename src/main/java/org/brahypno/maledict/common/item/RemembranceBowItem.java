@@ -3,6 +3,7 @@ package org.brahypno.maledict.common.item;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
@@ -19,13 +20,40 @@ import org.brahypno.maledict.registry.MaledictEnchantments;
 public final class RemembranceBowItem extends BowItem {
     private static final float DRAW_SPEED_MULTIPLIER = 2.0F;
     private static final float ARROW_SPEED_MULTIPLIER = 1.2F;
+    private final boolean autoReleaseAtFullCharge;
 
     public RemembranceBowItem(Properties properties) {
+        this(properties, false);
+    }
+
+    public RemembranceBowItem(Properties properties, boolean autoReleaseAtFullCharge) {
         super(properties);
+        this.autoReleaseAtFullCharge = autoReleaseAtFullCharge;
     }
 
     public float getDrawSpeedMultiplier(ItemStack stack) {
         return DRAW_SPEED_MULTIPLIER;
+    }
+
+    @Override
+    public void onUseTick(Level level, LivingEntity livingEntity, ItemStack bow, int remainingUseDuration) {
+        if (!autoReleaseAtFullCharge || !(livingEntity instanceof Player player)) {
+            return;
+        }
+
+        int charge = getUseDuration(bow) - remainingUseDuration;
+        float power = getPowerForTime(Math.round(charge * getDrawSpeedMultiplier(bow)));
+        if (power < 1.0F) {
+            return;
+        }
+
+        InteractionHand hand = player.getUsedItemHand();
+        player.releaseUsingItem();
+
+        ItemStack heldItem = player.getItemInHand(hand);
+        if (!heldItem.isEmpty() && heldItem.getItem() == this && hasAmmunition(player, heldItem)) {
+            player.startUsingItem(hand);
+        }
     }
 
     @Override
@@ -34,8 +62,7 @@ public final class RemembranceBowItem extends BowItem {
             return;
         }
 
-        boolean hasInfiniteArrows = player.getAbilities().instabuild
-                                    || EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, bow) > 0;
+        boolean hasInfiniteArrows = hasInfiniteArrows(player, bow);
         ItemStack ammunition = player.getProjectile(bow);
         int charge = getUseDuration(bow) - timeLeft;
         charge = net.minecraftforge.event.ForgeEventFactory.onArrowLoose(bow, level, player, charge, !ammunition.isEmpty() || hasInfiniteArrows);
@@ -100,6 +127,15 @@ public final class RemembranceBowItem extends BowItem {
             }
         }
         player.awardStat(Stats.ITEM_USED.get(this));
+    }
+
+    private static boolean hasAmmunition(Player player, ItemStack bow) {
+        return hasInfiniteArrows(player, bow) || !player.getProjectile(bow).isEmpty();
+    }
+
+    private static boolean hasInfiniteArrows(Player player, ItemStack bow) {
+        return player.getAbilities().instabuild
+               || EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, bow) > 0;
     }
 
     public int getDefaultProjectileRange() {return 20;}
