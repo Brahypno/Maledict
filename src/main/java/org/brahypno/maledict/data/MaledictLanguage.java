@@ -46,7 +46,10 @@ public final class MaledictLanguage extends LanguageProvider {
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
             add("entity.maledict.first_vicissitude", "无常");
             add("message.maledict.first_vicissitude.attack", "命运总是会将人逼上悬崖，犹如恶客造访");
+            add("message.maledict.first_vicissitude.phase_two",
+                    "所谓无常，就是圣人行走在正道上，依然会遇见的命运");
             add("tooltip.maledict.incursus_blade.description", "吞噬精魂成长，向周身挥出镰刃的魔法镰刀。");
+            add("tooltip.maledict.incursus_blade.medium_unlock_hint", "精魂之力到达神圣之数会解锁更本征的力量");
             add("tooltip.maledict.incursus_blade.hold_shift", "按住 Shift 查看精魂详情");
             add("tooltip.maledict.incursus_blade.infusion", "在背包中拿精魂右键此物品以永久注入：");
             add("tooltip.maledict.incursus_blade.spirit.earthen", "大地 %s（%s/%s）：攻击力");
@@ -103,7 +106,10 @@ public final class MaledictLanguage extends LanguageProvider {
             add("entity.maledict.first_vicissitude", "Vicissitude");
             add("message.maledict.first_vicissitude.attack",
                     "Fate always drives people to the edge of a cliff, like an unwelcome guest calling.");
+            add("message.maledict.first_vicissitude.phase_two",
+                    "Vicissitude is the fate even sages meet while walking the righteous path.");
             add("tooltip.maledict.incursus_blade.description", "A magic scythe that devours spirits and strikes all around its wielder.");
+            add("tooltip.maledict.incursus_blade.medium_unlock_hint", "When every spirit reaches the sacred number, a more intrinsic power will awaken.");
             add("tooltip.maledict.incursus_blade.hold_shift", "Hold Shift for spirit details");
             add("tooltip.maledict.incursus_blade.infusion", "Right-click this item with spirits in the inventory to infuse them permanently:");
             add("tooltip.maledict.incursus_blade.spirit.earthen", "Earthen %s (%s/%s): Attack damage");

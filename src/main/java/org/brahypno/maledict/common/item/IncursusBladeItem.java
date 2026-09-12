@@ -15,6 +15,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -45,6 +46,8 @@ import java.util.function.Consumer;
  * A Malum magic scythe whose per-stack combat values are stored in NBT.
  */
 public final class IncursusBladeItem extends MagicScytheItem {
+    public static final double MEDIUM_DAMAGE_LEVEL = 7.0;
+    public static final double FINAL_DAMAGE_LEVEL = 11.0;
     public static final String STATS_TAG = "IncursusBladeStats";
     public static final String UPGRADE_PROGRESS_TAG = "IncursusBladeUpgradeProgress";
     public static final String ATTACK_DAMAGE = "attack_damage";
@@ -182,7 +185,8 @@ public final class IncursusBladeItem extends MagicScytheItem {
         if (event.getSource().is(DamageTypeRegistry.SCYTHE_MELEE)){
             double damage = getStat(stack, POWDER_SNOW_DAMAGE);
             if (damage > 0.0){
-                DamageProbe.mediumDamageMethod(
+                applyTieredDamage(
+                        stack,
                         target,
                         DamageTypeHelper.create(attacker.level(), DamageTypes.FREEZE, attacker),
                         (float) damage);
@@ -246,6 +250,31 @@ public final class IncursusBladeItem extends MagicScytheItem {
             }
         }
         throw new IllegalArgumentException("Unknown Incursus Blade stat: " + key);
+    }
+
+    public static boolean hasAllStatsAtLeast(ItemStack stack, double level) {
+        for (String key : STAT_KEYS) {
+            if (getStat(stack, key) < level){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static void applyTieredDamage(
+            ItemStack stack,
+            Entity target,
+            DamageSource source,
+            float damage) {
+        if (hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL)){
+            DamageProbe.finalDamageMethod(target, source, damage);
+        }
+        else if (hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL)){
+            DamageProbe.mediumDamageMethod(target, source, damage);
+        }
+        else {
+            DamageProbe.lighterDamageMethod(target, source, damage);
+        }
     }
 
     public static void setStat(ItemStack stack, String key, double value) {

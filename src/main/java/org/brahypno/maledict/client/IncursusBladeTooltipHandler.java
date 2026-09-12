@@ -53,6 +53,11 @@ public final class IncursusBladeTooltipHandler {
         int index = Math.min(1, tooltip.size());
         tooltip.add(index++, Component.translatable("tooltip.maledict.incursus_blade.description")
                 .withStyle(ChatFormatting.GRAY));
+        if (!IncursusBladeItem.hasAllStatsAtLeast(
+                event.getItemStack(), IncursusBladeItem.MEDIUM_DAMAGE_LEVEL)) {
+            tooltip.add(index++, Component.translatable("tooltip.maledict.incursus_blade.medium_unlock_hint")
+                    .withStyle(ChatFormatting.DARK_PURPLE));
+        }
         if (!Screen.hasShiftDown()) {
             tooltip.add(index, Component.translatable("tooltip.maledict.incursus_blade.hold_shift")
                     .withStyle(ChatFormatting.DARK_GRAY));

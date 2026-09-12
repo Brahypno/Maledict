@@ -21,7 +21,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
-import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
@@ -66,7 +65,8 @@ public final class IncursusBladeAttack {
         for (Entity target : targets) {
             float damage = calculateDamage(player, weapon, target, attackStrength, sweepingLevel);
             if (damage > 0.0f){
-                DamageProbe.mediumDamageMethod(
+                IncursusBladeItem.applyTieredDamage(
+                        weapon,
                         target,
                         DamageTypeHelper.create(player.level(), DamageTypeRegistry.SCYTHE_MELEE, player),
                         damage);
