@@ -29,6 +29,7 @@ Build artifacts are written to `build/libs`.
 
 ## Development Notes
 
+- 禁止直接编辑 `src/generated`。只能修改数据生成器源码，并通过 `runData` 更新生成内容。
 - Chinese text for Malum codex body pages must contain a literal space after every 13 visible characters. Punctuation counts toward the 13-character limit; the inserted layout spaces do not.
 - Write the Chinese codex copy first, then derive the English localization from its meaning.
 
