@@ -125,6 +125,10 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
     protected void onIncomingAttack(DamageSource source, float amount) {
     }
 
+    /** Called after an incoming hit has passed immunity/cooldown checks and was accepted. */
+    protected void onDamageAccepted(DamageSource source, float amount) {
+    }
+
     /** Phase implementations can reject an otherwise valid hit without losing attacker information. */
     protected boolean isDamageImmune(DamageSource source) {
         return false;
@@ -157,14 +161,20 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
         }
         vitality.receiving = true;
         vitality.budget = Math.min(amount, limit);
+        boolean accepted;
+        float acceptedAmount = vitality.budget;
         try {
-            return super.hurt(source, vitality.budget);
+            accepted = super.hurt(source, vitality.budget);
         } finally {
             vitality.receiving = false;
             vitality.writing = false;
             vitality.budget = 0.0F;
             publishVitality();
         }
+        if (accepted) {
+            onDamageAccepted(source, acceptedAmount);
+        }
+        return accepted;
     }
 
     @Override
