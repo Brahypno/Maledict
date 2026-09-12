@@ -1,7 +1,5 @@
 # Repository Instructions
 
-## Mandatory startup
-
 ## Generated resources
 
 - Never edit any file under `src/generated` directly, including cleanup, formatting, restoration, or one-line
