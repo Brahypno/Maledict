@@ -1,0 +1,27 @@
+{
+  "type": "malum:spirit_repair",
+  "durabilityPercentage": 1.0,
+  "inputs": [
+    "maledict:remembrance_bow"
+  ],
+  "itemIdRegex": "",
+  "modIdRegex": "",
+  "repairMaterial": {
+    "count": 1,
+    "item": "malum:soulwood_log"
+  },
+  "spirits": [
+    {
+      "type": "aerial",
+      "count": 11
+    },
+    {
+      "type": "sacred",
+      "count": 11
+    },
+    {
+      "type": "aqueous",
+      "count": 11
+    }
+  ]
+}

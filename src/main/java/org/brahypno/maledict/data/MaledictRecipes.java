@@ -89,6 +89,13 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.AQUEOUS_SPIRIT, 11)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/remembrance_bow"));
 
+        new SpiritRepairRecipeBuilder(1.0f, Ingredient.of(ItemRegistry.SOULWOOD_LOG.get()), 1)
+                .addItem(MaledictItems.REMEMBRANCE_BOW.get())
+                .addSpirit(SpiritTypeRegistry.AERIAL_SPIRIT, 11)
+                .addSpirit(SpiritTypeRegistry.SACRED_SPIRIT, 11)
+                .addSpirit(SpiritTypeRegistry.AQUEOUS_SPIRIT, 11)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/remembrance_bow"));
+
         new SpiritInfusionRecipeBuilder(MaledictItems.REMEMBRANCE_BOW.get(), 1, MaledictItems.ELEGY_BOW.get(), 1)
                 .addExtraItem(ItemRegistry.NULL_SLATE.get(), 11)
                 .addExtraItem(ItemRegistry.VOID_SALTS.get(), 11)
@@ -97,5 +104,12 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 11)
                 .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 11)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/elegy_bow"));
+
+        new SpiritRepairRecipeBuilder(1.0f, Ingredient.of(ItemRegistry.NULL_SLATE.get()), 1)
+                .addItem(MaledictItems.ELEGY_BOW.get())
+                .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 11)
+                .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 11)
+                .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 11)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/elegy_bow"));
     }
 }

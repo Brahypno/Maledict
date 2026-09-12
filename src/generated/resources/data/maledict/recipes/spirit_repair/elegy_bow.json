@@ -1,0 +1,27 @@
+{
+  "type": "malum:spirit_repair",
+  "durabilityPercentage": 1.0,
+  "inputs": [
+    "maledict:elegy_bow"
+  ],
+  "itemIdRegex": "",
+  "modIdRegex": "",
+  "repairMaterial": {
+    "count": 1,
+    "item": "malum:null_slate"
+  },
+  "spirits": [
+    {
+      "type": "wicked",
+      "count": 11
+    },
+    {
+      "type": "eldritch",
+      "count": 11
+    },
+    {
+      "type": "infernal",
+      "count": 11
+    }
+  ]
+}
