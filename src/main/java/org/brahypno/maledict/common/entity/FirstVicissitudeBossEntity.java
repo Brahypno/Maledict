@@ -91,6 +91,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
     private final Set<UUID> phaseOneTargets = new LinkedHashSet<>();
     private final Set<UUID> phaseTwoPlayers = new LinkedHashSet<>();
+    private final Set<UUID> pendingDeathCurioReturns = new LinkedHashSet<>();
     private final Map<UUID, Integer> targetPlayerDeaths = new HashMap<>();
     private final Map<UUID, Integer> announcedPlayerDeaths = new HashMap<>();
     private final Map<UUID, Integer> phaseTwoPlayerDeaths = new HashMap<>();
@@ -137,6 +138,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     @Override
+    protected float getVitalityDamageLimit() {
+        float ratio = switch (bossDifficulty) {
+            case SIMPLE -> 0.20F;
+            case DIFFICULT -> 0.05F;
+            case COMPLETE, EXTREME -> 0.01F;
+        };
+        return getVitalityMaximum() * ratio;
+    }
+
+    @Override
     protected boolean isDamageImmune(DamageSource source) {
         return isPhaseOne() || source.getEntity() == null;
     }
@@ -154,11 +165,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Override
     protected void onIncomingAttack(DamageSource source, float amount) {
+        LivingEntity attacker = resolveLivingAttacker(source);
         if (!isPhaseOne()) {
+            if (phaseTwoStarted && attacker instanceof ServerPlayer player) {
+                registerPhaseTwoAttacker(player);
+            }
             return;
         }
-        LivingEntity attacker = resolveLivingAttacker(source);
-        if (attacker != null && attacker != this && attacker.isAlive() && attacker.hasLineOfSight(this)) {
+        if (attacker != null && attacker != this && attacker.isAlive()
+            && !isIgnoredPlayer(attacker) && attacker.hasLineOfSight(this)) {
             phaseOneTargets.add(attacker.getUUID());
             if (attacker instanceof ServerPlayer player) {
                 targetPlayerDeaths.put(player.getUUID(), getDeathCount(player));
@@ -167,6 +182,29 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             if (!isValidPhaseOneTarget(getTarget())) {
                 setTarget(attacker);
             }
+        }
+    }
+
+    private void registerPhaseTwoAttacker(ServerPlayer player) {
+        if (!player.isAlive() || player.level() != level() || isIgnoredPlayer(player)) {
+            return;
+        }
+        UUID identity = player.getUUID();
+        int deaths = getDeathCount(player);
+        Integer recordedDeaths = phaseTwoPlayerDeaths.get(identity);
+        if (pendingDeathCurioReturns.contains(identity)
+            || recordedDeaths != null && recordedDeaths != deaths) {
+            while (returnOneCurioTo(player)) {
+                // A rejoining player first receives everything retained from the previous life.
+            }
+            pendingDeathCurioReturns.remove(identity);
+        }
+        phaseTwoPlayers.add(identity);
+        phaseTwoPlayerDeaths.put(identity, deaths);
+        LivingEntity target = getTarget();
+        if (target == null || !target.isAlive() || target.level() != level()
+            || isIgnoredPlayer(target)) {
+            setTarget(player);
         }
     }
 
@@ -189,6 +227,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     public void tick() {
         setNoGravity(true);
+        if (!level().isClientSide && phaseTwoStarted) {
+            handlePhaseTwoPlayerDeaths();
+        }
         super.tick();
         if (level().isClientSide) {
             return;
@@ -204,7 +245,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             beginPhaseTwo();
         }
         if (isAlive() && phaseTwoStarted) {
-            returnCuriosAfterPlayerDeaths();
             destroyBlockingEntities();
             if ((horizontalCollision || verticalCollision) && tickCount % BLOCK_BREAK_INTERVAL == 0) {
                 destroyBlockingBlocks();
@@ -238,6 +278,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         tag.put("PhaseOneTargets", saveUuidSet(phaseOneTargets));
         tag.put("PhaseTwoPlayers", saveUuidSet(phaseTwoPlayers));
+        tag.put("PendingDeathCurioReturns", saveUuidSet(pendingDeathCurioReturns));
         tag.put("PhaseOneTargetDeaths", savePlayerDeathMap(targetPlayerDeaths));
         tag.put("PhaseOneAnnouncements", savePlayerDeathMap(announcedPlayerDeaths));
         tag.put("PhaseTwoPlayerDeaths", savePlayerDeathMap(phaseTwoPlayerDeaths));
@@ -264,6 +305,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         loadUuidSet(tag.getList("PhaseOneTargets", Tag.TAG_INT_ARRAY), phaseOneTargets);
         loadUuidSet(tag.getList("PhaseTwoPlayers", Tag.TAG_INT_ARRAY), phaseTwoPlayers);
+        loadUuidSet(tag.getList("PendingDeathCurioReturns", Tag.TAG_INT_ARRAY),
+                pendingDeathCurioReturns);
         loadPlayerDeathMap(tag.getList("PhaseOneTargetDeaths", Tag.TAG_COMPOUND), targetPlayerDeaths);
         loadPlayerDeathMap(tag.getList("PhaseOneAnnouncements", Tag.TAG_COMPOUND), announcedPlayerDeaths);
         loadPlayerDeathMap(tag.getList("PhaseTwoPlayerDeaths", Tag.TAG_COMPOUND), phaseTwoPlayerDeaths);
@@ -280,15 +323,27 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         setDeltaMovement(Vec3.ZERO);
         equipPhaseTwoWeapon();
 
+        Set<ServerPlayer> announcementRecipients = new LinkedHashSet<>(bossEvent.getPlayers());
+        for (UUID identity : phaseOneTargets) {
+            ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
+            if (player != null && player.level() == level()) {
+                announcementRecipients.add(player);
+            }
+        }
+        for (ServerPlayer player : announcementRecipients) {
+            player.displayClientMessage(Component.translatable(PHASE_TWO_MESSAGE_KEY), true);
+        }
+
         phaseTwoPlayers.clear();
         for (UUID identity : phaseOneTargets) {
             ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
-            if (player != null && player.level() == level() && !player.isSpectator()) {
-                phaseTwoPlayers.add(identity);
-                phaseTwoPlayerDeaths.put(identity, getDeathCount(player));
-                player.displayClientMessage(Component.translatable(PHASE_TWO_MESSAGE_KEY), true);
-                if (bossDifficulty.confiscatesCurios()) {
-                    confiscateEquippedCurios(player);
+            if (player != null && player.level() == level()) {
+                if (player.isAlive() && !isIgnoredPlayer(player)) {
+                    phaseTwoPlayers.add(identity);
+                    phaseTwoPlayerDeaths.put(identity, getDeathCount(player));
+                    if (bossDifficulty.confiscatesCurios()) {
+                        confiscateEquippedCurios(player);
+                    }
                 }
             }
         }
@@ -386,22 +441,33 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return true;
     }
 
-    private void returnCuriosAfterPlayerDeaths() {
-        if (!(level() instanceof ServerLevel serverLevel) || confiscatedCurios.isEmpty()) {
+    private void handlePhaseTwoPlayerDeaths() {
+        if (!(level() instanceof ServerLevel serverLevel)) {
             return;
         }
-        for (UUID identity : phaseTwoPlayers) {
+        for (UUID identity : new ArrayList<>(phaseTwoPlayers)) {
             ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
             if (player == null) {
                 continue;
             }
             int deaths = getDeathCount(player);
             int recordedDeaths = phaseTwoPlayerDeaths.getOrDefault(identity, deaths);
-            if (deaths != recordedDeaths && player.isAlive()) {
+            if (deaths != recordedDeaths) {
+                phaseTwoPlayers.remove(identity);
+                pendingDeathCurioReturns.add(identity);
+                if (getTarget() != null && identity.equals(getTarget().getUUID())) {
+                    setTarget(null);
+                }
+            }
+        }
+        for (UUID identity : new ArrayList<>(pendingDeathCurioReturns)) {
+            ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
+            if (player != null && player.isAlive()) {
                 while (returnOneCurioTo(player)) {
                     // Restore every curio still held by the boss after this player's death.
                 }
-                phaseTwoPlayerDeaths.put(identity, deaths);
+                phaseTwoPlayerDeaths.put(identity, getDeathCount(player));
+                pendingDeathCurioReturns.remove(identity);
             }
         }
     }
@@ -467,7 +533,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private void updatePhaseTwoMovement(@Nullable LivingEntity target) {
         if (target == null) {
-            steerToward(position().add(0.0D, 0.15D, 0.0D), PHASE_TWO_MAX_FLIGHT_SPEED);
+            setDeltaMovement(getDeltaMovement().scale(0.7D));
+            hasImpulse = true;
             return;
         }
         Vec3 away = position().subtract(target.position()).multiply(1.0D, 0.0D, 1.0D);
@@ -530,7 +597,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 removeInvalidTargets(invalid);
                 return living;
             }
-            if (candidate != null) {
+            if (candidate != null && shouldRemovePhaseOneTarget(identity, candidate)) {
                 invalid.add(identity);
             }
         }
@@ -547,7 +614,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         LivingEntity selected = phaseTwoPlayers.stream()
                 .map(identity -> serverLevel.getServer().getPlayerList().getPlayer(identity))
                 .filter(player -> player != null && player.level() == level()
-                                  && player.isAlive() && !player.isSpectator())
+                                  && player.isAlive() && !player.isSpectator() && !player.isCreative())
                 .max(Comparator.comparingDouble(LivingEntity::getHealth))
                 .orElse(null);
         if (selected == null) {
@@ -555,7 +622,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                     .map(serverLevel::getEntity)
                     .filter(LivingEntity.class::isInstance)
                     .map(LivingEntity.class::cast)
-                    .filter(target -> target != this && target.isAlive() && target.level() == level())
+                    .filter(target -> !(target instanceof Player) && target != this
+                                      && target.isAlive() && target.level() == level()
+                                      && !isIgnoredPlayer(target))
                     .max(Comparator.comparingDouble(LivingEntity::getHealth))
                     .orElse(null);
         }
@@ -569,10 +638,24 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         if (target instanceof ServerPlayer player) {
             Integer registeredDeathCount = targetPlayerDeaths.get(player.getUUID());
-            return !player.isSpectator()
+            return !player.isSpectator() && !player.isCreative()
                    && (registeredDeathCount == null || registeredDeathCount == getDeathCount(player));
         }
-        return !(target instanceof Player player) || !player.isSpectator();
+        return !isIgnoredPlayer(target);
+    }
+
+    private static boolean isIgnoredPlayer(@Nullable LivingEntity target) {
+        return target instanceof Player player && (player.isCreative() || player.isSpectator());
+    }
+
+    private boolean shouldRemovePhaseOneTarget(UUID identity, Entity candidate) {
+        if (!(candidate instanceof ServerPlayer player)) {
+            return !(candidate instanceof LivingEntity living)
+                   || !living.isAlive() || living.level() != level();
+        }
+        Integer registeredDeathCount = targetPlayerDeaths.get(identity);
+        return !player.isAlive() || player.level() != level()
+               || registeredDeathCount != null && registeredDeathCount != getDeathCount(player);
     }
 
     private void fireLightOrb(LivingEntity target) {
@@ -858,7 +941,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             }
             LivingEntity target = boss.getTarget();
             if (targetRefreshCooldown-- <= 0 || target == null || !target.isAlive()
-                || target.level() != boss.level()) {
+                || target.level() != boss.level() || isIgnoredPlayer(target)) {
                 target = boss.selectBalancedPhaseTwoTarget();
                 targetRefreshCooldown = 10;
             }

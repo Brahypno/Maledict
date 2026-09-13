@@ -23,6 +23,11 @@ record VicissitudeVitality(float current, float maximum, long nextHit, int killA
                 now + Math.max(1, interval), killAttempts, lastKillTick);
     }
 
+    VicissitudeVitality afterAcceptedHit(long now, int interval) {
+        return new VicissitudeVitality(current, maximum,
+                now + Math.max(1, interval), killAttempts, lastKillTick);
+    }
+
     VicissitudeVitality killAttempt(long now, int window) {
         if (current <= 0.0F || now == lastKillTick) {
             return this;

@@ -109,7 +109,11 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
 
     /** Maximum loss per accepted hit, independently of incoming damage magnitude. */
     protected float getVitalityDamageLimit() {
-        return verifiedVitality().maximum() * 0.01F;
+        return getVitalityMaximum() * 0.01F;
+    }
+
+    protected final float getVitalityMaximum() {
+        return verifiedVitality().maximum();
     }
 
     protected int getVitalityHitInterval() {
@@ -152,17 +156,23 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
             recordKillAttempt(source);
             return getHealth() <= 0.0F;
         }
-        if (level().getGameTime() < state.nextHit()) {
-            return false;
-        }
         float limit = getVitalityDamageLimit();
         if (!Float.isFinite(limit) || limit <= 0.0F) {
             return false;
         }
+        float cappedAmount = Math.min(amount, limit);
+        float damageScale = getInvulnerabilityDamageScale(state, level().getGameTime());
+        float adjustedAmount = cappedAmount * damageScale;
+        if (!Float.isFinite(adjustedAmount) || adjustedAmount <= 0.0F) {
+            return false;
+        }
         vitality.receiving = true;
-        vitality.budget = Math.min(amount, limit);
+        vitality.budget = adjustedAmount;
         boolean accepted;
         float acceptedAmount = vitality.budget;
+        // Replace vanilla's binary cooldown behavior with the continuous scale above.
+        invulnerableTime = 0;
+        lastHurt = 0.0F;
         try {
             accepted = super.hurt(source, vitality.budget);
         } finally {
@@ -172,9 +182,24 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
             publishVitality();
         }
         if (accepted) {
+            VicissitudeVitality afterHit = verifiedVitality();
+            long expectedNextHit = level().getGameTime() + Math.max(1, getVitalityHitInterval());
+            if (afterHit.nextHit() != expectedNextHit) {
+                commitVitality(afterHit.afterAcceptedHit(
+                        level().getGameTime(), getVitalityHitInterval()));
+            }
             onDamageAccepted(source, acceptedAmount);
         }
         return accepted;
+    }
+
+    private float getInvulnerabilityDamageScale(VicissitudeVitality state, long now) {
+        if (now >= state.nextHit()) {
+            return 1.0F;
+        }
+        int interval = Math.max(1, getVitalityHitInterval());
+        long remaining = state.nextHit() - now;
+        return Math.max(0.0F, Math.min(1.0F, 1.0F - remaining / (float) interval));
     }
 
     @Override
