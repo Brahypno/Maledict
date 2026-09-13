@@ -12,6 +12,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.MaledictTags;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.concurrent.CompletableFuture;
@@ -51,5 +52,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.ELEGY_BOW.get());
         tag(GOETY_GRAVE_GLOVE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(L2_NO_SEAL).add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
+        // Generated empty on purpose: modpacks extend it through a data pack.
+        tag(MaledictTags.VICISSITUDE_CONFISCATION_IMMUNE).addOptional(new ResourceLocation("sophisticatedbackpacks", "backpack"));
     }
 }

@@ -1,6 +1,10 @@
 package org.brahypno.maledict.common.entity;
 
+import com.sammy.malum.core.helpers.ParticleHelper;
 import com.sammy.malum.registry.common.DamageTypeRegistry;
+import com.sammy.malum.registry.common.ParticleEffectTypeRegistry;
+import com.sammy.malum.registry.common.SoundRegistry;
+import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -8,9 +12,14 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
 import net.minecraft.world.BossEvent;
@@ -30,18 +39,26 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
+import org.brahypno.maledict.common.curio.VicissitudeCurioLedger;
+import org.brahypno.maledict.config.MaledictConfig;
+import org.brahypno.maledict.common.curio.VicissitudeCurioReturns;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
+import org.brahypno.maledict.network.MaledictNetwork;
+import org.brahypno.maledict.network.VicissitudeEffectPacket;
+import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
+import org.brahypno.maledict.rig.VicissitudeRig;
+import org.brahypno.maledict.rig.VicissitudeRigData;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
-import top.theillusivec4.curios.api.CuriosApi;
-import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
-import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
-import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
+import team.lodestar.lodestone.helpers.RandomHelper;
+import team.lodestar.lodestone.helpers.SoundHelper;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -50,6 +67,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -58,14 +76,44 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/** The first Vicissitude encounter. */
+/**
+ * The first Vicissitude encounter.
+ *
+ * <p>Server authority: stage, action, action sequence, weapon ownership, wing blocking, part
+ * multipliers and the unstick search all live here. The client only reads synced state and the
+ * one shot event packets, so a late joiner can rebuild the current pose from the action start
+ * time without replaying anything.
+ */
 public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
-    public static final int PHASE_ONE_DURATION_TICKS = 20 * 300;
     public static final int PHASE_ONE_WARMUP_TICKS = 20;
-    public static final int LIGHT_ORB_INTERVAL_TICKS = 20 * 2;
+    public static final int TRANSITION_TICKS = 60;
+    public static final int DEATH_TICKS = 80;
+    public static final int BASE_ATTACK_INTERVAL_TICKS = 30;
+    public static final int WING_BARRAGE_COOLDOWN = 70;
+    public static final int CHEST_CAST_COOLDOWN = 90;
+    public static final int HALO_CAST_COOLDOWN = 80;
+    public static final int SLASH_COOLDOWN = 20;
+    public static final int VERTICAL_SLASH_COOLDOWN = 30;
+    public static final int HEAVY_ATTACK_COOLDOWN = 120;
+    public static final int DASH_COOLDOWN = 160;
+    public static final int THROW_COOLDOWN = 120;
+    public static final int RANGED_FALLBACK_COOLDOWN = 60;
+    public static final int MAX_NON_HOMING_BOLTS = 48;
+    public static final int MAX_HOMING_ORBS = 2;
+    public static final double MELEE_REACH = 5.0D;
+    public static final double THROW_MIN_RANGE = 6.0D;
+    public static final double THROW_MAX_RANGE = 24.0D;
+    public static final double DASH_MIN_RANGE = 8.0D;
+    public static final double DASH_MAX_RANGE = 20.0D;
+    public static final double DASH_DISTANCE = 10.0D;
+    public static final double NO_FIRE_RANGE = 64.0D;
+    /** Quick reference for the chat announcement. */
+    /** Phase one set piece line, shown once per player life when the fight starts. */
+    public static final String PHASE_ONE_MESSAGE_KEY = VicissitudeLightOrbEntity.ATTACK_MESSAGE_KEY;
     public static final String PHASE_TWO_MESSAGE_KEY =
             "message.maledict.first_vicissitude.phase_two";
-
+    public static final String UNSTICK_MESSAGE_KEY =
+            "message.maledict.first_vicissitude.unstick";
     private static final String[] INCURSUS_STATS = {
             IncursusBladeItem.ATTACK_DAMAGE,
             IncursusBladeItem.POWDER_SNOW_DAMAGE,
@@ -76,35 +124,123 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             IncursusBladeItem.ELDRITCH_ABSORPTION,
             IncursusBladeItem.WICKED_CRITICAL_DAMAGE
     };
-    private static final double PREFERRED_DISTANCE = 12.0D;
-    private static final double HOVER_HEIGHT = 5.0D;
+
+    private static final EntityDataAccessor<Byte> DATA_STAGE =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Byte> DATA_ACTION =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Byte> DATA_ACTIVE_SIDE =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Byte> DATA_WEAPON_STATE =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Integer> DATA_ACTION_SEQUENCE =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Long> DATA_ACTION_START =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Integer> DATA_HURT_TICKS =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TRANSITION_TICKS =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DATA_WING_FOLD =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_CORE_GLOW =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_X =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_Y =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_Z =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_INNER =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_OUTER =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_GAP_CENTER =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_GAP_WIDTH =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Long> DATA_GROUND_START =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Integer> DATA_GROUND_DURATION =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.INT);
+
+    private static final double PREFERRED_DISTANCE = 7.0D;
+    private static final double HOVER_HEIGHT = 2.5D;
     private static final double PHASE_TWO_DISTANCE = 2.25D;
     private static final double PHASE_TWO_HOVER_HEIGHT = 1.35D;
     private static final double MAX_FLIGHT_SPEED = 0.38D;
     private static final double PHASE_TWO_MAX_FLIGHT_SPEED = 0.52D;
     private static final double FLIGHT_STEERING = 0.2D;
-    private static final double ORBIT_STEP = 0.08D;
-    private static final int PHASE_TWO_ATTACK_INTERVAL = 20;
+    private static final double ORBIT_STEP = 0.03D;
     private static final int BLOCK_BREAK_INTERVAL = 10;
+    private static final int STUCK_WINDOW_TICKS = 40;
+    private static final double STUCK_MIN_TRAVEL = 0.25D;
+    private static final int UNSTICK_SUCCESS_COOLDOWN = 100;
+    private static final int UNSTICK_MAX_CANDIDATES = 64;
+    private static final int[] UNSTICK_RADII = {4, 8, 12, 16};
 
     private final ServerBossEvent bossEvent = new ServerBossEvent(
             getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
     private final Set<UUID> phaseOneTargets = new LinkedHashSet<>();
     private final Set<UUID> phaseTwoPlayers = new LinkedHashSet<>();
-    private final Set<UUID> pendingDeathCurioReturns = new LinkedHashSet<>();
     private final Map<UUID, Integer> targetPlayerDeaths = new HashMap<>();
     private final Map<UUID, Integer> announcedPlayerDeaths = new HashMap<>();
     private final Map<UUID, Integer> phaseTwoPlayerDeaths = new HashMap<>();
-    private final Map<UUID, Deque<ConfiscatedCurio>> confiscatedCurios = new LinkedHashMap<>();
-    private boolean phaseOneStarted;
-    private boolean phaseTwoStarted;
+    private final Map<UUID, Deque<VicissitudeCurioLedger.Entry>> confiscated = new LinkedHashMap<>();
+    private final VicissitudeRig.Pose serverPose = VicissitudeRig.newPose();
+    private final VicissitudeRig.Pose renderPose = VicissitudeRig.newPose();
+    /** Client only: previous frame's pose, blended towards the target pose for continuity. */
+    public final VicissitudeRig.Pose smoothedPose = VicissitudeRig.newPose();
+    public boolean smoothedPoseReady;
+    private final Set<UUID> roundDamagedTargets = new HashSet<>();
+
+    private VicissitudeBossStage stage = VicissitudeBossStage.DORMANT;
+    private VicissitudeRig.Action action = VicissitudeRig.Action.NONE;
+    private boolean actionLeft;
+    private boolean actionReleased;
+    private int actionSequence;
+    private int hurtTicks;
+    private int transitionTicks;
     private int phaseOneTicks;
+    private int phaseOneDurationTicks;
+    private boolean phaseOneDurationLocked;
+    private int baseSlotIndex;
     private int targetCursor;
     private int curioReturnCursor;
+    private int barrageCooldown;
+    private int chestCooldown;
+    private int haloCooldown;
+    private int slashCooldown;
+    private int verticalSlashCooldown;
+    private int heavyCooldown;
+    private int dashCooldown;
+    private int throwCooldown;
+    private int rangedCooldown;
+    private int meleeAlternator;
+    private int currentBaseSlot;
+    private int fanCount;
+    private boolean phaseTwoReached;
+    private int specialRotator;
     private double idleHoverY = Double.NaN;
+    private float wingFold;
+    private boolean wingsBlockedLastTick;
+    private double stuckReferenceX;
+    private double stuckReferenceY;
+    private double stuckReferenceZ;
+    private int stuckTicks;
+    private int unstickCooldown;
+    private int caveInTicks;
+    private boolean dashDirectionLocked;
+    private Vec3 dashDirection = Vec3.ZERO;
+    private int dashTicks;
+    private final Set<UUID> dashHitTargets = new HashSet<>();
+    private UUID scytheToken;
+    private ItemStack stashedWeapon = ItemStack.EMPTY;
+    private int pendingWeaponTier = -1;
     private BossDifficulty bossDifficulty = BossDifficulty.SIMPLE;
 
-    public FirstVicissitudeBossEntity(EntityType<? extends FirstVicissitudeBossEntity> type, Level level) {
+    public FirstVicissitudeBossEntity(EntityType<? extends FirstVicissitudeBossEntity> type,
+                                      Level level) {
         super(type, level);
         moveControl = new FlyingMoveControl(this, 20, true);
         setNoGravity(true);
@@ -116,7 +252,31 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 .add(Attributes.ATTACK_DAMAGE, 8.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.FLYING_SPEED, 0.45D)
-                .add(Attributes.FOLLOW_RANGE, 128.0D);
+                .add(Attributes.FOLLOW_RANGE, 32.0D);
+    }
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        entityData.define(DATA_STAGE, (byte) VicissitudeBossStage.DORMANT.ordinal());
+        entityData.define(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
+        entityData.define(DATA_ACTIVE_SIDE, (byte) 0);
+        entityData.define(DATA_WEAPON_STATE, (byte) 0);
+        entityData.define(DATA_ACTION_SEQUENCE, 0);
+        entityData.define(DATA_ACTION_START, 0L);
+        entityData.define(DATA_HURT_TICKS, 0);
+        entityData.define(DATA_TRANSITION_TICKS, 0);
+        entityData.define(DATA_WING_FOLD, 0.0F);
+        entityData.define(DATA_CORE_GLOW, 0.55F);
+        entityData.define(DATA_GROUND_X, 0.0F);
+        entityData.define(DATA_GROUND_Y, 0.0F);
+        entityData.define(DATA_GROUND_Z, 0.0F);
+        entityData.define(DATA_GROUND_INNER, 0.0F);
+        entityData.define(DATA_GROUND_OUTER, 0.0F);
+        entityData.define(DATA_GROUND_GAP_CENTER, 0.0F);
+        entityData.define(DATA_GROUND_GAP_WIDTH, 0.0F);
+        entityData.define(DATA_GROUND_START, 0L);
+        entityData.define(DATA_GROUND_DURATION, 0);
     }
 
     @Override
@@ -129,277 +289,1119 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Override
     protected void registerGoals() {
-        goalSelector.addGoal(0, new PhaseOneCombatGoal(this));
-        goalSelector.addGoal(0, new PhaseTwoCombatGoal(this));
+        goalSelector.addGoal(0, new CombatGoal(this));
     }
 
-    public boolean isPhaseOne() {
-        return phaseOneTicks < PHASE_ONE_DURATION_TICKS;
+    // ------------------------------------------------------------------ stage and sync
+
+    public VicissitudeBossStage getStage() {
+        return VicissitudeBossStage.byId(entityData.get(DATA_STAGE));
     }
 
-    @Override
-    protected float getVitalityDamageLimit() {
-        float ratio = switch (bossDifficulty) {
-            case SIMPLE -> 0.20F;
-            case DIFFICULT -> 0.05F;
-            case COMPLETE, EXTREME -> 0.01F;
-        };
-        return getVitalityMaximum() * ratio;
+    private void setStage(VicissitudeBossStage value) {
+        stage = value;
+        entityData.set(DATA_STAGE, (byte) value.ordinal());
     }
 
-    @Override
-    protected boolean isDamageImmune(DamageSource source) {
-        return isPhaseOne() || source.getEntity() == null;
+    public VicissitudeRig.Action getRenderAction() {
+        return VicissitudeRig.Action.byId(entityData.get(DATA_ACTION));
     }
 
-    @Override
-    public boolean isInvulnerableTo(DamageSource source) {
-        return isDamageImmune(source) || super.isInvulnerableTo(source);
+    public boolean isActionLeft() {
+        return entityData.get(DATA_ACTIVE_SIDE) == 1;
     }
 
-    @Override
-    public boolean canBeAffected(MobEffectInstance effect) {
-        return effect.getEffect().getCategory() != MobEffectCategory.HARMFUL
-               && super.canBeAffected(effect);
+    public boolean isPhaseTwoVisual() {
+        return phaseTwoReached;
     }
 
-    @Override
-    protected void onIncomingAttack(DamageSource source, float amount) {
-        LivingEntity attacker = resolveLivingAttacker(source);
-        if (!isPhaseOne()) {
-            if (phaseTwoStarted && attacker instanceof ServerPlayer player) {
-                registerPhaseTwoAttacker(player);
-            }
-            return;
+    public float getPhaseTwoBlend() {
+        if (phaseTwoReached) {
+            return 1.0F;
         }
-        if (attacker != null && attacker != this && attacker.isAlive()
-            && !isIgnoredPlayer(attacker) && attacker.hasLineOfSight(this)) {
-            phaseOneTargets.add(attacker.getUUID());
-            if (attacker instanceof ServerPlayer player) {
-                targetPlayerDeaths.put(player.getUUID(), getDeathCount(player));
-            }
-            phaseOneStarted = true;
-            if (!isValidPhaseOneTarget(getTarget())) {
-                setTarget(attacker);
-            }
+        if (getStage() == VicissitudeBossStage.TRANSITION) {
+            return Mth.clamp(entityData.get(DATA_TRANSITION_TICKS) / (float) TRANSITION_TICKS, 0.0F, 1.0F);
+        }
+        return 0.0F;
+    }
+
+    public float getHurtTicks() {
+        return entityData.get(DATA_HURT_TICKS);
+    }
+
+    public float getWingFold() {
+        return entityData.get(DATA_WING_FOLD);
+    }
+
+    public float getDeathTicks() {
+        if (getHealth() > 0.0F || deathTime <= 0) {
+            return -1.0F;
+        }
+        return deathTime;
+    }
+
+    public float getCoreGlow() {
+        return entityData.get(DATA_CORE_GLOW);
+    }
+
+    /** Action clock in ticks; -1 when no action is running. */
+    public float getActionTicks(float partialTick) {
+        VicissitudeRig.Action current = getRenderAction();
+        if (current == VicissitudeRig.Action.NONE) {
+            return -1.0F;
+        }
+        long start = entityData.get(DATA_ACTION_START);
+        return (float) (level().getGameTime() - start) + partialTick;
+    }
+
+    public int getActionSequence() {
+        return entityData.get(DATA_ACTION_SEQUENCE);
+    }
+
+    /** True while the encounter is still the phase one pressure state. */
+    public boolean isPhaseOneStage() {
+        VicissitudeBossStage current = getStage();
+        return current == VicissitudeBossStage.DORMANT || current == VicissitudeBossStage.PHASE_ONE;
+    }
+
+    /** Turns the body onto a world point and returns the yaw that was applied. */
+    private float faceTowards(Vec3 point) {
+        float wanted = yawTo(point);
+        setYRot(wanted);
+        setYHeadRot(wanted);
+        yBodyRot = wanted;
+        return wanted;
+    }
+
+    public boolean isChargingRanged() {
+        VicissitudeRig.Action current = getRenderAction();
+        return current == VicissitudeRig.Action.WING_RANGED
+               || current == VicissitudeRig.Action.WING_BARRAGE
+               || current == VicissitudeRig.Action.RANGED_FALLBACK
+               || current == VicissitudeRig.Action.SCYTHE_THROW;
+    }
+
+    public boolean shouldRenderHeldWeapon() {
+        return entityData.get(DATA_WEAPON_STATE) == 1;
+    }
+
+    private void setWeaponState(int state) {
+        entityData.set(DATA_WEAPON_STATE, (byte) state);
+    }
+
+    private int actionTicks() {
+        return (int) (level().getGameTime() - entityData.get(DATA_ACTION_START));
+    }
+
+    /** Starts a new action; the release frame is executed exactly once by the action tick. */
+    private void startAction(VicissitudeRig.Action next, boolean left) {
+        action = next;
+        actionLeft = left;
+        actionReleased = false;
+        actionSequence++;
+        roundDamagedTargets.clear();
+        entityData.set(DATA_ACTION, (byte) next.ordinal());
+        entityData.set(DATA_ACTIVE_SIDE, (byte) (left ? 1 : 0));
+        entityData.set(DATA_ACTION_SEQUENCE, actionSequence);
+        entityData.set(DATA_ACTION_START, level().getGameTime());
+        if (next == VicissitudeRig.Action.SCYTHE_THROW) {
+            throwCooldown = 0;
         }
     }
 
-    private void registerPhaseTwoAttacker(ServerPlayer player) {
-        if (!player.isAlive() || player.level() != level() || isIgnoredPlayer(player)) {
-            return;
-        }
-        UUID identity = player.getUUID();
-        int deaths = getDeathCount(player);
-        Integer recordedDeaths = phaseTwoPlayerDeaths.get(identity);
-        if (pendingDeathCurioReturns.contains(identity)
-            || recordedDeaths != null && recordedDeaths != deaths) {
-            while (returnOneCurioTo(player)) {
-                // A rejoining player first receives everything retained from the previous life.
-            }
-            pendingDeathCurioReturns.remove(identity);
-        }
-        phaseTwoPlayers.add(identity);
-        phaseTwoPlayerDeaths.put(identity, deaths);
-        LivingEntity target = getTarget();
-        if (target == null || !target.isAlive() || target.level() != level()
-            || isIgnoredPlayer(target)) {
-            setTarget(player);
-        }
+    private void endAction() {
+        action = VicissitudeRig.Action.NONE;
+        actionReleased = false;
+        entityData.set(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
+        entityData.set(DATA_ACTION_START, level().getGameTime());
+        actionSequence++;
+        entityData.set(DATA_ACTION_SEQUENCE, actionSequence);
+        clearGroundMarker();
     }
 
-    @Override
-    protected void onDamageAccepted(DamageSource source, float amount) {
-        if (phaseTwoStarted && bossDifficulty.confiscatesCurios()) {
-            returnOneCurio(resolveAttackingPlayer(source));
-        }
-    }
+    // ------------------------------------------------------------------ tick
 
     @Override
     public void onAddedToWorld() {
         super.onAddedToWorld();
         if (!level().isClientSide && Double.isNaN(idleHoverY)) {
             idleHoverY = Math.min(level().getMaxBuildHeight() - getBbHeight() - 1.0D,
-                                  getY() + HOVER_HEIGHT);
+                    getY() + HOVER_HEIGHT);
+            if (phaseOneDurationTicks <= 0) {
+                phaseOneDurationTicks = bossDifficulty.phaseOneDurationTicks();
+            }
+            stuckReferenceX = getX();
+            stuckReferenceY = getY();
+            stuckReferenceZ = getZ();
         }
     }
 
     @Override
     public void tick() {
         setNoGravity(true);
-        if (!level().isClientSide && phaseTwoStarted) {
-            handlePhaseTwoPlayerDeaths();
-        }
         super.tick();
         if (level().isClientSide) {
             return;
         }
+        syncDerivedState();
         bossEvent.setName(getDisplayName());
         bossEvent.setProgress(Mth.clamp(getHealth() / getMaxHealth(), 0.0F, 1.0F));
-        if (isAlive() && isPhaseOne() && phaseOneStarted) {
-            phaseOneTicks++;
-            if (!isPhaseOne()) {
-                beginPhaseTwo();
-            }
-        } else if (isAlive() && !isPhaseOne() && !phaseTwoStarted) {
-            beginPhaseTwo();
-        }
-        if (isAlive() && phaseTwoStarted) {
-            destroyBlockingEntities();
-            if ((horizontalCollision || verticalCollision) && tickCount % BLOCK_BREAK_INTERVAL == 0) {
-                destroyBlockingBlocks();
-            }
-        }
-    }
-
-    @Override
-    public void startSeenByPlayer(ServerPlayer player) {
-        super.startSeenByPlayer(player);
-        bossEvent.addPlayer(player);
-    }
-
-    @Override
-    public void stopSeenByPlayer(ServerPlayer player) {
-        super.stopSeenByPlayer(player);
-        bossEvent.removePlayer(player);
-    }
-
-    @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
-        tag.putBoolean("PhaseOneStarted", phaseOneStarted);
-        tag.putBoolean("PhaseTwoStarted", phaseTwoStarted);
-        tag.putInt("PhaseOneTicks", phaseOneTicks);
-        tag.putInt("PhaseOneTargetCursor", targetCursor);
-        tag.putInt("CurioReturnCursor", curioReturnCursor);
-        tag.putString("VicissitudeDifficulty", bossDifficulty.serializedName());
-        if (!Double.isNaN(idleHoverY)) {
-            tag.putDouble("PhaseOneHoverY", idleHoverY);
-        }
-        tag.put("PhaseOneTargets", saveUuidSet(phaseOneTargets));
-        tag.put("PhaseTwoPlayers", saveUuidSet(phaseTwoPlayers));
-        tag.put("PendingDeathCurioReturns", saveUuidSet(pendingDeathCurioReturns));
-        tag.put("PhaseOneTargetDeaths", savePlayerDeathMap(targetPlayerDeaths));
-        tag.put("PhaseOneAnnouncements", savePlayerDeathMap(announcedPlayerDeaths));
-        tag.put("PhaseTwoPlayerDeaths", savePlayerDeathMap(phaseTwoPlayerDeaths));
-        tag.put("ConfiscatedCurios", saveConfiscatedCurios());
-    }
-
-    @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        boolean hasStartedState = tag.contains("PhaseOneStarted", Tag.TAG_BYTE);
-        phaseOneTicks = hasStartedState
-                        ? Mth.clamp(tag.getInt("PhaseOneTicks"), 0, PHASE_ONE_DURATION_TICKS)
-                        : 0;
-        phaseOneStarted = hasStartedState && tag.getBoolean("PhaseOneStarted");
-        phaseTwoStarted = tag.getBoolean("PhaseTwoStarted");
-        targetCursor = Math.max(0, tag.getInt("PhaseOneTargetCursor"));
-        curioReturnCursor = Math.max(0, tag.getInt("CurioReturnCursor"));
-        String savedDifficulty = tag.contains("VicissitudeDifficulty", Tag.TAG_STRING)
-                                 ? tag.getString("VicissitudeDifficulty")
-                                 : tag.getString("PhaseTwoMode");
-        bossDifficulty = BossDifficulty.fromName(savedDifficulty);
-        if (tag.contains("PhaseOneHoverY", Tag.TAG_DOUBLE)) {
-            idleHoverY = tag.getDouble("PhaseOneHoverY");
-        }
-        loadUuidSet(tag.getList("PhaseOneTargets", Tag.TAG_INT_ARRAY), phaseOneTargets);
-        loadUuidSet(tag.getList("PhaseTwoPlayers", Tag.TAG_INT_ARRAY), phaseTwoPlayers);
-        loadUuidSet(tag.getList("PendingDeathCurioReturns", Tag.TAG_INT_ARRAY),
-                pendingDeathCurioReturns);
-        loadPlayerDeathMap(tag.getList("PhaseOneTargetDeaths", Tag.TAG_COMPOUND), targetPlayerDeaths);
-        loadPlayerDeathMap(tag.getList("PhaseOneAnnouncements", Tag.TAG_COMPOUND), announcedPlayerDeaths);
-        loadPlayerDeathMap(tag.getList("PhaseTwoPlayerDeaths", Tag.TAG_COMPOUND), phaseTwoPlayerDeaths);
-        loadConfiscatedCurios(tag.getList("ConfiscatedCurios", Tag.TAG_COMPOUND));
-    }
-
-    private void beginPhaseTwo() {
-        if (!(level() instanceof ServerLevel serverLevel) || phaseTwoStarted) {
+        if (getHealth() <= 0.0F) {
             return;
         }
-        phaseTwoStarted = true;
-        setTarget(null);
-        getNavigation().stop();
-        setDeltaMovement(Vec3.ZERO);
-        equipPhaseTwoWeapon();
+        tickFacing();
+        if (tickCount % 10 == 0) {
+            forgetDeadParticipants();
+        }
+        tickCooldowns();
+        tickStage();
+        tickAction();
+        refreshPose();
+        tickWingCollision();
+        tickUnstick();
+    }
 
-        Set<ServerPlayer> announcementRecipients = new LinkedHashSet<>(bossEvent.getPlayers());
-        for (UUID identity : phaseOneTargets) {
-            ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
-            if (player != null && player.level() == level()) {
-                announcementRecipients.add(player);
+    /** Aim point plus eye height the body should be oriented towards this tick. */
+    private record FacingAim(Vec3 point, double eyeY) {
+    }
+
+    /**
+     * Facing for several targets: a distance weighted blend of every engaged player inside the
+     * engagement radius, so with two or three opponents the body settles on the group instead of
+     * snapping between individuals every time the attack target rotates. Attacks still snap onto
+     * their own target at the release frame, which is what keeps the swing and the hit aligned.
+     */
+    @Nullable
+    private FacingAim blendedFacingAim() {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        Set<UUID> roster = isPhaseTwo() ? phaseTwoPlayers : phaseOneTargets;
+        if (roster.isEmpty()) {
+            return null;
+        }
+        double range = engagementRange();
+        Vec3 direction = Vec3.ZERO;
+        double eyeSum = 0.0D;
+        double weightSum = 0.0D;
+        for (UUID identity : roster) {
+            LivingEntity member = resolveParticipant(serverLevel, identity);
+            if (member == null || !member.isAlive() || member.level() != level()
+                || isIgnoredPlayer(member)) {
+                continue;
+            }
+            Vec3 offset = member.position().subtract(position()).multiply(1.0D, 0.0D, 1.0D);
+            double distance = offset.length();
+            if (distance < 0.05D || distance > range) {
+                continue;
+            }
+            double weight = 1.0D / (1.0D + distance * 0.15D);
+            direction = direction.add(offset.normalize().scale(weight));
+            eyeSum += member.getEyeY() * weight;
+            weightSum += weight;
+        }
+        if (weightSum <= 0.0D || direction.lengthSqr() < 1.0E-4D) {
+            return null;
+        }
+        return new FacingAim(position().add(direction.normalize().scale(4.0D)), eyeSum / weightSum);
+    }
+
+    @Nullable
+    private LivingEntity resolveParticipant(ServerLevel serverLevel, UUID identity) {
+        ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
+        if (player != null) {
+            return player;
+        }
+        Entity entity = serverLevel.getEntity(identity);
+        return entity instanceof LivingEntity living ? living : null;
+    }
+
+    /** Configurable aggro radius; the boss never starts or keeps a fight beyond it. */
+    private static double engagementRange() {
+        try {
+            return MaledictConfig.VICISSITUDE_ENGAGEMENT_RANGE.get();
+        } catch (IllegalStateException notLoaded) {
+            return 12.0D;
+        }
+    }
+
+    private double engagementRangeSqr() {
+        double range = engagementRange();
+        return range * range;
+    }
+
+    /**
+     * Mirrors the vanilla {@code NeutralMob#playerDied} contract: when
+     * {@code forgiveDeadPlayers} is on, a participant that died is forgotten, so respawning
+     * never drags the boss across the arena. With the rule off the boss keeps the grudge, just
+     * like an angry vanilla mob does. Death counters are the identity of one life, which is why
+     * they are stored when a player first engages.
+     */
+    private void forgetDeadParticipants() {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        boolean forgive = level().getGameRules().getBoolean(GameRules.RULE_FORGIVE_DEAD_PLAYERS);
+        var playerList = serverLevel.getServer().getPlayerList();
+        for (UUID identity : new ArrayList<>(phaseOneTargets)) {
+            if (updateParticipant(playerList.getPlayer(identity), identity, forgive,
+                    targetPlayerDeaths)) {
+                phaseOneTargets.remove(identity);
+                announcedPlayerDeaths.remove(identity);
             }
         }
-        for (ServerPlayer player : announcementRecipients) {
-            player.displayClientMessage(Component.translatable(PHASE_TWO_MESSAGE_KEY), true);
+        for (UUID identity : new ArrayList<>(phaseTwoPlayers)) {
+            if (updateParticipant(playerList.getPlayer(identity), identity, forgive,
+                    phaseTwoPlayerDeaths)) {
+                phaseTwoPlayers.remove(identity);
+            }
         }
+    }
 
-        phaseTwoPlayers.clear();
-        for (UUID identity : phaseOneTargets) {
-            ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
-            if (player != null && player.level() == level()) {
-                if (player.isAlive() && !isIgnoredPlayer(player)) {
-                    phaseTwoPlayers.add(identity);
-                    phaseTwoPlayerDeaths.put(identity, getDeathCount(player));
-                    if (bossDifficulty.confiscatesCurios()) {
-                        confiscateEquippedCurios(player);
-                    }
+    private boolean updateParticipant(@Nullable ServerPlayer player, UUID identity, boolean forgive,
+                                      Map<UUID, Integer> deathRecords) {
+        if (player == null) {
+            // Offline: keep the record so the ledger can still return curios on login.
+            return false;
+        }
+        if (player.level() != level()) {
+            // Leaving the dimension always ends the engagement.
+            deathRecords.remove(identity);
+            clearTargetIf(identity);
+            return true;
+        }
+        Integer recorded = deathRecords.get(identity);
+        if (recorded != null && recorded != getDeathCount(player)) {
+            if (forgive) {
+                deathRecords.remove(identity);
+                clearTargetIf(identity);
+                return true;
+            }
+            // Angry mobs keep hunting the same player after respawn.
+            deathRecords.put(identity, getDeathCount(player));
+            return false;
+        }
+        if (!player.isAlive()) {
+            // A dead entity is never an active target, with or without forgiveness.
+            clearTargetIf(identity);
+        }
+        return false;
+    }
+
+    private void clearTargetIf(UUID identity) {
+        LivingEntity target = getTarget();
+        if (target != null && identity.equals(target.getUUID())) {
+            setTarget(null);
+        }
+    }
+
+    private static final float YAW_RATE_TRACKING = 20.0F;
+    /**
+     * Turn rate while an action is running. A player circling the boss at 2.25 blocks (phase two
+     * holding distance) sweeps about 5.5 degrees per tick, so anything slower than that means the
+     * body can never catch up and the boss ends up attacking with its back to the player.
+     */
+    private static final float YAW_RATE_ACTION = 14.0F;
+    /** Windup of a ranged attack: snap the body onto the firing line so the shots match it. */
+    private static final float YAW_RATE_WINDUP = 30.0F;
+    /** A target far off axis gets a speed boost, so nobody can orbit faster than the body turns. */
+    private static final float YAW_CATCH_UP_ARC = 90.0F;
+    private static final float YAW_CATCH_UP_BOOST = 1.8F;
+
+    /**
+     * The boss owns its facing: it always turns towards the current target at a bounded rate.
+     * Vanilla look control plus path following used to fight over the yaw, which snapped the
+     * body around and left the model flying backwards; doing it here, after super.tick(), makes
+     * the facing both smooth and deterministic.
+     */
+    private void tickFacing() {
+        // Summoned but not yet provoked: an idol has no reason to follow anyone around.
+        if (stage == VicissitudeBossStage.DORMANT || getHealth() <= 0.0F) {
+            return;
+        }
+        FacingAim facing = blendedFacingAim();
+        if (facing == null) {
+            return;
+        }
+        Vec3 aim = facing.point();
+        double aimEyeY = facing.eyeY();
+        float rate = YAW_RATE_TRACKING;
+        if (action != VicissitudeRig.Action.NONE) {
+            rate = actionTicks() < action.releaseTick() ? YAW_RATE_WINDUP : YAW_RATE_ACTION;
+        }
+        float wanted = yawTo(aim);
+        float delta = Mth.wrapDegrees(wanted - getYRot());
+        float allowed = Math.abs(delta) > YAW_CATCH_UP_ARC ? rate * YAW_CATCH_UP_BOOST : rate;
+        float yaw = getYRot() + Mth.clamp(delta, -allowed, allowed);
+        setYRot(yaw);
+        setYHeadRot(yaw);
+        yBodyRot = yaw;
+        double dy = aimEyeY - getEyeY();
+        double horizontal = Math.sqrt(distanceToSqr(aim.x, getEyeY(), aim.z));
+        float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.max(0.25D, horizontal)));
+        setXRot(getXRot() + Mth.clamp(Mth.clamp(pitch, -35.0F, 35.0F) - getXRot(), -allowed, allowed));
+    }
+
+
+    private void syncDerivedState() {
+        if (hurtTicks > 0) {
+            hurtTicks--;
+        }
+        entityData.set(DATA_HURT_TICKS, hurtTicks);
+        entityData.set(DATA_WING_FOLD, wingFold);
+        entityData.set(DATA_CORE_GLOW, computeCoreGlow());
+    }
+
+    private float computeCoreGlow() {
+        if (getHealth() <= 0.0F) {
+            float fade = Mth.clamp((deathTime - 60.0F) / 19.0F, 0.0F, 1.0F);
+            return Math.max(0.0F, 1.0F - fade);
+        }
+        if (stage == VicissitudeBossStage.TRANSITION) {
+            return 0.7F + 0.3F * Mth.sin(transitionTicks * 0.6F);
+        }
+        return isPhaseTwo() ? 0.85F : 0.55F;
+    }
+
+    private void tickCooldowns() {
+        barrageCooldown = Math.max(0, barrageCooldown - 1);
+        chestCooldown = Math.max(0, chestCooldown - 1);
+        haloCooldown = Math.max(0, haloCooldown - 1);
+        slashCooldown = Math.max(0, slashCooldown - 1);
+        verticalSlashCooldown = Math.max(0, verticalSlashCooldown - 1);
+        heavyCooldown = Math.max(0, heavyCooldown - 1);
+        dashCooldown = Math.max(0, dashCooldown - 1);
+        throwCooldown = Math.max(0, throwCooldown - 1);
+        rangedCooldown = Math.max(0, rangedCooldown - 1);
+        unstickCooldown = Math.max(0, unstickCooldown - 1);
+    }
+
+    private void tickStage() {
+        switch (stage) {
+            case DORMANT, PHASE_ONE -> {
+                if (!isPhaseOneStarted()) {
+                    break;
+                }
+                phaseOneTicks++;
+                if (phaseOneTicks >= phaseOneDurationTicks) {
+                    beginTransition();
                 }
             }
-        }
-    }
-
-    private void equipPhaseTwoWeapon() {
-        ItemStack weapon;
-        if (bossDifficulty == BossDifficulty.SIMPLE) {
-            weapon = new ItemStack(ItemRegistry.SOUL_STAINED_STEEL_SCYTHE.get());
-        } else if (bossDifficulty == BossDifficulty.DIFFICULT) {
-            weapon = new ItemStack(ItemRegistry.EDGE_OF_DELIVERANCE.get());
-        } else {
-            weapon = new ItemStack(MaledictItems.INCURSUS_BLADE.get());
-            IncursusBladeItem.initializeStats(weapon);
-            double level = bossDifficulty == BossDifficulty.EXTREME ? 9.0D : 3.0D;
-            for (String stat : INCURSUS_STATS) {
-                IncursusBladeItem.setStat(weapon, stat, level);
+            case TRANSITION -> {
+                transitionTicks++;
+                entityData.set(DATA_TRANSITION_TICKS, transitionTicks);
+                tickTransitionEffects();
+                if (transitionTicks >= TRANSITION_TICKS) {
+                    completeTransition();
+                }
+            }
+            case PHASE_TWO -> {
+                destroyBlockingEntities();
+                if ((horizontalCollision || verticalCollision)
+                    && tickCount % BLOCK_BREAK_INTERVAL == 0) {
+                    destroyBlockingBlocks();
+                }
+            }
+            case DYING -> {
             }
         }
-        setItemSlot(EquipmentSlot.MAINHAND, weapon);
-        setDropChance(EquipmentSlot.MAINHAND, 0.0F);
     }
 
-    public BossDifficulty getBossDifficulty() {
-        return bossDifficulty;
-    }
-
-    public void setBossDifficulty(BossDifficulty difficulty) {
-        bossDifficulty = difficulty == null ? BossDifficulty.SIMPLE : difficulty;
-        if (phaseTwoStarted && !level().isClientSide) {
+    private void tickTransitionEffects() {
+        // 0-14 hover and stop, 15-29 fold wings and offset the ring/shell, 30-44 press the
+        // feathers down, 45 equip, 45-59 blend into the phase two pose.
+        if (transitionTicks == 1) {
+            setDeltaMovement(Vec3.ZERO);
+            getNavigation().stop();
+            sendEvent(VicissitudeEffectPacket.EVENT_TRANSITION_FLASH, position());
+        }
+        if (transitionTicks == 30) {
+            SoundHelper.playSound(this, (SoundEvent) SoundRegistry.SOUL_SHATTER.get(), 1.2F,
+                    RandomHelper.randomBetween(level().getRandom(), 0.7F, 0.9F));
+        }
+        if (transitionTicks == 45) {
             equipPhaseTwoWeapon();
         }
     }
 
-    private void confiscateEquippedCurios(ServerPlayer player) {
-        ICuriosItemHandler inventory = CuriosApi.getCuriosInventory(player).orElse(null);
-        if (inventory == null) {
+    private void beginTransition() {
+        setStage(VicissitudeBossStage.TRANSITION);
+        transitionTicks = 0;
+        entityData.set(DATA_TRANSITION_TICKS, 0);
+        action = VicissitudeRig.Action.NONE;
+        endAction();
+        cancelFlyingScythe();
+        setTarget(null);
+        clearGroundMarker();
+        clearPhaseOneProjectiles();
+    }
+
+    /**
+     * The transition wipes leftover phase one attack entities and warnings, so the second phase
+     * can never keep pressing health through old orbs.
+     */
+    private void clearPhaseOneProjectiles() {
+        if (!(level() instanceof ServerLevel serverLevel)) {
             return;
         }
-        Deque<ConfiscatedCurio> held = confiscatedCurios.computeIfAbsent(
-                player.getUUID(), ignored -> new ArrayDeque<>());
-        List<String> identifiers = new ArrayList<>(inventory.getCurios().keySet());
-        Collections.sort(identifiers);
-        for (String identifier : identifiers) {
-            ICurioStacksHandler handler = inventory.getCurios().get(identifier);
-            IDynamicStackHandler stacks = handler.getStacks();
-            for (int slot = 0; slot < stacks.getSlots(); slot++) {
-                ItemStack equipped = stacks.getStackInSlot(slot);
-                if (!equipped.isEmpty()) {
-                    held.addLast(new ConfiscatedCurio(identifier, slot, equipped.copy()));
-                    inventory.setEquippedCurio(identifier, slot, ItemStack.EMPTY);
+        AABB area = getBoundingBox().inflate(128.0D);
+        for (VicissitudeSpiritBoltEntity bolt : serverLevel.getEntitiesOfClass(
+                VicissitudeSpiritBoltEntity.class, area, candidate -> candidate.getOwner() == this)) {
+            bolt.discard();
+        }
+        for (VicissitudeLightOrbEntity orb : serverLevel.getEntitiesOfClass(
+                VicissitudeLightOrbEntity.class, area, candidate -> candidate.isOwnedBy(this))) {
+            orb.discard();
+        }
+    }
+
+    private void completeTransition() {
+        setStage(VicissitudeBossStage.PHASE_TWO);
+        phaseTwoReached = true;
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        Set<ServerPlayer> recipients = new LinkedHashSet<>(bossEvent.getPlayers());
+        phaseTwoPlayers.clear();
+        for (UUID identity : phaseOneTargets) {
+            ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
+            if (player == null || player.level() != level()) {
+                continue;
+            }
+            recipients.add(player);
+            if (!player.isAlive() || isIgnoredPlayer(player)) {
+                continue;
+            }
+            phaseTwoPlayers.add(identity);
+            phaseTwoPlayerDeaths.put(identity, getDeathCount(player));
+            if (bossDifficulty.confiscatesCurios()) {
+                confiscateEquippedCurios(player);
+            }
+        }
+        for (ServerPlayer player : recipients) {
+            player.displayClientMessage(announcement(PHASE_TWO_MESSAGE_KEY), true);
+        }
+    }
+
+    private void tickAction() {
+        if (action == VicissitudeRig.Action.NONE) {
+            return;
+        }
+        int ticks = actionTicks();
+        if (ticks >= action.duration()) {
+            finishAction();
+            return;
+        }
+        if (!actionReleased && ticks >= action.releaseTick()) {
+            actionReleased = true;
+            releaseAction();
+        }
+        if (action == VicissitudeRig.Action.DASH) {
+            tickDash(ticks);
+        }
+    }
+
+    private void finishAction() {
+        VicissitudeRig.Action finished = action;
+        endAction();
+        if (finished == VicissitudeRig.Action.SCYTHE_RECOVER) {
+            pendingWeaponTier = -1;
+        }
+    }
+
+    // ------------------------------------------------------------------ combat scheduling
+
+    private boolean isPhaseOne() {
+        return stage == VicissitudeBossStage.DORMANT || stage == VicissitudeBossStage.PHASE_ONE;
+    }
+
+    private boolean isPhaseOneStarted() {
+        return stage == VicissitudeBossStage.PHASE_ONE;
+    }
+
+    private boolean isPhaseTwo() {
+        return stage == VicissitudeBossStage.PHASE_TWO;
+    }
+
+    private void tickPhaseOneCombat() {
+        if (action != VicissitudeRig.Action.NONE) {
+            return;
+        }
+        if (phaseOneTicks < PHASE_ONE_WARMUP_TICKS) {
+            return;
+        }
+        if ((phaseOneTicks - PHASE_ONE_WARMUP_TICKS) % BASE_ATTACK_INTERVAL_TICKS != 0) {
+            return;
+        }
+        LivingEntity target = currentPhaseOneTarget();
+        if (target == null) {
+            return;
+        }
+        currentBaseSlot = baseSlotIndex++;
+        // Every other slot may be a special skill. Alternating instead of always preferring a
+        // special keeps the wing fan the main source of pressure, as 07 requires.
+        if (currentBaseSlot % 2 == 0 && tryRangedSpecialSkill(target)) {
+            return;
+        }
+        fanCount++;
+        startAction(VicissitudeRig.Action.WING_RANGED, (currentBaseSlot / 2) % 2 == 0);
+    }
+
+    /** Barrage, chest mark and halo verdict rotate; reusable in phase two as ranged options. */
+    private boolean tryRangedSpecialSkill(LivingEntity target) {
+        for (int attempt = 0; attempt < 3; attempt++) {
+            int choice = specialRotator % 3;
+            specialRotator++;
+            switch (choice) {
+                case 0 -> {
+                    if (barrageCooldown <= 0) {
+                        barrageCooldown = WING_BARRAGE_COOLDOWN;
+                        startAction(VicissitudeRig.Action.WING_BARRAGE, true);
+                        return true;
+                    }
+                }
+                case 1 -> {
+                    if (chestCooldown <= 0 && findGroundPoint(target) != null) {
+                        chestCooldown = CHEST_CAST_COOLDOWN;
+                        startAction(VicissitudeRig.Action.CAST_FROM_CHEST, false);
+                        return true;
+                    }
+                }
+                default -> {
+                    if (haloCooldown <= 0 && findGroundPoint(target) != null) {
+                        haloCooldown = HALO_CAST_COOLDOWN;
+                        startAction(VicissitudeRig.Action.CAST_FROM_HALO, false);
+                        return true;
+                    }
                 }
             }
         }
-        if (held.isEmpty()) {
-            confiscatedCurios.remove(player.getUUID());
+        return false;
+    }
+
+    private void tickPhaseTwoCombat() {
+        if (action != VicissitudeRig.Action.NONE) {
+            return;
+        }
+        LivingEntity target = getTarget();
+        if (target == null || !target.isAlive() || target.level() != level()
+            || isIgnoredPlayer(target)) {
+            target = selectBalancedPhaseTwoTarget();
+        }
+        if (target == null) {
+            return;
+        }
+        double distance = distanceTo(target);
+        if (distance > NO_FIRE_RANGE) {
+            return;
+        }
+        if (distance > THROW_MAX_RANGE) {
+            if (tryRangedSpecialSkill(target)) {
+                return;
+            }
+            if (rangedCooldown <= 0) {
+                rangedCooldown = RANGED_FALLBACK_COOLDOWN;
+                startAction(VicissitudeRig.Action.RANGED_FALLBACK, baseSlotIndex++ % 2 == 0);
+            }
+            return;
+        }
+        if (distance >= THROW_MIN_RANGE) {
+            if (throwCooldown <= 0 && hasWeaponInHand() && scytheToken == null
+                && hasLineOfSight(target)) {
+                throwCooldown = THROW_COOLDOWN;
+                startAction(VicissitudeRig.Action.SCYTHE_THROW, false);
+                return;
+            }
+            // Phase two reuses the wing barrage, chest mark and halo verdict as ranged options;
+            // their projectiles deal ordinary damage there instead of pressing health.
+            if (tryRangedSpecialSkill(target)) {
+                return;
+            }
+            if (dashCooldown <= 0 && distance >= DASH_MIN_RANGE && distance <= DASH_MAX_RANGE) {
+                dashCooldown = DASH_COOLDOWN;
+                startAction(VicissitudeRig.Action.DASH, false);
+                return;
+            }
+            if (rangedCooldown <= 0) {
+                rangedCooldown = RANGED_FALLBACK_COOLDOWN;
+                startAction(VicissitudeRig.Action.RANGED_FALLBACK, baseSlotIndex++ % 2 == 0);
+            }
+            return;
+        }
+        if (distance <= MELEE_REACH + getBbWidth() * 0.5D) {
+            commandMelee(target);
+        }
+    }
+
+    private void commandMelee(LivingEntity target) {
+        if (scytheToken != null) {
+            return;
+        }
+        if (heavyCooldown <= 0) {
+            heavyCooldown = HEAVY_ATTACK_COOLDOWN;
+            startAction(VicissitudeRig.Action.HEAVY_ATTACK, false);
+            return;
+        }
+        meleeAlternator++;
+        if (meleeAlternator % 3 == 0) {
+            if (verticalSlashCooldown > 0) {
+                return;
+            }
+            verticalSlashCooldown = VERTICAL_SLASH_COOLDOWN;
+            startAction(VicissitudeRig.Action.SLASH_VERTICAL, false);
+            return;
+        }
+        if (slashCooldown > 0) {
+            return;
+        }
+        slashCooldown = SLASH_COOLDOWN;
+        startAction(VicissitudeRig.Action.SLASH_HORIZONTAL, baseSlotIndex++ % 2 == 0);
+    }
+
+    private double distanceTo(LivingEntity target) {
+        return Math.sqrt(distanceToSqr(target.getX(), target.getY() + target.getBbHeight() * 0.5D,
+                target.getZ()));
+    }
+
+    // ------------------------------------------------------------------ release events
+
+    private void releaseAction() {
+        LivingEntity target = getTarget();
+        switch (action) {
+            case WING_RANGED -> fireFan(target);
+            case WING_BARRAGE -> fireBarrageWave(target, 0);
+            case CAST_FROM_CHEST -> resolveChestMark();
+            case CAST_FROM_HALO -> resolveHaloVerdict();
+            case SLASH_HORIZONTAL -> resolveMelee(100.0F, MELEE_REACH, 1.0F, false);
+            case SLASH_VERTICAL -> resolveVerticalSlash();
+            case HEAVY_ATTACK -> resolveMelee(120.0F, MELEE_REACH, 1.75F, true);
+            case SCYTHE_THROW -> throwScythe(target);
+            case RANGED_FALLBACK -> fireFallbackVolley(target);
+            case DASH -> {
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void fireFan(@Nullable LivingEntity target) {
+        if (target == null || !(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        boolean left = actionLeft;
+        boolean homingSlot = fanCount % 2 == 1 && isPhaseOneStage();
+        Vec3 aim = aimPoint(target);
+        faceTowards(aim);
+        for (int index = 0; index < 5; index++) {
+            float offset = -24.0F + index * 12.0F;
+            Vec3 origin = wingOrigin(left, index);
+            Vec3 direction = aimedDirection(origin, aim, offset);
+            if (index == 2 && homingSlot) {
+                spawnHomingOrb(serverLevel, target, origin);
+                continue;
+            }
+            spawnBolt(serverLevel, origin, direction.scale(0.45D), true, 0.0F, 80);
+        }
+        playSwingSound(left);
+        sendEvent(VicissitudeEffectPacket.EVENT_RELEASE, wingOrigin(left, 2));
+    }
+
+    private void fireBarrageWave(@Nullable LivingEntity target, int wave) {
+        if (target == null || !(level() instanceof ServerLevel serverLevel)) {
+            // No live target: the wave is dropped instead of being fired into empty air.
+            barrageWaveTick = 0L;
+            lastBarrageWave = 0;
+            return;
+        }
+        Vec3 aim = target == null ? position().add(getLookAngle().scale(8.0D)) : aimPoint(target);
+        faceTowards(aim);
+        double distance = target == null ? 8.0D : distanceTo(target);
+        double spread = Math.min(30.0D, 6.0D + distance * 1.5D);
+        for (int index = 0; index < 4; index++) {
+            // A deliberate center gap keeps at least one passable lane in every wave.
+            float offset = (float) (spread * (0.35D + index * 0.35D));
+            for (int side = 0; side < 2; side++) {
+                Vec3 origin = wingOrigin(side == 0, index);
+                spawnBolt(serverLevel, origin,
+                        aimedDirection(origin, aim, side == 0 ? offset : -offset).scale(0.45D),
+                        true, 0.0F, 80);
+            }
+        }
+        playSwingSound(wave % 2 == 0);
+        sendEvent(VicissitudeEffectPacket.EVENT_RELEASE, position().add(0.0D, 2.0D, 0.0D));
+        if (wave < 2) {
+            lastBarrageWave = wave + 1;
+            barrageWaveTick = level().getGameTime() + 8;
+        }
+    }
+
+    private int lastBarrageWave;
+    private long barrageWaveTick;
+
+    private void tickBarrageWaves() {
+        if (action != VicissitudeRig.Action.WING_BARRAGE || barrageWaveTick == 0L) {
+            return;
+        }
+        if (level().getGameTime() >= barrageWaveTick && lastBarrageWave <= 2) {
+            fireBarrageWave(getTarget(), lastBarrageWave);
+            barrageWaveTick = level().getGameTime() + 8;
+        }
+    }
+
+    private void fireFallbackVolley(@Nullable LivingEntity target) {
+        if (target == null || !(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        float damage = attackDamage() * 0.75F;
+        Vec3 aim = aimPoint(target);
+        faceTowards(aim);
+        for (int index = -1; index <= 1; index++) {
+            Vec3 origin = wingOrigin(index >= 0, Math.abs(index));
+            spawnBolt(serverLevel, origin,
+                    aimedDirection(origin, aim, index * 10.0F).scale(0.65D), false, damage, 120);
+        }
+        playSwingSound(true);
+        sendEvent(VicissitudeEffectPacket.EVENT_RELEASE, position().add(0.0D, 2.0D, 0.0D));
+    }
+
+    /**
+     * {@code pressInPhaseOne} is the authored phase one behaviour; in phase two the same volley
+     * becomes ordinary damage, which is what lets the wing/chest/halo skills be reused there.
+     */
+    private void spawnBolt(ServerLevel serverLevel, Vec3 origin, Vec3 motion, boolean pressInPhaseOne,
+                           float damage, int life) {
+        boolean press = pressInPhaseOne && isPhaseOneStage();
+        float actualDamage = press ? 0.0F : (damage > 0.0F ? damage : attackDamage() * 0.75F);
+        if (countBolts(serverLevel, false) >= MAX_NON_HOMING_BOLTS) {
+            // The cap is a hard skip: bolts are never queued for later.
+            return;
+        }
+        VicissitudeSpiritBoltEntity bolt = new VicissitudeSpiritBoltEntity(serverLevel, this,
+                origin, motion, press, actualDamage, life);
+        serverLevel.addFreshEntity(bolt);
+    }
+
+    private void spawnHomingOrb(ServerLevel serverLevel, LivingEntity target, Vec3 origin) {
+        if (countBolts(serverLevel, true) >= MAX_HOMING_ORBS) {
+            return;
+        }
+        VicissitudeLightOrbEntity orb = new VicissitudeLightOrbEntity(serverLevel, target, origin);
+        serverLevel.addFreshEntity(orb);
+    }
+
+    private int countBolts(ServerLevel serverLevel, boolean homing) {
+        AABB area = getBoundingBox().inflate(96.0D);
+        if (homing) {
+            return serverLevel.getEntitiesOfClass(VicissitudeLightOrbEntity.class, area,
+                    orb -> orb.isOwnedBy(this)).size();
+        }
+        return serverLevel.getEntitiesOfClass(VicissitudeSpiritBoltEntity.class, area,
+                bolt -> bolt.getOwner() == this).size();
+    }
+
+    private void resolveChestMark() {
+        Vec3 center = getGroundMarkerCenter();
+        double radius = getGroundMarkerOuterRadius();
+        float damage = attackDamage();
+        for (LivingEntity victim : groundTargets(center, radius, 2.0D)) {
+            // Judgement is the drawn circle, not the square that was used to find candidates.
+            if (victim.distanceToSqr(center.x, victim.getY(), center.z) > radius * radius) {
+                continue;
+            }
+            hurtBySkill(victim, damage, true);
+        }
+        if (level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL,
+                    center.x, center.y + 0.2D, center.z, 12, radius * 0.5D, 0.1D, radius * 0.5D,
+                    0.02D);
+        }
+        sendEvent(VicissitudeEffectPacket.EVENT_RELEASE, center);
+    }
+
+    private void resolveHaloVerdict() {
+        Vec3 center = getGroundMarkerCenter();
+        double inner = getGroundMarkerInnerRadius();
+        double outer = getGroundMarkerOuterRadius();
+        float gapCenter = getGroundMarkerGapCenter();
+        float gapWidth = getGroundMarkerGapWidth();
+        float damage = attackDamage();
+        for (LivingEntity victim : groundTargets(center, outer, 2.0D)) {
+            double distance = Math.sqrt(victim.distanceToSqr(center.x, victim.getY(), center.z));
+            if (distance < inner || distance > outer) {
+                // Centre and everything outside the ring are safe, matching the drawn geometry.
+                continue;
+            }
+            float angle = (float) Math.toDegrees(Math.atan2(victim.getZ() - center.z,
+                    victim.getX() - center.x));
+            if (Math.abs(Mth.wrapDegrees(angle - gapCenter)) < gapWidth * 0.5F) {
+                continue;
+            }
+            hurtBySkill(victim, damage, true);
+        }
+        sendEvent(VicissitudeEffectPacket.EVENT_RELEASE, center);
+    }
+
+    private List<LivingEntity> groundTargets(Vec3 center, double radius, double height) {
+        AABB area = new AABB(center.x - radius, center.y - 0.5D, center.z - radius,
+                center.x + radius, center.y + height, center.z + radius);
+        List<LivingEntity> targets = new ArrayList<>();
+        for (Entity entity : level().getEntities(this, area)) {
+            if (entity instanceof LivingEntity living && isValidCombatParticipant(living)) {
+                targets.add(living);
+            }
+        }
+        return targets;
+    }
+
+    private void resolveMelee(float arcDegrees, double reach, float multiplier, boolean heavy) {
+        LivingEntity swingTarget = getTarget();
+        if (swingTarget != null && swingTarget.isAlive()) {
+            // The swing has to line up with the player being hit, not with the facing blend.
+            faceTowards(swingTarget.position());
+        }
+        Vec3 look = getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
+        float damage = attackDamage() * multiplier;
+        boolean hitAny = false;
+        for (Entity entity : level().getEntities(this,
+                getBoundingBox().inflate(reach, 2.0D, reach))) {
+            if (!(entity instanceof LivingEntity living) || !isValidCombatParticipant(living)) {
+                continue;
+            }
+            Vec3 offset = living.position().subtract(position()).multiply(1.0D, 0.0D, 1.0D);
+            if (offset.length() > reach + living.getBbWidth() * 0.5D || offset.lengthSqr() < 1.0E-4D) {
+                continue;
+            }
+            double angle = Math.toDegrees(Math.acos(Mth.clamp(
+                    offset.normalize().dot(look), -1.0D, 1.0D)));
+            if (angle > arcDegrees * 0.5D) {
+                continue;
+            }
+            hitAny |= hurtBySkill(living, damage, false);
+        }
+        spawnSlashEffect(heavy);
+        if (hitAny) {
+            swing(InteractionHand.MAIN_HAND, true);
+            if (heavy) {
+                sendEvent(VicissitudeEffectPacket.EVENT_HEAVY_IMPACT,
+                        position().add(look.scale(2.0D)).add(0.0D, getBbHeight() * 0.4D, 0.0D));
+            }
+        }
+    }
+
+    private void resolveVerticalSlash() {
+        LivingEntity swingTarget = getTarget();
+        if (swingTarget != null && swingTarget.isAlive()) {
+            faceTowards(swingTarget.position());
+        }
+        Vec3 look = getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
+        Vec3 right = new Vec3(-look.z, 0.0D, look.x);
+        float damage = attackDamage() * 1.25F;
+        for (Entity entity : level().getEntities(this, getBoundingBox().inflate(MELEE_REACH, 2.0D,
+                MELEE_REACH))) {
+            if (!(entity instanceof LivingEntity living) || !isValidCombatParticipant(living)) {
+                continue;
+            }
+            Vec3 offset = living.position().subtract(position());
+            double forward = offset.x * look.x + offset.z * look.z;
+            double lateral = Math.abs(offset.x * right.x + offset.z * right.z);
+            if (forward < 0.0D || forward > MELEE_REACH || lateral > 1.5D) {
+                continue;
+            }
+            hurtBySkill(living, damage, false);
+        }
+        spawnSlashEffect(true);
+    }
+
+    private boolean hurtBySkill(LivingEntity victim, float damage, boolean area) {
+        UUID identity = victim.getUUID();
+        if (!roundDamagedTargets.add(identity)) {
+            // One damage instance per round and target: a fan or wave never double dips.
+            return false;
+        }
+        victim.invulnerableTime = 0;
+        return victim.hurt(DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this),
+                damage);
+    }
+
+    private void spawnSlashEffect(boolean vertical) {
+        ParticleHelper.SlashParticleEffectBuilder particles = ParticleHelper
+                .createSlashingEffect(ParticleEffectTypeRegistry.SCYTHE_SLASH)
+                .setSpiritType(SpiritTypeRegistry.UMBRAL_SPIRIT);
+        if (vertical) {
+            particles.setVerticalSlashAngle();
+        } else {
+            particles.setSlashAngle(getYRot());
+        }
+        particles.setMirrored(actionLeft);
+        Vec3 direction = getLookAngle().multiply(1.0D, 0.0D, 1.0D);
+        particles.spawnSlashingParticle(level(), position().add(0.0D, getBbHeight() * 0.6D, 0.0D),
+                direction);
+    }
+
+    // ------------------------------------------------------------------ dash
+
+    private void tickDash(int ticks) {
+        if (ticks < action.releaseTick()) {
+            return;
+        }
+        if (!dashDirectionLocked) {
+            dashDirectionLocked = true;
+            dashHitTargets.clear();
+            dashTicks = 0;
+            Vec3 look = getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
+            dashDirection = look.lengthSqr() < 1.0E-4D ? Vec3.ZERO : look;
+        }
+        if (dashTicks >= 12 || dashDirection == Vec3.ZERO) {
+            setDeltaMovement(getDeltaMovement().scale(0.4D));
+            return;
+        }
+        dashTicks++;
+        Vec3 step = dashDirection.scale(DASH_DISTANCE / 12.0D);
+        if (level().clip(new net.minecraft.world.level.ClipContext(position(),
+                position().add(step), net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, this))
+                .getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
+            // A solid obstacle stops the charge; the boss never teleports through walls.
+            setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+        setPos(getX() + step.x, getY() + step.y, getZ() + step.z);
+        AABB sweep = getBoundingBox().inflate(0.6D);
+        for (Entity entity : level().getEntities(this, sweep)) {
+            if (!(entity instanceof LivingEntity living) || !isValidCombatParticipant(living)) {
+                continue;
+            }
+            if (dashHitTargets.add(living.getUUID())) {
+                hurtBySkill(living, attackDamage(), false);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ scythe throw
+
+    private boolean hasWeaponInHand() {
+        return !getMainHandItem().isEmpty();
+    }
+
+    private void throwScythe(@Nullable LivingEntity target) {
+        if (!(level() instanceof ServerLevel serverLevel) || scytheToken != null) {
+            return;
+        }
+        ItemStack weapon = getMainHandItem();
+        if (weapon.isEmpty()) {
+            return;
+        }
+        Vec3 direction = target != null
+                         ? target.getEyePosition().subtract(handAnchorWorldPosition()).normalize()
+                         : getLookAngle();
+        VicissitudeScytheProjectileEntity scythe = new VicissitudeScytheProjectileEntity(
+                serverLevel, this, handAnchorWorldPosition(), direction, weapon, attackDamage());
+        if (!serverLevel.addFreshEntity(scythe)) {
+            // Only a successful spawn may empty the hand.
+            return;
+        }
+        stashedWeapon = weapon.copy();
+        setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        scytheToken = scythe.getUUID();
+        setWeaponState(2);
+        SoundHelper.playSound(this, (SoundEvent) SoundRegistry.SCYTHE_THROW.get(), 1.1F,
+                RandomHelper.randomBetween(level().getRandom(), 0.8F, 1.0F));
+    }
+
+    /** Called by the projectile when it is caught or gives up. */
+    public void onScytheReturned(VicissitudeScytheProjectileEntity projectile, boolean caught) {
+        if (scytheToken == null || !scytheToken.equals(projectile.getUUID())) {
+            return;
+        }
+        scytheToken = null;
+        ItemStack stack = stashedWeapon.isEmpty() ? projectile.getItem() : stashedWeapon;
+        stashedWeapon = ItemStack.EMPTY;
+        if (!stack.isEmpty()) {
+            setItemSlot(EquipmentSlot.MAINHAND, stack.copy());
+        }
+        setWeaponState(1);
+        if (caught) {
+            startAction(VicissitudeRig.Action.SCYTHE_RECOVER, false);
+            SoundHelper.playSound(this, (SoundEvent) SoundRegistry.SCYTHE_CATCH.get(), 1.0F,
+                    RandomHelper.randomBetween(level().getRandom(), 0.9F, 1.1F));
+            sendEvent(VicissitudeEffectPacket.EVENT_SCYTHE_CATCH, handAnchorWorldPosition());
+        } else {
+            startAction(VicissitudeRig.Action.SCYTHE_RECOVER, false);
+        }
+        applyDeferredWeaponTier();
+    }
+
+    private void cancelFlyingScythe() {
+        if (scytheToken == null || !(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        Entity entity = serverLevel.getEntity(scytheToken);
+        if (entity != null) {
+            entity.discard();
+        }
+        scytheToken = null;
+        if (!stashedWeapon.isEmpty()) {
+            setItemSlot(EquipmentSlot.MAINHAND, stashedWeapon.copy());
+            stashedWeapon = ItemStack.EMPTY;
+        }
+        setWeaponState(hasWeaponInHand() ? 1 : 0);
+    }
+
+    @Override
+    protected void onFinalDeath(DamageSource source) {
+        cancelFlyingScythe();
+        // Everything still held goes to the world ledger; nothing is deleted or dropped here.
+        if (level() instanceof ServerLevel serverLevel) {
+            for (Map.Entry<UUID, Deque<VicissitudeCurioLedger.Entry>> entry : confiscated.entrySet()) {
+                VicissitudeCurioReturns.retain(serverLevel, entry.getKey(),
+                        new ArrayList<>(entry.getValue()));
+                ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(entry.getKey());
+                if (player != null) {
+                    VicissitudeCurioReturns.deliverAll(player);
+                }
+            }
+            confiscated.clear();
+        }
+        setWeaponState(0);
+    }
+
+    @Override
+    protected int getDeathDurationTicks() {
+        return DEATH_TICKS;
+    }
+
+    @Override
+    protected void onDeathTick(int ticks) {
+        if (!level().isClientSide) {
+            setStage(VicissitudeBossStage.DYING);
+            if (ticks == 36) {
+                // 36-59: wing roots fail, the one death shake.
+                sendEvent(VicissitudeEffectPacket.EVENT_DEATH_CORE, position());
+            }
+            if (ticks == 60) {
+                // 60-79: the core goes out quietly.
+                sendEvent(VicissitudeEffectPacket.EVENT_DEATH_EXTINGUISH,
+                        anchorWorldPosition(VicissitudeRigData.Joint.HEAD_EFFECT_ANCHOR, 0.0F));
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ curio handling
+
+    private void confiscateEquippedCurios(ServerPlayer player) {
+        List<VicissitudeCurioLedger.Entry> taken = VicissitudeCurioReturns.confiscate(player);
+        if (taken.isEmpty()) {
+            confiscated.remove(player.getUUID());
+            return;
+        }
+        confiscated.put(player.getUUID(), new ArrayDeque<>(taken));
+    }
+
+    @Override
+    protected void onDamageAccepted(DamageSource source, float amount) {
+        hurtTicks = 6;
+        if (isPhaseTwo() && bossDifficulty.confiscatesCurios()) {
+            returnOneCurio(resolveAttackingPlayer(source));
         }
     }
 
@@ -422,154 +1424,574 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
+    /** Removes a stack only after delivery succeeded, otherwise it stays in the ledger. */
     private boolean returnOneCurioTo(ServerPlayer player) {
-        Deque<ConfiscatedCurio> held = confiscatedCurios.get(player.getUUID());
+        Deque<VicissitudeCurioLedger.Entry> held = confiscated.get(player.getUUID());
         if (held == null || held.isEmpty()) {
             return false;
         }
-        ConfiscatedCurio curio = held.removeFirst();
-        ItemStack stack = curio.stack().copy();
-        if (!tryEquipCurio(player, curio, stack)) {
-            player.getInventory().add(stack);
-            if (!stack.isEmpty()) {
-                player.drop(stack, false);
-            }
+        // Hand the stack to the ledger first, then try to deliver it: ownership moves exactly
+        // once, so nothing can be returned twice or dropped between the two holders.
+        VicissitudeCurioLedger.Entry entry = held.removeFirst();
+        VicissitudeCurioReturns.retain(player.serverLevel(), player.getUUID(), List.of(entry));
+        if (!VicissitudeCurioReturns.deliverAll(player)) {
+            // Whatever could not be delivered stays in the ledger; the rest of the hold moves too.
+            VicissitudeCurioReturns.retain(player.serverLevel(), player.getUUID(),
+                    new ArrayList<>(held));
+            held.clear();
+            confiscated.remove(player.getUUID());
+            return true;
         }
         if (held.isEmpty()) {
-            confiscatedCurios.remove(player.getUUID());
+            confiscated.remove(player.getUUID());
         }
         return true;
     }
 
-    private void handlePhaseTwoPlayerDeaths() {
-        if (!(level() instanceof ServerLevel serverLevel)) {
+    // ------------------------------------------------------------------ part multipliers
+
+    @Override
+    protected float modifyIncomingDamage(DamageSource source, float amount) {
+        List<VicissitudeRig.SegmentVolume> volumes = segmentVolumes();
+        Vec3 hit = source.getSourcePosition();
+        VicissitudeRig.Segment segment;
+        if (hit != null) {
+            segment = VicissitudeRig.nearestSegment(volumes, hit.x, hit.y, hit.z);
+        } else {
+            LivingEntity attacker = resolveLivingAttacker(source);
+            segment = attacker == null
+                      ? VicissitudeRig.Segment.BODY
+                      : VicissitudeRig.nearestSegment(volumes, attacker.getX(),
+                              attacker.getEyeY(), attacker.getZ());
+        }
+        return amount * segment.multiplier();
+    }
+
+    private List<VicissitudeRig.SegmentVolume> segmentVolumes() {
+        return VicissitudeRig.segmentVolumes(serverPose, getX(), getY(), getZ(), getYRot());
+    }
+
+    // ------------------------------------------------------------------ geometry and pose
+
+    private void refreshPose() {
+        float death = getHealth() > 0.0F ? -1.0F : deathTime;
+        VicissitudeRig.compute(serverPose, isPhaseTwoVisual(), getPhaseTwoBlend(), action,
+                actionTicks(), actionLeft, hurtTicks, level().getGameTime(), wingFold, death);
+    }
+
+    private VicissitudeRig.Pose poseForRender(float partialTick) {
+        float death = getHealth() > 0.0F ? -1.0F : deathTime + partialTick;
+        float ticks = Math.max(0.0F, getActionTicks(partialTick));
+        VicissitudeRig.compute(renderPose, isPhaseTwoVisual(),
+                getPhaseTwoBlend(), getRenderAction(), ticks, isActionLeft(), getHurtTicks(),
+                level().getGameTime() + partialTick, getWingFold(), death);
+        VicissitudeRig.solve(renderPose);
+        return renderPose;
+    }
+
+    public Vec3 anchorWorldPosition(VicissitudeRigData.Joint joint, float partialTick) {
+        VicissitudeRig.Pose pose = !level().isClientSide ? serverPose
+                : smoothedPoseReady ? smoothedPose : poseForRender(partialTick);
+        VicissitudeRig.V3 world = VicissitudeRig.worldPoint(pose, joint, 0.0F, 0.0F, 0.0F,
+                getX(), getY(), getZ(), getYRot());
+        return new Vec3(world.x(), world.y(), world.z());
+    }
+
+    public Vec3 handAnchorWorldPosition() {
+        VicissitudeRig.V3 world = VicissitudeRig.worldPoint(serverPose,
+                VicissitudeRigData.Joint.SCYTHE_HAND_ANCHOR, 0.0F, 0.0F, 0.0F,
+                getX(), getY(), getZ(), getYRot());
+        return new Vec3(world.x(), world.y(), world.z());
+    }
+
+    private Vec3 wingOrigin(boolean left, int index) {
+        VicissitudeRigData.Joint joint = left
+                ? VicissitudeRigData.Joint.WING_LEFT_ATTACK_ANCHOR
+                : VicissitudeRigData.Joint.WING_RIGHT_ATTACK_ANCHOR;
+        VicissitudeRig.V3 world = VicissitudeRig.worldPoint(serverPose, joint,
+                (left ? 1.0F : -1.0F) * index * 2.0F, 0.0F, 0.0F,
+                getX(), getY(), getZ(), getYRot());
+        return new Vec3(world.x(), world.y(), world.z());
+    }
+
+    /** Where the fan converges: the target's torso, not the empty air above it. */
+    private static Vec3 aimPoint(LivingEntity target) {
+        return target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
+    }
+
+    /**
+     * Direction from a wing tip to the aim point, spread horizontally by {@code offsetDegrees}.
+     * Aiming in three dimensions is what makes part of a volley land on and around the target
+     * instead of sailing over its head into the distance.
+     */
+    private static Vec3 aimedDirection(Vec3 origin, Vec3 aim, float offsetDegrees) {
+        Vec3 direction = aim.subtract(origin);
+        if (direction.lengthSqr() < 1.0E-4D) {
+            return new Vec3(0.0D, 0.0D, 1.0D);
+        }
+        return direction.normalize().yRot((float) Math.toRadians(offsetDegrees));
+    }
+
+
+    private float yawTo(LivingEntity target) {
+        return yawTo(target.position());
+    }
+
+    private float yawTo(Vec3 point) {
+        double dx = point.x - getX();
+        double dz = point.z - getZ();
+        return (float) (Math.toDegrees(Math.atan2(-dx, dz)));
+    }
+
+    private float attackDamage() {
+        return Math.max(1.0F, (float) getAttributeValue(Attributes.ATTACK_DAMAGE));
+    }
+
+    private void playSwingSound(boolean left) {
+        SoundHelper.playSound(this, (SoundEvent) SoundRegistry.SCYTHE_SWEEP.get(), 0.9F,
+                RandomHelper.randomBetween(level().getRandom(), 0.9F, 1.2F));
+    }
+
+    // ------------------------------------------------------------------ wing collision and unstick
+
+    private void tickWingCollision() {
+        if (!(level() instanceof ServerLevel)) {
             return;
         }
-        for (UUID identity : new ArrayList<>(phaseTwoPlayers)) {
-            ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
-            if (player == null) {
+        List<VicissitudeRig.SegmentVolume> volumes = segmentVolumes();
+        boolean blocked = false;
+        for (VicissitudeRig.SegmentVolume volume : volumes) {
+            if (!volume.segment().isWing()) {
                 continue;
             }
-            int deaths = getDeathCount(player);
-            int recordedDeaths = phaseTwoPlayerDeaths.getOrDefault(identity, deaths);
-            if (deaths != recordedDeaths) {
-                phaseTwoPlayers.remove(identity);
-                pendingDeathCurioReturns.add(identity);
-                if (getTarget() != null && identity.equals(getTarget().getUUID())) {
-                    setTarget(null);
-                }
+            AABB box = toAabb(volume.box()).expandTowards(getDeltaMovement());
+            if (level().getBlockCollisions(this, box).iterator().hasNext()) {
+                blocked = true;
+                break;
             }
         }
-        for (UUID identity : new ArrayList<>(pendingDeathCurioReturns)) {
-            ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
-            if (player != null && player.isAlive()) {
-                while (returnOneCurioTo(player)) {
-                    // Restore every curio still held by the boss after this player's death.
-                }
-                phaseTwoPlayerDeaths.put(identity, getDeathCount(player));
-                pendingDeathCurioReturns.remove(identity);
-            }
+        wingsBlockedLastTick = blocked;
+        if (blocked) {
+            // Stop the blocked motion, fold the wings, then keep trying to path around.
+            wingFold = Mth.clamp(wingFold + 0.12F, 0.0F, 1.0F);
+            setDeltaMovement(getDeltaMovement().scale(0.35D));
+        } else {
+            wingFold = Mth.clamp(wingFold - 0.06F, 0.0F, 1.0F);
+        }
+        AABB sweep = getBoundingBox().inflate(6.0D);
+        for (Player player : level().getEntitiesOfClass(Player.class, sweep,
+                candidate -> candidate.isAlive() && !candidate.isSpectator())) {
+            pushOutOfWings(player, volumes);
         }
     }
 
-    private boolean tryEquipCurio(ServerPlayer player, ConfiscatedCurio curio, ItemStack stack) {
-        ICuriosItemHandler inventory = CuriosApi.getCuriosInventory(player).orElse(null);
-        if (inventory == null) {
-            return false;
+    /**
+     * Only a real overlap with an actual wing segment moves a player, and then only with a short
+     * velocity nudge: standing next to the boss must never feel like being bounced away.
+     */
+    private void pushOutOfWings(Player player, List<VicissitudeRig.SegmentVolume> volumes) {
+        AABB playerBox = player.getBoundingBox();
+        for (VicissitudeRig.SegmentVolume volume : volumes) {
+            if (!volume.segment().isWing()) {
+                continue;
+            }
+            AABB wing = toAabb(volume.box());
+            if (!wing.intersects(playerBox)) {
+                continue;
+            }
+            Vec3 away = player.position().subtract(position()).multiply(1.0D, 0.0D, 1.0D);
+            if (away.lengthSqr() < 1.0E-4D) {
+                away = new Vec3(1.0D, 0.0D, 0.0D);
+            }
+            away = away.normalize();
+            // A short velocity nudge only: no teleport and no forced resync, so brushing a wing
+            // never reads as being bounced away from the boss.
+            if (!level().noCollision(player, player.getBoundingBox().move(away.scale(0.05D)))) {
+                // The player is wedged against a wall: yield with the wing instead of crushing.
+                wingFold = Mth.clamp(wingFold + 0.1F, 0.0F, 1.0F);
+                continue;
+            }
+            player.push(away.x * 0.06D, 0.0D, away.z * 0.06D);
         }
-        if (tryEquipCurio(inventory, curio.slotIdentifier(), curio.slotIndex(), stack)) {
-            return true;
+    }
+
+    private void tickUnstick() {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            return;
         }
-        List<String> identifiers = new ArrayList<>(inventory.getCurios().keySet());
-        Collections.sort(identifiers);
-        for (String identifier : identifiers) {
-            ICurioStacksHandler handler = inventory.getCurios().get(identifier);
-            for (int slot = 0; slot < handler.getStacks().getSlots(); slot++) {
-                if (tryEquipCurio(inventory, identifier, slot, stack)) {
-                    return true;
+        double travelled = Math.sqrt(sqr(getX() - stuckReferenceX) + sqr(getY() - stuckReferenceY)
+                                     + sqr(getZ() - stuckReferenceZ));
+        stuckTicks++;
+        if (travelled >= STUCK_MIN_TRAVEL) {
+            stuckReferenceX = getX();
+            stuckReferenceY = getY();
+            stuckReferenceZ = getZ();
+            stuckTicks = 0;
+            return;
+        }
+        boolean targetPresent = getTarget() != null;
+        boolean exempt = !targetPresent || action == VicissitudeRig.Action.SCYTHE_RECOVER
+                         || stage == VicissitudeBossStage.TRANSITION || getHealth() <= 0.0F;
+        if (exempt || stuckTicks < STUCK_WINDOW_TICKS || unstickCooldown > 0) {
+            return;
+        }
+        boolean obstructed = wingsBlockedLastTick
+                             || !level().noCollision(this, getBoundingBox().inflate(0.1D));
+        if (!obstructed) {
+            stuckReferenceX = getX();
+            stuckReferenceY = getY();
+            stuckReferenceZ = getZ();
+            stuckTicks = 0;
+            return;
+        }
+        if (tryUnstickTeleport(serverLevel)) {
+            stuckTicks = 0;
+            unstickCooldown = UNSTICK_SUCCESS_COOLDOWN;
+        } else {
+            // No valid space yet: stay put and retry after another window.
+            stuckTicks = 0;
+        }
+    }
+
+    private boolean tryUnstickTeleport(ServerLevel serverLevel) {
+        int checked = 0;
+        for (int radius : UNSTICK_RADII) {
+            for (int dx = -radius; dx <= radius && checked < UNSTICK_MAX_CANDIDATES; dx += 2) {
+                for (int dz = -radius; dz <= radius && checked < UNSTICK_MAX_CANDIDATES; dz += 2) {
+                    for (int dy = -8; dy <= 8 && checked < UNSTICK_MAX_CANDIDATES; dy += 2) {
+                        checked++;
+                        double x = getX() + dx;
+                        double y = getY() + dy;
+                        double z = getZ() + dz;
+                        if (y < level().getMinBuildHeight() + 1
+                            || y > level().getMaxBuildHeight() - getBbHeight() - 1) {
+                            continue;
+                        }
+                        BlockPos pos = BlockPos.containing(x, y, z);
+                        if (!level().hasChunkAt(pos) || !level().isLoaded(pos)) {
+                            // Never force load chunks while searching.
+                            continue;
+                        }
+                        if (isSpaceUsable(serverLevel, x, y, z)) {
+                            unstickTeleport(x, y, z);
+                            return true;
+                        }
+                    }
                 }
             }
         }
         return false;
     }
 
-    private static boolean tryEquipCurio(
-            ICuriosItemHandler inventory, String identifier, int slot, ItemStack stack) {
-        ICurioStacksHandler handler = inventory.getCurios().get(identifier);
-        if (handler == null || slot < 0 || slot >= handler.getStacks().getSlots()) {
+    private boolean isSpaceUsable(ServerLevel serverLevel, double x, double y, double z) {
+        Vec3 old = position();
+        setPos(x, y, z);
+        boolean usable;
+        try {
+            if (!level().noCollision(this, getBoundingBox().deflate(0.05D))) {
+                usable = false;
+            } else if (level().containsAnyLiquid(getBoundingBox())) {
+                usable = false;
+            } else {
+                usable = true;
+                for (VicissitudeRig.SegmentVolume volume : segmentVolumes()) {
+                    AABB box = toAabb(volume.box());
+                    if (level().getBlockCollisions(this, box).iterator().hasNext()) {
+                        usable = false;
+                        break;
+                    }
+                    if (!level().getEntitiesOfClass(Player.class, box).isEmpty()) {
+                        usable = false;
+                        break;
+                    }
+                }
+            }
+        } finally {
+            setPos(old.x, old.y, old.z);
+        }
+        return usable;
+    }
+
+    /** Emergency escape only: a finite search around the boss, never a chase teleport. */
+    private void unstickTeleport(double x, double y, double z) {
+        Vec3 before = position();
+        setPos(x, y, z);
+        setDeltaMovement(Vec3.ZERO);
+        getNavigation().stop();
+        // Interrupt the current attack into recovery: nothing already released is replayed.
+        if (action != VicissitudeRig.Action.NONE && action != VicissitudeRig.Action.SCYTHE_RECOVER) {
+            endAction();
+            startAction(VicissitudeRig.Action.SCYTHE_RECOVER, false);
+        }
+        if (scytheToken != null && level() instanceof ServerLevel serverLevel) {
+            Entity entity = serverLevel.getEntity(scytheToken);
+            if (entity instanceof VicissitudeScytheProjectileEntity scythe) {
+                scythe.recall();
+            }
+        }
+        stuckReferenceX = x;
+        stuckReferenceY = y;
+        stuckReferenceZ = z;
+        sendEvent(VicissitudeEffectPacket.EVENT_UNSTICK, position());
+        if (level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME,
+                    before.x, before.y + 1.0D, before.z, 12, 0.6D, 0.8D, 0.6D, 0.02D);
+        }
+    }
+
+    private static AABB toAabb(VicissitudeRig.Box box) {
+        return new AABB(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ());
+    }
+
+    private static double sqr(double value) {
+        return value * value;
+    }
+
+    // ------------------------------------------------------------------ ground markers
+
+    @Nullable
+    private Vec3 findGroundPoint(LivingEntity target) {
+        BlockPos origin = target.blockPosition();
+        for (int drop = 0; drop <= 8; drop++) {
+            BlockPos candidate = origin.below(drop);
+            if (!level().getBlockState(candidate).getCollisionShape(level(), candidate).isEmpty()) {
+                return new Vec3(candidate.getX() + 0.5D, candidate.getY() + 1.0D,
+                        candidate.getZ() + 0.5D);
+            }
+        }
+        return null;
+    }
+
+    /** The ground marker center is locked ten ticks into the windup and never slides after. */
+    private void lockGroundMarker(double inner, double outer, float gapCenter, float gapWidth) {
+        Vec3 center = groundMarkerTarget;
+        if (center == null) {
+            return;
+        }
+        entityData.set(DATA_GROUND_X, (float) center.x);
+        entityData.set(DATA_GROUND_Y, (float) center.y);
+        entityData.set(DATA_GROUND_Z, (float) center.z);
+        entityData.set(DATA_GROUND_INNER, (float) inner);
+        entityData.set(DATA_GROUND_OUTER, (float) outer);
+        entityData.set(DATA_GROUND_GAP_CENTER, gapCenter);
+        entityData.set(DATA_GROUND_GAP_WIDTH, gapWidth);
+        entityData.set(DATA_GROUND_START, level().getGameTime());
+        entityData.set(DATA_GROUND_DURATION, action == null ? 0 : action.duration());
+    }
+
+    private Vec3 groundMarkerTarget = null;
+
+    private void clearGroundMarker() {
+        entityData.set(DATA_GROUND_DURATION, 0);
+        entityData.set(DATA_GROUND_START, 0L);
+        groundMarkerTarget = null;
+    }
+
+    public boolean isGroundMarkerActive() {
+        return entityData.get(DATA_GROUND_DURATION) > 0
+               && getGroundMarkerProgress(0.0F) < 1.0F;
+    }
+
+    public Vec3 getGroundMarkerCenter() {
+        return new Vec3(entityData.get(DATA_GROUND_X), entityData.get(DATA_GROUND_Y),
+                entityData.get(DATA_GROUND_Z));
+    }
+
+    public double getGroundMarkerInnerRadius() {
+        return entityData.get(DATA_GROUND_INNER);
+    }
+
+    public double getGroundMarkerOuterRadius() {
+        return entityData.get(DATA_GROUND_OUTER);
+    }
+
+    public float getGroundMarkerGapCenter() {
+        return entityData.get(DATA_GROUND_GAP_CENTER);
+    }
+
+    public float getGroundMarkerGapWidth() {
+        return entityData.get(DATA_GROUND_GAP_WIDTH);
+    }
+
+    public float getGroundMarkerProgress(float partialTick) {
+        int duration = entityData.get(DATA_GROUND_DURATION);
+        if (duration <= 0) {
+            return 1.0F;
+        }
+        long elapsed = level().getGameTime() - entityData.get(DATA_GROUND_START);
+        return Mth.clamp((elapsed + partialTick) / (duration + 8.0F), 0.0F, 1.0F);
+    }
+
+    private void tickGroundMarkerWindup() {
+        if (action == VicissitudeRig.Action.CAST_FROM_CHEST) {
+            int ticks = actionTicks();
+            if (ticks == 1) {
+                LivingEntity target = getTarget();
+                groundMarkerTarget = target == null ? null : findGroundPoint(target);
+                if (groundMarkerTarget == null) {
+                    return;
+                }
+            }
+            if (ticks == 10) {
+                lockGroundMarker(0.0D, 2.0D, 0.0F, 0.0F);
+            }
+        } else if (action == VicissitudeRig.Action.CAST_FROM_HALO) {
+            int ticks = actionTicks();
+            if (ticks == 1) {
+                LivingEntity target = getTarget();
+                groundMarkerTarget = target == null ? null : findGroundPoint(target);
+            }
+            if (ticks == 10) {
+                // The 60 degree safe gap is chosen once and stays visible.
+                float gap = level().getRandom().nextFloat() * 360.0F;
+                lockGroundMarker(3.0D, 6.0D, gap, 60.0F);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ targets and damage rules
+
+    public boolean isValidCombatParticipant(Entity entity) {
+        if (!(entity instanceof LivingEntity living) || living == this || !living.isAlive()
+            || living.level() != level()) {
             return false;
         }
-        IDynamicStackHandler stacks = handler.getStacks();
-        if (!stacks.getStackInSlot(slot).isEmpty() || !stacks.isItemValid(slot, stack)) {
+        if (isIgnoredPlayer(living)) {
             return false;
         }
-        inventory.setEquippedCurio(identifier, slot, stack.copy());
-        stack.setCount(0);
-        return true;
+        if (isPhaseTwo()) {
+            return living instanceof ServerPlayer player
+                   && phaseTwoPlayers.contains(player.getUUID());
+        }
+        return phaseOneTargets.contains(living.getUUID());
     }
 
-    private void updatePhaseOneMovement(@Nullable LivingEntity target) {
-        if (target == null) {
-            double wantedY = Double.isNaN(idleHoverY) ? getY() + HOVER_HEIGHT : idleHoverY;
-            steerToward(new Vec3(getX(), wantedY, getZ()), MAX_FLIGHT_SPEED);
-            return;
-        }
-        Vec3 away = position().subtract(target.position()).multiply(1.0D, 0.0D, 1.0D);
-        if (away.lengthSqr() < 0.01D) {
-            double angle = phaseOneTicks * ORBIT_STEP;
-            away = new Vec3(Math.cos(angle), 0.0D, Math.sin(angle));
-        }
-        double currentAngle = Math.atan2(away.z, away.x);
-        double wantedAngle = currentAngle + ORBIT_STEP;
-        Vec3 wanted = new Vec3(
-                target.getX() + Math.cos(wantedAngle) * PREFERRED_DISTANCE,
-                target.getY(),
-                target.getZ() + Math.sin(wantedAngle) * PREFERRED_DISTANCE);
-        double wantedY = Mth.clamp(target.getEyeY() + HOVER_HEIGHT,
-                                   level().getMinBuildHeight() + 1.0D,
-                                   level().getMaxBuildHeight() - getBbHeight() - 1.0D);
-        steerToward(new Vec3(wanted.x, wantedY, wanted.z), MAX_FLIGHT_SPEED);
+    @Override
+    protected float getVitalityDamageLimit() {
+        float ratio = switch (bossDifficulty) {
+            case SIMPLE -> 0.20F;
+            case DIFFICULT -> 0.05F;
+            case COMPLETE, EXTREME -> 0.01F;
+        };
+        return getVitalityMaximum() * ratio;
     }
 
-    private void updatePhaseTwoMovement(@Nullable LivingEntity target) {
-        if (target == null) {
-            setDeltaMovement(getDeltaMovement().scale(0.7D));
-            hasImpulse = true;
-            return;
+    @Override
+    protected boolean isDamageImmune(DamageSource source) {
+        // Transition and the authored death sequence are damage free.
+        if (stage == VicissitudeBossStage.TRANSITION || getHealth() <= 0.0F) {
+            return true;
         }
-        Vec3 away = position().subtract(target.position()).multiply(1.0D, 0.0D, 1.0D);
-        if (away.lengthSqr() < 0.01D) {
-            double angle = tickCount * ORBIT_STEP;
-            away = new Vec3(Math.cos(angle), 0.0D, Math.sin(angle));
-        } else {
-            away = away.normalize();
-        }
-        double wantedY = Mth.clamp(target.getY() + PHASE_TWO_HOVER_HEIGHT,
-                                   level().getMinBuildHeight() + 1.0D,
-                                   level().getMaxBuildHeight() - getBbHeight() - 1.0D);
-        Vec3 destination = new Vec3(
-                target.getX() + away.x * PHASE_TWO_DISTANCE,
-                wantedY,
-                target.getZ() + away.z * PHASE_TWO_DISTANCE);
-        steerToward(destination, PHASE_TWO_MAX_FLIGHT_SPEED);
+        return isPhaseOne() || source.getEntity() == null;
     }
 
-    private void steerToward(Vec3 destination, double maximumSpeed) {
-        Vec3 offset = destination.subtract(position());
-        if (offset.lengthSqr() < 0.01D) {
-            setDeltaMovement(getDeltaMovement().scale(0.7D));
+    @Override
+    public boolean isInvulnerableTo(DamageSource source) {
+        return isDamageImmune(source) || super.isInvulnerableTo(source);
+    }
+
+    @Override
+    public boolean canBeAffected(MobEffectInstance effect) {
+        return effect.getEffect().getCategory() != MobEffectCategory.HARMFUL
+               && super.canBeAffected(effect);
+    }
+
+    @Override
+    protected void onIncomingAttack(DamageSource source, float amount) {
+        LivingEntity attacker = resolveLivingAttacker(source);
+        if (stage == VicissitudeBossStage.TRANSITION || isPhaseTwo()) {
+            if (attacker instanceof ServerPlayer player) {
+                registerPhaseTwoAttacker(player);
+            }
             return;
         }
-        double desiredSpeed = Math.min(maximumSpeed, offset.length() * 0.12D);
-        Vec3 desiredMotion = offset.normalize().scale(desiredSpeed);
-        Vec3 motion = getDeltaMovement().scale(1.0D - FLIGHT_STEERING)
-                                        .add(desiredMotion.scale(FLIGHT_STEERING));
-        if (motion.lengthSqr() > maximumSpeed * maximumSpeed) {
-            motion = motion.normalize().scale(maximumSpeed);
+        if (attacker != null && attacker != this && attacker.isAlive()
+            && !isIgnoredPlayer(attacker) && attacker.hasLineOfSight(this)) {
+            phaseOneTargets.add(attacker.getUUID());
+            if (attacker instanceof ServerPlayer player) {
+                targetPlayerDeaths.put(player.getUUID(), getDeathCount(player));
+            }
+            if (stage == VicissitudeBossStage.DORMANT) {
+                lockPhaseOneDuration();
+                setStage(VicissitudeBossStage.PHASE_ONE);
+                phaseOneTicks = 0;
+                if (attacker instanceof ServerPlayer starter) {
+                    announceFirstAttack(starter);
+                }
+            }
+            if (!isValidPhaseOneTarget(getTarget())) {
+                setTarget(attacker);
+            }
         }
-        setDeltaMovement(motion);
-        hasImpulse = true;
     }
+
+    /**
+     * Set piece lines use the action bar, but with the mod's palette instead of vanilla white.
+     * A Style can carry colour and weight; the action bar itself is a single fixed font size,
+     * which is why this needs no custom overlay or timer.
+     */
+    private static Component announcement(String key) {
+        return Component.translatable(key).withStyle(style -> style
+                .withColor(TextColor.fromRgb(0xE6EDF5))
+                .withBold(true));
+    }
+
+    /** The phase one set piece line, once per player life. */
+    private void announceFirstAttack(ServerPlayer player) {
+        int deathCount = getDeathCount(player);
+        if (announcedPlayerDeaths.getOrDefault(player.getUUID(), -1) != deathCount) {
+            player.displayClientMessage(announcement(PHASE_ONE_MESSAGE_KEY), true);
+            announcedPlayerDeaths.put(player.getUUID(), deathCount);
+        }
+    }
+
+    private void lockPhaseOneDuration() {
+        if (!phaseOneDurationLocked) {
+            phaseOneDurationTicks = bossDifficulty.phaseOneDurationTicks();
+            phaseOneDurationLocked = true;
+        }
+    }
+
+    private void registerPhaseTwoAttacker(ServerPlayer player) {
+        if (!player.isAlive() || player.level() != level() || isIgnoredPlayer(player)) {
+            return;
+        }
+        UUID identity = player.getUUID();
+        phaseTwoPlayers.add(identity);
+        phaseTwoPlayerDeaths.putIfAbsent(identity, getDeathCount(player));
+        LivingEntity target = getTarget();
+        if (target == null || !target.isAlive() || target.level() != level()
+            || isIgnoredPlayer(target)) {
+            setTarget(player);
+        }
+    }
+
+    @Override
+    public void startSeenByPlayer(ServerPlayer player) {
+        super.startSeenByPlayer(player);
+        bossEvent.addPlayer(player);
+    }
+
+    @Override
+    public void stopSeenByPlayer(ServerPlayer player) {
+        super.stopSeenByPlayer(player);
+        bossEvent.removePlayer(player);
+    }
+
+    private void sendEvent(int eventId, Vec3 position) {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        VicissitudeEffectPacket packet = new VicissitudeEffectPacket(getId(), eventId,
+                actionSequence, position);
+        for (ServerPlayer player : serverLevel.players()) {
+            if (player.distanceToSqr(position) < 96.0D * 96.0D) {
+                MaledictNetwork.sendEffect(player, packet);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ movement and targets
 
     @Nullable
     private LivingEntity currentPhaseOneTarget() {
@@ -614,26 +2036,20 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         LivingEntity selected = phaseTwoPlayers.stream()
                 .map(identity -> serverLevel.getServer().getPlayerList().getPlayer(identity))
                 .filter(player -> player != null && player.level() == level()
-                                  && player.isAlive() && !player.isSpectator() && !player.isCreative())
+                                  && player.isAlive() && !player.isSpectator() && !player.isCreative()
+                                  && distanceToSqr(player) <= engagementRangeSqr())
                 .max(Comparator.comparingDouble(LivingEntity::getHealth))
                 .orElse(null);
-        if (selected == null) {
-            selected = phaseOneTargets.stream()
-                    .map(serverLevel::getEntity)
-                    .filter(LivingEntity.class::isInstance)
-                    .map(LivingEntity.class::cast)
-                    .filter(target -> !(target instanceof Player) && target != this
-                                      && target.isAlive() && target.level() == level()
-                                      && !isIgnoredPlayer(target))
-                    .max(Comparator.comparingDouble(LivingEntity::getHealth))
-                    .orElse(null);
-        }
         setTarget(selected);
         return selected;
     }
 
     private boolean isValidPhaseOneTarget(@Nullable LivingEntity target) {
         if (target == null || target == this || !target.isAlive() || target.level() != level()) {
+            return false;
+        }
+        if (distanceToSqr(target) > engagementRangeSqr()) {
+            // Out of engagement range: the boss holds position instead of crossing the arena.
             return false;
         }
         if (target instanceof ServerPlayer player) {
@@ -658,42 +2074,85 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                || registeredDeathCount != null && registeredDeathCount != getDeathCount(player);
     }
 
-    private void fireLightOrb(LivingEntity target) {
-        if (!(level() instanceof ServerLevel serverLevel)) {
-            return;
+    private void removeInvalidTargets(List<UUID> invalid) {
+        phaseOneTargets.removeAll(invalid);
+        for (UUID identity : invalid) {
+            targetPlayerDeaths.remove(identity);
         }
-        Vec3 launch = new Vec3(getX(), getEyeY() - 0.1D, getZ());
-        announceFirstAttack(target);
-        VicissitudeLightOrbEntity orb = new VicissitudeLightOrbEntity(serverLevel, target, launch);
-        serverLevel.addFreshEntity(orb);
-        swing(InteractionHand.MAIN_HAND);
     }
 
-    private boolean performPhaseTwoAttack(LivingEntity target) {
-        ItemStack weapon = getMainHandItem();
-        float damage = Math.max(1.0F, (float) getAttributeValue(Attributes.ATTACK_DAMAGE));
-        boolean damaged = target.hurt(
-                DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_MELEE, this), damage);
-        if (damaged) {
-            swing(InteractionHand.MAIN_HAND, true);
-            if (!weapon.isEmpty()) {
-                weapon.hurtAndBreak(1, this,
-                        entity -> entity.broadcastBreakEvent(EquipmentSlot.MAINHAND));
-            }
-        }
-        return damaged;
-    }
-
-    private void announceFirstAttack(LivingEntity target) {
-        if (!(target instanceof ServerPlayer player)) {
+    private void updatePhaseOneMovement(@Nullable LivingEntity target) {
+        if (target == null) {
+            double wantedY = Double.isNaN(idleHoverY) ? getY() + HOVER_HEIGHT : idleHoverY;
+            steerToward(new Vec3(getX(), wantedY, getZ()), MAX_FLIGHT_SPEED);
             return;
         }
-        int deathCount = getDeathCount(player);
-        if (announcedPlayerDeaths.getOrDefault(player.getUUID(), -1) != deathCount) {
-            player.displayClientMessage(
-                    Component.translatable(VicissitudeLightOrbEntity.ATTACK_MESSAGE_KEY), true);
-            announcedPlayerDeaths.put(player.getUUID(), deathCount);
+        if (action != VicissitudeRig.Action.NONE && actionTicks() <= action.releaseTick() + 4) {
+            // Hold the station through the windup and the release: casting has to read as
+            // aiming at the target, not as drifting past it.
+            setDeltaMovement(getDeltaMovement().scale(0.5D));
+            hasImpulse = true;
+            return;
         }
+        Vec3 away = position().subtract(target.position()).multiply(1.0D, 0.0D, 1.0D);
+        if (away.lengthSqr() < 0.01D) {
+            double angle = phaseOneTicks * ORBIT_STEP;
+            away = new Vec3(Math.cos(angle), 0.0D, Math.sin(angle));
+        }
+        double currentAngle = Math.atan2(away.z, away.x);
+        double wantedAngle = currentAngle + ORBIT_STEP;
+        Vec3 wanted = new Vec3(
+                target.getX() + Math.cos(wantedAngle) * PREFERRED_DISTANCE,
+                target.getY(),
+                target.getZ() + Math.sin(wantedAngle) * PREFERRED_DISTANCE);
+        double wantedY = Mth.clamp(target.getEyeY() + HOVER_HEIGHT,
+                level().getMinBuildHeight() + 1.0D,
+                level().getMaxBuildHeight() - getBbHeight() - 1.0D);
+        steerToward(new Vec3(wanted.x, wantedY, wanted.z), MAX_FLIGHT_SPEED);
+    }
+
+    private void updatePhaseTwoMovement(@Nullable LivingEntity target) {
+        if (target == null) {
+            setDeltaMovement(getDeltaMovement().scale(0.7D));
+            hasImpulse = true;
+            return;
+        }
+        if (action == VicissitudeRig.Action.DASH && dashDirectionLocked
+            && actionTicks() >= action.releaseTick()) {
+            return;
+        }
+        Vec3 away = position().subtract(target.position()).multiply(1.0D, 0.0D, 1.0D);
+        if (away.lengthSqr() < 0.01D) {
+            double angle = tickCount * ORBIT_STEP;
+            away = new Vec3(Math.cos(angle), 0.0D, Math.sin(angle));
+        } else {
+            away = away.normalize();
+        }
+        double wantedY = Mth.clamp(target.getY() + PHASE_TWO_HOVER_HEIGHT,
+                level().getMinBuildHeight() + 1.0D,
+                level().getMaxBuildHeight() - getBbHeight() - 1.0D);
+        Vec3 destination = new Vec3(
+                target.getX() + away.x * PHASE_TWO_DISTANCE,
+                wantedY,
+                target.getZ() + away.z * PHASE_TWO_DISTANCE);
+        steerToward(destination, PHASE_TWO_MAX_FLIGHT_SPEED);
+    }
+
+    private void steerToward(Vec3 destination, double maximumSpeed) {
+        Vec3 offset = destination.subtract(position());
+        if (offset.lengthSqr() < 0.01D) {
+            setDeltaMovement(getDeltaMovement().scale(0.7D));
+            return;
+        }
+        double desiredSpeed = Math.min(maximumSpeed, offset.length() * 0.12D);
+        Vec3 desiredMotion = offset.normalize().scale(desiredSpeed);
+        Vec3 motion = getDeltaMovement().scale(1.0D - FLIGHT_STEERING)
+                .add(desiredMotion.scale(FLIGHT_STEERING));
+        if (motion.lengthSqr() > maximumSpeed * maximumSpeed) {
+            motion = motion.normalize().scale(maximumSpeed);
+        }
+        setDeltaMovement(motion);
+        hasImpulse = true;
     }
 
     private void destroyBlockingEntities() {
@@ -706,7 +2165,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (obstacles.isEmpty()) {
             return;
         }
-        float damage = Math.max(10.0F, (float) getAttributeValue(Attributes.ATTACK_DAMAGE));
+        float damage = Math.max(10.0F, attackDamage());
         boolean attacked = false;
         for (Entity obstacle : obstacles) {
             attacked |= obstacle.hurt(damageSources().mobAttack(this), damage);
@@ -740,29 +2199,147 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    @Nullable
-    private LivingEntity resolveLivingAttacker(DamageSource source) {
-        Entity attacker = source.getEntity();
-        if (!(attacker instanceof LivingEntity)) {
-            attacker = source.getDirectEntity();
+    // ------------------------------------------------------------------ weapon loadout
+
+    private void equipPhaseTwoWeapon() {
+        setItemSlot(EquipmentSlot.MAINHAND, createWeaponForDifficulty(bossDifficulty));
+        setDropChance(EquipmentSlot.MAINHAND, 0.0F);
+        setWeaponState(1);
+    }
+
+    private ItemStack createWeaponForDifficulty(BossDifficulty difficulty) {
+        if (difficulty == BossDifficulty.SIMPLE) {
+            return new ItemStack(ItemRegistry.SOUL_STAINED_STEEL_SCYTHE.get());
         }
-        return attacker instanceof LivingEntity living ? living : null;
+        if (difficulty == BossDifficulty.DIFFICULT) {
+            return new ItemStack(ItemRegistry.EDGE_OF_DELIVERANCE.get());
+        }
+        ItemStack weapon = new ItemStack(MaledictItems.INCURSUS_BLADE.get());
+        IncursusBladeItem.initializeStats(weapon);
+        double level = difficulty == BossDifficulty.EXTREME ? 9.0D : 3.0D;
+        for (String stat : INCURSUS_STATS) {
+            IncursusBladeItem.setStat(weapon, stat, level);
+        }
+        return weapon;
     }
 
-    @Nullable
-    private ServerPlayer resolveAttackingPlayer(DamageSource source) {
-        LivingEntity attacker = resolveLivingAttacker(source);
-        return attacker instanceof ServerPlayer player ? player : null;
+    public BossDifficulty getBossDifficulty() {
+        return bossDifficulty;
     }
 
-    private static int getDeathCount(ServerPlayer player) {
-        return player.getStats().getValue(Stats.CUSTOM.get(Stats.DEATHS));
+    public void setBossDifficulty(BossDifficulty difficulty) {
+        bossDifficulty = difficulty == null ? BossDifficulty.SIMPLE : difficulty;
+        if (!phaseOneDurationLocked) {
+            phaseOneDurationTicks = bossDifficulty.phaseOneDurationTicks();
+        }
+        if (isPhaseTwo() && !level().isClientSide) {
+            if (scytheToken != null) {
+                // A weapon change while the scythe flies waits for this recovery.
+                pendingWeaponTier = bossDifficulty.ordinal();
+                return;
+            }
+            equipPhaseTwoWeapon();
+        }
     }
 
-    private void removeInvalidTargets(List<UUID> invalid) {
-        phaseOneTargets.removeAll(invalid);
-        for (UUID identity : invalid) {
-            targetPlayerDeaths.remove(identity);
+    private void applyDeferredWeaponTier() {
+        if (pendingWeaponTier >= 0) {
+            pendingWeaponTier = -1;
+            equipPhaseTwoWeapon();
+        }
+    }
+
+    // ------------------------------------------------------------------ persistence
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putByte("VicissitudeStage", (byte) stage.ordinal());
+        tag.putBoolean("PhaseTwoReached", phaseTwoReached);
+        tag.putInt("PhaseOneTicks", phaseOneTicks);
+        tag.putInt("PhaseOneDuration", phaseOneDurationTicks);
+        tag.putBoolean("PhaseOneDurationLocked", phaseOneDurationLocked);
+        tag.putInt("PhaseOneTargetCursor", targetCursor);
+        tag.putInt("CurioReturnCursor", curioReturnCursor);
+        tag.putInt("BaseSlotIndex", baseSlotIndex);
+        tag.putInt("SpecialRotator", specialRotator);
+        tag.putInt("ActionSequence", actionSequence);
+        tag.putString("VicissitudeDifficulty", bossDifficulty.serializedName());
+        tag.putInt("BarrageCooldown", barrageCooldown);
+        tag.putInt("ChestCooldown", chestCooldown);
+        tag.putInt("HaloCooldown", haloCooldown);
+        if (!Double.isNaN(idleHoverY)) {
+            tag.putDouble("PhaseOneHoverY", idleHoverY);
+        }
+        if (scytheToken != null) {
+            tag.putUUID("ScytheToken", scytheToken);
+        }
+        if (!stashedWeapon.isEmpty()) {
+            tag.put("StashedWeapon", stashedWeapon.save(new CompoundTag()));
+        }
+        tag.put("PhaseOneTargets", saveUuidSet(phaseOneTargets));
+        tag.put("PhaseTwoPlayers", saveUuidSet(phaseTwoPlayers));
+        tag.put("PhaseOneTargetDeaths", savePlayerDeathMap(targetPlayerDeaths));
+        tag.put("PhaseOneAnnouncements", savePlayerDeathMap(announcedPlayerDeaths));
+        tag.put("PhaseTwoPlayerDeaths", savePlayerDeathMap(phaseTwoPlayerDeaths));
+        tag.put("ConfiscatedCurios", saveConfiscatedCurios());
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        boolean hasStage = tag.contains("VicissitudeStage", Tag.TAG_BYTE);
+        String savedDifficulty = tag.contains("VicissitudeDifficulty", Tag.TAG_STRING)
+                                 ? tag.getString("VicissitudeDifficulty")
+                                 : tag.getString("PhaseTwoMode");
+        bossDifficulty = BossDifficulty.fromName(savedDifficulty);
+        if (hasStage) {
+            stage = VicissitudeBossStage.byId(tag.getByte("VicissitudeStage"));
+        } else {
+            // Legacy saves only know the boolean flags.
+            stage = tag.getBoolean("PhaseTwoStarted") ? VicissitudeBossStage.PHASE_TWO
+                    : tag.getBoolean("PhaseOneStarted") ? VicissitudeBossStage.PHASE_ONE
+                    : VicissitudeBossStage.DORMANT;
+        }
+        phaseOneDurationLocked = tag.getBoolean("PhaseOneDurationLocked");
+        phaseTwoReached = stage == VicissitudeBossStage.PHASE_TWO || tag.getBoolean("PhaseTwoReached");
+        int savedDuration = tag.getInt("PhaseOneDuration");
+        int savedTicks = Mth.clamp(tag.getInt("PhaseOneTicks"), 0, 6000);
+        if (savedDuration > 0) {
+            phaseOneDurationTicks = savedDuration;
+            phaseOneTicks = Mth.clamp(savedTicks, 0, savedDuration);
+        } else {
+            phaseOneDurationTicks = bossDifficulty.phaseOneDurationTicks();
+            // Legacy progress was measured against the old five minute timer; keep the ratio.
+            float completed = Mth.clamp(savedTicks / 6000.0F, 0.0F, 1.0F);
+            phaseOneTicks = Math.round(completed * phaseOneDurationTicks);
+        }
+        targetCursor = Math.max(0, tag.getInt("PhaseOneTargetCursor"));
+        curioReturnCursor = Math.max(0, tag.getInt("CurioReturnCursor"));
+        baseSlotIndex = Math.max(0, tag.getInt("BaseSlotIndex"));
+        specialRotator = Math.max(0, tag.getInt("SpecialRotator"));
+        actionSequence = tag.getInt("ActionSequence");
+        barrageCooldown = Math.max(0, tag.getInt("BarrageCooldown"));
+        chestCooldown = Math.max(0, tag.getInt("ChestCooldown"));
+        haloCooldown = Math.max(0, tag.getInt("HaloCooldown"));
+        if (tag.contains("PhaseOneHoverY", Tag.TAG_DOUBLE)) {
+            idleHoverY = tag.getDouble("PhaseOneHoverY");
+        }
+        if (tag.hasUUID("ScytheToken")) {
+            scytheToken = tag.getUUID("ScytheToken");
+        }
+        stashedWeapon = ItemStack.of(tag.getCompound("StashedWeapon"));
+        loadUuidSet(tag.getList("PhaseOneTargets", Tag.TAG_INT_ARRAY), phaseOneTargets);
+        loadUuidSet(tag.getList("PhaseTwoPlayers", Tag.TAG_INT_ARRAY), phaseTwoPlayers);
+        loadPlayerDeathMap(tag.getList("PhaseOneTargetDeaths", Tag.TAG_COMPOUND), targetPlayerDeaths);
+        loadPlayerDeathMap(tag.getList("PhaseOneAnnouncements", Tag.TAG_COMPOUND), announcedPlayerDeaths);
+        loadPlayerDeathMap(tag.getList("PhaseTwoPlayerDeaths", Tag.TAG_COMPOUND), phaseTwoPlayerDeaths);
+        loadConfiscatedCurios(tag.getList("ConfiscatedCurios", Tag.TAG_COMPOUND));
+        entityData.set(DATA_STAGE, (byte) stage.ordinal());
+        entityData.set(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
+        action = VicissitudeRig.Action.NONE;
+        if (stage == VicissitudeBossStage.PHASE_TWO) {
+            setWeaponState(hasWeaponInHand() ? 1 : scytheToken != null ? 2 : 0);
         }
     }
 
@@ -804,11 +2381,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private ListTag saveConfiscatedCurios() {
         ListTag players = new ListTag();
-        for (Map.Entry<UUID, Deque<ConfiscatedCurio>> entry : confiscatedCurios.entrySet()) {
+        for (Map.Entry<UUID, Deque<VicissitudeCurioLedger.Entry>> entry : confiscated.entrySet()) {
             CompoundTag player = new CompoundTag();
             player.putUUID("Player", entry.getKey());
             ListTag items = new ListTag();
-            for (ConfiscatedCurio curio : entry.getValue()) {
+            for (VicissitudeCurioLedger.Entry curio : entry.getValue()) {
                 CompoundTag item = new CompoundTag();
                 item.putString("Slot", curio.slotIdentifier());
                 item.putInt("Index", curio.slotIndex());
@@ -822,32 +2399,64 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void loadConfiscatedCurios(ListTag players) {
-        confiscatedCurios.clear();
+        confiscated.clear();
         for (Tag playerTag : players) {
             CompoundTag player = (CompoundTag) playerTag;
             if (!player.hasUUID("Player")) {
                 continue;
             }
-            Deque<ConfiscatedCurio> items = new ArrayDeque<>();
+            Deque<VicissitudeCurioLedger.Entry> items = new ArrayDeque<>();
             for (Tag itemTag : player.getList("Items", Tag.TAG_COMPOUND)) {
                 CompoundTag item = (CompoundTag) itemTag;
                 ItemStack stack = ItemStack.of(item.getCompound("Stack"));
                 if (!stack.isEmpty()) {
-                    items.addLast(new ConfiscatedCurio(
+                    items.addLast(new VicissitudeCurioLedger.Entry(
                             item.getString("Slot"), item.getInt("Index"), stack));
                 }
             }
             if (!items.isEmpty()) {
-                confiscatedCurios.put(player.getUUID("Player"), items);
+                confiscated.put(player.getUUID("Player"), items);
             }
         }
     }
 
+    // ------------------------------------------------------------------ helpers
+
+    @Nullable
+    private LivingEntity resolveLivingAttacker(DamageSource source) {
+        Entity attacker = source.getEntity();
+        if (!(attacker instanceof LivingEntity)) {
+            attacker = source.getDirectEntity();
+        }
+        return attacker instanceof LivingEntity living ? living : null;
+    }
+
+    @Nullable
+    private ServerPlayer resolveAttackingPlayer(DamageSource source) {
+        LivingEntity attacker = resolveLivingAttacker(source);
+        return attacker instanceof ServerPlayer player ? player : null;
+    }
+
+    private static int getDeathCount(ServerPlayer player) {
+        return player.getStats().getValue(Stats.CUSTOM.get(Stats.DEATHS));
+    }
+
+    /** Difficulty table: phase one gets shorter as the difficulty rises. */
     public enum BossDifficulty {
-        SIMPLE,
-        DIFFICULT,
-        COMPLETE,
-        EXTREME;
+        SIMPLE(1800),
+        DIFFICULT(1400),
+        COMPLETE(1000),
+        EXTREME(750);
+
+        private final int phaseOneDurationTicks;
+
+        BossDifficulty(int phaseOneDurationTicks) {
+            this.phaseOneDurationTicks = phaseOneDurationTicks;
+        }
+
+        public int phaseOneDurationTicks() {
+            return phaseOneDurationTicks;
+        }
 
         private boolean confiscatesCurios() {
             return this == COMPLETE || this == EXTREME;
@@ -866,67 +2475,24 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    private record ConfiscatedCurio(String slotIdentifier, int slotIndex, ItemStack stack) {
-    }
-
-    private static final class PhaseOneCombatGoal extends Goal {
+    /** Single combat goal; phase selection happens inside so goals never fight each other. */
+    private static final class CombatGoal extends Goal {
         private final FirstVicissitudeBossEntity boss;
-
-        private PhaseOneCombatGoal(FirstVicissitudeBossEntity boss) {
-            this.boss = boss;
-            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
-        }
-
-        @Override
-        public boolean canUse() {
-            return boss.isAlive() && boss.isPhaseOne();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return canUse();
-        }
-
-        @Override
-        public boolean requiresUpdateEveryTick() {
-            return true;
-        }
-
-        @Override
-        public void tick() {
-            LivingEntity target = boss.currentPhaseOneTarget();
-            if (boss.phaseOneTicks >= PHASE_ONE_WARMUP_TICKS
-                && (boss.phaseOneTicks - PHASE_ONE_WARMUP_TICKS) % LIGHT_ORB_INTERVAL_TICKS == 0) {
-                target = boss.selectNextPhaseOneTarget(true);
-                if (target != null) {
-                    boss.fireLightOrb(target);
-                }
-            }
-            if (target != null) {
-                boss.getLookControl().setLookAt(target, 30.0F, 30.0F);
-            }
-            boss.updatePhaseOneMovement(target);
-        }
-    }
-
-    private static final class PhaseTwoCombatGoal extends Goal {
-        private final FirstVicissitudeBossEntity boss;
-        private int attackCooldown;
         private int targetRefreshCooldown;
 
-        private PhaseTwoCombatGoal(FirstVicissitudeBossEntity boss) {
+        private CombatGoal(FirstVicissitudeBossEntity boss) {
             this.boss = boss;
             setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         }
 
         @Override
         public boolean canUse() {
-            return boss.isAlive() && boss.phaseTwoStarted && !boss.isPhaseOne();
+            return boss.isAlive();
         }
 
         @Override
         public boolean canContinueToUse() {
-            return canUse();
+            return boss.isAlive();
         }
 
         @Override
@@ -936,27 +2502,33 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
         @Override
         public void tick() {
-            if (attackCooldown > 0) {
-                attackCooldown--;
-            }
-            LivingEntity target = boss.getTarget();
-            if (targetRefreshCooldown-- <= 0 || target == null || !target.isAlive()
-                || target.level() != boss.level() || isIgnoredPlayer(target)) {
-                target = boss.selectBalancedPhaseTwoTarget();
-                targetRefreshCooldown = 10;
-            }
-            if (target != null) {
-                boss.getLookControl().setLookAt(target, 40.0F, 40.0F);
-                double reach = 2.5D + boss.getBbWidth() * 0.5D + target.getBbWidth() * 0.5D;
-                if (attackCooldown <= 0 && boss.distanceToSqr(target) <= reach * reach
-                    && boss.hasLineOfSight(target)) {
-                    if (boss.performPhaseTwoAttack(target)) {
-                        attackCooldown = PHASE_TWO_ATTACK_INTERVAL;
-                        targetRefreshCooldown = 0;
+            boss.tickBarrageWaves();
+            boss.tickGroundMarkerWindup();
+            switch (boss.stage) {
+                case DORMANT, PHASE_ONE -> {
+                    LivingEntity target = boss.currentPhaseOneTarget();
+                    boss.tickPhaseOneCombat();
+                    boss.updatePhaseOneMovement(target);
+                }
+                case PHASE_TWO -> {
+                    if (targetRefreshCooldown-- <= 0) {
+                        boss.selectBalancedPhaseTwoTarget();
+                        targetRefreshCooldown = 10;
                     }
+                    LivingEntity target = boss.getTarget();
+                    if (target == null || !target.isAlive() || target.level() != boss.level()) {
+                        target = boss.selectBalancedPhaseTwoTarget();
+                    }
+                    boss.tickPhaseTwoCombat();
+                    boss.updatePhaseTwoMovement(target);
+                }
+                case TRANSITION -> {
+                    boss.setDeltaMovement(boss.getDeltaMovement().scale(0.6D));
+                    boss.getNavigation().stop();
+                }
+                default -> {
                 }
             }
-            boss.updatePhaseTwoMovement(target);
         }
     }
 }

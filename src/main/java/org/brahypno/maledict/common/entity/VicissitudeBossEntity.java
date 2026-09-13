@@ -138,6 +138,14 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
         return false;
     }
 
+    /**
+     * Body part multipliers and similar per hit scaling. Applied before the damage cap, the
+     * invulnerability scale and the vitality transaction, so it can never bypass protection.
+     */
+    protected float modifyIncomingDamage(DamageSource source, float amount) {
+        return amount;
+    }
+
     @Override
     public final boolean hurt(DamageSource source, float amount) {
         if (level().isClientSide || !vitality.joined || vitality.receiving
@@ -156,6 +164,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
             recordKillAttempt(source);
             return getHealth() <= 0.0F;
         }
+        amount = modifyIncomingDamage(source, amount);
         float limit = getVitalityDamageLimit();
         if (!Float.isFinite(limit) || limit <= 0.0F) {
             return false;
@@ -244,16 +253,39 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
                 dead = false;
                 super.die(source);
                 vitality.deathHandled = dead;
+                if (dead) {
+                    onFinalDeath(source);
+                }
             } finally {
                 vitality.finishing = false;
             }
         }
     }
 
+    /** Called once when the genuine death transaction has started. */
+    protected void onFinalDeath(DamageSource source) {
+    }
+
+    /** Length of the authored death sequence; the entity is removed when it finishes. */
+    protected int getDeathDurationTicks() {
+        return 20;
+    }
+
+    /** Per tick death update for the authored death sequence, on both sides. */
+    protected void onDeathTick(int ticks) {
+    }
+
     @Override
     protected final void tickDeath() {
-        if (getHealth() <= 0.0F) {
-            super.tickDeath();
+        if (getHealth() > 0.0F) {
+            return;
+        }
+        deathTime++;
+        onDeathTick(deathTime);
+        if (deathTime >= Math.max(1, getDeathDurationTicks())
+            && !level().isClientSide && !isRemoved()) {
+            level().broadcastEntityEvent(this, (byte) 60);
+            remove(RemovalReason.KILLED);
         }
     }
 

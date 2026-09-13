@@ -4,6 +4,9 @@ import net.minecraftforge.common.ForgeConfigSpec;
 
 public final class MaledictConfig {
     public static final ForgeConfigSpec COMMON_SPEC;
+    public static final ForgeConfigSpec CLIENT_SPEC;
+    public static final ForgeConfigSpec.DoubleValue SCREENSHAKE_INTENSITY;
+    public static final ForgeConfigSpec.DoubleValue VICISSITUDE_ENGAGEMENT_RANGE;
     public static final ForgeConfigSpec.BooleanValue AERIAL_POTION_EFFECTS_ONLY;
     public static final ForgeConfigSpec.DoubleValue EARTHEN_UPGRADE_COST_COEFFICIENT;
     public static final ForgeConfigSpec.DoubleValue AQUEOUS_UPGRADE_COST_COEFFICIENT;
@@ -30,8 +33,24 @@ public final class MaledictConfig {
         ELDRITCH_UPGRADE_COST_COEFFICIENT = defineUpgradeCostCoefficient(builder, "eldritch", 1);
         WICKED_UPGRADE_COST_COEFFICIENT = defineUpgradeCostCoefficient(builder, "wicked", 0.5);
         builder.pop();
+        builder.push("firstVicissitude");
+        VICISSITUDE_ENGAGEMENT_RANGE = builder
+                .comment("How far, in blocks, the First Vicissitude picks up and keeps a target.",
+                        "Players farther away are ignored until they engage again, which is the",
+                        "vanilla style death forgiveness behaviour. Lower it to make the boss",
+                        "less willing to cross the arena towards you.")
+                .defineInRange("engagementRange", 12.0D, 4.0D, 64.0D);
+        builder.pop();
         builder.pop();
         COMMON_SPEC = builder.build();
+
+        ForgeConfigSpec.Builder clientBuilder = new ForgeConfigSpec.Builder();
+        clientBuilder.push("firstVicissitude");
+        SCREENSHAKE_INTENSITY = clientBuilder
+                .comment("Client side multiplier for the First Vicissitude screenshake. 0 disables it.")
+                .defineInRange("screenshakeIntensity", 1.0D, 0.0D, 1.0D);
+        clientBuilder.pop();
+        CLIENT_SPEC = clientBuilder.build();
     }
 
     private static ForgeConfigSpec.DoubleValue defineUpgradeCostCoefficient(ForgeConfigSpec.Builder builder, String spirit, double defaultValue) {

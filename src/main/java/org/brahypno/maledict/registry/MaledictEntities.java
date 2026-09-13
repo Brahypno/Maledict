@@ -12,6 +12,8 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.entity.SpiritArrowEntity;
 import org.brahypno.maledict.common.entity.VicissitudeLightOrbEntity;
+import org.brahypno.maledict.common.entity.VicissitudeScytheProjectileEntity;
+import org.brahypno.maledict.common.entity.VicissitudeSpiritBoltEntity;
 
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class MaledictEntities {
@@ -29,10 +31,29 @@ public final class MaledictEntities {
     public static final RegistryObject<EntityType<FirstVicissitudeBossEntity>> FIRST_VICISSITUDE =
             ENTITY_TYPES.register("first_vicissitude", () -> EntityType.Builder
                     .of(FirstVicissitudeBossEntity::new, MobCategory.MONSTER)
-                    .sized(0.6F, 1.8F)
-                    .clientTrackingRange(10)
+                    .sized(1.6F, 4.375F)
+                    .clientTrackingRange(12)
                     .fireImmune()
                     .build("first_vicissitude"));
+
+    public static final RegistryObject<EntityType<VicissitudeSpiritBoltEntity>> VICISSITUDE_SPIRIT_BOLT =
+            ENTITY_TYPES.register("vicissitude_spirit_bolt", () -> EntityType.Builder
+                    .<VicissitudeSpiritBoltEntity>of(VicissitudeSpiritBoltEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F)
+                    .clientTrackingRange(10)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .build("vicissitude_spirit_bolt"));
+
+    public static final RegistryObject<EntityType<VicissitudeScytheProjectileEntity>> VICISSITUDE_SCYTHE =
+            ENTITY_TYPES.register("vicissitude_scythe", () -> EntityType.Builder
+                    .<VicissitudeScytheProjectileEntity>of(VicissitudeScytheProjectileEntity::new,
+                            MobCategory.MISC)
+                    .sized(0.8F, 0.8F)
+                    .clientTrackingRange(10)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .build("vicissitude_scythe"));
 
     public static final RegistryObject<EntityType<VicissitudeLightOrbEntity>> VICISSITUDE_LIGHT_ORB =
             ENTITY_TYPES.register("vicissitude_light_orb", () -> EntityType.Builder

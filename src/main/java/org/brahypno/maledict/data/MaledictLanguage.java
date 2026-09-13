@@ -45,6 +45,11 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "狱火精魂箭");
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
             add("entity.maledict.first_vicissitude", "无常");
+            addItem(MaledictItems.CURIO_RETURN_TOKEN, "保管凭证");
+            add("tooltip.maledict.curio_return_token", "右键领取被无常没收、尚未归还的饰品。全部交付后凭证才会消失。");
+            add("message.maledict.first_vicissitude.curio_return_pending",
+                    "还有 %s 件饰品由无常保管：腾出背包或饰品栏空间后会自动归还");
+            add("message.maledict.first_vicissitude.curio_return_complete", "被没收的饰品已全部归还");
             add("message.maledict.first_vicissitude.attack", "命运总是会将人逼上悬崖，犹如恶客造访");
             add("message.maledict.first_vicissitude.phase_two",
                     "所谓无常，就是圣人行走在正道上，依然会遇见的命运");
@@ -104,6 +109,15 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "Infernal Spirit Arrow");
             add("attribute.name.maledict.powder_snow_damage", "Freezing Damage");
             add("entity.maledict.first_vicissitude", "Vicissitude");
+            addItem(MaledictItems.CURIO_RETURN_TOKEN, "Custody Token");
+            add("tooltip.maledict.curio_return_token",
+                    "Right-click to reclaim confiscated curios that are still in custody. "
+                    + "The token only disappears once everything has been handed back.");
+            add("message.maledict.first_vicissitude.curio_return_pending",
+                    "%s curio(s) are still in custody: free up inventory or curio slots and they "
+                    + "will be returned automatically");
+            add("message.maledict.first_vicissitude.curio_return_complete",
+                    "Every confiscated curio has been returned");
             add("message.maledict.first_vicissitude.attack",
                     "Fate always drives people to the edge of a cliff, like an unwelcome guest calling.");
             add("message.maledict.first_vicissitude.phase_two",

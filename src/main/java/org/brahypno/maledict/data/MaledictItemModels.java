@@ -43,6 +43,10 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .perspective(ItemDisplayContext.GUI, gui)
                 .perspective(ItemDisplayContext.FIXED, gui);
 
+        getBuilder("curio_return_token")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/curio_return_token"));
+
         getBuilder("mnemonic_obelisk")
                 .parent(new ModelFile.UncheckedModelFile(
                         ResourceLocation.fromNamespaceAndPath("malum", "item/runewood_obelisk")))

@@ -8,6 +8,7 @@ import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
+import org.brahypno.maledict.common.item.CurioReturnTokenItem;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
 import org.brahypno.maledict.common.item.RemembranceBowItem;
 import org.brahypno.maledict.common.item.SpiritArrowItem;
@@ -23,6 +24,10 @@ public final class MaledictItems {
             new RemembranceBowItem(new Item.Properties().durability(384).rarity(Rarity.RARE), false));
     public static final RegistryObject<Item> ELEGY_BOW = ITEMS.register("elegy_bow", () ->
             new RemembranceBowItem(new Item.Properties().durability(1111).rarity(Rarity.RARE), true));
+
+    /** Claim ticket for confiscated curios that could not be delivered automatically. */
+    public static final RegistryObject<Item> CURIO_RETURN_TOKEN = ITEMS.register("curio_return_token",
+            CurioReturnTokenItem::new);
 
     public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.MNEMONIC_OBELISK.get(), new Item.Properties(), MnemonicObeliskBlockEntity.STRUCTURE));
