@@ -2,6 +2,10 @@
 
 采用 Forge 1.20.1 原版 HierarchicalModel/ModelPart，一套基础模型服务两阶段，建议不新增 GeckoLib。原稿层级的手臂和头部分居 root 下会增加躯干联动工作；采用下列实际父子关系。
 
+2026-09-13 用户要求使用 Blender 提升造型精度：现采用 Blender 多边形网格绑定下述原版关节，
+由 `VicissitudeBlenderMesh` 提交三角面，保留 ModelPart 动画及锚点；Blockbench 交付改为 free mesh 格式，
+并增加可编辑 `.blend`。具体资产和复现步骤见 `art/first-vicissitude/README.md`。
+
 ```text
 root
 └─ body_root

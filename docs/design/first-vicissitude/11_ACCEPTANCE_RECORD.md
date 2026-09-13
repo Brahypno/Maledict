@@ -6,6 +6,20 @@
 
 ## 结论摘要
 
+2026-09-13 Blender 重做补充：用户否定旧方块模型精度后，已交付 `.blend`、free mesh `.bbmodel`、
+256×256 base/emissive 及游戏 mesh JSON。反馈修订后为 380 个网格、23,244 个三角面，保留 65 个层级关节/锚点；
+胸腔背板改为两侧残片，断环为四段不等长真弧线，双翼改为正面展开的分层骨羽，头部为遮住内核的分离冠壳。
+渲染接回原版 ModelPart 姿态及持物/特效父链；服务端翼部包围盒从 Blender 网格导出。
+`compileJava --offline` 和 1,483,776 次翼顶点/动作/阶段/朝向/收翼组合检查通过。
+本次反馈修订：断环改为环面内旋转；翼部增加三股骨架及前中后三层羽片；加厚躯干与自然连接；
+分指改为块状手；胸环改为破碎骨质残弧、错位黑紫底片和断续星轨/裂光。环面旋转检查通过。
+后续澄清：头部采用末地水晶式内核、多面裂壳与断菱形框，保留尖锐星芒，不采用完整立方体头。
+胸肩、侧壁、腹部补成有棱面的实体，缩小中央空洞；手掌减小并以收窄前臂/腕环衔接。
+修复贴图重复线性化引起的灰暗输出，PNG 与 Blender 预览共用相同 sRGB 资产。
+两阶段四视角、灰模三视图、头胸细节、死亡露核和夜间 Blender 预览见 `art/first-vicissitude/preview/blender`。
+这些是离线检查，游戏实机灯光、三类武器握持、资源重载和帧率仍待客户端验收。
+以下原 M2/M3 数量和早期 cube 工具描述仅记录旧版，不代表当前美术交付；复现步骤以美术目录 README 为准。
+
 | 里程碑 | 状态 | 说明 |
 | --- | --- | --- |
 | M1 状态与接口 | 代码完成待验证 | stage/action/序列/起始时间/持械状态全部走 SynchedEntityData；难度时长集中在 `BossDifficulty` 表；免没收 tag 与账本已接入 |
@@ -241,6 +255,84 @@
     攻击仍然在**释放帧**对齐到真正的攻击对象：扇射/齐射/远程在出手瞬间 aceTowards(aim)，
     近战（横斩/竖劈/重击）在结算前 aceTowards(swingTarget.position())，
     所以"看到它朝我挥刀"和"这一刀打的是我"始终一致。
+
+## 用户反馈修正（第十轮）
+
+用户更新了 Blender 模型（380 网格、23,244 三角面，关节名不变），随后提出四项修订：
+
+29. **胸口的环与头后的环反向旋转**：胸环三段弧是三个各自带枢轴的关节（局部枢轴 (10,5)、( -10,5)、(0,9)），
+    单关节自转只会让碎片原地打转。新增 `VicissitudeRig.spinChestRing`：以 TORSO 局部 (0,1)（即网格实测的环心，
+    xy 半径约 5.2、深度由网格自身给出）为心，把三条弧的枢轴沿同一个圆一起推移并附加同角度自转，
+    于是整环刚性旋转。idle 中光环 +0.6°/tick、胸环 **-0.6°/tick**（同速反向）。
+    离线检查 `RigMeshCheck` 新增：三条弧到环心的距离在 0–240 tick 内恒定（刚性），
+    且"胸环转角 − 光环转角 = 2·tick·0.6"在 NONE 与 CAST_FROM_CHEST 下都成立（互为反向同速）。
+30. **渲染与实际手持物品分离**（应对"缴械"类能力）：
+    - 新增同步字段 `DATA_WEAPON_TIER`；`FirstVicissitudeBossEntity#getDisplayWeapon` 在客户端按档位用
+      `createWeaponForDifficulty` 重建 ItemStack（带缓存，只在档位变化时重建），渲染层不再读 `getMainHandItem()`；
+    - 手上仍会维持同档武器：空手当 tick 立即补，类型不符每 20 tick 纠正一次，飞行镰刀（weaponState=2）不被触碰；
+      `cancelFlyingScythe` 在保管副本丢失时也用代码副本补回；
+    - **物品带来的属性写在实体的 attribute 里**：`applyWeaponAttributes()` 在装备二阶段武器时，从
+      `createWeaponForDifficulty(...).getAttributeModifiers(MAINHAND)` **读出武器自身的属性表**，为每一条生成
+      一个固定修饰符（自有 UUID）加到实体上——攻击伤害、攻击速度等一个不漏，代码里不出现任何手写数值；
+      同时 `suppressHeldItemAttributes()` 每 tick 清掉手上物品的临时修饰符，所以同一份加成不会被算两次。
+      `attackDamage()` 回到原来的 `getAttributeValue(ATTACK_DAMAGE)`，攻击方式与原版一致。
+      （本例实际结果：基础 8 + 染魂钢镰刀 5 / 救赎之锋 9 / Incursus Blade 等级 3 → 3、等级 9 → 9，
+      即 13 / 17 / 11 / 17；一阶段不持械仍是 8。这些数字来自武器定义，不在本仓库里写死。）
+31. **对玩家的伤害分档**：`hurtParticipant` 是所有技能（近战、冲刺、胸/环判定、投掷弹体、二阶段球）唯一的伤害入口。
+    玩家目标走 ChangeLib：SIMPLE/DIFFICULT 用 `DamageProbe.lighterDamageMethod`，COMPLETE/EXTREME 用
+    `mediumDamageMethod`；非玩家仍走普通 `hurt`。每个技能仍保留"每轮每目标一次"与 `invulnerableTime=0`。
+32. **血量与防御**：`BossDifficulty` 增加 `maxHealth`(500/750/1000/1500) 与 `damagePress`（伤害本身仍来自实体属性）；
+    `applyDifficultyAttributes` 在该实体加入世界、真生命账本捕获上限之前写入 `MAX_HEALTH` 固定修饰符，
+    入世后锁定（与阶段时长一致，中途改难度不改本场血量）；属性注册补 15 点护甲与显式击退抗性 1.0。
+    直接从存档载入二阶段时，`onAddedToWorld` 也会补一次武器属性烘焙，避免第一 tick 掉回基础值。
+33. **翅膀与手臂的次要动态**（第四轮"右臂攻击时左臂一动不动"的收尾）：
+    - 所有攻击取释放曲线**延迟 4 tick** 的副本，得到 `trail = swing - swingLag`；
+    - 另一只手做反向配重：横斩时左臂蓄力抬起、释放甩出；竖劈/重击时反向驱动；胸施法双手合拢再张开；
+      环施法右手抬起、左手低位张开；投掷/冲刺/收招/远程兜底同样补齐；
+    - 双翼按身体 yaw 或俯仰的落后量拖拽（左右**同号**，是整体滞后），并在释放帧加一次开合；
+    - 下段残躯与布片按 `trail` 延迟跟随；
+    - idle 增加：双臂各自独立慢漂移（1.9 rad 相位差）、翼根 160 tick 呼吸且左右不完全同步、
+      二阶段左臂静止位更低（对应设计"左手独立"）。
+
+### 本轮命令与结果
+
+| 命令 | 结果 |
+| --- | --- |
+| `.\gradlew compileJava --offline` | BUILD SUCCESSFUL |
+| `javac src/main/java/org/brahypno/maledict/rig/*.java art/first-vicissitude/tools/RigMeshCheck.java` + `java RigMeshCheck` | 三条 PASS：光环保持面内、胸环刚性且与光环反向同速、1,483,776 次翼顶点/动作/阶段/朝向/收翼组合检查（与上一轮同数，未回退） |
+
+本轮同样**未在游戏内验证**：反向旋转的观感、四种难度下的血量/伤害手感、DamageProbe 在玩家身上的实际表现
+（尤其 COMPLETE/EXTREME 的补足伤害是否会显得"护甲无效"）、缴械模组下的补装行为，都需要客户端实测。
+
+## 用户反馈修正（第十一轮）
+
+34. **跟随距离又偏短**：真正决定"跟多远"的不是 `FOLLOW_RANGE` 属性，而是 `firstVicissitude.engagementRange`
+    ——第六轮按"主动攻击距离别那么大"把它设成 12 格，于是玩家一跑出 12 格，Boss 就直接放弃目标、原地悬停。
+    这和 07 写的"超过 64 格仅接近不发射"自相矛盾：12 格时那条规则根本触发不到。现在：
+    - `engagementRange` 默认 12 → **96** 格，可调范围 4–64 → **4–256**；
+    - `Attributes.FOLLOW_RANGE` 32 → **96**，与本战斗实际使用的距离一致（该属性对本实体只作对外一致用，
+      追击由 CombatGoal 自己走）；
+    - 一阶段补上和二阶段同款的**超距不发射**门：距离 > 64 格时只接近不开火。一阶段弹体寿命只够飞约 36 格，
+      从半场外开火只会生成打不到的空弹。
+    死亡宽恕、旁观/创造忽略、换维度结束交战这些不受影响，所以第六轮"别跨场追复活玩家"的诉求仍然成立
+    ——那条现在由 `forgiveDeadPlayers` 负责，而不是由 12 格的半径负责。
+35. **羽翼乱翻（第十轮次要动态的实现错误）**：`dragWingsYaw/Pitch` 的实参已经是**角度**，
+    但我当时又乘了一遍 16–24 的"每单位角度"系数，于是翼根在释放帧被甩到 **-254°**（横斩）、
+    竖劈 **-252°**、重击 **-432°**、环施法 **-120°** —— 正是用户看到的"绕横轴和躯干纵轴乱翻、幅度大又快"。
+    现在改为取身体转角的 **30%** 并封顶 **±10°**（`WING_DRAG_FRACTION` / `WING_DRAG_CAP`），
+    翼根 / 外翼 / 羽片按 1.0 / 0.6 / 0.4 递减，峰值分别不超过 10° / 6° / 4°。
+    新增离线检查 `RigMeshCheck#checkWingComposure`：扫 3060 组动作/阶段/收翼/时钟组合，
+    逐关节逐轴比对"作者姿态包络 + 约 15%"的上限（实测峰值：翼根 10.1/61.5/56.4、外翼 3.7/49.0/18.2、
+    下翼 0/46.0/0、羽片 2.6/4.0/0），任何再次乘错倍数都会当场断言失败。
+36. **区块加载时崩溃：Modifier is already applied on this attribute!**（用户实测报错，
+    栈顶 `applyWeaponAttributes` → `AttributeInstance.addPermanentModifier` → `AttributeMap.addModifier`）
+    ——固定修饰符是**实体存档的一部分**（`LivingEntity` 会把 attributes 写进 NBT），
+    从磁盘重载时属性表里已经有我写的那些 UUID，而我用来避免叠加的 `appliedWeaponAttributes`
+    是运行期列表、重载后是空的，于是"移除旧的"什么都没移除，接着又加同一个 UUID，原版直接抛异常。
+    现在把"先清除再写入"改成**按槽位 UUID 无条件清除**（`weaponModifierId(slot)`，
+    `removeModifier` 对不存在的 id 是空操作），运行期列表只作为额外保险。
+    同一类问题已连带复查：`applyDifficultyAttributes` 本来就是先 `removeModifier` 再 `add`，不受影响；
+    全仓库只有这两处会写固定修饰符。
 
 ## 未验证项（明确不声称通过）
 

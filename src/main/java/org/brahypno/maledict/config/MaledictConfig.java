@@ -36,10 +36,12 @@ public final class MaledictConfig {
         builder.push("firstVicissitude");
         VICISSITUDE_ENGAGEMENT_RANGE = builder
                 .comment("How far, in blocks, the First Vicissitude picks up and keeps a target.",
-                        "Players farther away are ignored until they engage again, which is the",
-                        "vanilla style death forgiveness behaviour. Lower it to make the boss",
-                        "less willing to cross the arena towards you.")
-                .defineInRange("engagementRange", 12.0D, 4.0D, 64.0D);
+                        "This is the boss' real follow range: beyond it the encounter lets you go,",
+                        "which is the vanilla style death forgiveness behaviour. It has to stay",
+                        "above the 64 block no-fire range, otherwise the boss would drop the target",
+                        "before the approach-without-firing behaviour it is built around can happen.",
+                        "Lower it to make the boss less willing to cross the arena towards you.")
+                .defineInRange("engagementRange", 96.0D, 4.0D, 256.0D);
         builder.pop();
         builder.pop();
         COMMON_SPEC = builder.build();

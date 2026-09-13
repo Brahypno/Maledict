@@ -31,6 +31,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
@@ -45,6 +48,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
+import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.common.curio.VicissitudeCurioLedger;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.common.curio.VicissitudeCurioReturns;
@@ -133,6 +137,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> DATA_WEAPON_STATE =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
+    /** Weapon tier of the current difficulty; the client draws from this, never from the hand. */
+    private static final EntityDataAccessor<Byte> DATA_WEAPON_TIER =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> DATA_ACTION_SEQUENCE =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Long> DATA_ACTION_START =
@@ -178,6 +185,14 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private static final int UNSTICK_SUCCESS_COOLDOWN = 100;
     private static final int UNSTICK_MAX_CANDIDATES = 64;
     private static final int[] UNSTICK_RADII = {4, 8, 12, 16};
+    /** Stable id for the difficulty health modifier, so it can be rewritten without stacking. */
+    private static final UUID MAX_HEALTH_MODIFIER_ID =
+            UUID.fromString("2c4b1d5a-9f34-4b1c-9a37-6d1f4c0a51e2");
+    /** Base id for the baked weapon modifiers; each one gets the next least significant value. */
+    private static final UUID WEAPON_ATTRIBUTE_ID =
+            UUID.fromString("8a17c3d2-5e64-4d0b-9c31-7b2f5a0e6d44");
+    /** How often the hand is checked against the weapon the encounter expects. */
+    private static final int WEAPON_GUARD_INTERVAL = 20;
 
     private final ServerBossEvent bossEvent = new ServerBossEvent(
             getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
@@ -238,6 +253,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private ItemStack stashedWeapon = ItemStack.EMPTY;
     private int pendingWeaponTier = -1;
     private BossDifficulty bossDifficulty = BossDifficulty.SIMPLE;
+    /** Set once the vitality ledger has captured the pool; a mode change may not alter it after. */
+    private boolean difficultyLocked;
+    /** Client side render stack, rebuilt only when the synced tier changes. */
+    private ItemStack displayWeapon = ItemStack.EMPTY;
+    private int displayWeaponTier = -1;
+    /** Weapon modifiers currently baked into the entity's attribute map. */
+    private final List<AppliedAttribute> appliedWeaponAttributes = new ArrayList<>();
 
     public FirstVicissitudeBossEntity(EntityType<? extends FirstVicissitudeBossEntity> type,
                                       Level level) {
@@ -250,9 +272,103 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public static AttributeSupplier.Builder createAttributes() {
         return createBossAttributes()
                 .add(Attributes.ATTACK_DAMAGE, 8.0D)
+                // The encounter cannot be shoved around and ordinary hits mostly glance off; the
+                // weapon in the hand contributes nothing to either value.
+                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
+                .add(Attributes.ARMOR, 15.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.FLYING_SPEED, 0.45D)
-                .add(Attributes.FOLLOW_RANGE, 32.0D);
+                // Kept in step with the engagement range in the config: this boss chases through
+                // its own combat goal, but every vanilla and modded system that reads the
+                // attribute should see the same reach the encounter actually uses.
+                .add(Attributes.FOLLOW_RANGE, 96.0D);
+    }
+
+    /**
+     * Writes the difficulty's health pool onto the attribute. The attribute stays the single
+     * authority for the maximum; only the permanent modifier is rewritten, and only before the
+     * vitality ledger captures the pool, so an in-progress fight can never be healed or
+     * shortened by changing the mode.
+     */
+    private void applyDifficultyAttributes() {
+        AttributeInstance attribute = getAttribute(Attributes.MAX_HEALTH);
+        if (attribute == null) {
+            return;
+        }
+        attribute.removeModifier(MAX_HEALTH_MODIFIER_ID);
+        double delta = bossDifficulty.maxHealth() - VicissitudeBossEntity.BASE_MAX_HEALTH;
+        if (delta != 0.0D) {
+            attribute.addPermanentModifier(new AttributeModifier(MAX_HEALTH_MODIFIER_ID,
+                    "Vicissitude difficulty health", delta, AttributeModifier.Operation.ADDITION));
+        }
+    }
+
+    /**
+     * Bakes the difficulty weapon's attribute loadout into the entity itself.
+     *
+     * <p>The values are read from the weapon the encounter holds, never typed out here: the item
+     * stays the definition, the entity carries the result. Attack damage, attack speed and any
+     * other attribute the weapon provides therefore survive a disarm, an inventory swap or a mod
+     * that deletes the held item, and {@code attackDamage()} keeps reading the plain vanilla
+     * attribute like every other mob.
+     *
+     * <p>The copies get their own ids, and {@link #suppressHeldItemAttributes()} removes the
+     * weapon's own equipment modifiers every tick, so the same bonus is never counted twice.
+     *
+     * <p>Every id is cleared before it is written again: permanent modifiers are part of the
+     * entity's saved attributes, so after a reload the attribute map already holds them while the
+     * in-memory list below is empty. Adding a modifier whose id is present throws, which is
+     * exactly what a boss reloading from disk used to do.
+     */
+    private void applyWeaponAttributes() {
+        for (AppliedAttribute applied : appliedWeaponAttributes) {
+            AttributeInstance instance = getAttribute(applied.attribute());
+            if (instance != null) {
+                instance.removeModifier(applied.id());
+            }
+        }
+        appliedWeaponAttributes.clear();
+        int slot = 0;
+        for (var entry : createWeaponForDifficulty(bossDifficulty)
+                .getAttributeModifiers(EquipmentSlot.MAINHAND).entries()) {
+            UUID id = weaponModifierId(slot++);
+            AttributeInstance instance = getAttribute(entry.getKey());
+            if (instance == null) {
+                // The entity simply does not carry that attribute (modded ones such as Lodestone's
+                // magic damage are player only); there is nothing to bake in.
+                continue;
+            }
+            instance.removeModifier(id);
+            AttributeModifier source = entry.getValue();
+            instance.addPermanentModifier(new AttributeModifier(id,
+                    "Vicissitude weapon " + entry.getKey().getDescriptionId(), source.getAmount(),
+                    source.getOperation()));
+            appliedWeaponAttributes.add(new AppliedAttribute(entry.getKey(), id));
+        }
+    }
+
+    /** Stable id per loadout slot, so a re-apply always clears the modifier it wrote before. */
+    private static UUID weaponModifierId(int slot) {
+        return new UUID(WEAPON_ATTRIBUTE_ID.getMostSignificantBits(),
+                WEAPON_ATTRIBUTE_ID.getLeastSignificantBits() + slot);
+    }
+
+    /**
+     * Strips whatever the hand currently provides. The encounter's own copies are permanent, so
+     * nothing equipped may add to them; this also covers a replacement item dropped in by another
+     * mod before the guard restores the real weapon.
+     */
+    private void suppressHeldItemAttributes() {
+        ItemStack held = getMainHandItem();
+        if (held.isEmpty()) {
+            return;
+        }
+        getAttributes().removeAttributeModifiers(
+                held.getAttributeModifiers(EquipmentSlot.MAINHAND));
+    }
+
+    /** One baked weapon modifier, remembered so it can be replaced instead of stacking. */
+    private record AppliedAttribute(Attribute attribute, UUID id) {
     }
 
     @Override
@@ -262,6 +378,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         entityData.define(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
         entityData.define(DATA_ACTIVE_SIDE, (byte) 0);
         entityData.define(DATA_WEAPON_STATE, (byte) 0);
+        // Field initializers have not run yet at this point, so the tier starts as SIMPLE (0).
+        entityData.define(DATA_WEAPON_TIER, (byte) 0);
         entityData.define(DATA_ACTION_SEQUENCE, 0);
         entityData.define(DATA_ACTION_START, 0L);
         entityData.define(DATA_HURT_TICKS, 0);
@@ -385,8 +503,29 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return entityData.get(DATA_WEAPON_STATE) == 1;
     }
 
+    /**
+     * The stack the renderer draws, rebuilt from the synced tier rather than read from the hand.
+     *
+     * <p>Disarm effects, inventory swaps and mods that delete held items therefore cannot leave
+     * the encounter visibly unarmed; the weapon on screen and the weapon in the hand are two
+     * separate things by design.
+     */
+    public ItemStack getDisplayWeapon() {
+        int tier = entityData.get(DATA_WEAPON_TIER);
+        if (tier != displayWeaponTier || displayWeapon.isEmpty()) {
+            displayWeaponTier = tier;
+            displayWeapon = createWeaponForDifficulty(BossDifficulty.byId(tier));
+        }
+        return displayWeapon;
+    }
+
     private void setWeaponState(int state) {
         entityData.set(DATA_WEAPON_STATE, (byte) state);
+    }
+
+    private void setWeaponTier(BossDifficulty difficulty) {
+        entityData.set(DATA_WEAPON_TIER, (byte) difficulty.ordinal());
+        displayWeaponTier = -1;
     }
 
     private int actionTicks() {
@@ -423,6 +562,17 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Override
     public void onAddedToWorld() {
+        if (!level().isClientSide) {
+            // The base class captures the health pool into the vitality ledger from here on, so
+            // the difficulty modifier has to be in place before that call.
+            applyDifficultyAttributes();
+            difficultyLocked = true;
+            if (entityData.get(DATA_WEAPON_STATE) == 1) {
+                // A save loaded with the weapon already in hand never runs the equip step again,
+                // so the weapon's attribute loadout is rebuilt here.
+                applyWeaponAttributes();
+            }
+        }
         super.onAddedToWorld();
         if (!level().isClientSide && Double.isNaN(idleHoverY)) {
             idleHoverY = Math.min(level().getMaxBuildHeight() - getBbHeight() - 1.0D,
@@ -453,6 +603,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (tickCount % 10 == 0) {
             forgetDeadParticipants();
         }
+        if (tickCount % WEAPON_GUARD_INTERVAL == 0) {
+            tickWeaponGuard(true);
+        }
+        tickWeaponGuard(false);
+        suppressHeldItemAttributes();
         tickCooldowns();
         tickStage();
         tickAction();
@@ -837,6 +992,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (target == null) {
             return;
         }
+        if (distanceTo(target) > NO_FIRE_RANGE) {
+            // Same rule as phase two: close the gap first. Phase one bolts only live long enough
+            // for about 36 blocks, so firing from across the arena would only spawn duds.
+            return;
+        }
         currentBaseSlot = baseSlotIndex++;
         // Every other slot may be a special skill. Alternating instead of always preferring a
         // special keeps the wing fan the main source of pressure, as 07 requires.
@@ -1218,9 +1378,31 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             // One damage instance per round and target: a fan or wave never double dips.
             return false;
         }
+        return hurtParticipant(victim,
+                DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this), damage);
+    }
+
+    /**
+     * The encounter's only damage entry point for combat participants.
+     *
+     * <p>Players are hit through the ChangeLib probe ladder the difficulty table selects: the two
+     * easy modes use the light ladder, which stops after the first authoritative hit and lets
+     * armour, enchantments and caps do their job, while COMPLETE and EXTREME use the medium
+     * ladder, which keeps pressing until the authored amount has actually been taken. Everything
+     * that is not a player is hit normally.
+     */
+    public boolean hurtParticipant(LivingEntity victim, DamageSource source, float damage) {
+        if (damage <= 0.0F || victim.level().isClientSide) {
+            return false;
+        }
+        // Every skill hit lands: an attack is one authored instance, not a stream of ticks.
         victim.invulnerableTime = 0;
-        return victim.hurt(DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this),
-                damage);
+        if (!(victim instanceof Player)) {
+            return victim.hurt(source, damage);
+        }
+        return bossDifficulty.damagePress() == DamagePress.MEDIUM
+               ? DamageProbe.mediumDamageMethod(victim, source, damage).success()
+               : DamageProbe.lighterDamageMethod(victim, source, damage).success();
     }
 
     private void spawnSlashEffect(boolean vertical) {
@@ -1289,7 +1471,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         ItemStack weapon = getMainHandItem();
         if (weapon.isEmpty()) {
-            return;
+            // A disarm must not skip the throw either: fall back to the code owned copy.
+            weapon = createWeaponForDifficulty(bossDifficulty);
         }
         Vec3 direction = target != null
                          ? target.getEyePosition().subtract(handAnchorWorldPosition()).normalize()
@@ -1340,11 +1523,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             entity.discard();
         }
         scytheToken = null;
-        if (!stashedWeapon.isEmpty()) {
-            setItemSlot(EquipmentSlot.MAINHAND, stashedWeapon.copy());
-            stashedWeapon = ItemStack.EMPTY;
-        }
-        setWeaponState(hasWeaponInHand() ? 1 : 0);
+        // The stash is the authoritative copy. A copy that was lost, disarmed or replaced while
+        // the weapon flew is re-issued from code instead of leaving the encounter empty handed.
+        ItemStack restored = stashedWeapon.isEmpty()
+                             ? (getHealth() > 0.0F ? createWeaponForDifficulty(bossDifficulty)
+                                                   : ItemStack.EMPTY)
+                             : stashedWeapon.copy();
+        stashedWeapon = ItemStack.EMPTY;
+        setItemSlot(EquipmentSlot.MAINHAND, restored);
+        setWeaponTier(bossDifficulty);
+        setWeaponState(restored.isEmpty() ? 0 : 1);
     }
 
     @Override
@@ -1543,6 +1731,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return (float) (Math.toDegrees(Math.atan2(-dx, dz)));
     }
 
+    /**
+     * Damage comes from the entity's own attribute, exactly like any other mob. What changed is
+     * where the weapon's contribution lives: {@link #applyWeaponAttributes()} bakes the difficulty
+     * weapon's modifiers into the entity, so the number no longer depends on the item being in the
+     * hand and is never written out by hand here.
+     */
     private float attackDamage() {
         return Math.max(1.0F, (float) getAttributeValue(Attributes.ATTACK_DAMAGE));
     }
@@ -2204,7 +2398,31 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private void equipPhaseTwoWeapon() {
         setItemSlot(EquipmentSlot.MAINHAND, createWeaponForDifficulty(bossDifficulty));
         setDropChance(EquipmentSlot.MAINHAND, 0.0F);
+        applyWeaponAttributes();
+        setWeaponTier(bossDifficulty);
         setWeaponState(1);
+    }
+
+    /**
+     * Keeps the hand matching the encounter while the weapon is supposed to be held.
+     *
+     * <p>The rendered weapon no longer depends on this stack, and neither does the damage, but the
+     * throw loop and everything else that reads the hand still expect a scythe there. Only the
+     * "weapon is held" state is policed, which leaves a weapon in flight alone.
+     *
+     * @param fullCheck also compares the item type, on the slow cadence; an empty hand is always
+     *                  restored immediately
+     */
+    private void tickWeaponGuard(boolean fullCheck) {
+        if (scytheToken != null || entityData.get(DATA_WEAPON_STATE) != 1) {
+            return;
+        }
+        ItemStack held = getMainHandItem();
+        if (!held.isEmpty() && (!fullCheck || held.is(createWeaponForDifficulty(bossDifficulty)
+                .getItem()))) {
+            return;
+        }
+        equipPhaseTwoWeapon();
     }
 
     private ItemStack createWeaponForDifficulty(BossDifficulty difficulty) {
@@ -2229,6 +2447,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     public void setBossDifficulty(BossDifficulty difficulty) {
         bossDifficulty = difficulty == null ? BossDifficulty.SIMPLE : difficulty;
+        setWeaponTier(bossDifficulty);
+        if (!difficultyLocked && !level().isClientSide) {
+            // Before the fight starts the pool simply follows the mode; afterwards it is frozen.
+            applyDifficultyAttributes();
+        }
         if (!phaseOneDurationLocked) {
             phaseOneDurationTicks = bossDifficulty.phaseOneDurationTicks();
         }
@@ -2293,6 +2516,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                                  ? tag.getString("VicissitudeDifficulty")
                                  : tag.getString("PhaseTwoMode");
         bossDifficulty = BossDifficulty.fromName(savedDifficulty);
+        entityData.set(DATA_WEAPON_TIER, (byte) bossDifficulty.ordinal());
         if (hasStage) {
             stage = VicissitudeBossStage.byId(tag.getByte("VicissitudeStage"));
         } else {
@@ -2443,19 +2667,42 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     /** Difficulty table: phase one gets shorter as the difficulty rises. */
     public enum BossDifficulty {
-        SIMPLE(1800),
-        DIFFICULT(1400),
-        COMPLETE(1000),
-        EXTREME(750);
+        /**
+         * {@code maxHealth} is the pool the vitality ledger captures when the entity joins the
+         * world. Attack damage is not listed here: it comes from the difficulty weapon's own
+         * attribute modifiers, which {@link #applyWeaponAttributes()} bakes into the entity.
+         *
+         * <p>{@code damagePress} picks the ChangeLib damage ladder used when the boss damages a
+         * player: {@code LIGHT} stops after the first authoritative hit, so armour, enchantments
+         * and damage caps still decide how much lands, while {@code MEDIUM} keeps pressing until
+         * the authored amount has actually been taken. The two easy modes use the light ladder,
+         * the two hard modes the medium one.
+         */
+        SIMPLE(1800, 500.0D, DamagePress.LIGHT),
+        DIFFICULT(1400, 750.0D, DamagePress.LIGHT),
+        COMPLETE(1000, 1000.0D, DamagePress.MEDIUM),
+        EXTREME(750, 1500.0D, DamagePress.MEDIUM);
 
         private final int phaseOneDurationTicks;
+        private final double maxHealth;
+        private final DamagePress damagePress;
 
-        BossDifficulty(int phaseOneDurationTicks) {
+        BossDifficulty(int phaseOneDurationTicks, double maxHealth, DamagePress damagePress) {
             this.phaseOneDurationTicks = phaseOneDurationTicks;
+            this.maxHealth = maxHealth;
+            this.damagePress = damagePress;
         }
 
         public int phaseOneDurationTicks() {
             return phaseOneDurationTicks;
+        }
+
+        public double maxHealth() {
+            return maxHealth;
+        }
+
+        public DamagePress damagePress() {
+            return damagePress;
         }
 
         private boolean confiscatesCurios() {
@@ -2466,6 +2713,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return name().toLowerCase(Locale.ROOT);
         }
 
+        /** Synced weapon tiers travel as a byte; anything unexpected falls back to SIMPLE. */
+        private static BossDifficulty byId(int id) {
+            BossDifficulty[] values = values();
+            return id >= 0 && id < values.length ? values[id] : SIMPLE;
+        }
+
         private static BossDifficulty fromName(String name) {
             try {
                 return valueOf(name.toUpperCase(Locale.ROOT));
@@ -2473,6 +2726,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 return SIMPLE;
             }
         }
+    }
+
+    /** How hard the boss presses its damage through a player's defences. */
+    public enum DamagePress {
+        LIGHT,
+        MEDIUM
     }
 
     /** Single combat goal; phase selection happens inside so goals never fight each other. */

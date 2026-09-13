@@ -110,7 +110,11 @@ public final class FirstVicissitudeBossRenderer
     }
 
     /**
-     * The real difficulty weapon, drawn in the bind pose of the right hand chain.
+     * The difficulty weapon, drawn in the bind pose of the right hand chain.
+     *
+     * <p>The stack comes from the entity's synced tier, not from the main hand: the encounter has
+     * to stay visibly armed even when a disarm effect, an inventory swap or another mod empties
+     * or replaces the real item.
      */
     private static final class WeaponLayer
             extends RenderLayer<FirstVicissitudeBossEntity, FirstVicissitudeBossModel> {
@@ -126,7 +130,7 @@ public final class FirstVicissitudeBossRenderer
             if (!entity.shouldRenderHeldWeapon()){
                 return;
             }
-            ItemStack stack = entity.getMainHandItem();
+            ItemStack stack = entity.getDisplayWeapon();
             if (stack.isEmpty()){
                 return;
             }

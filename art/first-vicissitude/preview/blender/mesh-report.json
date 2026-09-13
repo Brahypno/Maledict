@@ -1,0 +1,10 @@
+{
+  "objects": 380,
+  "triangles": 23244,
+  "joints": 65,
+  "source": "Blender mesh, same geometry exported to runtime and Blockbench",
+  "texture_size": [
+    256,
+    256
+  ]
+}

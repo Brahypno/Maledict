@@ -3,12 +3,12 @@ package org.brahypno.maledict.client.model;
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.rig.VicissitudeRig;
 import org.brahypno.maledict.rig.VicissitudeRigData;
@@ -19,14 +19,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The First Vicissitude boss model. The part hierarchy, pivots, cube boxes and UV rectangles
- * all come from {@link VicissitudeRigData}, and the per-frame pose comes from
- * {@link VicissitudeRig}, so the rendered skeleton and the authoritative server geometry are
- * always the same skeleton.
+ * Blender-authored rigid mesh on the shared vanilla joint hierarchy. Animation, held-item
+ * transforms and authoritative attack anchors continue to use {@link VicissitudeRig}.
  */
 public final class FirstVicissitudeBossModel
         extends HierarchicalModel<FirstVicissitudeBossEntity> {
     private final ModelPart root;
+    private final VicissitudeBlenderMesh mesh = new VicissitudeBlenderMesh();
     private final Map<VicissitudeRigData.Joint, ModelPart> parts =
             new EnumMap<>(VicissitudeRigData.Joint.class);
     private final VicissitudeRig.Pose pose = VicissitudeRig.newPose();
@@ -51,7 +50,7 @@ public final class FirstVicissitudeBossModel
             PartDefinition parent = joint.parent() == null
                                     ? skeletonRoot : definitions.get(joint.parent());
             PartDefinition definition = parent.addOrReplaceChild(
-                    joint.partName(), cubes(joint),
+                    joint.partName(), CubeListBuilder.create(),
                     PartPose.offset(joint.localX(), joint.localY(), joint.localZ()));
             definitions.put(joint, definition);
         }
@@ -59,19 +58,10 @@ public final class FirstVicissitudeBossModel
                 VicissitudeRigData.TEXTURE_SIZE);
     }
 
-    private static CubeListBuilder cubes(VicissitudeRigData.Joint joint) {
-        CubeListBuilder builder = CubeListBuilder.create();
-        for (VicissitudeRigData.PlacedCube cube : VicissitudeRigData.placedCubes(joint)) {
-            float width = cube.spec().width();
-            float height = cube.spec().height();
-            float depth = cube.spec().depth();
-            builder.texOffs(cube.u(), cube.v()).addBox(
-                    cube.spec().centerX() - width / 2.0F,
-                    cube.spec().centerY() - height / 2.0F,
-                    cube.spec().centerZ() - depth / 2.0F,
-                    width, height, depth, CubeDeformation.NONE);
-        }
-        return builder;
+    @Override
+    public void renderToBuffer(PoseStack stack, VertexConsumer buffer, int light, int overlay,
+                               float red, float green, float blue, float alpha) {
+        mesh.render(this, stack, buffer, light, overlay, red, green, blue, alpha);
     }
 
     public ModelPart part(VicissitudeRigData.Joint joint) {

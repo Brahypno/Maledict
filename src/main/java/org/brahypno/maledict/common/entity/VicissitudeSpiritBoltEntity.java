@@ -112,10 +112,16 @@ public final class VicissitudeSpiritBoltEntity extends Projectile {
                 living.setHealth(Math.min(living.getHealth(), 1.0F));
             } else {
                 Entity owner = getOwner();
-                living.invulnerableTime = 0;
-                living.hurt(owner instanceof LivingEntity livingOwner
-                        ? damageSources().mobProjectile(this, livingOwner)
-                        : damageSources().magic(), damage);
+                // Phase two bolts belong to the encounter: they go through the same difficulty
+                // ladder as its melee so a hard mode cannot be dodged by putting armour on.
+                if (owner instanceof FirstVicissitudeBossEntity boss) {
+                    boss.hurtParticipant(living, damageSources().mobProjectile(this, boss), damage);
+                } else {
+                    living.invulnerableTime = 0;
+                    living.hurt(owner instanceof LivingEntity livingOwner
+                            ? damageSources().mobProjectile(this, livingOwner)
+                            : damageSources().magic(), damage);
+                }
             }
         }
         if (level() instanceof ServerLevel serverLevel) {

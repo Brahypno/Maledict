@@ -29,6 +29,11 @@ import java.util.UUID;
  */
 public abstract class VicissitudeBossEntity extends PathfinderMob {
     public static final MobType VICISSITUDE = new MobType();
+    /**
+     * The attribute default every Vicissitude boss starts from. Difficulty tables express their
+     * pool as a delta against this, and the ledger captures whatever the attribute ends up at.
+     */
+    public static final double BASE_MAX_HEALTH = 1000.0D;
     private static final EntityDataAccessor<Float> DISPLAY_VITALITY =
             SynchedEntityData.defineId(VicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
     // Transient combat transaction state is separate from the immutable committed values.
@@ -41,7 +46,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
 
     public static AttributeSupplier.Builder createBossAttributes() {
         return PathfinderMob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 1000.0D)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D);
     }
 

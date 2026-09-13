@@ -152,9 +152,9 @@ public final class VicissitudeScytheProjectileEntity extends Projectile {
             Entity target = entityResult.getEntity();
             if (!struck && target instanceof LivingEntity living) {
                 struck = true;
-                living.invulnerableTime = 0;
-                living.hurt(DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP,
-                        this, boss), damage);
+                boss.hurtParticipant(living,
+                        DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, boss),
+                        damage);
             }
             setReturning(true);
             return;

@@ -17,8 +17,40 @@ import java.util.List;
 public final class VicissitudeRig {
     public static final int JOINT_COUNT = Joint.values().length;
     private static final float DEG_TO_RAD = (float) (Math.PI / 180.0);
+    /**
+     * Idle spin of the broken halo, in degrees per tick.
+     */
+    public static final float HALO_SPIN_PER_TICK = 0.6F;
+    /**
+     * The chest ring answers the halo at the same speed in the opposite direction.
+     */
+    public static final float CHEST_RING_SPIN_PER_TICK = -0.6F;
+    /**
+     * Hub of the broken chest ring, relative to the torso pivot (model units). The ring lies in
+     * the chest plane, so only X and Y define the axis; the depth comes from the mesh itself.
+     */
+    public static final float CHEST_RING_HUB_X = 0.0F;
+    public static final float CHEST_RING_HUB_Y = 1.0F;
+    /**
+     * The three surviving arcs of the chest ring.
+     */
+    public static final Joint[] CHEST_RING_ARCS = {
+            Joint.CHEST_RING_LEFT, Joint.CHEST_RING_RIGHT, Joint.CHEST_RING_BOTTOM};
+    /**
+     * Ticks the off hand, the wings and the lower body trail the weapon by.
+     */
+    private static final float FOLLOW_LAG = 4.0F;
+    /**
+     * How much of a body turn the wing pair is allowed to lag behind, and the absolute ceiling in
+     * degrees. Small on purpose: the strike curve crosses the whole turn in a couple of ticks, so
+     * anything larger reads as the wings flapping on their own.
+     */
+    private static final float WING_DRAG_FRACTION = 0.6F;
+    private static final float WING_DRAG_CAP = 30.0F;
 
-    /** Coarse hit segments; multipliers follow the design specification. */
+    /**
+     * Coarse hit segments; multipliers follow the design specification.
+     */
     public enum Segment {
         BODY(1.0F),
         HEAD(1.25F),
@@ -42,14 +74,18 @@ public final class VicissitudeRig {
         }
     }
 
-    /** A point in authoring space (model units). */
+    /**
+     * A point in authoring space (model units).
+     */
     public record V3(float x, float y, float z) {
         public V3 add(V3 other) {
             return new V3(x + other.x, y + other.y, z + other.z);
         }
     }
 
-    /** An axis aligned box in entity-local blocks. */
+    /**
+     * An axis aligned box in entity-local blocks.
+     */
     public record Box(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
         public boolean intersects(Box other) {
             return minX < other.maxX && maxX > other.minX
@@ -75,7 +111,7 @@ public final class VicissitudeRig {
 
         public Box inflate(double amount) {
             return new Box(minX - amount, minY - amount, minZ - amount,
-                    maxX + amount, maxY + amount, maxZ + amount);
+                           maxX + amount, maxY + amount, maxZ + amount);
         }
 
         public Box expandTowards(double dx, double dy, double dz) {
@@ -86,11 +122,13 @@ public final class VicissitudeRig {
 
         public static Box of(double x1, double y1, double z1, double x2, double y2, double z2) {
             return new Box(Math.min(x1, x2), Math.min(y1, y2), Math.min(z1, z2),
-                    Math.max(x1, x2), Math.max(y1, y2), Math.max(z1, z2));
+                           Math.max(x1, x2), Math.max(y1, y2), Math.max(z1, z2));
         }
     }
 
-    /** Mutable per-frame pose; reuse one instance per entity. */
+    /**
+     * Mutable per-frame pose; reuse one instance per entity.
+     */
     public static final class Pose {
         private final float[] rotX = new float[JOINT_COUNT];
         private final float[] rotY = new float[JOINT_COUNT];
@@ -164,7 +202,9 @@ public final class VicissitudeRig {
             offZ[index] += z;
         }
 
-        /** Copies every channel of another pose; used to seed the client side smoothing state. */
+        /**
+         * Copies every channel of another pose; used to seed the client side smoothing state.
+         */
         public void copyFrom(Pose other) {
             System.arraycopy(other.rotX, 0, rotX, 0, JOINT_COUNT);
             System.arraycopy(other.rotY, 0, rotY, 0, JOINT_COUNT);
@@ -207,12 +247,13 @@ public final class VicissitudeRig {
      * @param wingFold      0 = wings fully spread, 1 = wings folded against the body
      * @param deathTicks    ticks since death started, negative while alive
      */
-    public static void compute(Pose pose, boolean phaseTwo, float phaseTwoBlend, Action action,
-                               float actionTicks, boolean actionLeft, float hurtTicks,
-                               float idleTicks, float wingFold, float deathTicks) {
+    public static void compute(
+            Pose pose, boolean phaseTwo, float phaseTwoBlend, Action action,
+            float actionTicks, boolean actionLeft, float hurtTicks,
+            float idleTicks, float wingFold, float deathTicks) {
         pose.reset();
         applyStage(pose, phaseTwoBlend);
-        applyIdle(pose, idleTicks);
+        applyIdle(pose, idleTicks, phaseTwoBlend);
         applyAction(pose, action, actionTicks, actionLeft);
         applyFold(pose, wingFold);
         applyHurt(pose, hurtTicks);
@@ -220,7 +261,9 @@ public final class VicissitudeRig {
         solve(pose);
     }
 
-    /** Stage silhouettes: high idol versus forward-leaning executor. */
+    /**
+     * Stage silhouettes: high idol versus forward-leaning executor.
+     */
     private static void applyStage(Pose pose, float blend) {
         float torsoLean = lerp(0.0F, 15.0F, blend);
         float headDown = lerp(8.0F, 15.0F, blend);
@@ -247,12 +290,17 @@ public final class VicissitudeRig {
         pose.setRotation(Joint.HALO_FRAGMENT_4, 0.0F, 0.0F, -108.0F);
     }
 
-    /** Floating idle: body bob, feather micro motion, slow halo rotation and delayed spine sway. */
-    private static void applyIdle(Pose pose, float ticks) {
+    /**
+     * Floating idle: body bob, feather micro motion, counter-rotating rings and delayed spine sway.
+     */
+    private static void applyIdle(Pose pose, float ticks, float phaseTwoBlend) {
         float bob = (float) Math.sin(ticks * (Math.PI * 2.0D / 80.0D));
         pose.addOffset(Joint.BODY, 0.0F, -1.28F * bob, 0.0F);
-        pose.addRotation(Joint.BODY, bob * 1.5F, bob * 1.0F, 0.0F);
-        pose.addRotation(Joint.HALO_ROOT, 0.0F, ticks * 0.6F, 0.0F);
+        pose.addRotation(Joint.BODY, bob * 1.5F, bob, 0.0F);
+        // The halo lies in model XY. Spin about its normal (Z), not vertical Y; the chest ring
+        // turns the other way so the two broken rings read as one linked mechanism.
+        pose.addRotation(Joint.HALO_ROOT, 0.0F, 0.0F, ticks * HALO_SPIN_PER_TICK);
+        spinChestRing(pose, ticks * CHEST_RING_SPIN_PER_TICK);
         for (int i = 1; i <= 4; i++) {
             Joint left = Joint.valueOf("WING_LEFT_FEATHER_" + i);
             Joint right = Joint.valueOf("WING_RIGHT_FEATHER_" + i);
@@ -268,17 +316,65 @@ public final class VicissitudeRig {
         }
         pose.addRotation(Joint.HALO_FRAGMENT_1, 0.0F, 2.0F * bob, 0.0F);
         pose.addRotation(Joint.HALO_FRAGMENT_3, 0.0F, -2.0F * bob, 0.0F);
+        // Arms drift on their own slow clock and out of phase with each other, so the silhouette
+        // keeps moving while the boss hovers and waits. Phase two drops the left arm lower: the
+        // design asks for an independent left hand once the executor silhouette takes over.
+        float drift = (float) Math.sin(ticks * (float) (Math.PI * 2.0D / 120.0D));
+        float counter = (float) Math.sin(ticks * (float) (Math.PI * 2.0D / 120.0D) + 1.9F);
+        pose.addRotation(Joint.ARM_LEFT, drift * 2.6F, 0.0F,
+                         -drift * 2.2F - 4.0F * phaseTwoBlend);
+        pose.addRotation(Joint.FOREARM_LEFT, drift * 2.2F + 3.0F * phaseTwoBlend, 0.0F, 0.0F);
+        pose.addRotation(Joint.ARM_RIGHT, counter * 2.2F, 0.0F, counter * 1.8F);
+        pose.addRotation(Joint.FOREARM_RIGHT, counter * 1.6F, 0.0F, 0.0F);
+        // The wing roots breathe on a slower clock than the body bob, and slightly unevenly:
+        // a pair of wings that moves as one rigid plate is the fastest way to look like a prop.
+        float breathe = (float) Math.sin(ticks * (float) (Math.PI * 2.0D / 160.0D));
+        float uneven = (float) Math.sin(ticks * (float) (Math.PI * 2.0D / 160.0D) + 0.8F);
+        pose.addRotation(Joint.WING_LEFT_ROOT, breathe * 2.4F, breathe * 3.2F, -breathe * 4.5F);
+        pose.addRotation(Joint.WING_RIGHT_ROOT, uneven * 2.4F, -uneven * 3.2F, uneven * 4.5F);
+        pose.addRotation(Joint.WING_LEFT_OUTER, 0.0F, breathe * 2.6F, -uneven * 3.0F);
+        pose.addRotation(Joint.WING_RIGHT_OUTER, 0.0F, -uneven * 2.6F, breathe * 3.0F);
+        pose.addRotation(Joint.WING_LEFT_LOWER, 0.0F, uneven * 3.0F, 0.0F);
+        pose.addRotation(Joint.WING_RIGHT_LOWER, 0.0F, -breathe * 3.0F, 0.0F);
     }
 
-    /** Attack poses. Timings match the combat specification tables. */
+    /**
+     * Spins the whole broken chest ring around its hub.
+     *
+     * <p>The three arcs are separate joints whose pivots sit on the ring itself, so a per joint
+     * rotation would only spin each arc in place. Moving every pivot along the circle the arcs
+     * travel turns the fragments into one rigid ring again, which is how the halo already moves.
+     */
+    private static void spinChestRing(Pose pose, float degrees) {
+        float radians = degrees * DEG_TO_RAD;
+        float cos = (float) Math.cos(radians);
+        float sin = (float) Math.sin(radians);
+        for (Joint arc : CHEST_RING_ARCS) {
+            float dx = arc.localX() - CHEST_RING_HUB_X;
+            float dy = arc.localY() - CHEST_RING_HUB_Y;
+            // The hub only defines the axis: a spin in the model XY plane never moves the arcs
+            // away from the chest, so Z is left exactly where it was authored.
+            pose.addOffset(arc, cos * dx - sin * dy - dx, sin * dx + cos * dy - dy, 0.0F);
+            pose.addRotation(arc, 0.0F, 0.0F, degrees);
+        }
+    }
+
+    /**
+     * Attack poses. Timings match the combat specification tables.
+     */
     private static void applyAction(Pose pose, Action action, float t, boolean left) {
-        if (action == null || action == Action.NONE || t < 0.0F) {
+        if (action == null || action == Action.NONE || t < 0.0F){
             return;
         }
         float total = Math.max(1.0F, action.duration());
         float hit = action.releaseTick();
         float swing = strike(t, hit, total);
         float wind = ramp(t, hit, total);
+        // Trailing samples of the same curves. The weapon leads and everything else follows a
+        // few ticks later, which is what turns one rigid arm swing into a whole body motion.
+        float swingLag = strike(Math.max(0.0F, t - FOLLOW_LAG), hit, total);
+        float windLag = ramp(Math.max(0.0F, t - FOLLOW_LAG), hit, total);
+        float trail = swing - swingLag;
         switch (action) {
             case WING_RANGED -> {
                 Joint root = left ? Joint.WING_LEFT_ROOT : Joint.WING_RIGHT_ROOT;
@@ -288,6 +384,17 @@ public final class VicissitudeRig {
                 pose.addRotation(root, 0.0F, sweep * (-18.0F * wind + 26.0F * swing), 0.0F);
                 pose.addRotation(tip, 0.0F, sweep * 15.0F * wind, 0.0F);
                 pose.addRotation(Joint.TORSO, 0.0F, sweep * 9.0F * swing, 0.0F);
+                // Both hands brace in front of the chest; the far wing folds back to clear the shot.
+                pose.addRotation(Joint.ARM_LEFT, -10.0F * wind + 14.0F * swingLag, 0.0F,
+                                 10.0F * wind + 6.0F * swing);
+                pose.addRotation(Joint.ARM_RIGHT, -10.0F * wind + 14.0F * swingLag, 0.0F,
+                                 -10.0F * wind - 6.0F * swing);
+                pose.addRotation(Joint.FOREARM_LEFT, 16.0F * wind - 20.0F * swingLag, 0.0F, 0.0F);
+                pose.addRotation(Joint.FOREARM_RIGHT, 16.0F * wind - 20.0F * swingLag, 0.0F, 0.0F);
+                float far = left ? -1.0F : 1.0F;
+                pose.addRotation(Joint.WING_RIGHT_LOWER, 0.0F, far * 9.0F * wind, 0.0F);
+                pose.addRotation(Joint.WING_LEFT_LOWER, 0.0F, far * -9.0F * wind, 0.0F);
+                dragWingsYaw(pose, sweep * 9.0F * (swing - swingLag));
             }
             case WING_BARRAGE -> {
                 float pulse = 0.0F;
@@ -298,52 +405,115 @@ public final class VicissitudeRig {
                 float load = clamp(t / 20.0F);
                 float settle = t > 36.0F ? clamp(1.0F - (t - 36.0F) / 20.0F) : 1.0F;
                 pose.addRotation(Joint.WING_LEFT_ROOT,
-                        -6.0F * load * settle, -14.0F * load * settle + 26.0F * pulse, -8.0F * pulse);
+                                 -6.0F * load * settle, -14.0F * load * settle + 26.0F * pulse, -8.0F * pulse);
                 pose.addRotation(Joint.WING_RIGHT_ROOT,
-                        -6.0F * load * settle, 14.0F * load * settle - 26.0F * pulse, 8.0F * pulse);
+                                 -6.0F * load * settle, 14.0F * load * settle - 26.0F * pulse, 8.0F * pulse);
                 pose.addRotation(Joint.WING_LEFT_OUTER, 0.0F, 10.0F * pulse, 0.0F);
                 pose.addRotation(Joint.WING_RIGHT_OUTER, 0.0F, -10.0F * pulse, 0.0F);
                 pose.addRotation(Joint.TORSO, -4.0F * load * settle, 0.0F, 0.0F);
+                // The arms pump once per volley instead of hanging while the wings do the work.
+                pose.addRotation(Joint.ARM_LEFT, 12.0F * load * settle - 18.0F * pulse, 0.0F,
+                                 14.0F * load * settle + 10.0F * pulse);
+                pose.addRotation(Joint.ARM_RIGHT, 12.0F * load * settle - 18.0F * pulse, 0.0F,
+                                 -14.0F * load * settle - 10.0F * pulse);
+                pose.addRotation(Joint.FOREARM_LEFT, 20.0F * load * settle - 26.0F * pulse, 0.0F, 0.0F);
+                pose.addRotation(Joint.FOREARM_RIGHT, 20.0F * load * settle - 26.0F * pulse, 0.0F, 0.0F);
+                pose.addRotation(Joint.LOWER_ROOT, 6.0F * load * settle, 0.0F, 0.0F);
             }
             case CAST_FROM_CHEST -> {
-                pose.addRotation(Joint.TORSO, 10.0F * wind - 16.0F * swing, 0.0F, 0.0F);
+                float lean = 10.0F * wind - 16.0F * swing;
+                float leanLag = 10.0F * windLag - 16.0F * swingLag;
+                pose.addRotation(Joint.TORSO, lean, 0.0F, 0.0F);
                 pose.addRotation(Joint.CHEST_RING_LEFT, 0.0F, 0.0F, -38.0F * wind + 58.0F * swing);
                 pose.addRotation(Joint.CHEST_RING_RIGHT, 0.0F, 0.0F, 38.0F * wind - 58.0F * swing);
                 pose.addRotation(Joint.CHEST_RING_BOTTOM, 40.0F * swing, 0.0F, 0.0F);
                 pose.addRotation(Joint.CHEST_SHELL_LEFT, 0.0F, 0.0F, -12.0F * swing);
                 pose.addRotation(Joint.CHEST_SHELL_RIGHT, 0.0F, 0.0F, 12.0F * swing);
                 pose.addRotation(Joint.HEAD_ROOT, -8.0F * wind, 0.0F, 0.0F);
+                // Both hands cup the hollow chest while it charges, then throw wide on the release.
+                pose.addRotation(Joint.ARM_LEFT, 46.0F * wind - 66.0F * swingLag, 0.0F,
+                                 22.0F * wind - 30.0F * swing);
+                pose.addRotation(Joint.ARM_RIGHT, 46.0F * wind - 66.0F * swingLag, 0.0F,
+                                 -22.0F * wind + 30.0F * swing);
+                pose.addRotation(Joint.FOREARM_LEFT, 34.0F * wind - 48.0F * swing, 0.0F, 0.0F);
+                pose.addRotation(Joint.FOREARM_RIGHT, 34.0F * wind - 48.0F * swing, 0.0F, 0.0F);
+                dragWingsPitch(pose, lean - leanLag);
+                pose.addRotation(Joint.SPINE_TAIL_1, 6.0F * windLag - 10.0F * swingLag, 0.0F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_2, 7.0F * windLag - 12.0F * swingLag, 0.0F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_3, 8.0F * windLag - 14.0F * swingLag, 0.0F, 0.0F);
             }
             case CAST_FROM_HALO -> {
                 pose.addRotation(Joint.HEAD_ROOT, -14.0F * wind + 10.0F * swing, 0.0F, 0.0F);
-                pose.addRotation(Joint.HALO_ROOT, 0.0F, 48.0F * wind - 115.0F * swing, 0.0F);
+                pose.addRotation(Joint.HALO_ROOT, 0.0F, 0.0F, 48.0F * wind - 115.0F * swing);
                 pose.addRotation(Joint.HALO_FRAGMENT_1, 0.0F, 0.0F, -18.0F * swing);
                 pose.addRotation(Joint.HALO_FRAGMENT_2, 0.0F, 0.0F, 22.0F * swing);
                 pose.addRotation(Joint.HALO_FRAGMENT_3, 0.0F, 0.0F, -26.0F * swing);
                 pose.addRotation(Joint.HALO_FRAGMENT_4, 0.0F, 0.0F, 16.0F * swing);
                 pose.addRotation(Joint.BODY, 0.0F, 12.0F * swing, 0.0F);
+                // The right hand reaches up into the ring; the left arm holds the balance low and wide.
+                pose.addRotation(Joint.ARM_RIGHT, 96.0F * wind - 128.0F * swingLag, 0.0F,
+                                 14.0F * wind - 8.0F * swing);
+                pose.addRotation(Joint.FOREARM_RIGHT, 26.0F * wind - 34.0F * swingLag, 0.0F, 0.0F);
+                pose.addRotation(Joint.ARM_LEFT, -22.0F * wind + 30.0F * swingLag, 0.0F,
+                                 -26.0F * wind - 12.0F * swing);
+                pose.addRotation(Joint.FOREARM_LEFT, -14.0F * wind, 0.0F, 0.0F);
+                dragWingsYaw(pose, 12.0F * (swing - swingLag));
             }
             case SLASH_HORIZONTAL -> {
                 // Windup turns the body to its right, the release sweeps through to the left.
-                pose.addRotation(Joint.BODY, 0.0F, 30.0F * wind - 62.0F * swing, 0.0F);
+                float bodyYaw = 30.0F * wind - 62.0F * swing;
+                pose.addRotation(Joint.BODY, 0.0F, bodyYaw, 0.0F);
                 pose.addRotation(Joint.TORSO, 0.0F, 16.0F * wind - 36.0F * swing, 0.0F);
                 pose.addRotation(Joint.ARM_RIGHT, 44.0F * wind - 104.0F * swing, 0.0F, 26.0F * wind);
                 pose.addRotation(Joint.FOREARM_RIGHT, 52.0F * wind - 78.0F * swing, 0.0F, 0.0F);
+                // The free arm is the counterweight: it lifts against the windup and whips out
+                // the other way while the blade crosses, four ticks behind the weapon.
+                pose.addRotation(Joint.ARM_LEFT, 34.0F * windLag - 52.0F * swingLag, 0.0F,
+                                 -20.0F * wind + 30.0F * swing);
+                pose.addRotation(Joint.FOREARM_LEFT, 20.0F * windLag - 30.0F * swingLag, 0.0F, 0.0F);
+                dragWingsYaw(pose, bodyYaw - (30.0F * windLag - 62.0F * swingLag));
+                pose.addRotation(Joint.LOWER_ROOT, 0.0F, -bodyYaw * 0.22F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_1, 0.0F, -bodyYaw * 0.10F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_2, 0.0F, -bodyYaw * 0.14F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_3, 0.0F, -bodyYaw * 0.18F, 0.0F);
             }
             case SLASH_VERTICAL -> {
-                pose.addRotation(Joint.BODY, -12.0F * wind + 28.0F * swing, 0.0F, 0.0F);
+                float chop = -12.0F * wind + 28.0F * swing;
+                pose.addRotation(Joint.BODY, chop, 0.0F, 0.0F);
                 pose.addRotation(Joint.ARM_RIGHT, 118.0F * wind - 172.0F * swing, 0.0F, 12.0F * wind);
                 pose.addRotation(Joint.FOREARM_RIGHT, 62.0F * wind - 82.0F * swing, 0.0F, 0.0F);
                 pose.addRotation(Joint.TORSO, -9.0F * wind + 18.0F * swing, 0.0F, 0.0F);
+                pose.addRotation(Joint.ARM_LEFT, 36.0F * windLag - 62.0F * swingLag, 0.0F,
+                                 -14.0F * wind - 8.0F * swing);
+                pose.addRotation(Joint.FOREARM_LEFT, 22.0F * windLag - 34.0F * swingLag, 0.0F, 0.0F);
+                dragWingsPitch(pose, chop - (-12.0F * windLag + 28.0F * swingLag));
+                pose.addRotation(Joint.WING_LEFT_ROOT, 0.0F, 0.0F, -8.0F * swing);
+                pose.addRotation(Joint.WING_RIGHT_ROOT, 0.0F, 0.0F, 8.0F * swing);
+                pose.addRotation(Joint.LOWER_ROOT, 10.0F * windLag - 18.0F * swingLag, 0.0F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_1, 8.0F * trail, 0.0F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_2, 10.0F * trail, 0.0F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_3, 12.0F * trail, 0.0F, 0.0F);
             }
             case HEAVY_ATTACK -> {
-                pose.addRotation(Joint.BODY, -20.0F * wind + 36.0F * swing, 0.0F, 0.0F);
+                float slam = -20.0F * wind + 36.0F * swing;
+                pose.addRotation(Joint.BODY, slam, 0.0F, 0.0F);
                 pose.addRotation(Joint.TORSO, -14.0F * wind + 28.0F * swing, 0.0F, 0.0F);
                 pose.addRotation(Joint.ARM_RIGHT, 152.0F * wind - 208.0F * swing, 0.0F, 18.0F * wind);
                 pose.addRotation(Joint.FOREARM_RIGHT, 72.0F * wind - 92.0F * swing, 0.0F, 0.0F);
                 pose.addRotation(Joint.HEAD_ROOT, -14.0F * wind + 26.0F * swing, 0.0F, 0.0F);
                 pose.addRotation(Joint.WING_LEFT_ROOT, 0.0F, 0.0F, -24.0F * wind + 36.0F * swing);
                 pose.addRotation(Joint.WING_RIGHT_ROOT, 0.0F, 0.0F, 24.0F * wind - 36.0F * swing);
+                // The whole body commits: the off arm drives back, the tail drags, the wings snap.
+                pose.addRotation(Joint.ARM_LEFT, 44.0F * windLag - 78.0F * swingLag, 0.0F,
+                                 -26.0F * wind - 12.0F * swing);
+                pose.addRotation(Joint.FOREARM_LEFT, 30.0F * windLag - 44.0F * swingLag, 0.0F, 0.0F);
+                dragWingsPitch(pose, slam - (-20.0F * windLag + 36.0F * swingLag));
+                pose.addRotation(Joint.WING_LEFT_OUTER, 0.0F, 0.0F, -14.0F * swing);
+                pose.addRotation(Joint.WING_RIGHT_OUTER, 0.0F, 0.0F, 14.0F * swing);
+                pose.addRotation(Joint.LOWER_ROOT, 18.0F * windLag - 30.0F * swingLag, 0.0F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_1, 12.0F * trail + 6.0F * wind, 0.0F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_2, 15.0F * trail + 7.0F * wind, 0.0F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_3, 18.0F * trail + 8.0F * wind, 0.0F, 0.0F);
             }
             case DASH -> {
                 float lunge = clamp((t - 20.0F) / 12.0F);
@@ -354,32 +524,102 @@ public final class VicissitudeRig {
                 pose.addRotation(Joint.WING_LEFT_ROOT, 0.0F, -20.0F * wind + 30.0F * push, 14.0F * wind);
                 pose.addRotation(Joint.WING_RIGHT_ROOT, 0.0F, 20.0F * wind - 30.0F * push, -14.0F * wind);
                 pose.addRotation(Joint.ARM_RIGHT, 20.0F * wind - 35.0F * push, 0.0F, 0.0F);
-                pose.addRotation(Joint.ARM_LEFT, 20.0F * wind - 35.0F * push, 0.0F, 0.0F);
+                // The off arm reaches back through the charge and swings forward when it brakes.
+                pose.addRotation(Joint.ARM_LEFT, 46.0F * wind - 74.0F * push - 24.0F * brake, 0.0F,
+                                 -10.0F * wind);
+                pose.addRotation(Joint.FOREARM_LEFT, 24.0F * wind - 30.0F * push, 0.0F, 0.0F);
+                pose.addRotation(Joint.WING_LEFT_OUTER, 0.0F, 12.0F * push, 0.0F);
+                pose.addRotation(Joint.WING_RIGHT_OUTER, 0.0F, -12.0F * push, 0.0F);
                 pose.addRotation(Joint.LOWER_ROOT, 20.0F * wind - 26.0F * push, 0.0F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_1, 10.0F * push, 0.0F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_2, 12.0F * push, 0.0F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_3, 14.0F * push, 0.0F, 0.0F);
             }
             case SCYTHE_THROW -> {
-                pose.addRotation(Joint.BODY, 0.0F, 34.0F * wind - 64.0F * swing, 0.0F);
+                float bodyYaw = 34.0F * wind - 64.0F * swing;
+                pose.addRotation(Joint.BODY, 0.0F, bodyYaw, 0.0F);
                 pose.addRotation(Joint.ARM_RIGHT, 126.0F * wind - 184.0F * swing, 0.0F, 0.0F);
                 pose.addRotation(Joint.FOREARM_RIGHT, 58.0F * wind - 74.0F * swing, 0.0F, 0.0F);
-                pose.addRotation(Joint.ARM_LEFT, 0.0F, 0.0F, -18.0F * swing);
+                pose.addRotation(Joint.ARM_LEFT, 30.0F * windLag - 46.0F * swingLag, 0.0F,
+                                 -18.0F * swing);
+                pose.addRotation(Joint.FOREARM_LEFT, 18.0F * windLag, 0.0F, 0.0F);
+                pose.addRotation(Joint.WING_LEFT_ROOT, 0.0F, -12.0F * wind + 18.0F * swingLag, 0.0F);
+                pose.addRotation(Joint.WING_RIGHT_ROOT, 0.0F, 12.0F * wind - 18.0F * swingLag, 0.0F);
+                dragWingsYaw(pose, bodyYaw - (34.0F * windLag - 64.0F * swingLag));
+                pose.addRotation(Joint.LOWER_ROOT, 0.0F, -bodyYaw * 0.25F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_2, 0.0F, -bodyYaw * 0.12F, 0.0F);
+                pose.addRotation(Joint.SPINE_TAIL_3, 0.0F, -bodyYaw * 0.16F, 0.0F);
             }
             case SCYTHE_RECOVER -> {
-                pose.addRotation(Joint.ARM_RIGHT, -25.0F * (1.0F - clamp(t / total)), 0.0F, 0.0F);
-                pose.addRotation(Joint.FOREARM_RIGHT, -20.0F * (1.0F - clamp(t / total)), 0.0F, 0.0F);
+                float ease = 1.0F - clamp(t / total);
+                pose.addRotation(Joint.ARM_RIGHT, -25.0F * ease, 0.0F, 0.0F);
+                pose.addRotation(Joint.FOREARM_RIGHT, -20.0F * ease, 0.0F, 0.0F);
+                pose.addRotation(Joint.ARM_LEFT, -14.0F * ease, 0.0F, 6.0F * ease);
+                pose.addRotation(Joint.FOREARM_LEFT, -12.0F * ease, 0.0F, 0.0F);
+                pose.addRotation(Joint.WING_LEFT_ROOT, 0.0F, 0.0F, -6.0F * ease);
+                pose.addRotation(Joint.WING_RIGHT_ROOT, 0.0F, 0.0F, 6.0F * ease);
             }
             case RANGED_FALLBACK -> {
                 pose.addRotation(Joint.WING_LEFT_ROOT, -8.0F * wind, -24.0F * wind, -14.0F * swing);
                 pose.addRotation(Joint.WING_RIGHT_ROOT, -8.0F * wind, 24.0F * wind, 14.0F * swing);
                 pose.addRotation(Joint.TORSO, -6.0F * wind + 10.0F * swing, 0.0F, 0.0F);
+                pose.addRotation(Joint.ARM_LEFT, 14.0F * wind - 20.0F * swingLag, 0.0F,
+                                 12.0F * wind);
+                pose.addRotation(Joint.ARM_RIGHT, 14.0F * wind - 20.0F * swingLag, 0.0F,
+                                 -12.0F * wind);
+                pose.addRotation(Joint.FOREARM_LEFT, 18.0F * wind - 24.0F * swingLag, 0.0F, 0.0F);
+                pose.addRotation(Joint.FOREARM_RIGHT, 18.0F * wind - 24.0F * swingLag, 0.0F, 0.0F);
             }
             default -> {
             }
         }
     }
 
-    /** Collision driven fold: the wings collapse towards the body when space is tight. */
+    /**
+     * Wing drag for the whole span, following a body yaw: the pair lags behind by a fraction of
+     * the turn the torso just made, so the wings read as mass instead of being welded to the
+     * spine.
+     *
+     * <p>The argument is the body's own turn in degrees. The strike curve crosses most of that
+     * turn in two or three ticks, so this only ever takes {@link #WING_DRAG_FRACTION} of it and
+     * caps the result: a wing that swings further than the torso it hangs from looks broken, not
+     * heavy.
+     *
+     * <p>Both wings take the same sign: this is the pair lagging behind a rotation, not a
+     * symmetric fold, so mirroring the sign would cancel the effect out.
+     */
+    private static void dragWingsYaw(Pose pose, float bodyTurn) {
+        float drag = clampDrag(bodyTurn * WING_DRAG_FRACTION);
+        pose.addRotation(Joint.WING_LEFT_ROOT, 0.0F, drag, 0.0F);
+        pose.addRotation(Joint.WING_RIGHT_ROOT, 0.0F, drag, 0.0F);
+        pose.addRotation(Joint.WING_LEFT_OUTER, 0.0F, drag * 0.6F, 0.0F);
+        pose.addRotation(Joint.WING_RIGHT_OUTER, 0.0F, drag * 0.6F, 0.0F);
+        pose.addRotation(Joint.WING_LEFT_FEATHERS, 0.0F, drag * 0.4F, 0.0F);
+        pose.addRotation(Joint.WING_RIGHT_FEATHERS, 0.0F, drag * 0.4F, 0.0F);
+    }
+
+    /**
+     * Wing drag for a forward lean: the pair lifts against the pitch and settles after it.
+     */
+    private static void dragWingsPitch(Pose pose, float bodyLean) {
+        float drag = clampDrag(bodyLean * WING_DRAG_FRACTION);
+        pose.addRotation(Joint.WING_LEFT_ROOT, drag, 0.0F, 0.0F);
+        pose.addRotation(Joint.WING_RIGHT_ROOT, drag, 0.0F, 0.0F);
+        pose.addRotation(Joint.WING_LEFT_OUTER, drag * 0.7F, 0.0F, 0.0F);
+        pose.addRotation(Joint.WING_RIGHT_OUTER, drag * 0.7F, 0.0F, 0.0F);
+        pose.addRotation(Joint.WING_LEFT_FEATHERS, drag * 0.5F, 0.0F, 0.0F);
+        pose.addRotation(Joint.WING_RIGHT_FEATHERS, drag * 0.5F, 0.0F, 0.0F);
+    }
+
+    private static float clampDrag(float degrees) {
+        return Math.max(-WING_DRAG_CAP, Math.min(WING_DRAG_CAP, degrees));
+    }
+
+    /**
+     * Collision driven fold: the wings collapse towards the body when space is tight.
+     */
     private static void applyFold(Pose pose, float fold) {
-        if (fold <= 0.0F) {
+        if (fold <= 0.0F){
             return;
         }
         float amount = clamp(fold);
@@ -393,9 +633,11 @@ public final class VicissitudeRig {
         pose.addRotation(Joint.ARM_RIGHT, 0.0F, 0.0F, 10.0F * amount);
     }
 
-    /** Six ticks of small divergence; shells and feathers lag behind the core. */
+    /**
+     * Six ticks of small divergence; shells and feathers lag behind the core.
+     */
     private static void applyHurt(Pose pose, float hurtTicks) {
-        if (hurtTicks <= 0.0F) {
+        if (hurtTicks <= 0.0F){
             return;
         }
         float strength = clamp(hurtTicks / 6.0F);
@@ -412,9 +654,11 @@ public final class VicissitudeRig {
         }
     }
 
-    /** Eighty tick death: ring stops, shell opens, wings fail, core goes out. */
+    /**
+     * Eighty tick death: ring stops, shell opens, wings fail, core goes out.
+     */
     private static void applyDeath(Pose pose, float ticks) {
-        if (ticks < 0.0F) {
+        if (ticks < 0.0F){
             return;
         }
         float shell = clamp((ticks - 16.0F) / 19.0F);
@@ -432,7 +676,7 @@ public final class VicissitudeRig {
         pose.addRotation(Joint.CHEST_SHELL_LEFT, 0.0F, 0.0F, -22.0F * shell);
         pose.addRotation(Joint.CHEST_SHELL_RIGHT, 0.0F, 0.0F, 22.0F * shell);
         pose.addRotation(Joint.CHEST_SHELL_BACK, 0.0F, 0.0F, 12.0F * shell);
-        pose.addRotation(Joint.HALO_ROOT, 0.0F, -30.0F * stop, 0.0F);
+        pose.addRotation(Joint.HALO_ROOT, 0.0F, 0.0F, -30.0F * stop);
         pose.addRotation(Joint.HALO_FRAGMENT_2, 0.0F, 0.0F, 24.0F * shell);
         pose.addRotation(Joint.HALO_FRAGMENT_4, 0.0F, 0.0F, -28.0F * shell);
         pose.addRotation(Joint.BODY, 24.0F * wings, 0.0F, 0.0F);
@@ -457,7 +701,9 @@ public final class VicissitudeRig {
         pose.addOffset(Joint.LOWER_FRAGMENT_RIGHT, 3.0F * wings, 2.0F * wings, 0.0F);
     }
 
-    /** Composes every joint matrix: M(joint) = M(parent) * T(local) * Rz * Ry * Rx. */
+    /**
+     * Composes every joint matrix: M(joint) = M(parent) * T(local) * Rz * Ry * Rx.
+     */
     public static void solve(Pose pose) {
         for (Joint joint : Joint.values()) {
             int index = joint.index() * 16;
@@ -468,11 +714,11 @@ public final class VicissitudeRig {
             rotateY(pose.matrices, index, pose.rotY(joint));
             rotateZ(pose.matrices, index, pose.rotZ(joint));
             translate(pose.matrices, index,
-                    joint.localX() + pose.offX(joint),
-                    joint.localY() + pose.offY(joint),
-                    joint.localZ() + pose.offZ(joint));
+                      joint.localX() + pose.offX(joint),
+                      joint.localY() + pose.offY(joint),
+                      joint.localZ() + pose.offZ(joint));
             Joint parent = joint.parent();
-            if (parent != null) {
+            if (parent != null){
                 multiply(pose.matrices, index, parent.index() * 16, index);
             }
         }
@@ -489,16 +735,20 @@ public final class VicissitudeRig {
     // Column-major 4x4 matrices: element (row r, column c) lives at index c * 4 + r, so the
     // translation sits in indices 12..14 and transform() applies M * p exactly like OpenGL.
 
-    /** M = T * M. */
+    /**
+     * M = T * M.
+     */
     private static void translate(float[] matrix, int offset, float x, float y, float z) {
         matrix[offset + 12] += x;
         matrix[offset + 13] += y;
         matrix[offset + 14] += z;
     }
 
-    /** M = Rx * M. */
+    /**
+     * M = Rx * M.
+     */
     private static void rotateX(float[] matrix, int offset, float degrees) {
-        if (degrees == 0.0F) {
+        if (degrees == 0.0F){
             return;
         }
         float radians = degrees * DEG_TO_RAD;
@@ -512,9 +762,11 @@ public final class VicissitudeRig {
         }
     }
 
-    /** M = Ry * M. */
+    /**
+     * M = Ry * M.
+     */
     private static void rotateY(float[] matrix, int offset, float degrees) {
-        if (degrees == 0.0F) {
+        if (degrees == 0.0F){
             return;
         }
         float radians = degrees * DEG_TO_RAD;
@@ -528,9 +780,11 @@ public final class VicissitudeRig {
         }
     }
 
-    /** M = Rz * M. */
+    /**
+     * M = Rz * M.
+     */
     private static void rotateZ(float[] matrix, int offset, float degrees) {
-        if (degrees == 0.0F) {
+        if (degrees == 0.0F){
             return;
         }
         float radians = degrees * DEG_TO_RAD;
@@ -544,7 +798,9 @@ public final class VicissitudeRig {
         }
     }
 
-    /** target = left * right, where all three are column-major 4x4 blocks. */
+    /**
+     * target = left * right, where all three are column-major 4x4 blocks.
+     */
     private static void multiply(float[] matrix, int targetOffset, int leftOffset, int rightOffset) {
         float[] result = new float[16];
         for (int column = 0; column < 4; column++) {
@@ -559,7 +815,9 @@ public final class VicissitudeRig {
         System.arraycopy(result, 0, matrix, targetOffset, 16);
     }
 
-    /** Transforms a point expressed in the joint's own frame into authoring space. */
+    /**
+     * Transforms a point expressed in the joint's own frame into authoring space.
+     */
     public static V3 transform(Pose pose, Joint joint, float x, float y, float z) {
         int offset = joint.index() * 16;
         float[] m = pose.matrices;
@@ -573,14 +831,18 @@ public final class VicissitudeRig {
         return transform(pose, joint, 0.0F, 0.0F, 0.0F);
     }
 
-    /** Authoring space to entity-local blocks (x left, y up, z forward). */
+    /**
+     * Authoring space to entity-local blocks (x left, y up, z forward).
+     */
     public static V3 toEntityLocal(V3 modelPoint) {
         return new V3(modelPoint.x / VicissitudeRigData.UNITS_PER_BLOCK,
-                (VicissitudeRigData.MODEL_ORIGIN_Y - modelPoint.y) / VicissitudeRigData.UNITS_PER_BLOCK,
-                -modelPoint.z / VicissitudeRigData.UNITS_PER_BLOCK);
+                      (VicissitudeRigData.MODEL_ORIGIN_Y - modelPoint.y) / VicissitudeRigData.UNITS_PER_BLOCK,
+                      -modelPoint.z / VicissitudeRigData.UNITS_PER_BLOCK);
     }
 
-    /** Entity-local blocks to world space for the supplied entity position and yaw. */
+    /**
+     * Entity-local blocks to world space for the supplied entity position and yaw.
+     */
     public static V3 toWorld(double entityX, double entityY, double entityZ, float yawDegrees, V3 local) {
         float yaw = yawDegrees * DEG_TO_RAD;
         float cos = (float) Math.cos(yaw);
@@ -592,8 +854,9 @@ public final class VicissitudeRig {
                 (float) entityZ + local.x * sin + local.z * cos);
     }
 
-    public static V3 worldPoint(Pose pose, Joint joint, float x, float y, float z,
-                                double entityX, double entityY, double entityZ, float yawDegrees) {
+    public static V3 worldPoint(
+            Pose pose, Joint joint, float x, float y, float z,
+            double entityX, double entityY, double entityZ, float yawDegrees) {
         return toWorld(entityX, entityY, entityZ, yawDegrees, toEntityLocal(transform(pose, joint, x, y, z)));
     }
 
@@ -602,46 +865,55 @@ public final class VicissitudeRig {
      * side. The chest cavity has no box of its own, and range effects use the highest multiplier
      * they overlap without stacking.
      */
-    public static List<SegmentVolume> segmentVolumes(Pose pose, double entityX, double entityY,
-                                                     double entityZ, float yawDegrees) {
+    public static List<SegmentVolume> segmentVolumes(
+            Pose pose, double entityX, double entityY,
+            double entityZ, float yawDegrees) {
         List<SegmentVolume> volumes = new ArrayList<>(8);
         volumes.add(new SegmentVolume(Segment.BODY, volumeBox(pose, Joint.TORSO,
-                -9.0F, -3.0F, -6.0F, 9.0F, 14.0F, 7.0F, 0.0F,
-                entityX, entityY, entityZ, yawDegrees)));
+                                                              -9.0F, -3.0F, -6.0F, 9.0F, 14.0F, 7.0F, 0.0F,
+                                                              entityX, entityY, entityZ, yawDegrees)));
         volumes.add(new SegmentVolume(Segment.HEAD, volumeBox(pose, Joint.HEAD_ROOT,
-                -6.0F, -14.0F, -6.0F, 6.0F, 2.0F, 7.0F, 0.0F,
-                entityX, entityY, entityZ, yawDegrees)));
-        // Wing root, outer bone and the feather fan, sized from the authored cubes rather than
-        // from an inflated whole-wing rectangle.
-        volumes.add(new SegmentVolume(Segment.WING_LEFT_ROOT, wingCapsule(pose,
-                Joint.WING_LEFT_UPPER, Joint.WING_LEFT_OUTER, 3.0F,
-                entityX, entityY, entityZ, yawDegrees)));
-        volumes.add(new SegmentVolume(Segment.WING_LEFT_OUTER, wingCapsule(pose,
-                Joint.WING_LEFT_OUTER, Joint.WING_LEFT_TIP, 3.5F,
-                entityX, entityY, entityZ, yawDegrees)));
-        volumes.add(new SegmentVolume(Segment.WING_LEFT_OUTER, volumeBox(pose,
-                Joint.WING_LEFT_FEATHERS, 0.0F, 0.0F, 0.0F, 10.0F, 6.0F, 20.0F, 4.0F,
-                entityX, entityY, entityZ, yawDegrees)));
-        volumes.add(new SegmentVolume(Segment.WING_RIGHT_ROOT, wingCapsule(pose,
-                Joint.WING_RIGHT_UPPER, Joint.WING_RIGHT_OUTER, 3.0F,
-                entityX, entityY, entityZ, yawDegrees)));
-        volumes.add(new SegmentVolume(Segment.WING_RIGHT_OUTER, wingCapsule(pose,
-                Joint.WING_RIGHT_OUTER, Joint.WING_RIGHT_TIP, 3.5F,
-                entityX, entityY, entityZ, yawDegrees)));
-        volumes.add(new SegmentVolume(Segment.WING_RIGHT_OUTER, volumeBox(pose,
-                Joint.WING_RIGHT_FEATHERS, 0.0F, 0.0F, 0.0F, -10.0F, 6.0F, 20.0F, 4.0F,
-                entityX, entityY, entityZ, yawDegrees)));
+                                                              -6.0F, -14.0F, -6.0F, 6.0F, 2.0F, 7.0F, 0.0F,
+                                                              entityX, entityY, entityZ, yawDegrees)));
+        // Blender exports one bound per articulated wing mesh group, including each feather.
+        for (var bounds : VicissitudeMeshGeometry.WINGS) {
+            boolean left = bounds.joint().name().startsWith("WING_LEFT_");
+            boolean root = bounds.joint() == Joint.WING_LEFT_UPPER
+                           || bounds.joint() == Joint.WING_RIGHT_UPPER;
+            Segment segment = left ? (root ? Segment.WING_LEFT_ROOT : Segment.WING_LEFT_OUTER)
+                                   : (root ? Segment.WING_RIGHT_ROOT : Segment.WING_RIGHT_OUTER);
+            double minX = Double.POSITIVE_INFINITY, minY = minX, minZ = minX;
+            double maxX = Double.NEGATIVE_INFINITY, maxY = maxX, maxZ = maxX;
+            // Transform all eight corners: opposite corners alone lose rotated extents.
+            for (int corner = 0; corner < 8; corner++) {
+                V3 point = worldPoint(pose, bounds.joint(),
+                                      (corner & 1) == 0 ? bounds.minX() : bounds.maxX(),
+                                      (corner & 2) == 0 ? bounds.minY() : bounds.maxY(),
+                                      (corner & 4) == 0 ? bounds.minZ() : bounds.maxZ(),
+                                      entityX, entityY, entityZ, yawDegrees);
+                minX = Math.min(minX, point.x);
+                minY = Math.min(minY, point.y);
+                minZ = Math.min(minZ, point.z);
+                maxX = Math.max(maxX, point.x);
+                maxY = Math.max(maxY, point.y);
+                maxZ = Math.max(maxZ, point.z);
+            }
+            volumes.add(new SegmentVolume(segment, new Box(minX, minY, minZ, maxX, maxY, maxZ)));
+        }
         return volumes;
     }
 
-    /** Hit record for one segment. */
+    /**
+     * Hit record for one segment.
+     */
     public record SegmentVolume(Segment segment, Box box) {
     }
 
-    private static Box volumeBox(Pose pose, Joint joint, float x1, float y1, float z1,
-                                 float x2, float y2, float z2, float radiusModelUnits,
-                                 double entityX, double entityY, double entityZ,
-                                 float yawDegrees) {
+    private static Box volumeBox(
+            Pose pose, Joint joint, float x1, float y1, float z1,
+            float x2, float y2, float z2, float radiusModelUnits,
+            double entityX, double entityY, double entityZ,
+            float yawDegrees) {
         V3 a = worldPoint(pose, joint, x1, y1, z1, entityX, entityY, entityZ, yawDegrees);
         V3 b = worldPoint(pose, joint, x2, y2, z2, entityX, entityY, entityZ, yawDegrees);
         Box box = Box.of(a.x, a.y, a.z, b.x, b.y, b.z);
@@ -649,21 +921,24 @@ public final class VicissitudeRig {
                ? box : box.inflate(radiusModelUnits / VicissitudeRigData.UNITS_PER_BLOCK);
     }
 
-    private static Box wingCapsule(Pose pose, Joint from, Joint to, float radiusModelUnits,
-                                   double entityX, double entityY, double entityZ,
-                                   float yawDegrees) {
+    private static Box wingCapsule(
+            Pose pose, Joint from, Joint to, float radiusModelUnits,
+            double entityX, double entityY, double entityZ,
+            float yawDegrees) {
         V3 a = toWorld(entityX, entityY, entityZ, yawDegrees, toEntityLocal(jointOrigin(pose, from)));
         V3 b = toWorld(entityX, entityY, entityZ, yawDegrees, toEntityLocal(jointOrigin(pose, to)));
         return Box.of(a.x, a.y, a.z, b.x, b.y, b.z)
-                .inflate(radiusModelUnits / VicissitudeRigData.UNITS_PER_BLOCK);
+                  .inflate(radiusModelUnits / VicissitudeRigData.UNITS_PER_BLOCK);
     }
 
-    /** Range attacks take the highest multiplier they overlap; single hits take the nearest. */
+    /**
+     * Range attacks take the highest multiplier they overlap; single hits take the nearest.
+     */
     public static Segment highestMultiplierSegment(List<SegmentVolume> volumes, Box area) {
         Segment best = Segment.BODY;
         float bestMultiplier = -1.0F;
         for (SegmentVolume volume : volumes) {
-            if (volume.box().intersects(area) && volume.segment().multiplier() > bestMultiplier) {
+            if (volume.box().intersects(area) && volume.segment().multiplier() > bestMultiplier){
                 bestMultiplier = volume.segment().multiplier();
                 best = volume.segment();
             }
@@ -680,7 +955,7 @@ public final class VicissitudeRig {
             double dy = Math.max(0.0D, Math.max(box.minY() - y, y - box.maxY()));
             double dz = Math.max(0.0D, Math.max(box.minZ() - z, z - box.maxZ()));
             double distance = dx * dx + dy * dy + dz * dz;
-            if (distance < bestDistance) {
+            if (distance < bestDistance){
                 bestDistance = distance;
                 best = volume.segment();
             }
@@ -688,7 +963,9 @@ public final class VicissitudeRig {
         return best;
     }
 
-    /** Highest multiplier among the given body sample points (used by area damage). */
+    /**
+     * Highest multiplier among the given body sample points (used by area damage).
+     */
     public static float multiplierAt(List<SegmentVolume> volumes, Box area) {
         return highestMultiplierSegment(volumes, area).multiplier();
     }
@@ -706,17 +983,21 @@ public final class VicissitudeRig {
         return clamped * clamped * (3.0F - 2.0F * clamped);
     }
 
-    /** Ramps to 1 at {@code hit} and stays there until {@code total}. */
+    /**
+     * Ramps to 1 at {@code hit} and stays there until {@code total}.
+     */
     private static float ramp(float t, float hit, float total) {
-        if (t <= hit) {
+        if (t <= hit){
             return smooth(hit <= 0.0F ? 1.0F : t / hit);
         }
         return 1.0F;
     }
 
-    /** 0 -> 1 at {@code hit} -> 0 at {@code total}. */
+    /**
+     * 0 -> 1 at {@code hit} -> 0 at {@code total}.
+     */
     private static float bell(float t, float hit, float total) {
-        if (t <= hit) {
+        if (t <= hit){
             return smooth(hit <= 0.0F ? 1.0F : t / hit);
         }
         float span = Math.max(1.0F, total - hit);
@@ -730,21 +1011,23 @@ public final class VicissitudeRig {
      * weightless in/out bell.
      */
     private static float strike(float t, float hit, float total) {
-        if (t <= hit) {
+        if (t <= hit){
             return smooth(hit <= 0.0F ? 1.0F : t / hit);
         }
         float after = t - hit;
-        if (after < 2.0F) {
+        if (after < 2.0F){
             return 1.0F + 0.28F * (after / 2.0F);
         }
-        if (after < 6.0F) {
+        if (after < 6.0F){
             return 1.28F - 0.18F * ((after - 2.0F) / 4.0F);
         }
         float span = Math.max(1.0F, total - hit - 6.0F);
         return 1.10F * (1.0F - smooth((after - 6.0F) / span));
     }
 
-    /** Combat actions with their authored timings (ticks). */
+    /**
+     * Combat actions with their authored timings (ticks).
+     */
     public enum Action {
         NONE(0, 0, false),
         WING_RANGED(20, 12, true),
