@@ -80,6 +80,21 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.headline." + MNEMONIC_OBELISK_PAGE, "回忆方尖碑");
             add("malum.gui.book.entry.page.text." + MNEMONIC_OBELISK_PAGE + ".1",
                 "经验晶已经证明了它的成功。 加入更多忆念残片中凝结的力 量则可以使附魔的力量更加辉 煌，达到惊人的十个书架的效 果。");
+            add("malum.gui.rite." + VICISSITUDE_RITE_ID, "无常仪式");
+            add("malum.gui.rite.corrupted_" + VICISSITUDE_RITE_ID, "无常仪式");
+            add("malum.gui.rite." + GREATER_RITE_ID, "无常大仪式");
+            add("malum.gui.rite.corrupted_" + GREATER_RITE_ID, "无常大仪式");
+            add("malum.gui.rite." + ELDRITCH_RITE_ID, "邪术无常仪式");
+            add("malum.gui.rite.corrupted_" + ELDRITCH_RITE_ID, "邪术无常仪式");
+            add("malum.gui.rite." + GREATER_ELDRITCH_RITE_ID, "邪术无常大仪式");
+            add("malum.gui.rite.corrupted_" + GREATER_ELDRITCH_RITE_ID, "邪术无常大仪式");
+            add("malum.gui.book.entry." + RITE_ENTRY, "无常仪式");
+            add("malum.gui.book.entry." + RITE_ENTRY + ".description", "唤来无法收回之物");
+            add("malum.gui.book.entry.page.headline." + RITE_ENTRY, "无常仪式");
+            add("malum.gui.book.entry.page.text." + RITE_ENTRY + ".1",
+                "无常不是我创造的东西，它只 是被叫来的。三枚奥术精魂推 开一条缝，四枚推得更开；同 一个存在，愿意带多少力气过 来却不同。配方页所画的顺序 ，就是自下而上的摆放顺序。");
+            add("malum.gui.book.entry.page.text." + RITE_ENTRY + ".2",
+                "把邪术精魂放在最底下，召唤 就会落到更深处：一枚邪术是 完整的它，两枚则是不再留手 的那一面。邪术不因我的谨慎 而收敛，它只把无常推到我原 本不敢伸手的地方。");
         }else {
             add("itemGroup.maledict", "Maledict");
             add("enchantment.maledict.ectoplasm", "Ectoplasm");
@@ -149,6 +164,21 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.headline." + MNEMONIC_OBELISK_PAGE, "Mnemonic Obelisk");
             add("malum.gui.book.entry.page.text." + MNEMONIC_OBELISK_PAGE + ".1",
                 "Experience crystals have already proven this approach successful. Adding more of the power condensed within mnemonic fragments can make enchanting power shine even more brilliantly, reaching the astonishing strength of ten bookshelves.");
+            add("malum.gui.rite." + VICISSITUDE_RITE_ID, "Rite of Vicissitude");
+            add("malum.gui.rite.corrupted_" + VICISSITUDE_RITE_ID, "Rite of Vicissitude");
+            add("malum.gui.rite." + GREATER_RITE_ID, "Greater Rite of Vicissitude");
+            add("malum.gui.rite.corrupted_" + GREATER_RITE_ID, "Greater Rite of Vicissitude");
+            add("malum.gui.rite." + ELDRITCH_RITE_ID, "Eldritch Rite of Vicissitude");
+            add("malum.gui.rite.corrupted_" + ELDRITCH_RITE_ID, "Eldritch Rite of Vicissitude");
+            add("malum.gui.rite." + GREATER_ELDRITCH_RITE_ID, "Greater Eldritch Rite of Vicissitude");
+            add("malum.gui.rite.corrupted_" + GREATER_ELDRITCH_RITE_ID, "Greater Eldritch Rite of Vicissitude");
+            add("malum.gui.book.entry." + RITE_ENTRY, "Rite of Vicissitude");
+            add("malum.gui.book.entry." + RITE_ENTRY + ".description", "Calling what cannot be recalled");
+            add("malum.gui.book.entry.page.headline." + RITE_ENTRY, "Rite of Vicissitude");
+            add("malum.gui.book.entry.page.text." + RITE_ENTRY + ".1",
+                "Vicissitude is not something I created; it is only ever called. Three arcane spirits open a crack, four open it wider, and the same being decides how much of itself comes through. The order drawn on the recipe page is the order of the poles, bottom first.");
+            add("malum.gui.book.entry.page.text." + RITE_ENTRY + ".2",
+                "Set eldritch spirits at the very bottom and the call reaches deeper: one eldritch brings the complete thing, two bring the face that no longer holds back. The eldritch does not moderate itself for my caution; it only pushes Vicissitude further than I dared to reach.");
         }
     }
 
@@ -156,4 +186,9 @@ public final class MaledictLanguage extends LanguageProvider {
     private static final String ELEGY_BOW_ENTRY = "void.maledict.elegy_bow";
     private static final String SOULWOOD_OBELISK_PAGE = OBELISKS_ENTRY + ".soulwood_obelisk";
     private static final String MNEMONIC_OBELISK_PAGE = OBELISKS_ENTRY + ".mnemonic_obelisk";
+    private static final String RITE_ENTRY = "void.maledict.vicissitude_rite";
+    private static final String VICISSITUDE_RITE_ID = "vicissitude_rite";
+    private static final String GREATER_RITE_ID = "greater_vicissitude_rite";
+    private static final String ELDRITCH_RITE_ID = "eldritch_vicissitude_rite";
+    private static final String GREATER_ELDRITCH_RITE_ID = "greater_eldritch_vicissitude_rite";
 }

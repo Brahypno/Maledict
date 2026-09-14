@@ -7,6 +7,8 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec CLIENT_SPEC;
     public static final ForgeConfigSpec.DoubleValue SCREENSHAKE_INTENSITY;
     public static final ForgeConfigSpec.DoubleValue VICISSITUDE_ENGAGEMENT_RANGE;
+    public static final ForgeConfigSpec.BooleanValue SUMMONING_RITE;
+    public static final ForgeConfigSpec.ConfigValue<String> SUMMONING_RITE_ENTITY;
     public static final ForgeConfigSpec.BooleanValue AERIAL_POTION_EFFECTS_ONLY;
     public static final ForgeConfigSpec.DoubleValue EARTHEN_UPGRADE_COST_COEFFICIENT;
     public static final ForgeConfigSpec.DoubleValue AQUEOUS_UPGRADE_COST_COEFFICIENT;
@@ -42,6 +44,17 @@ public final class MaledictConfig {
                         "before the approach-without-firing behaviour it is built around can happen.",
                         "Lower it to make the boss less willing to cross the arena towards you.")
                 .defineInRange("engagementRange", 96.0D, 4.0D, 256.0D);
+        SUMMONING_RITE = builder
+                .comment("When true, the Vicissitude Rites - spirit recipes no other totemic rite",
+                        "uses - do what their page promises and create something above the totem.",
+                        "Both are one time effects, so a soulwood totem fires them once as well and",
+                        "never spawns a crowd. The recipe decides the difficulty of what answers:",
+                        "three arcane spirits bring the standard encounter, and the eldritch",
+                        "recipe (two eldritch over two arcane) brings the extreme one.")
+                .define("summoningRite", true);
+        SUMMONING_RITE_ENTITY = builder
+                .comment("Registry name of the entity the Vicissitude Rites create.")
+                .define("summoningRiteEntity", "maledict:first_vicissitude");
         builder.pop();
         builder.pop();
         COMMON_SPEC = builder.build();

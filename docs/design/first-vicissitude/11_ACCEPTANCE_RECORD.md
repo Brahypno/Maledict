@@ -334,6 +334,77 @@
     同一类问题已连带复查：`applyDifficultyAttributes` 本来就是先 `removeModifier` 再 `add`，不受影响；
     全仓库只有这两处会写固定修饰符。
 
+## 扩展功能（第十二轮）—— 四个召唤仪式（一档一配方）
+
+用户先问"能够把 malum 的释缚仪式扩展出一个召唤实体的效果吗"，随后明确：**四个难度四个配方，
+后两档（完整/极限）可以用幽影**。因此**不改动 Malum 的任何现有仪式**，而是新增四个灵组合独一无二的仪式，
+配方档次直接决定召唤难度。
+
+**术语与幽影的实测更正（重要）**：
+
+- Malum 官方中文里，「虚空」指维度/层级（虚空盐、虚空通史、虚空符文），**不是任何一种灵**。九种灵的中文名是：
+  奥术精魂、邪术精魂（Eldritch）、神圣精魂、邪恶精魂、澄空精魂、碧水精魂、大地精魂、狱火精魂、幽影精魂（Umbral）。
+  用户口语里的"虚空灵"指**邪术精魂**（`malum:eldritch_spirit`）。
+- **幽影精魂放不上图腾柱，而且是 Malum 写死的**（用户实测"右键没反应"后 javap 复核）：
+  `MalumLogBLock#createTotemPole(...)` 的第一条语句就是
+  `if (shard.type.equals(SpiritTypeRegistry.UMBRAL_SPIRIT)) return false;`。
+  同一方法还有第二条容易踩的规则：**点击面为 UP/DOWN 时直接返回 FAIL** —— 必须右键原木的**侧面**。
+  因此可用的柱灵只有八种；先前记录里"幽影也能用"的判断是错的，已全部改为**邪术**。
+
+**Malum 的仪式机制（javap 实读，1.20.1-1.6.7）**：
+
+- `SpiritRiteRegistry` 是普通静态表（`RITES` 列表 + 每个仪式的静态字段），不是注册表；
+- `TotemicRiteType` **用灵的类型列表匹配**（`List.equals`，顺序敏感）：图腾基座每 tick `getRite(getSpirits())`，
+  标识符存进 NBT，读档用 `getRite(String)` 复原；
+- 图腾柱顺序：`updateTotemPoles` 从基座**逐层向上** `add`，所以 `getSpirits()` 是**自下而上**；
+- 现有 13 个仪式的组合是：`[奥术, X, X]`（六个元素）、`[邪术, 奥术, X, X]`（六个「大」仪式）、`[奥术 ×5]`（释缚仪式）。
+  **没有任何一个是「奥术 ×3 / ×4」或「[邪术, 奥术, 奥术, 奥术]」**；
+- `effect` / `corruptedEffect` 是 final 字段，在父类构造函数里通过可覆写的 `getNaturalRiteEffect()` 赋值 ——
+  子类实例字段那时还没初始化，所以效果只持有 `this`、执行时才读 `owner.difficulty()`；
+- `ONE_TIME_EFFECT` 表示激活时触发一次（朽木的 `RADIAL_BLOCK_EFFECT` 才会按 tickRate 反复）。
+
+**四个新仪式的配方**（自下而上；全部避开 13 个现有组合，彼此也不重复；**邪术只出现在后两档**）：
+
+| 难度 | 标识符 | 灵组合（自下而上） | 柱数 |
+| --- | --- | --- | --- |
+| SIMPLE | `vicissitude_rite` | 奥术 ×3 | 3 |
+| DIFFICULT | `greater_vicissitude_rite` | 奥术 ×4 | 4 |
+| COMPLETE | `eldritch_vicissitude_rite` | **邪术 ×1**、奥术 ×3 | 4 |
+| EXTREME | `greater_eldritch_vicissitude_rite` | **邪术 ×2**、奥术 ×3 | 5 |
+
+后两档也可以换成别的八种柱灵（如神圣/邪恶）来拉开差异，只要不与上表或 Malum 的 13 个组合重复。
+`SummoningRite#poleSpirit` 会在注册前拦掉含幽影的配方并打一条 warning，避免以后改配方时留下一个**永远搭不出来**的死仪式。
+
+**实现**（`common/rite/`）：
+
+- `VicissitudeRiteType`：带参数的 `TotemicRiteType`（标识符 + 难度 + 灵数组）。自然与朽木效果都是
+  `ONE_TIME_EFFECT` 的召唤，因此两种木头的图腾都只在激活时召唤一次，不会刷怪。
+  `getIcon()` 被覆写：Malum 用「自己的命名空间 + 仪式标识符」拼图标路径，新仪式会指向不存在的文件，
+  因此复用 `malum:textures/vfx/rite/arcane.png`（不复制素材、不新增资源）。
+- `SummoningRite`：`Recipe` 枚举描述四个配方（奥术数量 + 幽影数量，自下而上生成灵数组），
+  在 `FMLCommonSetupEvent` 的 `enqueueWork` 里逐个 `create` 进 `RITES`（纯追加，不替换任何现有条目）。
+  召唤时：读配置 → 64 格内已有同类型实体则跳过（不叠 Boss）→ 按 3/4/6/2/8 高度依次找无碰撞落点
+  （1.6×4.375 的碰撞箱不能凭空假设有空间；全被堵住时也放最低候选点，交给 Boss 自带的脱困）→
+  朝向取图腾朝向 → 播放 `malum:soul_shatter` 与灵魂火粒子 → 若召唤的是 First Vicissitude 则写入该仪式对应的难度。
+
+**法典与本地化**：`client/MaledictCodexEntries` 新增一条虚空卷条目（虚空水晶之后解锁）共六页：
+标题正文 → SIMPLE 配方页 → DIFFICULT 配方页 → 幽影说明正文 → COMPLETE 配方页 → EXTREME 配方页。
+配方页用 Malum 现成的 `SpiritRiteRecipePage`，会按顺序画出灵的组合。语言键由 `data/MaledictLanguage`
+生成（中文先写、每 13 个可见字符一个空格），已跑 `runData` 重新生成。
+
+**新增配置**（`firstVicissitude` 段，均为新键）：
+
+| 键 | 默认 | 说明 |
+| --- | --- | --- |
+| `summoningRite` | `true` | 关掉即完全恢复 Malum 原版行为 |
+| `summoningRiteEntity` | `maledict:first_vicissitude` | 注册名，可指向任意实体 |
+
+**命令**：`.\gradlew compileJava test --offline` BUILD SUCCESSFUL（测试 5 项 0 失败）、
+`.\gradlew runData --offline` BUILD SUCCESSFUL（重新生成 zh_cn/en_us，已抽查四个仪式的名称键）。
+**未验证**：需进游戏搭图腾实测 —— 四个配方的柱数与顺序是否与法典配方页一致、召唤位置是否合适、
+会不会与图腾结构互相卡住、64 格去重是否够用、以及 JEI 是否会自动列出新仪式
+（JEI 的仪式列表由 Malum 插件生成，若在 common setup 之前抓取则会漏掉，法典条目不受影响）。
+
 ## 未验证项（明确不声称通过）
 
 1. 客户端与专服双人场景、晚加入不串阶段、走出/走入跟踪范围。
