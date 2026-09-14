@@ -48,7 +48,7 @@
 
 第三轮明确应利用 Lodestone 已有表现工具。已在本地依赖 JAR 核实：`ScreenshakeHandler.addScreenshake(ScreenshakeInstance)`；`PositionedScreenshakeInstance(int, Vec3, float, float)`（时长、位置、衰减距离、最大距离）；`ScreenshakeInstance.setIntensity` 支持 1/2/3 个强度参数，另有 setEasing。包路径为 `team.lodestar.lodestone.handlers` 与 `team.lodestar.lodestone.systems.screenshake`。JAR 同时存在 ScreenshakePacket/PositionedScreenshakePacket，但尚未核对它们的具体构造签名，不预设不存在的方法。
 
-首版接入基于位置的短震动：重击命中约 8 tick/峰值 0.15，转场关键点 16 tick/0.25，死亡翼根失效 12 tick/0.18；全强度距离 8 格，最大 24 格，强度采用短入/衰减，不每个球命中都震动。这些是可调基准，以游戏观感校准 Lodestone 强度单位；不把 0.25 误称为相机角度。
+首版接入基于位置的短震动：重击命中约 12 tick/峰值 0.30（第十三轮按用户要求由 8 tick/0.15 加强），转场关键点 16 tick/0.25，死亡翼根失效 12 tick/0.18；全强度距离 8 格，最大 24 格，强度采用短入/衰减，不每个球命中都震动。这些是可调基准，以游戏观感校准 Lodestone 强度单位；不把 0.25 误称为相机角度。
 
 服务器事件只通知附近跟踪玩家，客户端按 UUID/actionSequence/事件类型去重后添加实例；晚加入不补播过去的一次性震动。提供客户端强度倍率 0–1，0 关闭；不绕过 Lodestone 自身设置。多个 Boss 只限制本模组发出的重复效果，不清空全局 INSTANCES 干扰其他模组；震动不替代地面预警，也不影响判定/移动输入。
 

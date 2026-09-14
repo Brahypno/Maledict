@@ -12,7 +12,8 @@
 | 历史拖尾 | Lodestone `TrailPointBuilder.create`、`addTrailPoint(Vec3)`、`tickTrailPoints`、`getTrailPoints`；Malum `RenderUtils.renderEntityTrail` | 镰刀飞行、冲刺残迹、追踪球曲线；尾宽和颜色随历史位置衰减 |
 | 灵魂材质 VFX | `SpiritBasedWorldVFXBuilder.create(MalumSpiritType)`、`setRenderType`、`setAlpha`，继承 WorldVFXBuilder | 延用本项目光球 umbral/eldritch 风格，控制亮度以匹配黑紫圣骸 |
 | 线段/光带 | `VFXBuilders.WorldVFXBuilder.renderBeam(Matrix4f, Vec3, Vec3, float)` 与更多重载 | 左手到飞镰的细命运线、标记指向线；末尾 float 的具体几何尺度按方法体及游戏校准 |
-| 面片/曲线几何 | `WorldVFXBuilder.renderQuad`、`renderTrail`、`setUV`、`setColor`、`setAlpha` | 胸标记的边界、主环技能的带缺口地面预兆、释放瞬间的薄弧面 |
+| 面片/曲线几何 | `WorldVFXBuilder.renderQuad`、`renderTrail`、`setUV`、`setColor`、`setAlpha` | 释放瞬间的薄弧面、斩击以外的曲线面片；地面预兆已不再用几何绘制，见下一行 |
+| 地面法阵 | Malum `ParticleRegistry.RITUAL_CIRCLE` 与 `ParticleRegistry.CIRCLE`；`WorldParticleBuilder` + `DirectionalBehaviorComponent(new Vec3(0,1,0))`（四边形垂直于 +Y，平铺地面）+ `setSpinData`；`LodestoneWorldParticleRenderType.LUMITRANSPARENT` | 胸标记的黑色整圆法阵、环裁定的黑色断环符文、两者边界的冷白微光；真实用法见下表的两个地面技能 |
 | 斩击方向 | Malum `ParticleHelper.SlashParticleEffectBuilder`：`setSlashAngle`、`setVerticalSlashAngle`、`setMirrored`、`setSpiritType`、`spawnSlashingParticle(Level,Vec3,Vec3)` | 横斩、竖劈、重击分别绑定正确的方向和服务端释放位置；不随机镜像导致视觉与真实挥刀相反 |
 | 空间/形状粒子分布 | `WorldParticleBuilder.spawnLine`、`createCircle`、`repeatCircle`、`surroundVoxelShape` | 少量路径碎光、局部环片火花或破坏成功后沿实际方块形状的碎屑；不是用于决定碰撞/伤害 |
 | 震动与缓动 | 已核实 PositionedScreenshakeInstance、ScreenshakeHandler；Easing 类型存在 | 08 的重击、转场、死亡短震动；粒子数据的具体 easing setter 在实施时核对，不猜方法签名 |
@@ -29,8 +30,8 @@
 | 一阶段普通扇射 | 活动翼片从翼根向翼尖依次亮起，提前 12 tick 蓄力 | 释放短星芒，非追踪球用直线短尾；所有一阶段球均压血，不暗示普通伤害 |
 | 一阶段追踪球 | 双层旋转光核＋明显曲线尾迹 | 与直线球形状/运动区分；不能只靠颜色区分；沿用已存在的光球渲染样例 |
 | wing barrage | 每波按左右翼顺序闪亮，模型羽片轻微展开 | 每波仅在真正发射锚点出光，不给每枚球永久挂多套粒子 |
-| 胸标记 | 胸残环轻微偏移，地面区域有清晰边界和倒计时式收束 | 视觉范围使用与判定相同的中心/半径；边界在低粒子设置下仍存在，触发后约 8 tick 淡出 |
-| 主环裁定 | 头后断片短暂错位，地面显示内外环与 60° 安全缺口 | 用分段几何保留缺口；不能直接 repeatCircle 画满圆把安全区盖掉 |
+| 胸标记 | 胸残环轻微偏移，地面区域有清晰边界和倒计时式收束 | 视觉范围使用与判定相同的中心/半径；黑色法阵随收束边长大，边界微光在收束边与判定外沿之间交替；全部符文强制生成，低粒子设置下仍存在；触发后约 8 tick 淡出 |
+| 主环裁定 | 头后断片短暂错位，地面显示内外环与 60° 安全缺口 | 断环符文按固定槽位铺在环带内（12 槽、每 tick 复活一枚、寿命 14），槽位角度与符文尺寸都按缺口内缩，不能画满圆把安全区盖掉；中心与环外同样不放符文 |
 | 横斩 / 竖劈 / 重击 | 粒子斩弧与实际镰刀方向一致 | 释放帧一次产生，重击比普通斩弧更宽更短；不是更大范围伤害 |
 | scythe throw / recover | 飞镰独立 Item 渲染，历史轨迹逐渐消失 | 左手到飞镰的细线仅在牵引/返回关键段显示；接回一次短光，空手状态由同步状态决定 |
 | dash / charge | 先明确方向预兆，再产生短身后残迹 | 轨迹不延伸成新的攻击区域；碰撞停止或 recovery 时停止采样，旧点自然消失 |
@@ -44,17 +45,19 @@
 1. common 侧动作/事件提供 Boss UUID、actionSequence、事件类型、时间、锚点或世界位置以及必要参数。持续效果由同步状态重建；一次性闪光/斩弧/震动只消费一次。只同步事件，不为每个装饰粒子发网络包。
 2. 客户端用一个 Boss 特效入口组合 builder 和 trail；Model 不直接散落网络/粒子逻辑。建议位置 `client/vfx/FirstVicissitudeEffects.java`，需要状态时按实体实例保存，不能静态共享一组尾迹。
 3. Malum 斩击 builder 关联 networked ParticleEffectType；实施前核对所选效果的发送/消费侧，采用“Malum helper 发一次”或“本模组同步后客户端生成”其中一条路径，避免双方各生成一遍。已有 `IncursusBladeEnchantments` 是调用样例，不直接复用其造成伤害的主动技能入口。
-4. 模型锚点只负责客户端精确附着；服务端预兆中心、攻击朝向和半径仍来自 02/07 的权威几何。显示地面环不是 renderer 自行重新选目标。
-5. 色彩数据使用 01 的冷白/暗紫层次。SpiritBasedWorldVFXBuilder 可用于风格一致的既有光球；若封装带来的色彩/透明规则与 Boss 目标冲突，使用普通 WorldVFXBuilder 加本色板，不强迫每种效果走同一个封装。
+4. 模型锚点只负责客户端精确附着；服务端预兆中心、攻击朝向和半径仍来自 02/07 的权威几何。显示法阵不是 renderer 自行重新选目标。
+5. 色彩数据使用 01 的冷白/暗紫层次。SpiritBasedWorldVFXBuilder 可用于风格一致的既有光球；若封装带来的色彩/透明规则与 Boss 目标冲突，使用普通 WorldVFXBuilder 加本色板，不强迫每种效果走同一个封装。地面法阵是用户指定的例外：符文本体为纯黑（`SIGIL_BLACK`），只有边界微光保留冷白对比。
 
 ## 数量、缓存与显示
 
 - 继承 04 每 Boss 120 个存活装饰粒子、常态新增最多 8/tick、关键事件最多额外 40 的初始预算；双层 bloom 与 helper 内部产生的粒子都计数，不能把一次 helper 调用当作一粒。必要时直接配置底层 builder。
-- 粒子总预算覆盖本 Boss 的所有弹体。达到预算优先减少外围光点和次要尾迹；不得删掉真实弹体显示、技能范围边界或安全缺口。
+- 粒子总预算覆盖本 Boss 的所有弹体。达到预算优先减少外围光点和次要尾迹；不得删掉真实弹体显示、技能范围法阵或安全缺口。
+- 法阵用 `LUMITRANSPARENT` 且颜色为黑，这不是随手选的组合：Malum 的符文贴图是**全不透明**的白字黑底（alpha 恒为 255），普通 `TRANSPARENT` 会拍出一整块黑方块；而该着色器先用**贴图自身亮度**替换贴图 alpha、再乘顶点色，所以白笔画不透明、黑底透明，RGB 乘黑即为黑色符文。想换颜色只需改 `SIGIL_BLACK`，但不要改渲染类型。
 - 飞镰/追踪球每客户端 tick 最多采一个历史点，首版保存 12–20 tick 的短历史；静止不反复加相同点。每次添加前更新/老化历史，帧渲染只插值，不能让高 FPS 客户端尾迹更长。
-- 胸/主环预兆用预计算分段几何，初始约 48 段，段位/UV 可以复用，动态只变中心/朝向/淡出参数。地形贴合只在生成/位置最终锁定时采样，不每帧搜索整个圆盘；复杂地形保证显示面对应实际可伤害地面。
+- 胸/主环预兆改为每客户端 tick 生成的符文粒子，落点直接取同步的锁定几何与缺口角，不做每帧地形搜索。符文尺寸与世界危险面同源：整圆法阵只在胸标记（判定就是整个圆盘）出现，环裁定只用断环符文。地形贴合沿用锁定时的落点方块顶面，不每 tick 重扫。
+- 地面预兆曾用 `RenderType.lightning()` 画分段四边形环，已删除，不要再用：那是原版闪电/天气的渲染类型（加色、全亮、写天气目标），任何颜色都会显成发白发黄的一圈，与冷色调主题不符。
 - 使用项目已有 applyAndCache RenderType 模式；builder 是可变对象，复用时重置颜色/alpha/UV，避免跨实体串色。不要长时间缓存绑定帧缓冲的 VertexConsumer。
-- 光晕是视觉柔光/叠加，不等同真实动态照明；强光层受深度和距离控制，不能无条件隔墙透视 Boss。低粒子设置也能通过模型、实体和几何预兆辨认攻击。
+- 光晕是视觉柔光/叠加，不等同真实动态照明；强光层受深度和距离控制，不能无条件隔墙透视 Boss。法阵符文走普通粒子渲染层，照常被地形遮挡。低粒子设置也能通过模型、实体和法阵预兆辨认攻击：符文全部 `enableForcedSpawn()`，最低粒子档位下仍会显示。
 
 ## 实施与验收
 

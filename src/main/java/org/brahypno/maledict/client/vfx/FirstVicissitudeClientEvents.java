@@ -70,7 +70,9 @@ public final class FirstVicissitudeClientEvents {
                     FirstVicissitudeEffects.spawnGatherFlash(level, position, 10);
             case VicissitudeEffectPacket.EVENT_HEAVY_IMPACT -> {
                 FirstVicissitudeEffects.spawnReleaseBurst(level, position, true);
-                shake(position, 8, 0.15F);
+                // The one shake the player is meant to feel rather than read: longer and roughly
+                // twice the peak of the original 8 tick / 0.15 base.
+                shake(position, 12, 0.30F);
             }
 
             case VicissitudeEffectPacket.EVENT_UNSTICK ->

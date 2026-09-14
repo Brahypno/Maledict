@@ -1,14 +1,10 @@
 package org.brahypno.maledict.client;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -20,11 +16,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Client side world space pass for the boss' ground warnings.
+ * Client side driver for the boss' ground warnings.
  *
- * <p>Drawing them here instead of inside the entity render layer keeps the maths in plain world
- * coordinates and, more importantly, keeps a warning visible even when the boss itself is off
- * screen. The candidate list is refreshed once per client tick.
+ * <p>The candidate list is refreshed once per client tick and the rune particles are spawned from
+ * the same pass, so the warning cost never scales with the frame rate. The warnings themselves are
+ * pure world space particles: they no longer need a render layer of their own, and they stay
+ * visible even when the boss is outside the frustum.
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE,
         value = Dist.CLIENT)
@@ -50,20 +47,7 @@ public final class MaledictClientRenderEvents {
                 MARKERS.add(boss);
             }
         }
-    }
-
-    @SubscribeEvent
-    public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS
-            || MARKERS.isEmpty()) {
-            return;
-        }
-        MultiBufferSource.BufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
-        Vec3 camera = event.getCamera().getPosition();
-        PoseStack poseStack = event.getPoseStack();
-        FirstVicissitudeEffects.renderGroundMarkers(MARKERS, event.getPartialTick(), poseStack,
-                buffers, camera);
-        buffers.endBatch();
+        FirstVicissitudeEffects.tickGroundMarkers(MARKERS);
     }
 
     private MaledictClientRenderEvents() {
