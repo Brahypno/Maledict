@@ -20,6 +20,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("itemGroup.maledict", "咒邪");
             add("enchantment.maledict.ectoplasm", "灵质");
             add("enchantment.maledict.reminiscence", "追忆");
+            add("enchantment.maledict.aftertaste", "回味");
             addItem(MaledictItems.INCURSUS_BLADE, "神侵恶刃");
             addItem(MaledictItems.REMEMBRANCE_BOW, "思念弓");
             addItem(MaledictItems.ELEGY_BOW, "哀歌弓");
@@ -99,6 +100,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("itemGroup.maledict", "Maledict");
             add("enchantment.maledict.ectoplasm", "Ectoplasm");
             add("enchantment.maledict.reminiscence", "Reminiscence");
+            add("enchantment.maledict.aftertaste", "Aftertaste");
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
             addItem(MaledictItems.REMEMBRANCE_BOW, "Remembrance Bow");
             addItem(MaledictItems.ELEGY_BOW, "Elegy Bow");
