@@ -29,6 +29,7 @@ public final class MaledictCreativeTabs {
                         output.accept(MaledictItems.AQUEOUS_SPIRIT_ARROW.get());
                         output.accept(MaledictItems.EARTHEN_SPIRIT_ARROW.get());
                         output.accept(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
+                        output.accept(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
                         output.accept(MaledictItems.CURIO_RETURN_TOKEN.get());
                     })
                     .build());

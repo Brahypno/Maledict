@@ -29,6 +29,10 @@ public final class MaledictItemTags extends ItemTagsProvider {
     private static final TagKey<Item> L2_NO_SEAL =
             ItemTags.create(new ResourceLocation("l2hostility", "no_seal"));
 
+    /** Curios 的护符槽；戴上后由 AgeOfEnlightenmentCurioRenderer 在头部渲染面具。 */
+    private static final TagKey<Item> CURIOS_CHARM =
+            ItemTags.create(new ResourceLocation("curios", "charm"));
+
     public MaledictItemTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagsProvider.TagLookup<Block>> blockTags, ExistingFileHelper existingFiles) {
         super(output, lookupProvider, blockTags, Maledict.MODID, existingFiles);
     }
@@ -52,6 +56,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.ELEGY_BOW.get());
         tag(GOETY_GRAVE_GLOVE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(L2_NO_SEAL).add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
+        tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
         // Generated empty on purpose: modpacks extend it through a data pack.
         tag(MaledictTags.VICISSITUDE_CONFISCATION_IMMUNE).addOptional(new ResourceLocation("sophisticatedbackpacks", "backpack"));
     }

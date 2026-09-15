@@ -46,6 +46,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "狱火精魂箭");
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
             add("entity.maledict.first_vicissitude", "无常");
+            addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "启蒙之年");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "保管凭证");
             add("tooltip.maledict.curio_return_token", "右键领取被无常没收、尚未归还的饰品。全部交付后凭证才会消失。");
             add("message.maledict.first_vicissitude.curio_return_pending",
@@ -126,6 +127,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "Infernal Spirit Arrow");
             add("attribute.name.maledict.powder_snow_damage", "Freezing Damage");
             add("entity.maledict.first_vicissitude", "Vicissitude");
+            addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "Age of Enlightenment");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "Custody Token");
             add("tooltip.maledict.curio_return_token",
                     "Right-click to reclaim confiscated curios that are still in custody. "

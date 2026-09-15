@@ -43,6 +43,10 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .perspective(ItemDisplayContext.GUI, gui)
                 .perspective(ItemDisplayContext.FIXED, gui);
 
+        getBuilder("age_of_enlightenment")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/age_of_enlightenment"));
+
         getBuilder("curio_return_token")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", modLoc("item/curio_return_token"));

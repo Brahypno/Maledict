@@ -8,11 +8,7 @@ import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
-import org.brahypno.maledict.common.item.CurioReturnTokenItem;
-import org.brahypno.maledict.common.item.IncursusBladeItem;
-import org.brahypno.maledict.common.item.RemembranceBowItem;
-import org.brahypno.maledict.common.item.SpiritArrowItem;
-import org.brahypno.maledict.common.item.SpiritArrowType;
+import org.brahypno.maledict.common.item.*;
 import team.lodestar.lodestone.systems.multiblock.MultiBlockItem;
 
 public final class MaledictItems {
@@ -25,9 +21,15 @@ public final class MaledictItems {
     public static final RegistryObject<Item> ELEGY_BOW = ITEMS.register("elegy_bow", () ->
             new RemembranceBowItem(new Item.Properties().durability(1111).rarity(Rarity.RARE), true));
 
-    /** Claim ticket for confiscated curios that could not be delivered automatically. */
-    public static final RegistryObject<Item> CURIO_RETURN_TOKEN = ITEMS.register("curio_return_token",
-            CurioReturnTokenItem::new);
+    /**
+     * Curio amulet (charm slot) that renders a skull mask over the wearer's face.
+     */
+    public static final RegistryObject<Item> AGE_OF_ENLIGHTENMENT = ITEMS.register("age_of_enlightenment", AgeOfEnlightenmentItem::new);
+
+    /**
+     * Claim ticket for confiscated curios that could not be delivered automatically.
+     */
+    public static final RegistryObject<Item> CURIO_RETURN_TOKEN = ITEMS.register("curio_return_token", CurioReturnTokenItem::new);
 
     public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.MNEMONIC_OBELISK.get(), new Item.Properties(), MnemonicObeliskBlockEntity.STRUCTURE));
