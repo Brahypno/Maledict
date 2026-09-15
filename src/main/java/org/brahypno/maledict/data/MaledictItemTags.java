@@ -29,9 +29,10 @@ public final class MaledictItemTags extends ItemTagsProvider {
     private static final TagKey<Item> L2_NO_SEAL =
             ItemTags.create(new ResourceLocation("l2hostility", "no_seal"));
 
-    /** Curios 的护符槽；戴上后由 AgeOfEnlightenmentCurioRenderer 在头部渲染面具。 */
-    private static final TagKey<Item> CURIOS_CHARM =
-            ItemTags.create(new ResourceLocation("curios", "charm"));
+    /**
+     * Curios 的护符槽；
+     */
+    private static final TagKey<Item> CURIOS_CHARM = ItemTags.create(new ResourceLocation("curios", "charm"));
 
     public MaledictItemTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagsProvider.TagLookup<Block>> blockTags, ExistingFileHelper existingFiles) {
         super(output, lookupProvider, blockTags, Maledict.MODID, existingFiles);

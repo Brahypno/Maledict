@@ -3,8 +3,8 @@ package org.brahypno.maledict.data;
 import net.minecraft.data.PackOutput;
 import net.minecraftforge.common.data.LanguageProvider;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictBlocks;
+import org.brahypno.maledict.registry.MaledictItems;
 
 public final class MaledictLanguage extends LanguageProvider {
     private final String locale;
@@ -45,17 +45,17 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.EARTHEN_SPIRIT_ARROW, "大地精魂箭");
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "狱火精魂箭");
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
-            add("entity.maledict.first_vicissitude", "无常");
+            add("entity.maledict.first_vicissitude", "无常(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "启蒙之年");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "保管凭证");
             add("tooltip.maledict.curio_return_token", "右键领取被无常没收、尚未归还的饰品。全部交付后凭证才会消失。");
             add("message.maledict.first_vicissitude.curio_return_pending",
-                    "还有 %s 件饰品由无常保管：腾出背包或饰品栏空间后会自动归还");
+                "还有 %s 件饰品由无常保管：腾出背包或饰品栏空间后会自动归还");
             add("message.maledict.first_vicissitude.curio_return_complete", "被没收的饰品已全部归还");
             add("message.maledict.first_vicissitude.attack", "命运总是会将人逼上悬崖，犹如恶客造访");
             add("message.maledict.first_vicissitude.phase_two",
-                    "所谓无常，就是圣人行走在正道上，依然会遇见的命运");
-            add("tooltip.maledict.incursus_blade.description", "吞噬精魂成长，向周身挥出镰刃的魔法镰刀。");
+                "所谓无常，就是圣人行走在正道上，依然会遇见的命运");
+            add("tooltip.maledict.incursus_blade.description", "吞噬精魂成长，向周身挥出锋刃的凶邪镰刀。");
             add("tooltip.maledict.incursus_blade.medium_unlock_hint", "精魂之力到达神圣之数会解锁更本征的力量");
             add("tooltip.maledict.incursus_blade.hold_shift", "按住 Shift 查看精魂详情");
             add("tooltip.maledict.incursus_blade.infusion", "在背包中拿精魂右键此物品以永久注入：");
@@ -126,22 +126,22 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.EARTHEN_SPIRIT_ARROW, "Earthen Spirit Arrow");
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "Infernal Spirit Arrow");
             add("attribute.name.maledict.powder_snow_damage", "Freezing Damage");
-            add("entity.maledict.first_vicissitude", "Vicissitude");
+            add("entity.maledict.first_vicissitude", "Vicissitude(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "Age of Enlightenment");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "Custody Token");
             add("tooltip.maledict.curio_return_token",
-                    "Right-click to reclaim confiscated curios that are still in custody. "
-                    + "The token only disappears once everything has been handed back.");
+                "Right-click to reclaim confiscated curios that are still in custody. "
+                + "The token only disappears once everything has been handed back.");
             add("message.maledict.first_vicissitude.curio_return_pending",
-                    "%s curio(s) are still in custody: free up inventory or curio slots and they "
-                    + "will be returned automatically");
+                "%s curio(s) are still in custody: free up inventory or curio slots and they "
+                + "will be returned automatically");
             add("message.maledict.first_vicissitude.curio_return_complete",
-                    "Every confiscated curio has been returned");
+                "Every confiscated curio has been returned");
             add("message.maledict.first_vicissitude.attack",
-                    "Fate always drives people to the edge of a cliff, like an unwelcome guest calling.");
+                "Fate always drives people to the edge of a cliff, like an unwelcome guest calling.");
             add("message.maledict.first_vicissitude.phase_two",
-                    "Vicissitude is the fate even sages meet while walking the righteous path.");
-            add("tooltip.maledict.incursus_blade.description", "A magic scythe that devours spirits and strikes all around its wielder.");
+                "Vicissitude is the fate even sages meet while walking the righteous path.");
+            add("tooltip.maledict.incursus_blade.description", "A evil scythe that devours spirits and strikes all around its wielder.");
             add("tooltip.maledict.incursus_blade.medium_unlock_hint", "When every spirit reaches the sacred number, a more intrinsic power will awaken.");
             add("tooltip.maledict.incursus_blade.hold_shift", "Hold Shift for spirit details");
             add("tooltip.maledict.incursus_blade.infusion", "Right-click this item with spirits in the inventory to infuse them permanently:");
