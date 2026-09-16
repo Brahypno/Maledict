@@ -22,6 +22,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -170,16 +171,30 @@ public final class IncursusBladeItem extends MagicScytheItem {
             return;
         }
 
+        // 倍率按「属性存不存在」来取，而不是取一个可能为 0 的值。
+        //
+        // getAttributeValue() 在属性没注册到该实体时返回 0，而 0 在这两个位置上都是灾难：
+        //   熟练度当乘数用 → 伤害直接归零；
+        //   抗性当除数用 → Math.max(0.01, 0) 会让伤害暴涨 100 倍。
+        // getAttribute() 返回 null 才真正表示「这个实体没有这条属性」，于是缺了就跳过该倍率：
+        // 熟练度缺失 = ×1（原样通过），抗性缺失 = 不减免。这与 Lodestone 自己
+        // LodestoneAttributeEventHandler 的写法一致——它同样是先取 AttributeInstance 再判空。
+
         if (magicDamage){
-            event.setAmount(event.getAmount() * (float) attacker.getAttributeValue(AttributeRegistry.SCYTHE_PROFICIENCY.get()));
+            // 镰刀熟练度以 1 为中性，取不到时按 1 处理，见 scytheProficiencyOrNeutral。
+            event.setAmount(event.getAmount() * (float) scytheProficiencyOrNeutral(
+                    attacker.getAttributeValue(AttributeRegistry.SCYTHE_PROFICIENCY.get())));
         }
 
         if (scytheDamage){
-            double magicProficiency = attacker.getAttributeValue(
-                    LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get());
-            double magicResistance = Math.max(0.01, target.getAttributeValue(
-                    LodestoneAttributeRegistry.MAGIC_RESISTANCE.get()));
-            event.setAmount(event.getAmount() * (float) (magicProficiency / magicResistance));
+            AttributeInstance proficiency = attacker.getAttribute(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get());
+            if (proficiency != null){
+                event.setAmount(event.getAmount() * (float) proficiency.getValue());
+            }
+            AttributeInstance resistance = target.getAttribute(LodestoneAttributeRegistry.MAGIC_RESISTANCE.get());
+            if (resistance != null){
+                event.setAmount(event.getAmount() / (float) Math.max(0.01, resistance.getValue()));
+            }
         }
 
         if (event.getSource().is(DamageTypeRegistry.SCYTHE_MELEE)){
@@ -194,6 +209,18 @@ public final class IncursusBladeItem extends MagicScytheItem {
         }
 
         addAbsorptionFromDamage(attacker, stack, event.getAmount());
+    }
+
+    /**
+     * 镰刀熟练度的中性兜底。
+     *
+     * <p>与魔法熟练度/魔法抗性不同：那两个直接用 {@code getAttribute()} 判空即可，因为
+     * Lodestone 的属性在实体没注册时会返回 null；而镰刀熟练度这里走的是
+     * {@code getAttributeValue}，取不到时给的是 0，它又当乘数用，0 会让伤害归零，
+     * 所以缺省一律当中性 1（也就是「无加成，原样通过」）。
+     */
+    private static double scytheProficiencyOrNeutral(double value) {
+        return value > 0.0 ? value : 1.0;
     }
 
     private static void addAbsorptionFromDamage(
@@ -266,15 +293,13 @@ public final class IncursusBladeItem extends MagicScytheItem {
             Entity target,
             DamageSource source,
             float damage) {
-        if (hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL)){
+        if (hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL))
             DamageProbe.finalDamageMethod(target, source, damage);
-        }
-        else if (hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL)){
+        else if (hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL))
             DamageProbe.mediumDamageMethod(target, source, damage);
-        }
-        else {
+        else
             DamageProbe.lighterDamageMethod(target, source, damage);
-        }
+
     }
 
     public static void setStat(ItemStack stack, String key, double value) {
