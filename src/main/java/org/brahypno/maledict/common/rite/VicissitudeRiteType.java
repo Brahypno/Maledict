@@ -21,7 +21,6 @@ import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDiffic
  * the bottom reaches deeper. Every effect is a {@code ONE_TIME_EFFECT}, so a soulwood totem fires
  * each rite once per activation and can never spawn a crowd.
  */
-@SuppressWarnings({"removal"})
 public final class VicissitudeRiteType extends TotemicRiteType {
     private final BossDifficulty difficulty;
 
@@ -57,7 +56,7 @@ public final class VicissitudeRiteType extends TotemicRiteType {
      */
     @Override
     public ResourceLocation getIcon() {
-        return new ResourceLocation("malum", "textures/vfx/rite/arcane.png");
+        return ResourceLocation.fromNamespaceAndPath("malum", "textures/vfx/rite/arcane.png");
     }
 
     private static final class SummoningRiteEffect extends TotemicRiteEffect {

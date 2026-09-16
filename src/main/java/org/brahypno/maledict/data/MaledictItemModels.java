@@ -18,7 +18,6 @@ public final class MaledictItemModels extends ItemModelProvider {
     }
 
     @Override
-    @SuppressWarnings({"removal"})
     protected void registerModels() {
         for (SpiritArrowType arrowType : SpiritArrowType.values()) {
             getBuilder(arrowType.name().toLowerCase() + "_spirit_arrow")
@@ -31,7 +30,7 @@ public final class MaledictItemModels extends ItemModelProvider {
 
         ItemModelBuilder handheld = getBuilder("incursus_blade_handheld")
                 .parent(new ModelFile.UncheckedModelFile(
-                        new ResourceLocation("malum", "item/handheld_large")))
+                        ResourceLocation.fromNamespaceAndPath("malum", "item/handheld_large")))
                 .texture("layer0", modLoc("item/incursus_blade_huge"));
         ItemModelBuilder gui = withExistingParent("incursus_blade_gui", "item/handheld")
                 .texture("layer0", modLoc("item/incursus_blade"));

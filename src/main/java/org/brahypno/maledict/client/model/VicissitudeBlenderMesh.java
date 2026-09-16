@@ -16,8 +16,7 @@ import java.util.*;
  * Rigid Blender mesh attached to vanilla ModelPart joints, also used by the emissive pass.
  */
 final class VicissitudeBlenderMesh {
-    @SuppressWarnings({"removal"})
-    private static final ResourceLocation RESOURCE = new ResourceLocation(
+    private static final ResourceLocation RESOURCE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "models/entity/first_vicissitude.mesh.json");
     private final Map<Joint, List<Triangle>> triangles = new EnumMap<>(Joint.class);
 

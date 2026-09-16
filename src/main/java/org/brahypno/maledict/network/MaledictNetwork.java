@@ -13,9 +13,8 @@ import java.util.Optional;
 
 public final class MaledictNetwork {
     private static final String PROTOCOL = "1";
-    @SuppressWarnings({"removal"})
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(Maledict.MODID, "main"),
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "main"),
             () -> PROTOCOL,
             PROTOCOL::equals,
             PROTOCOL::equals);
@@ -53,7 +52,6 @@ public final class MaledictNetwork {
     }
 
     /** One shot boss presentation event for a single tracking player. */
-    @SuppressWarnings({"deprecation", "removal"})
     public static void sendEffect(ServerPlayer player, VicissitudeEffectPacket packet) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }

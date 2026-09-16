@@ -9,7 +9,6 @@ import org.brahypno.maledict.Maledict;
 /**
  * Shared tag keys. Generated JSON lives under {@code data/maledict/tags/items}.
  */
-@SuppressWarnings({"removal"})
 public final class MaledictTags {
     /**
      * Curios that the Vicissitude confiscation must leave in place. The default generated tag is
@@ -17,7 +16,7 @@ public final class MaledictTags {
      */
 
     public static final TagKey<Item> VICISSITUDE_CONFISCATION_IMMUNE = ItemTags.create(
-            new ResourceLocation(Maledict.MODID, "vicissitude_confiscation_immune"));
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "vicissitude_confiscation_immune"));
 
     private MaledictTags() {
     }

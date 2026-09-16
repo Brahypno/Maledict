@@ -27,14 +27,13 @@ import org.brahypno.maledict.rig.VicissitudeRigData;
  * weapon in the right hand and the effect entry point. Frustum culling is widened to include
  * the full wing span so the wings never pop out at the edge of the screen.
  */
-@SuppressWarnings({"removal"})
 public final class FirstVicissitudeBossRenderer
         extends MobRenderer<FirstVicissitudeBossEntity, FirstVicissitudeBossModel> {
     public static final ModelLayerLocation LAYER = new ModelLayerLocation(
-            new ResourceLocation(Maledict.MODID, "first_vicissitude"), "main");
-    public static final ResourceLocation TEXTURE = new ResourceLocation(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "first_vicissitude"), "main");
+    public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "textures/entity/first_vicissitude.png");
-    public static final ResourceLocation EMISSIVE = new ResourceLocation(
+    public static final ResourceLocation EMISSIVE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "textures/entity/first_vicissitude_emissive.png");
     /**
      * Half of the maximum wing span plus the ring, so large wings stay visible.

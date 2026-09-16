@@ -28,7 +28,7 @@ import org.brahypno.maledict.Maledict;
  */
 public final class AgeOfEnlightenmentModel extends EntityModel<Player> {
     public static final ModelLayerLocation LAYER = new ModelLayerLocation(
-            new ResourceLocation(Maledict.MODID, "age_of_enlightenment"), "main");
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "age_of_enlightenment"), "main");
 
     /** 贴图画布尺寸，必须与 art/age-of-enlightenment/tools/MaskTextureBuilder.java 的 TEX 一致。 */
     public static final int TEXTURE_WIDTH = 64;

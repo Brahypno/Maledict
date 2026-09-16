@@ -24,7 +24,6 @@ public final class MaledictRecipes extends RecipeProvider {
     }
 
     @Override
-    @SuppressWarnings({"removal"})
     protected void buildRecipes(Consumer<FinishedRecipe> recipes) {
         for (SpiritArrowType arrowType : SpiritArrowType.values()) {
             ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, MaledictItems.getSpiritArrow(arrowType).get(), 1)
@@ -51,7 +50,7 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.AQUEOUS_SPIRIT, 64)
                 .addSpirit(SpiritTypeRegistry.EARTHEN_SPIRIT, 64)
                 .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 64)
-                .build(recipes, new ResourceLocation(Maledict.MODID, "spirit_infusion/incursus_blade"));
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/incursus_blade"));
 
         new SpiritRepairRecipeBuilder(1.0f, Ingredient.of(Items.NETHER_STAR), 1)
                 .addItem(MaledictItems.INCURSUS_BLADE.get())

@@ -17,22 +17,22 @@ import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.concurrent.CompletableFuture;
 
-@SuppressWarnings({"removal"})
 public final class MaledictItemTags extends ItemTagsProvider {
 
     private static final TagKey<Item> GOETY_GRAVE_GLOVE =
-            ItemTags.create(new ResourceLocation("goety", "grave_glove_boost"));
+            ItemTags.create(ResourceLocation.fromNamespaceAndPath("goety", "grave_glove_boost"));
 
     private static final TagKey<Item> FORGE_SCYTHE =
-            ItemTags.create(new ResourceLocation("forge", "scythe"));
+            ItemTags.create(ResourceLocation.fromNamespaceAndPath("forge", "scythe"));
 
     private static final TagKey<Item> L2_NO_SEAL =
-            ItemTags.create(new ResourceLocation("l2hostility", "no_seal"));
+            ItemTags.create(ResourceLocation.fromNamespaceAndPath("l2hostility", "no_seal"));
 
     /**
      * Curios 的护符槽；
      */
-    private static final TagKey<Item> CURIOS_CHARM = ItemTags.create(new ResourceLocation("curios", "charm"));
+    private static final TagKey<Item> CURIOS_CHARM =
+            ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "charm"));
 
     public MaledictItemTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagsProvider.TagLookup<Block>> blockTags, ExistingFileHelper existingFiles) {
         super(output, lookupProvider, blockTags, Maledict.MODID, existingFiles);
@@ -59,6 +59,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(L2_NO_SEAL).add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
         tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
         // Generated empty on purpose: modpacks extend it through a data pack.
-        tag(MaledictTags.VICISSITUDE_CONFISCATION_IMMUNE).addOptional(new ResourceLocation("sophisticatedbackpacks", "backpack"));
+        tag(MaledictTags.VICISSITUDE_CONFISCATION_IMMUNE)
+                .addOptional(ResourceLocation.fromNamespaceAndPath("sophisticatedbackpacks", "backpack"));
     }
 }

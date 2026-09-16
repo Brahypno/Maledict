@@ -16,7 +16,6 @@ import org.brahypno.maledict.registry.MaledictItems;
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class MaledictItemProperties {
     @SubscribeEvent
-    @SuppressWarnings("removal")
     public static void registerItemProperties(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             registerBowProperties(MaledictItems.REMEMBRANCE_BOW.get());
@@ -24,9 +23,8 @@ public final class MaledictItemProperties {
         });
     }
 
-    @SuppressWarnings("removal")
     private static void registerBowProperties(Item item) {
-        ItemProperties.register(item, new ResourceLocation("pull"),
+        ItemProperties.register(item, ResourceLocation.fromNamespaceAndPath("minecraft", "pull"),
                 (stack, level, entity, seed) -> {
                     if (entity == null || entity.getUseItem() != stack
                             || !(stack.getItem() instanceof RemembranceBowItem bow)) {
@@ -37,7 +35,7 @@ public final class MaledictItemProperties {
                             usedTicks * bow.getDrawSpeedMultiplier(stack) / BowItem.MAX_DRAW_DURATION,
                             0.0F, 1.0F);
                 });
-        ItemProperties.register(item, new ResourceLocation("pulling"),
+        ItemProperties.register(item, ResourceLocation.fromNamespaceAndPath("minecraft", "pulling"),
                 (stack, level, entity, seed) -> entity != null
                         && entity.isUsingItem()
                         && entity.getUseItem() == stack ? 1.0F : 0.0F);

@@ -23,8 +23,8 @@ import top.theillusivec4.curios.api.client.ICurioRenderer;
  * 只要把头部姿态复制给面具模型即可。
  */
 public final class AgeOfEnlightenmentCurioRenderer implements ICurioRenderer {
-    private static final ResourceLocation TEXTURE =
-            new ResourceLocation(Maledict.MODID, "textures/curio/age_of_enlightenment.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
+            Maledict.MODID, "textures/curio/age_of_enlightenment.png");
 
     @Override
     public <T extends LivingEntity, M extends EntityModel<T>> void render(ItemStack stack, SlotContext slotContext,
