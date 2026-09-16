@@ -48,6 +48,18 @@ public final class MaledictLanguage extends LanguageProvider {
             add("entity.maledict.first_vicissitude", "无常(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "启蒙之年");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "保管凭证");
+            add("effect.maledict.age_of_enlightenment", "启蒙之年");
+            add("effect.maledict.age_of_darkness", "黑暗时代");
+            add("effect.maledict.age_of_enlightenment.description",
+                "人民把蒙昧与黑暗错认为神圣，你的下一击必定造成暴击；每级额外给予 1 点法杖暂存弹数。");
+            add("effect.maledict.age_of_darkness.description",
+                "任由野蛮焚烧文明的黑暗时代啊，每级降低 20% 魔法抗性、灵魂护盾容量与灵魂护盾稳固度。");
+            add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "佩戴时冷却速度加倍");
+            add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "攻击半生命值目标时触发收获精魂时的效果");
+            add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment", "击杀敌人时获得启蒙之年，已有则延长时间");
+            add("tooltip.maledict.age_of_enlightenment.hold_shift", "按住 Shift 追问一个不该问的问题");
+            add("tooltip.maledict.age_of_enlightenment.shift", "黑暗的时代曾经存在过吗");
+            add("tooltip.maledict.age_of_enlightenment.shift.enlightened", "那无穷，无限，永动的启蒙之年啊");
             add("tooltip.maledict.curio_return_token", "右键领取被无常没收、尚未归还的饰品。全部交付后凭证才会消失。");
             add("message.maledict.first_vicissitude.curio_return_pending",
                 "还有 %s 件饰品由无常保管：腾出背包或饰品栏空间后会自动归还");
@@ -129,6 +141,22 @@ public final class MaledictLanguage extends LanguageProvider {
             add("entity.maledict.first_vicissitude", "Vicissitude(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "Age of Enlightenment");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "Custody Token");
+            add("effect.maledict.age_of_enlightenment", "Age of Enlightenment");
+            add("effect.maledict.age_of_darkness", "Age of Darkness");
+            add("effect.maledict.age_of_enlightenment.description",
+                "Where ignorance and shadow were mistaken for divine, Your next strike is sealed as a critical blow. "
+                + "Each level grants an additional Reserve Staff Charge.");
+            add("effect.maledict.age_of_darkness.description",
+                "Burned through civilization, stripping a fifth of your magic resistance, "
+                + "Soul Ward capacity and Soul Ward integrity per level.");
+            add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "Doubles the speed of item cooldowns while worn");
+            add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "Striking Half Health Targets Triggers Spirit Collection Effects");
+            add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment",
+                "Slaying an enemy grants the Age of Enlightenment, or extends it if already held");
+            add("tooltip.maledict.age_of_enlightenment.hold_shift", "Hold Shift to ask a question better left unasked");
+            add("tooltip.maledict.age_of_enlightenment.shift", "Was there ever a true age of darkness?");
+            add("tooltip.maledict.age_of_enlightenment.shift.enlightened",
+                "That infinite, boundless, perpetual \"Age of Enlightenment.\"");
             add("tooltip.maledict.curio_return_token",
                 "Right-click to reclaim confiscated curios that are still in custody. "
                 + "The token only disappears once everything has been handed back.");

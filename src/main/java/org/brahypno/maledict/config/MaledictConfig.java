@@ -18,6 +18,7 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue INFERNAL_UPGRADE_COST_COEFFICIENT;
     public static final ForgeConfigSpec.DoubleValue ELDRITCH_UPGRADE_COST_COEFFICIENT;
     public static final ForgeConfigSpec.DoubleValue WICKED_UPGRADE_COST_COEFFICIENT;
+    public static final ForgeConfigSpec.DoubleValue ENLIGHTENMENT_COOLDOWN_SPEED;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -34,6 +35,17 @@ public final class MaledictConfig {
         INFERNAL_UPGRADE_COST_COEFFICIENT = defineUpgradeCostCoefficient(builder, "infernal", 6);
         ELDRITCH_UPGRADE_COST_COEFFICIENT = defineUpgradeCostCoefficient(builder, "eldritch", 1);
         WICKED_UPGRADE_COST_COEFFICIENT = defineUpgradeCostCoefficient(builder, "wicked", 0.5);
+        builder.pop();
+        builder.push("ageOfEnlightenment");
+        ENLIGHTENMENT_COOLDOWN_SPEED = builder
+                .comment("How much faster item cooldowns recover while the Age of Enlightenment is worn.",
+                        "2.0 means cooldowns run at double speed: the wearer's active cooldowns lose an",
+                        "extra tick every server tick. This is a passive of the curio itself, not tied",
+                        "to the half health trigger or to kills. Values of 1.0 or below mean no boost.",
+                        "Note that the vanilla client only receives a cooldown once and then counts it",
+                        "down on its own, so the cooldown sweep can look slower than it really is; the",
+                        "cooldown does end when the server says it does.")
+                .defineInRange("cooldownSpeed", 2.0D, 1.0D, 20.0D);
         builder.pop();
         builder.push("firstVicissitude");
         VICISSITUDE_ENGAGEMENT_RANGE = builder

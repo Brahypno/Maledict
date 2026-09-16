@@ -1,6 +1,13 @@
-# Vicissitude 测试示例
+# 测试示例
 
-测试代码位于 `java/org/brahypno/maledict/common/entity/VicissitudeVitalityTest.java`。
+测试代码位于 `src/test/java`，目前有三个类：
+
+| 类 | 覆盖 |
+| --- | --- |
+| `common/entity/VicissitudeVitalityTest` | 无常 Boss 的真生命、击杀计数与世界存档 |
+| `common/curio/HalfHealthTest` | 启蒙之年的半血判定（纯数值） |
+| `common/curio/EnlightenmentLevelTest` | 启蒙之年护符 NBT 上的等级读取（纯数值） |
+
 每个 `@Test` 方法对应一个完整场景，使用 JUnit 5 的断言检查结果。
 
 ## 运行
@@ -22,7 +29,7 @@ HTML 报告位于 `build/reports/tests/test/index.html`，日志位于 `build/te
 .\gradlew.bat test --tests '*VicissitudeVitalityTest'
 ```
 
-## 可运行示例
+## 无常 Boss 的可运行示例
 
 | 方法 | 操作及预期 |
 | --- | --- |
@@ -33,6 +40,44 @@ HTML 报告位于 `build/reports/tests/test/index.html`，日志位于 `build/te
 | `entityNbtCannotRewriteTheLedgerOrBoundCapability` | 修改 Capability 导出的 NBT 不影响已绑定副本及世界记录；入场绑定时以世界记录覆盖伪造的加载值。 |
 
 这些例子直接验证状态、文件存储和 Capability 镜像的序列化策略，不启动 Minecraft 服务端。
+
+## 启蒙之年的半血判定
+
+`HalfHealthTest` 只测 `HalfHealth` 这一个纯数值函数，不启动 Minecraft。它钉住的是那条
+tooltip 的字面规则「攻击半血生物时触发魂息虚空」——与监视者项链的「攻击满血生物」相对：
+
+| 方法 | 操作及预期 |
+| --- | --- |
+| `aWoundedCreatureCounts` | 40/100 算半血生物。 |
+| `landingExactlyOnTheLineCounts` | 50/100 触发：恰好半血算在内。 |
+| `aHealthyCreatureDoesNotCount` | 50.1/100、100/100 都不触发。 |
+| `aWoundedCreatureCountsAgainAndAgain` | 50、49、1 都成立：只看出手时的血量。 |
+| `aDeadCreatureDoesNotCount` | 0 与负血量都不触发。 |
+| `aTargetWithNoMaximumHealthDoesNotCount` | 上限为 0 时不触发。 |
+| `theLineFollowsTheMaximumHealth` | 上限 10 时线在 5，上限 500 时线在 250。 |
+
+限流那道 `SpiritVoidCooldownCapability`（100 tick，照着监视者项链配的）没有单测：
+它是 capability 上的一个自减计数器，真值只能靠游戏内验证。
+
+## 启蒙之年的饰品等级
+
+`EnlightenmentLevelTest` 同样不启动 Minecraft，只测「护符 NBT 上那个 `EnlightenmentLevel`
+怎么读」。这个数同时当击杀给出的启蒙之年与黑暗年代的 `amplifier` 用——也就是
+「取决于饰品的 NBT，fallback 0 级」这条规则：
+
+| 方法 | 操作及预期 |
+| --- | --- |
+| `aStackWithoutNbtFallsBackToZeroLevel` | 没有 NBT 的护符读作 0 级。 |
+| `aStackWithoutTheKeyFallsBackToZeroLevel` | 有 NBT 但没有这个键，同样 0 级（普通途径拿到的护符就是这样）。 |
+| `anExplicitLevelIsRead` | 写 1、2、9 就读出 1、2、9。 |
+| `levelZeroReadsAsZero` | 显式写 0 与没有键是同一个结果。 |
+| `aNegativeLevelFallsBackToZero` | 负数夹回 0：等级乘数是 `amount * (amplifier + 1)`，负等级会把效果反过来。 |
+| `aKeyOfAnotherTypeFallsBackToZero` | 键写成字符串时当没写处理，不抛异常。 |
+
+黑暗年代的传染（`AgeOfEnlightenmentEvents#onDarknessBearerHurt`）没有单测：它要真事件、
+真实体和真世界。那一段的规则是「受击者身上有黑暗年代 + 伤害源身上有启蒙之年 →
+黑暗年代跳到受击者附近最近的一名敌人，等级取伤害源的启蒙之年等级」，只能在游戏内验证。
+
 增加场景时，在 `src/test/java` 中新增测试类，或在已有类中增加 `@Test` 方法；不需要修改 `build.gradle`。
 
 ## 具体实体接入后的游戏内验证示例

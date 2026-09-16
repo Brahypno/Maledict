@@ -1,5 +1,13 @@
 {
   "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "maledict:item/age_of_enlightenment_enlightened",
+      "predicate": {
+        "maledict:enlightened": 1.0
+      }
+    }
+  ],
   "textures": {
     "layer0": "maledict:item/age_of_enlightenment"
   }

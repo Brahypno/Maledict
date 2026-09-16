@@ -9,6 +9,7 @@ import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.client.model.generators.loaders.SeparateTransformsModelBuilder;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.item.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
 
@@ -42,9 +43,7 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .perspective(ItemDisplayContext.GUI, gui)
                 .perspective(ItemDisplayContext.FIXED, gui);
 
-        getBuilder("age_of_enlightenment")
-                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
-                .texture("layer0", modLoc("item/age_of_enlightenment"));
+        registerAgeOfEnlightenmentModel();
 
         getBuilder("curio_return_token")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
@@ -58,6 +57,28 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .parent(new ModelFile.UncheckedModelFile(
                         ResourceLocation.fromNamespaceAndPath("malum", "item/runewood_obelisk")))
                 .texture("0", modLoc("block/runewood_obelisk"));
+    }
+
+    /**
+     * 启蒙之年：两张贴图。
+     *
+     * <p>谓词 {@code maledict:enlightened} 由 {@code MaledictItemProperties} 注册，
+     * 佩戴者身上有启蒙之年药水效果时置 1，切到 {@code _enlightened} 那张。
+     * 谓词名和物品侧共用 {@link AgeOfEnlightenmentItem#ENLIGHTENED_PROPERTY}，
+     * 免得两边各写一遍字符串、改了模型忘了改代码。
+     */
+    private void registerAgeOfEnlightenmentModel() {
+        ItemModelBuilder enlightened = getBuilder("age_of_enlightenment_enlightened")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/age_of_enlightenment_enlightened"));
+
+        getBuilder("age_of_enlightenment")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/age_of_enlightenment"))
+                .override()
+                .predicate(AgeOfEnlightenmentItem.ENLIGHTENED_PROPERTY, 1.0F)
+                .model(enlightened)
+                .end();
     }
 
     private void registerBowModel(String name) {
