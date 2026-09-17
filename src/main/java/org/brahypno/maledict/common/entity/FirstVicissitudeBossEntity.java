@@ -16,6 +16,7 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -49,6 +50,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
+import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.curio.VicissitudeCurioLedger;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.common.curio.VicissitudeCurioReturns;
@@ -1535,6 +1537,20 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         setWeaponState(restored.isEmpty() ? 0 : 1);
     }
 
+    /**
+     * 掉落物表跟着难度走：四档各一张表，表里写着该档的启蒙之年等级与珍金块数量。
+     *
+     * <p>盖的是 {@code Mob#getDefaultLootTable}：Mob 把 {@code getLootTable()} 定成了 final，
+     * 实体自己带一份显式表（NBT 上的 {@code DeathLootTable}）时才不经过这里——本实体不会带。
+     *
+     * <p>选表发生在死亡时，读的是实体自己那份权威难度（存档里缺失时已经退到 SIMPLE），
+     * 所以旧存档不会因为找不到难度字段而掉不出东西。
+     */
+    @Override
+    protected ResourceLocation getDefaultLootTable() {
+        return bossDifficulty.lootTable();
+    }
+
     @Override
     protected void onFinalDeath(DamageSource source) {
         cancelFlyingScythe();
@@ -2677,20 +2693,25 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
          * and damage caps still decide how much lands, while {@code MEDIUM} keeps pressing until
          * the authored amount has actually been taken. The two easy modes use the light ladder,
          * the two hard modes the medium one.
+         *
+         * <p>The trailing path is this mode's loot table, see {@link #lootTable()}.
          */
-        SIMPLE(1800, 500.0D, DamagePress.LIGHT),
-        DIFFICULT(1400, 750.0D, DamagePress.LIGHT),
-        COMPLETE(1000, 1000.0D, DamagePress.MEDIUM),
-        EXTREME(750, 1500.0D, DamagePress.MEDIUM);
+        SIMPLE(1800, 500.0D, DamagePress.LIGHT, "entities/first_vicissitude"),
+        DIFFICULT(1400, 750.0D, DamagePress.LIGHT, "entities/first_vicissitude_difficult"),
+        COMPLETE(1000, 1000.0D, DamagePress.MEDIUM, "entities/first_vicissitude_complete"),
+        EXTREME(750, 1500.0D, DamagePress.MEDIUM, "entities/first_vicissitude_extreme");
 
         private final int phaseOneDurationTicks;
         private final double maxHealth;
         private final DamagePress damagePress;
+        private final ResourceLocation lootTable;
 
-        BossDifficulty(int phaseOneDurationTicks, double maxHealth, DamagePress damagePress) {
+        BossDifficulty(int phaseOneDurationTicks, double maxHealth, DamagePress damagePress,
+                       String lootTablePath) {
             this.phaseOneDurationTicks = phaseOneDurationTicks;
             this.maxHealth = maxHealth;
             this.damagePress = damagePress;
+            this.lootTable = ResourceLocation.fromNamespaceAndPath(Maledict.MODID, lootTablePath);
         }
 
         public int phaseOneDurationTicks() {
@@ -2703,6 +2724,18 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
         public DamagePress damagePress() {
             return damagePress;
+        }
+
+        /**
+         * 该难度使用的掉落物表。
+         *
+         * <p>每一档都有自己的表，难度越高启蒙之年的等级越高；内容见
+         * {@code MaledictEntityLoot}，这里只保存 ID。SIMPLE 用的就是实体默认路径
+         * {@code maledict:entities/first_vicissitude}，所以照着默认 ID 找表的一方看到的
+         * 是最低一档的奖励，而不是一张空表。
+         */
+        public ResourceLocation lootTable() {
+            return lootTable;
         }
 
         private boolean confiscatesCurios() {

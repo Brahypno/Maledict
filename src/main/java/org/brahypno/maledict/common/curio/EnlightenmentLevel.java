@@ -14,7 +14,8 @@ import javax.annotation.Nullable;
  *
  * <p>读不到就是 {@link #FALLBACK}（0 级）。普通途径拿到的护符身上没有这个键，
  * 于是行为与加等级之前一模一样；等级只能从 {@code give} 命令、战利品表、
- * 合成脚本这类外部来源写进来。
+ * 合成脚本这类外部来源写进来——本模组自己写它的地方是无常的掉落表
+ * （{@code MaledictEntityLoot}）：四档难度由易到难给 0–3 级，也就是游戏里的 I–IV 级。
  *
  * <p>不依赖任何 Minecraft 世界的类型，只碰 {@link CompoundTag}，方便直接单测——
  * 与 {@link HalfHealth} 同一个理由。

@@ -1,0 +1,39 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{EnlightenmentLevel:0}"
+            }
+          ],
+          "name": "maledict:age_of_enlightenment"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": 2.0,
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "malum:block_of_cthonic_gold"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "maledict:entities/first_vicissitude"
+}

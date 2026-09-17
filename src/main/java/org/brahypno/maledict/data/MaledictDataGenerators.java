@@ -30,8 +30,11 @@ public final class MaledictDataGenerators {
         generator.addProvider(event.includeServer(), new LootTableProvider(
                 output,
                 Set.of(),
-                List.of(new LootTableProvider.SubProviderEntry(
-                        MaledictBlockLoot::new, LootContextParamSets.BLOCK))));
+                List.of(
+                        new LootTableProvider.SubProviderEntry(
+                                MaledictBlockLoot::new, LootContextParamSets.BLOCK),
+                        new LootTableProvider.SubProviderEntry(
+                                MaledictEntityLoot::new, LootContextParamSets.ENTITY))));
         MaledictBlockTags blockTags = new MaledictBlockTags(output, event.getLookupProvider(), existingFiles);
         generator.addProvider(event.includeServer(), blockTags);
         generator.addProvider(event.includeServer(), new MaledictItemTags(
