@@ -21,6 +21,13 @@ public final class MaledictLanguage extends LanguageProvider {
             add("enchantment.maledict.ectoplasm", "灵质");
             add("enchantment.maledict.reminiscence", "追忆");
             add("enchantment.maledict.aftertaste", "回味");
+            add("enchantment.maledict.ectoplasm.desc",
+                "每级使射出的箭矢速度提高 8%，每发消耗背包中（等级 + 1）÷ 2 枚精魂；精魂不足时不生效。");
+            add("enchantment.maledict.reminiscence.desc",
+                "射出的箭矢可穿过一次方块，能够穿透的厚度为 2 + 等级 格。");
+            add("enchantment.maledict.aftertaste.desc",
+                "镰刀命中时，按这一击占目标最大生命的比例，尝到其掉落物本可提供的饥饿与饱食度；"
+                + "1 至 3 级分别回复 50%、60%、70%，掉落物附带的食物效果也会一并生效。");
             addItem(MaledictItems.INCURSUS_BLADE, "神侵恶刃");
             addItem(MaledictItems.REMEMBRANCE_BOW, "思念弓");
             addItem(MaledictItems.ELEGY_BOW, "哀歌弓");
@@ -118,6 +125,15 @@ public final class MaledictLanguage extends LanguageProvider {
             add("enchantment.maledict.ectoplasm", "Ectoplasm");
             add("enchantment.maledict.reminiscence", "Reminiscence");
             add("enchantment.maledict.aftertaste", "Aftertaste");
+            add("enchantment.maledict.ectoplasm.desc",
+                "Each level speeds up fired arrows by 8%, spending (level + 1) / 2 spirits from your "
+                + "inventory per shot; without enough spirits nothing happens.");
+            add("enchantment.maledict.reminiscence.desc",
+                "Arrows fired pass through one block, phasing up to 2 + level blocks deep.");
+            add("enchantment.maledict.aftertaste.desc",
+                "A scythe hit tastes the hunger and saturation the victim's drops would have fed you, "
+                + "scaled by the share of its health the hit claimed: 50%, 60% and 70% at levels 1 to 3. "
+                + "Food effects from those drops come along with it.");
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
             addItem(MaledictItems.REMEMBRANCE_BOW, "Remembrance Bow");
             addItem(MaledictItems.ELEGY_BOW, "Elegy Bow");
