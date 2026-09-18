@@ -22,10 +22,14 @@ import javax.annotation.Nullable;
  */
 public final class EnlightenmentLevel {
 
-    /** 饰品 NBT 上记等级的键。 */
-    public static final String TAG = "EnlightenmentLevel";
+    /**
+     * 饰品 NBT 上记等级的键。
+     */
+    public static final String TAG = "Maldict:EnlightenmentLevel";
 
-    /** 键不存在（或写了个不是数字的值）时的等级：0 级。 */
+    /**
+     * 键不存在（或写了个不是数字的值）时的等级：0 级。
+     */
     public static final int FALLBACK = 0;
 
     /**
@@ -33,7 +37,7 @@ public final class EnlightenmentLevel {
      * @return 等级，缺失或为负都是 {@link #FALLBACK}
      */
     public static int fromTag(@Nullable CompoundTag tag) {
-        if (tag == null) {
+        if (tag == null){
             return FALLBACK;
         }
         // 键不存在、或者类型不是数字时 getInt 给 0，正好就是退路；只有负数需要单独夹一次。

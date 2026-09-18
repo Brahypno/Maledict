@@ -98,7 +98,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.rite.corrupted_" + VICISSITUDE_RITE_ID, "无常仪式");
             add("malum.gui.rite." + GREATER_RITE_ID, "无常大仪式");
             add("malum.gui.rite.corrupted_" + GREATER_RITE_ID, "无常大仪式");
-            add("malum.gui.rite." + ELDRITCH_RITE_ID, "邪术无常仪式");
+            add("malum.gui.rite." + ELDRITCH_RITE_ID, "邪术无常仪式(WIP!)");
             add("malum.gui.rite.corrupted_" + ELDRITCH_RITE_ID, "邪术无常仪式");
             add("malum.gui.rite." + GREATER_ELDRITCH_RITE_ID, "邪术无常大仪式");
             add("malum.gui.rite.corrupted_" + GREATER_ELDRITCH_RITE_ID, "邪术无常大仪式");
@@ -200,7 +200,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.rite.corrupted_" + VICISSITUDE_RITE_ID, "Rite of Vicissitude");
             add("malum.gui.rite." + GREATER_RITE_ID, "Greater Rite of Vicissitude");
             add("malum.gui.rite.corrupted_" + GREATER_RITE_ID, "Greater Rite of Vicissitude");
-            add("malum.gui.rite." + ELDRITCH_RITE_ID, "Eldritch Rite of Vicissitude");
+            add("malum.gui.rite." + ELDRITCH_RITE_ID, "Eldritch Rite of Vicissitude(WIP!)");
             add("malum.gui.rite.corrupted_" + ELDRITCH_RITE_ID, "Eldritch Rite of Vicissitude");
             add("malum.gui.rite." + GREATER_ELDRITCH_RITE_ID, "Greater Eldritch Rite of Vicissitude");
             add("malum.gui.rite.corrupted_" + GREATER_ELDRITCH_RITE_ID, "Greater Eldritch Rite of Vicissitude");

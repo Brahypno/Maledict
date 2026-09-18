@@ -9,7 +9,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{EnlightenmentLevel:0}"
+              "tag": "{\"Maldict:EnlightenmentLevel\":0}"
             }
           ],
           "name": "maledict:age_of_enlightenment"
