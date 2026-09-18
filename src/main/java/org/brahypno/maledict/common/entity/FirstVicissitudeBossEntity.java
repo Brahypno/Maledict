@@ -206,9 +206,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private final Map<UUID, Deque<VicissitudeCurioLedger.Entry>> confiscated = new LinkedHashMap<>();
     private final VicissitudeRig.Pose serverPose = VicissitudeRig.newPose();
     private final VicissitudeRig.Pose renderPose = VicissitudeRig.newPose();
-    /** Client only: previous frame's pose, blended towards the target pose for continuity. */
-    public final VicissitudeRig.Pose smoothedPose = VicissitudeRig.newPose();
-    public boolean smoothedPoseReady;
     private final Set<UUID> roundDamagedTargets = new HashSet<>();
 
     private VicissitudeBossStage stage = VicissitudeBossStage.DORMANT;
@@ -1335,7 +1332,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             }
             double angle = Math.toDegrees(Math.acos(Mth.clamp(
                     offset.normalize().dot(look), -1.0D, 1.0D)));
-            if (angle > arcDegrees * 0.5D) {
+            if (angle > arcDegrees * 0.5D || !hasLineOfSight(living)) {
                 continue;
             }
             hitAny |= hurtBySkill(living, damage, false);
@@ -1366,7 +1363,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             Vec3 offset = living.position().subtract(position());
             double forward = offset.x * look.x + offset.z * look.z;
             double lateral = Math.abs(offset.x * right.x + offset.z * right.z);
-            if (forward < 0.0D || forward > MELEE_REACH || lateral > 1.5D) {
+            if (forward < 0.0D || forward > MELEE_REACH || lateral > 1.5D
+                    || !hasLineOfSight(living)) {
                 continue;
             }
             hurtBySkill(living, damage, false);
@@ -1681,34 +1679,53 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         float death = getHealth() > 0.0F ? -1.0F : deathTime;
         VicissitudeRig.compute(serverPose, isPhaseTwoVisual(), getPhaseTwoBlend(), action,
                 actionTicks(), actionLeft, hurtTicks, level().getGameTime(), wingFold, death);
+        applyHeadLook(serverPose, action, death, yHeadRot - yBodyRot, getXRot());
     }
 
-    private VicissitudeRig.Pose poseForRender(float partialTick) {
+    private static void applyHeadLook(VicissitudeRig.Pose pose, VicissitudeRig.Action action,
+                                      float death, float yaw, float pitch) {
+        if (action == VicissitudeRig.Action.NONE && death < 0.0F) {
+            pose.addRotation(VicissitudeRigData.Joint.HEAD_ROOT,
+                    pitch * 0.6F, Mth.wrapDegrees(yaw) * 0.5F, 0.0F);
+            VicissitudeRig.solve(pose);
+        }
+    }
+
+    /** Shared render sample for the mesh and effects; callers must not mutate this scratch pose. */
+    public VicissitudeRig.Pose poseForRender(float partialTick) {
         float death = getHealth() > 0.0F ? -1.0F : deathTime + partialTick;
         float ticks = Math.max(0.0F, getActionTicks(partialTick));
         VicissitudeRig.compute(renderPose, isPhaseTwoVisual(),
                 getPhaseTwoBlend(), getRenderAction(), ticks, isActionLeft(), getHurtTicks(),
                 level().getGameTime() + partialTick, getWingFold(), death);
-        VicissitudeRig.solve(renderPose);
+        applyHeadLook(renderPose, getRenderAction(), death,
+                Mth.rotLerp(partialTick, yHeadRotO, yHeadRot)
+                        - Mth.rotLerp(partialTick, yBodyRotO, yBodyRot),
+                Mth.lerp(partialTick, xRotO, getXRot()));
         return renderPose;
     }
 
     public Vec3 anchorWorldPosition(VicissitudeRigData.Joint joint, float partialTick) {
-        VicissitudeRig.Pose pose = !level().isClientSide ? serverPose
-                : smoothedPoseReady ? smoothedPose : poseForRender(partialTick);
+        if (!level().isClientSide) {
+            refreshPose();
+        }
+        VicissitudeRig.Pose pose = level().isClientSide ? poseForRender(partialTick) : serverPose;
+        double x = level().isClientSide ? Mth.lerp(partialTick, xOld, getX()) : getX();
+        double y = level().isClientSide ? Mth.lerp(partialTick, yOld, getY()) : getY();
+        double z = level().isClientSide ? Mth.lerp(partialTick, zOld, getZ()) : getZ();
+        float yaw = level().isClientSide ? Mth.rotLerp(partialTick, yBodyRotO, yBodyRot) : getYRot();
         VicissitudeRig.V3 world = VicissitudeRig.worldPoint(pose, joint, 0.0F, 0.0F, 0.0F,
-                getX(), getY(), getZ(), getYRot());
+                x, y, z, yaw);
         return new Vec3(world.x(), world.y(), world.z());
     }
 
     public Vec3 handAnchorWorldPosition() {
-        VicissitudeRig.V3 world = VicissitudeRig.worldPoint(serverPose,
-                VicissitudeRigData.Joint.SCYTHE_HAND_ANCHOR, 0.0F, 0.0F, 0.0F,
-                getX(), getY(), getZ(), getYRot());
-        return new Vec3(world.x(), world.y(), world.z());
+        return anchorWorldPosition(VicissitudeRigData.Joint.SCYTHE_HAND_ANCHOR, 0.0F);
     }
 
     private Vec3 wingOrigin(boolean left, int index) {
+        // Releases run before the end-of-tick pose refresh.
+        refreshPose();
         VicissitudeRigData.Joint joint = left
                 ? VicissitudeRigData.Joint.WING_LEFT_ATTACK_ANCHOR
                 : VicissitudeRigData.Joint.WING_RIGHT_ATTACK_ANCHOR;

@@ -9,7 +9,7 @@ import java.util.List;
  * Pose evaluation and forward kinematics for the First Vicissitude skeleton.
  *
  * <p>The client model and the server-side attack geometry both consume this class, so the
- * rendered wing tips and the authoritative release points can never disagree. Everything here
+ * rendered wing tips and authoritative release points share the same pose equations. Everything here
  * is expressed in the authoring space documented on {@link VicissitudeRigData}; convert to
  * entity-local blocks with {@link #toEntityLocal} and to world space with
  * {@link #toWorld(double, double, double, float)}.
@@ -203,7 +203,7 @@ public final class VicissitudeRig {
         }
 
         /**
-         * Copies every channel of another pose; used to seed the client side smoothing state.
+         * Copies every channel and solved matrix of another pose.
          */
         public void copyFrom(Pose other) {
             System.arraycopy(other.rotX, 0, rotX, 0, JOINT_COUNT);
@@ -212,6 +212,7 @@ public final class VicissitudeRig {
             System.arraycopy(other.offX, 0, offX, 0, JOINT_COUNT);
             System.arraycopy(other.offY, 0, offY, 0, JOINT_COUNT);
             System.arraycopy(other.offZ, 0, offZ, 0, JOINT_COUNT);
+            System.arraycopy(other.matrices, 0, matrices, 0, matrices.length);
         }
 
         /**
@@ -367,13 +368,14 @@ public final class VicissitudeRig {
             return;
         }
         float total = Math.max(1.0F, action.duration());
-        float hit = action.releaseTick();
-        float swing = strike(t, hit, total);
-        float wind = ramp(t, hit, total);
+        ActionSample lead = sampleAction(action, t, 0.0F);
+        float swing = lead.swing();
+        float wind = lead.wind();
         // Trailing samples of the same curves. The weapon leads and everything else follows a
         // few ticks later, which is what turns one rigid arm swing into a whole body motion.
-        float swingLag = strike(Math.max(0.0F, t - FOLLOW_LAG), hit, total);
-        float windLag = ramp(Math.max(0.0F, t - FOLLOW_LAG), hit, total);
+        ActionSample follow = sampleAction(action, t, FOLLOW_LAG);
+        float swingLag = follow.swing();
+        float windLag = follow.wind();
         float trail = swing - swingLag;
         switch (action) {
             case WING_RANGED -> {
@@ -981,6 +983,19 @@ public final class VicissitudeRig {
     private static float smooth(float value) {
         float clamped = clamp(value);
         return clamped * clamped * (3.0F - 2.0F * clamped);
+    }
+
+    /** Stateless action channels; follow delays are measured in ticks, never rendered frames. */
+    public record ActionSample(float wind, float swing) { }
+
+    public static ActionSample sampleAction(Action action, float ticks, float delay) {
+        if (action == null || action == Action.NONE || ticks < 0.0F) {
+            return new ActionSample(0.0F, 0.0F);
+        }
+        float t = Math.max(0.0F, ticks - delay);
+        float total = Math.max(1.0F, action.duration());
+        return new ActionSample(ramp(t, action.releaseTick(), total),
+                strike(t, action.releaseTick(), total));
     }
 
     /**

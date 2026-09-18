@@ -101,49 +101,10 @@ public final class FirstVicissitudeBossModel
     public void setupAnim(FirstVicissitudeBossEntity entity, float limbSwing, float limbSwingAmount,
                           float ageInTicks, float netHeadYaw, float headPitch) {
         root.getAllParts().forEach(ModelPart::resetPose);
-        computeTargetPose(entity, ageInTicks, netHeadYaw, headPitch);
-        // Blend from the previous frame's pose so action changes and recovery never snap.
-        if (!entity.smoothedPoseReady) {
-            entity.smoothedPose.copyFrom(pose);
-            entity.smoothedPoseReady = true;
-        } else {
-            entity.smoothedPose.interpolate(pose, blendAmount(entity));
-        }
-        VicissitudeRig.solve(entity.smoothedPose);
-        applyPose(entity.smoothedPose);
-    }
-
-    /** Fast during the strike frames so the snap stays crisp, slower elsewhere for continuity. */
-    private static float blendAmount(FirstVicissitudeBossEntity entity) {
-        VicissitudeRig.Action action = entity.getRenderAction();
-        if (action == VicissitudeRig.Action.NONE || entity.getDeathTicks() >= 0.0F) {
-            return 0.3F;
-        }
-        float ticks = entity.getActionTicks(0.0F);
-        float hit = action.releaseTick();
-        if (ticks >= hit - 2.0F && ticks <= hit + 5.0F) {
-            return 0.9F;
-        }
-        return 0.45F;
-    }
-
-    private void computeTargetPose(FirstVicissitudeBossEntity entity, float ageInTicks,
-                                   float netHeadYaw, float headPitch) {
-        VicissitudeRig.compute(pose,
-                entity.isPhaseTwoVisual(),
-                entity.getPhaseTwoBlend(),
-                entity.getRenderAction(),
-                entity.getActionTicks(0.0F) < 0.0F ? 0.0F : entity.getActionTicks(0.0F),
-                entity.isActionLeft(),
-                entity.getHurtTicks(),
-                ageInTicks,
-                entity.getWingFold(),
-                entity.getDeathTicks());
-        // Head look is additive on top of the authored pose and never overrides a release frame.
-        if (entity.getRenderAction() == VicissitudeRig.Action.NONE && entity.getDeathTicks() < 0.0F) {
-            pose.addRotation(VicissitudeRigData.Joint.HEAD_ROOT,
-                    headPitch * 0.6F, netHeadYaw * 0.5F, 0.0F);
-        }
+        // Sample the same clock and pose as the effect anchors, independent of render frequency.
+        float partialTick = net.minecraft.util.Mth.clamp(ageInTicks - entity.tickCount, 0.0F, 1.0F);
+        pose.copyFrom(entity.poseForRender(partialTick));
+        applyPose(pose);
     }
 
     private void applyPose(VicissitudeRig.Pose applied) {
