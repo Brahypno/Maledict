@@ -13,26 +13,25 @@ public final class MaledictCreativeTabs {
 
     public static final RegistryObject<CreativeModeTab> MALEDICT = CREATIVE_TABS.register("maledict", () ->
             CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.maledict"))
-                    .icon(() -> MaledictItems.INCURSUS_BLADE.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> {
-                        output.accept(MaledictItems.INCURSUS_BLADE.get());
-                        output.accept(MaledictItems.REMEMBRANCE_BOW.get());
-                        output.accept(MaledictItems.ELEGY_BOW.get());
-                        output.accept(MaledictItems.MNEMONIC_OBELISK.get());
-                        output.accept(MaledictItems.SOULWOOD_OBELISK.get());
-                        output.accept(MaledictItems.SACRED_SPIRIT_ARROW.get());
-                        output.accept(MaledictItems.WICKED_SPIRIT_ARROW.get());
-                        output.accept(MaledictItems.ARCANE_SPIRIT_ARROW.get());
-                        output.accept(MaledictItems.ELDRITCH_SPIRIT_ARROW.get());
-                        output.accept(MaledictItems.AERIAL_SPIRIT_ARROW.get());
-                        output.accept(MaledictItems.AQUEOUS_SPIRIT_ARROW.get());
-                        output.accept(MaledictItems.EARTHEN_SPIRIT_ARROW.get());
-                        output.accept(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
-                        output.accept(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
-                        output.accept(MaledictItems.CURIO_RETURN_TOKEN.get());
-                    })
-                    .build());
+                           .title(Component.translatable("itemGroup.maledict"))
+                           .icon(() -> MaledictItems.INCURSUS_BLADE.get().getDefaultInstance())
+                           .displayItems((parameters, output) -> {
+                               output.accept(MaledictItems.INCURSUS_BLADE.get());
+                               output.accept(MaledictItems.REMEMBRANCE_BOW.get());
+                               output.accept(MaledictItems.ELEGY_BOW.get());
+                               output.accept(MaledictItems.MNEMONIC_OBELISK.get());
+                               output.accept(MaledictItems.SOULWOOD_OBELISK.get());
+                               output.accept(MaledictItems.SACRED_SPIRIT_ARROW.get());
+                               output.accept(MaledictItems.WICKED_SPIRIT_ARROW.get());
+                               output.accept(MaledictItems.ARCANE_SPIRIT_ARROW.get());
+                               output.accept(MaledictItems.ELDRITCH_SPIRIT_ARROW.get());
+                               output.accept(MaledictItems.AERIAL_SPIRIT_ARROW.get());
+                               output.accept(MaledictItems.AQUEOUS_SPIRIT_ARROW.get());
+                               output.accept(MaledictItems.EARTHEN_SPIRIT_ARROW.get());
+                               output.accept(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
+                               output.accept(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+                           })
+                           .build());
 
     private MaledictCreativeTabs() {
     }
