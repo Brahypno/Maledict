@@ -83,9 +83,13 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.void.maledict.incursus_blade.description", "永无止境的饥渴");
             add("malum.gui.book.entry.page.headline.void.maledict.incursus_blade", "神侵恶刃");
             add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.1",
-                "也许是坠井击碎了我对禁忌的 畏怖。恶念白镴对知识消退的 渴望铸造了挽魂锋镰，那么能 否将这种排斥转化为一种显性 的魔法性质呢？之前的研究提 醒了我，如果能够构建一个动 态稳定的环境，在八种精魂脉 动的刺激下，也许第九种奥术 能量的脉动得以显现。");
+                "也许是坠井击碎了我对禁忌的 畏怖。恶念白镴对知识消退的 渴望铸造了挽魂锋镰。");
             add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.2",
-                "最后我得到了这种武器，挽魂 锋镰本身的意志被虚空吞噬殆 尽，这片空无渴求着吞并一切 ，而八种精魂完全受其操控， 甚至脉动被扭曲，从而对外展 现出意料之外的能力。随着投 入精魂数量的增加，这柄武器 也更加的难以捉摸。我将之成 为神侵恶刃，并希望这片虚空 能够满足于脉动。");
+                "那么能否将这种排斥转化为一 种显性的魔法性质呢？之前的 研究提醒了我，如果能够构建 一个动态稳定的环境，在八种 精魂脉动的刺激下，也许第九 种奥术能量的脉动得以显现。");
+            add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.3",
+                "最后我得到了这种武器，挽魂 锋镰本身的意志被虚空吞噬殆 尽，这片空无渴求着吞并一切 ，而八种精魂完全受其操控， 甚至脉动被扭曲，从而对外展 现出意料之外的能力。");
+            add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.4",
+                "随着投入精魂数量的增加，这 柄武器也更加的难以捉摸。我 将之成为神侵恶刃，并希望这 片虚空能够满足于脉动。");
             add("malum.gui.book.entry." + OBELISKS_ENTRY, "异质方尖碑");
             add("malum.gui.book.entry." + OBELISKS_ENTRY + ".description", "排斥与回忆");
             add("malum.gui.book.entry.page.headline." + SOULWOOD_OBELISK_PAGE, "灵魂木方尖碑");
@@ -121,7 +125,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.maledict.remembrance_bow.description", "Longing Beyond Barriers");
             add("malum.gui.book.entry.page.headline.maledict.remembrance_bow", "Remembrance Bow");
             add("malum.gui.book.entry.page.text.maledict.remembrance_bow.1",
-                "If the magic of endermen could be gathered and borne by astral weave, it might lend soulwood wondrous properties. A bow made from this material takes only half as long to draw as an ordinary bow; its arrows fly faster and can pass through blocks to a limited extent.");
+                "If endermen's magic were gathered into astral weave, soulwood might gain wondrous properties. "
+                + "A bow of this wood draws twice as fast, and its arrows fly faster and pierce blocks to a limited extent.");
             add("malum.gui.book.entry." + ELEGY_BOW_ENTRY, "Elegy Bow");
             add("malum.gui.book.entry." + ELEGY_BOW_ENTRY + ".description", "Remembrance Without Respite");
             add("malum.gui.book.entry.page.headline." + ELEGY_BOW_ENTRY, "Elegy Bow");
@@ -185,9 +190,19 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.void.maledict.incursus_blade.description", "A hunger without end");
             add("malum.gui.book.entry.page.headline.void.maledict.incursus_blade", "The Incursus Blade");
             add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.1",
-                "Perhaps falling into the well shattered my fear of the forbidden. Malignant pewter's hunger for the erosion of knowledge forged the Edge of Deliverance, so could that rejection be transformed into an overt magical property? My earlier research reminded me that, if I could construct a dynamically stable environment, the pulses of the eight spirits might provoke the pulse of a ninth arcane energy to reveal itself.");
+                "Perhaps falling into the well shattered my fear of the forbidden. "
+                + "Malignant pewter's hunger for the erosion of knowledge forged the Edge of Deliverance.");
             add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.2",
-                "At last I obtained this weapon. The will within the Edge of Deliverance was utterly devoured by the void. This emptiness hungers to consume everything, while the eight spirits submit entirely to its control; even their pulses are distorted, manifesting unexpected abilities. As more spirits are offered, the weapon becomes ever more inscrutable. I have named it the Incursus Blade, and hope this void can be sated by the pulses.");
+                "Could that rejection be transformed into an overt magical property? My earlier research reminded me "
+                + "that, if I could construct a dynamically stable environment, the pulses of the eight spirits "
+                + "might provoke the pulse of a ninth arcane energy to reveal itself.");
+            add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.3",
+                "At last I obtained this weapon. The will within the Edge of Deliverance was utterly devoured by the "
+                + "void. This emptiness hungers to consume everything, while the eight spirits submit entirely to its "
+                + "control; even their pulses are distorted, manifesting unexpected abilities.");
+            add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.4",
+                "As more spirits are offered, the weapon becomes ever more inscrutable. I have named it the Incursus "
+                + "Blade, and hope this void can be sated by the pulses.");
             add("malum.gui.book.entry." + OBELISKS_ENTRY, "Esoteric Obelisks");
             add("malum.gui.book.entry." + OBELISKS_ENTRY + ".description", "Rejection and remembrance");
             add("malum.gui.book.entry.page.headline." + SOULWOOD_OBELISK_PAGE, "Soulwood Obelisk");

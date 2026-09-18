@@ -140,12 +140,17 @@ public final class MaledictCodexEntries {
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.INCURSUS_BLADE)
                 .setStyle(BookWidgetStyle.SOULWOOD));
+        // An item headline page starts its body at y+75 instead of y+25 and only fits about ten
+        // wrapped lines, so this entry's copy is split over four pages the way Malum splits
+        // Malignant Pewter's.
         builder.addPage(new HeadlineTextItemPage(
                 INCURSUS_BLADE_ENTRY,
                 INCURSUS_BLADE_ENTRY + ".1",
                 MaledictItems.INCURSUS_BLADE.get()));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.INCURSUS_BLADE.get()));
         builder.addPage(new TextPage(INCURSUS_BLADE_ENTRY + ".2"));
+        builder.addPage(new TextPage(INCURSUS_BLADE_ENTRY + ".3"));
+        builder.addPage(new TextPage(INCURSUS_BLADE_ENTRY + ".4"));
         builder.afterUmbralCrystal();
 
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
