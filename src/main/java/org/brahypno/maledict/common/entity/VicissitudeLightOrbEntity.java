@@ -4,6 +4,7 @@ import com.sammy.malum.common.entity.FloatingEntity;
 import com.sammy.malum.registry.common.SoundRegistry;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import com.sammy.malum.visual_effects.SpiritLightSpecs;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
@@ -15,20 +16,35 @@ import net.minecraft.world.phys.Vec3;
 import org.brahypno.maledict.registry.MaledictEntities;
 import team.lodestar.lodestone.systems.particle.ParticleEffectSpawner;
 
+import java.util.UUID;
+import javax.annotation.Nullable;
+
 /**
  * An attacking variant of Malum's pneuma void: it winds up, homes through terrain,
  * and applies the Vicissitude phase-one attack when it reaches its marked target.
+ *
+ * <p>{@link FloatingEntity}'s {@code owner} is this orb's <em>victim</em>, not the entity that
+ * fired it: the constructor calls {@code setOwner(target)} because Malum's {@code owner} is what
+ * {@code getDestination()} homes towards. The caster is tracked separately in
+ * {@link #casterUUID}, which is what {@link #isOwnedBy(Entity)} answers.
  */
 public final class VicissitudeLightOrbEntity extends FloatingEntity {
     public static final String ATTACK_MESSAGE_KEY = "message.maledict.first_vicissitude.attack";
+    private static final String CASTER_TAG = "OrbCaster";
+
+    /** The entity that fired this orb, kept apart from Malum's {@code owner} (see the class doc). */
+    private UUID casterUUID;
+    private Entity caster;
 
     public VicissitudeLightOrbEntity(EntityType<? extends VicissitudeLightOrbEntity> type, Level level) {
         super(type, level);
         maxAge = 200;
     }
 
-    public VicissitudeLightOrbEntity(ServerLevel level, LivingEntity target, Vec3 position) {
+    public VicissitudeLightOrbEntity(ServerLevel level, LivingEntity caster, LivingEntity target,
+                                     Vec3 position) {
         this(MaledictEntities.VICISSITUDE_LIGHT_ORB.get(), level);
+        setCaster(caster);
         setOwner(target.getUUID());
         setPos(position);
         Vec3 forward = getDestination().subtract(position).normalize().scale(0.12D);
@@ -83,6 +99,38 @@ public final class VicissitudeLightOrbEntity extends FloatingEntity {
 
     /** Ownership check used by the boss to enforce the live orb cap. */
     public boolean isOwnedBy(Entity entity) {
-        return owner == entity;
+        return entity != null && entity == caster();
+    }
+
+    private void setCaster(LivingEntity caster) {
+        casterUUID = caster.getUUID();
+        this.caster = caster;
+    }
+
+    /**
+     * The caster reference is rebuilt from {@link #casterUUID} instead of being saved directly, so
+     * an orb loaded from disk can never reference a stale entity.
+     */
+    @Nullable
+    private Entity caster() {
+        if (caster == null && casterUUID != null && level() instanceof ServerLevel serverLevel) {
+            caster = serverLevel.getEntity(casterUUID);
+        }
+        return caster;
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        if (casterUUID != null) {
+            tag.putUUID(CASTER_TAG, casterUUID);
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        casterUUID = tag.hasUUID(CASTER_TAG) ? tag.getUUID(CASTER_TAG) : null;
+        caster = null;
     }
 }

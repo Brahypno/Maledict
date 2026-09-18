@@ -7,12 +7,13 @@
 
 | 难度 | 掉落表 ID | 启蒙之年 | 深岩珍金块 |
 | --- | --- | --- | --- |
-| SIMPLE | `maledict:entities/first_vicissitude` | ×1，`EnlightenmentLevel:0`（游戏内 I 级） | `malum:block_of_cthonic_gold` ×2 |
-| DIFFICULT | `maledict:entities/first_vicissitude_difficult` | ×1，`EnlightenmentLevel:1`（II 级） | 同上 |
-| COMPLETE | `maledict:entities/first_vicissitude_complete` | ×1，`EnlightenmentLevel:2`（III 级） | 同上 |
-| EXTREME | `maledict:entities/first_vicissitude_extreme` | ×1，`EnlightenmentLevel:3`（IV 级） | 同上 |
+| SIMPLE | `maledict:entities/first_vicissitude` | ×1，`Maldict:EnlightenmentLevel:0`（游戏内 I 级） | `malum:block_of_cthonic_gold` ×2 |
+| DIFFICULT | `maledict:entities/first_vicissitude_difficult` | ×1，`Maldict:EnlightenmentLevel:1`（II 级） | 同上 |
+| COMPLETE | `maledict:entities/first_vicissitude_complete` | ×1，`Maldict:EnlightenmentLevel:2`（III 级） | 同上 |
+| EXTREME | `maledict:entities/first_vicissitude_extreme` | ×1，`Maldict:EnlightenmentLevel:3`（IV 级） | 同上 |
 
-- NBT 上写的是 amplifier，`0` 就是游戏里显示的一级（见 `EnlightenmentLevel`）；四档由易到难正好
+- NBT 键名是 `Maldict:EnlightenmentLevel`（`EnlightenmentLevel.TAG` 的原样拼写，含 `Maldict` 这个
+  拼写错误，不是 `maledict`），写到物品上的是 amplifier，`0` 就是游戏里显示的一级（见 `EnlightenmentLevel`）；四档由易到难正好
   是 I–IV 级，四个等级都能从这只 Boss 身上拿全——`maledict:age_of_enlightenment` 除创造模式
   物品栏与指令外没有别的获取途径，所以等级 I 不会因为「基础档」而被跳过。
 - 「深岩珍金块」取 Malum 的方块物品 `malum:block_of_cthonic_gold`（`ItemRegistry.BLOCK_OF_CTHONIC_GOLD`），
@@ -40,6 +41,6 @@
 ## 验证
 
 - 已跑：`compileJava`、`test`、`runData`。产物四张表内容与上表一致：
-  启蒙之年分别带 `{EnlightenmentLevel:0..3}`，珍金块 `count 2.0`，两池 `rolls 1.0`。
+  启蒙之年分别带 `{"Maldict:EnlightenmentLevel":0..3}`，珍金块 `count 2.0`，两池 `rolls 1.0`。
 - 游戏内未验证：四档各实际击杀一次，核对掉落数量、启蒙之年 NBT 等级与效果实际等级；
   用 `/loot` 或战利品查看类模组逐张读表。

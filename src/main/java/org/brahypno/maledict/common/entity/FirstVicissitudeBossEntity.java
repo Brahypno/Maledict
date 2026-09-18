@@ -1244,7 +1244,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (countBolts(serverLevel, true) >= MAX_HOMING_ORBS) {
             return;
         }
-        VicissitudeLightOrbEntity orb = new VicissitudeLightOrbEntity(serverLevel, target, origin);
+        VicissitudeLightOrbEntity orb = new VicissitudeLightOrbEntity(serverLevel, this, target, origin);
         serverLevel.addFreshEntity(orb);
     }
 

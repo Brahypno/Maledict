@@ -43,7 +43,7 @@ public final class MaledictCodexEntries {
 
     /**
      * The four Vicissitude Rites share one entry: the recipe is the price and the tier, from three
-     * arcane spirits all the way to two umbral under three arcane. The rite types live in Malum's
+     * arcane spirits all the way to two eldritch under three arcane. The rite types live in Malum's
      * table, so the entry is skipped rather than faked if that table is not ready.
      */
     private static void addVicissitudeRiteEntry() {
