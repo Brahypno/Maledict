@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "maledict.refmap.json",
   "mixins": [
+    "FoodDataMixin"
   ],
   "client": [
     "HiddenTagRegistryMixin"

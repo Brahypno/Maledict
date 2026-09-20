@@ -1,0 +1,14 @@
+{
+  "type": "malum:runeworking",
+  "output": {
+    "item": "maledict:rune_of_decay"
+  },
+  "primaryInput": {
+    "count": 1,
+    "item": "malum:runewood_tablet"
+  },
+  "secondaryInput": {
+    "count": 32,
+    "item": "malum:wicked_spirit"
+  }
+}

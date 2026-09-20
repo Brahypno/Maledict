@@ -1,5 +1,6 @@
 package org.brahypno.maledict.data;
 
+import com.sammy.malum.data.recipe.builder.RunicWorkbenchRecipeBuilder;
 import com.sammy.malum.data.recipe.builder.SpiritInfusionRecipeBuilder;
 import com.sammy.malum.data.recipe.builder.SpiritRepairRecipeBuilder;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
@@ -103,6 +104,29 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 11)
                 .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 11)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/elegy_bow"));
+
+        new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_SATIATION.get(), 1)
+                .setPrimaryInput(ItemRegistry.RUNEWOOD_TABLET.get(), 1)
+                .setSecondaryInput(SpiritTypeRegistry.SACRED_SPIRIT.spiritShard.get(), 32)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "runeworking/rune_of_satiation"));
+
+        // 邪恶线的两枚图腾符文：符板认极性，精魂认路线——都是 Malum 图腾符文的写法
+        // （符文木符板配 32 枚精魂，普通符文的污岩/虚空符板只要 16 枚）。
+        new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_DECAY.get(), 1)
+                .setPrimaryInput(ItemRegistry.RUNEWOOD_TABLET.get(), 1)
+                .setSecondaryInput(SpiritTypeRegistry.WICKED_SPIRIT.spiritShard.get(), 32)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "runeworking/rune_of_decay"));
+
+        new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_THINNING.get(), 1)
+                .setPrimaryInput(ItemRegistry.SOULWOOD_TABLET.get(), 1)
+                .setSecondaryInput(SpiritTypeRegistry.WICKED_SPIRIT.spiritShard.get(), 32)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "runeworking/rune_of_thinning"));
+
+        // 神圣线的灵魂木那枚：同样 32 枚精魂，换神圣精魂、符板仍旧认极性。
+        new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_RIPENING.get(), 1)
+                .setPrimaryInput(ItemRegistry.SOULWOOD_TABLET.get(), 1)
+                .setSecondaryInput(SpiritTypeRegistry.SACRED_SPIRIT.spiritShard.get(), 32)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "runeworking/rune_of_ripening"));
 
         new SpiritRepairRecipeBuilder(1.0f, Ingredient.of(ItemRegistry.NULL_SLATE.get()), 1)
                 .addItem(MaledictItems.ELEGY_BOW.get())

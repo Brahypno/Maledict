@@ -41,6 +41,31 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.headline." + ELEGY_BOW_ENTRY, "哀歌弓");
             add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".1",
                 "停不下的思念迫使我倾注在制 作上。于是，思念弓具有了满 蓄力自动发射的功能，我将其 称为哀歌之弓");
+            add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY, "图腾符文：续");
+            add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".description", "更单纯的脉动");
+            add("malum.gui.book.entry.page.headline." + TOTEMIC_RUNES_CONTINUED_ENTRY, "图腾符文：续");
+            add("malum.gui.book.entry.page.text." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".1",
+                "在适当调整符文仪式的画法后 ，我又成功刻印了其他灵气仪 式在符板上。看来之前得出的 只有基本元素对应的仪式才能 起效是不完全正确的。原因是 这些脉动更加的单纯，因而效 果与完整的仪式有些区别");
+            add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY, "饱食符文");
+            add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY + ".description", "饱足里的第二份");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_SATIATION_ENTRY, "饱食符文");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_SATIATION_ENTRY + ".1",
+                "生灵之祝的脉动刻在符板上后 ，佩戴者每一次靠饱足自愈， 都会再得一份同样的血。它只 认得饥饿与饱食度这条路，别 处的治疗一概不理。");
+            add("malum.gui.book.entry." + RUNE_OF_DECAY_ENTRY, "衰朽符文");
+            add("malum.gui.book.entry." + RUNE_OF_DECAY_ENTRY + ".description", "磨去血肉的那一半");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_DECAY_ENTRY, "衰朽符文");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_DECAY_ENTRY + ".1",
+                "衰朽仪式的脉动刻进符板，只 留下最钝的那一半。佩戴者身 边的敌对之物会被缓缓磨去血 肉，却永远差最后一口气。");
+            add("malum.gui.book.entry." + RUNE_OF_THINNING_ENTRY, "汰余符文");
+            add("malum.gui.book.entry." + RUNE_OF_THINNING_ENTRY + ".description", "维持数目的那一半");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_THINNING_ENTRY, "汰余符文");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_THINNING_ENTRY + ".1",
+                "把屠戮的脉动收窄到只认得数 目：同一处挤着的同种敌人超 过八只，最外围那只便每两秒 挨一次重击，直到倒下。");
+            add("malum.gui.book.entry." + RUNE_OF_RIPENING_ENTRY, "熟成符文");
+            add("malum.gui.book.entry." + RUNE_OF_RIPENING_ENTRY + ".description", "多出来的四分之一");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_RIPENING_ENTRY, "熟成符文");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_RIPENING_ENTRY + ".1",
+                "熟成符文的脉动只做一件事： 把佩戴者学到的经验熬得更浓 。每一份经验都会多出四分之一 ，零头按概率进位，长期下来 分毫不差。");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "回忆方尖碑");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "灵魂木方尖碑");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "神圣精魂箭");
@@ -55,15 +80,37 @@ public final class MaledictLanguage extends LanguageProvider {
             add("entity.maledict.first_vicissitude", "无常(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "启蒙之年");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "保管凭证");
+            addItem(MaledictItems.RUNE_OF_SATIATION, "饱食符文");
+            addItem(MaledictItems.RUNE_OF_DECAY, "衰朽符文");
+            addItem(MaledictItems.RUNE_OF_THINNING, "汰余符文");
+            addItem(MaledictItems.RUNE_OF_RIPENING, "熟成符文");
             add("effect.maledict.age_of_enlightenment", "启蒙之年");
             add("effect.maledict.age_of_darkness", "黑暗时代");
             add("effect.maledict.age_of_enlightenment.description",
                 "人民把蒙昧与黑暗错认为神圣，你的下一击必定造成暴击；每级额外给予 1 点法杖暂存弹数。");
             add("effect.maledict.age_of_darkness.description",
                 "任由野蛮焚烧文明的黑暗时代啊，每级降低 20% 魔法抗性、灵魂护盾容量与灵魂护盾稳固度。");
+            add("effect.maledict.blessing_of_life", "生灵之祝");
+            add("effect.maledict.blessing_of_life.description",
+                "生灵的祝祷随饱足流入血脉：自然回复生命时额外回复等量的一份。");
+            add("effect.maledict.decay", "衰朽之息");
+            add("effect.maledict.decay.description",
+                "佩戴者身边的敌对之物每两秒被磨去半颗心，永不致命——"
+                + "它只负责把东西磨到读秒，收尾仍旧要自己动手。");
+            add("effect.maledict.thinning", "汰余之令");
+            add("effect.maledict.thinning.description",
+                "佩戴者身边同种敌对生物超过八只时，最外围的那只每两秒挨一记 1.5 颗心的重击；"
+                + "与衰朽之息不同，这一记是会打死人的。");
+            add("effect.maledict.ripening", "熟成之赐");
+            add("effect.maledict.ripening.description",
+                "佩戴者获得的每一份经验都多出四分之一；零头按概率进位，长期下来分毫不差。");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "佩戴时冷却速度加倍");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "攻击半生命值目标时触发收获精魂时的效果");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment", "击杀敌人时获得启蒙之年，已有则延长时间");
+            add("malum.gui.curio.effect.maledict.blessing_of_life", "自然回复生命时额外回复等量的一份。");
+            add("malum.gui.curio.effect.maledict.decay", "身边敌对之物每两秒被磨去半颗心，永不致命。");
+            add("malum.gui.curio.effect.maledict.thinning", "身边同种敌对生物超过八只时，最外围的那只每两秒受 1.5 颗心伤害。");
+            add("malum.gui.curio.effect.maledict.ripening", "获得的经验多出四分之一。");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "按住 Shift 追问一个不该问的问题");
             add("tooltip.maledict.age_of_enlightenment.shift", "黑暗的时代曾经存在过吗");
             add("tooltip.maledict.age_of_enlightenment.shift.enlightened", "那无穷，无限，永动的启蒙之年啊");
@@ -148,6 +195,40 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.headline." + ELEGY_BOW_ENTRY, "Elegy Bow");
             add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".1",
                 "Longing that would not cease compelled me to pour myself into the work. Thus, the Remembrance Bow gained the ability to fire automatically at full draw. I call it the Elegy Bow.");
+            add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY, "Totemic Runes: Continued");
+            add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".description", "A Simpler Pulse");
+            add("malum.gui.book.entry.page.headline." + TOTEMIC_RUNES_CONTINUED_ENTRY, "Totemic Runes: Continued");
+            add("malum.gui.book.entry.page.text." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".1",
+                "Once I had adjusted the way the runic rite is drawn, I managed to inscribe other aura rites "
+                + "onto the tablets as well. It would seem my earlier conclusion - that only the rites of the "
+                + "basic elements would take - was not entirely correct. Their pulse is simpler, and so their "
+                + "effect differs somewhat from that of the full rite.");
+            add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY, "Rune of Satiation");
+            add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY + ".description", "A Second Share of Fullness");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_SATIATION_ENTRY, "Rune of Satiation");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_SATIATION_ENTRY + ".1",
+                "Once the pulse of the Blessing of Life is cut into a tablet, every mending the wearer draws "
+                + "from their own fullness comes with a second share beside it. It knows only the road of "
+                + "hunger and saturation; healing from anywhere else it ignores entirely.");
+            add("malum.gui.book.entry." + RUNE_OF_DECAY_ENTRY, "Rune of Decay");
+            add("malum.gui.book.entry." + RUNE_OF_DECAY_ENTRY + ".description", "The Half That Grinds");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_DECAY_ENTRY, "Rune of Decay");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_DECAY_ENTRY + ".1",
+                "The pulse of the Rite of Decay, cut into a tablet, keeps only its bluntest half: "
+                + "whatever stands hostile beside the wearer is ground down, yet always left one breath short of death.");
+            add("malum.gui.book.entry." + RUNE_OF_THINNING_ENTRY, "Rune of Thinning");
+            add("malum.gui.book.entry." + RUNE_OF_THINNING_ENTRY + ".description", "The Half That Counts");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_THINNING_ENTRY, "Rune of Thinning");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_THINNING_ENTRY + ".1",
+                "The pulse of the Rite of Culling narrows to a single count: once more than eight hostiles of "
+                + "one kind crowd together, the outermost of them is struck hard every two seconds, until it falls.");
+            add("malum.gui.book.entry." + RUNE_OF_RIPENING_ENTRY, "Rune of Ripening");
+            add("malum.gui.book.entry." + RUNE_OF_RIPENING_ENTRY + ".description", "The Extra Quarter");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_RIPENING_ENTRY, "Rune of Ripening");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_RIPENING_ENTRY + ".1",
+                "The pulse cut into this tablet does one thing: it steeps whatever the wearer learns until it "
+                + "is richer. Every share of experience comes with a quarter more; the remainder is settled by "
+                + "chance, and in the long run the books balance exactly.");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "Mnemonic Obelisk");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "Soulwood Obelisk");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "Sacred Spirit Arrow");
@@ -162,6 +243,10 @@ public final class MaledictLanguage extends LanguageProvider {
             add("entity.maledict.first_vicissitude", "Vicissitude(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "Age of Enlightenment");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "Custody Token");
+            addItem(MaledictItems.RUNE_OF_SATIATION, "Rune of Satiation");
+            addItem(MaledictItems.RUNE_OF_DECAY, "Rune of Decay");
+            addItem(MaledictItems.RUNE_OF_THINNING, "Rune of Thinning");
+            addItem(MaledictItems.RUNE_OF_RIPENING, "Rune of Ripening");
             add("effect.maledict.age_of_enlightenment", "Age of Enlightenment");
             add("effect.maledict.age_of_darkness", "Age of Darkness");
             add("effect.maledict.age_of_enlightenment.description",
@@ -170,10 +255,34 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.age_of_darkness.description",
                 "Burned through civilization, stripping a fifth of your magic resistance, "
                 + "Soul Ward capacity and Soul Ward integrity per level.");
+            add("effect.maledict.blessing_of_life", "Blessing of Life");
+            add("effect.maledict.blessing_of_life.description",
+                "The blessing of the living flows in with your fullness: whenever saturation or hunger "
+                + "mends your health, each level heals an extra equal share.");
+            add("effect.maledict.decay", "Breath of Decay");
+            add("effect.maledict.decay.description",
+                "Hostile things beside the wearer lose half a heart every two seconds, and it never kills them: "
+                + "the pulse only grinds them down to within an inch of death, and the last blow stays yours to strike.");
+            add("effect.maledict.thinning", "Edict of Thinning");
+            add("effect.maledict.thinning.description",
+                "Once more than eight hostiles of one kind crowd beside the wearer, the outermost of them takes "
+                + "1.5 hearts every two seconds. Unlike the Breath of Decay, this one can kill.");
+            add("effect.maledict.ripening", "Boon of Ripening");
+            add("effect.maledict.ripening.description",
+                "Every share of experience the wearer earns comes with a quarter more; the remainder is "
+                + "settled by chance, so in the long run the books balance exactly.");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "Doubles the speed of item cooldowns while worn");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "Striking Half Health Targets Triggers Spirit Collection Effects");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment",
                 "Slaying an enemy grants the Age of Enlightenment, or extends it if already held");
+            add("malum.gui.curio.effect.maledict.blessing_of_life",
+                "Natural Regeneration Heals an Extra Share");
+            add("malum.gui.curio.effect.maledict.decay",
+                "Nearby Hostiles Lose Half a Heart Every Two Seconds, Never Fatally");
+            add("malum.gui.curio.effect.maledict.thinning",
+                "Crowds of More Than Eight Hostiles Lose 1.5 Hearts Every Two Seconds");
+            add("malum.gui.curio.effect.maledict.ripening",
+                "Experience Gained Is a Quarter Higher");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "Hold Shift to ask a question better left unasked");
             add("tooltip.maledict.age_of_enlightenment.shift", "Was there ever a true age of darkness?");
             add("tooltip.maledict.age_of_enlightenment.shift.enlightened",
@@ -250,6 +359,11 @@ public final class MaledictLanguage extends LanguageProvider {
     private static final String SOULWOOD_OBELISK_PAGE = OBELISKS_ENTRY + ".soulwood_obelisk";
     private static final String MNEMONIC_OBELISK_PAGE = OBELISKS_ENTRY + ".mnemonic_obelisk";
     private static final String RITE_ENTRY = "void.maledict.vicissitude_rite";
+    private static final String TOTEMIC_RUNES_CONTINUED_ENTRY = "maledict.totemic_runes_continued";
+    private static final String RUNE_OF_SATIATION_ENTRY = "maledict.rune_of_satiation";
+    private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";
+    private static final String RUNE_OF_THINNING_ENTRY = "maledict.rune_of_thinning";
+    private static final String RUNE_OF_RIPENING_ENTRY = "maledict.rune_of_ripening";
     private static final String VICISSITUDE_RITE_ID = "vicissitude_rite";
     private static final String GREATER_RITE_ID = "greater_vicissitude_rite";
     private static final String ELDRITCH_RITE_ID = "eldritch_vicissitude_rite";

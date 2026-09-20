@@ -1,0 +1,14 @@
+{
+  "type": "malum:runeworking",
+  "output": {
+    "item": "maledict:rune_of_ripening"
+  },
+  "primaryInput": {
+    "count": 1,
+    "item": "malum:soulwood_tablet"
+  },
+  "secondaryInput": {
+    "count": 32,
+    "item": "malum:sacred_spirit"
+  }
+}
