@@ -489,6 +489,18 @@
 - 一阶段对玩家恒用 `DamageProbe.lighterDamageMethod`（难度表只管二阶段）；压血弹把玩家压到 1 血后 30 tick 内不释放，已经起手未释放的胸/环作废重起。
 - 命令：`compileJava test --offline`（7 类全绿，新增 `FirstVicissitudeSpiritDataTest` 5 项）、`runData --offline`（四张表重写）。以上均未进游戏验证。
 
+## 2026-09-20：仇恨、参战者与 UUID 清理（第十五轮补充）
+
+见 [19 仇恨、参战者与 UUID 清理](19_ENGAGEMENT_AND_RETALIATION.md)。
+
+- 起因：用户实测「无常打守者没动画」。翻 `run/saves/新的世界 (1)` 的实体区确认：存盘时它停在 PHASE_ONE、`PhaseOneTargets` 为空、`ActionSequence=17`（真的放过 17 个动作），同会话聊天记录里的「被切成了两半」正是它自己的 `scythe_sweep` 伤害——动画链路是通的，缺的是「谁算对手」。
+- 用户明确「需求与原版仇恨系统差不了太多」，因此 `onIncomingAttack` 按 `HurtByTargetGoal` 对齐：打它的人一律进名单、**完全不看视线**（隔着墙打也会结仇还手；第一版曾把视线当门槛、第二版只对首击要求视线，均已去掉），创造/旁观玩家照旧在入口被忽略（第一版曾放开，用户否掉后收回）。
+- 新增 `ownerOf`：宠物/召唤物打过来时连主人一起参战（对应原版 `lastHurtByPlayer`，这里连非玩家主人也算），第一次还手优先主人。
+- 二阶段名单从「只认玩家」放宽到任意存活生物（`phaseTwoPlayers` → `phaseTwoParticipants`，存档键不变），选目标玩家优先；过场中挨打也计入并随转场带走。
+- UUID 清理统一为「不在场就退出名单」：`updateParticipant`/`dropAbsentParticipant` 处理离线、区块没加载、换维度与死亡；回退未参战时连名单带死亡记录整表清空。世界级真生命账本里死掉的 UUID 是**故意保留**的（防旧实体副本复活），见 19 的清理表。
+- 新增「没有对手满 100 tick 回到未参战」（`EMPTY_ENCOUNTER_RESET_TICKS` + `hasPossibleOpponent`）。
+- 命令：`compileJava test --offline` 全绿；本轮不动掉落表与资源，`runData` 无产出变化。游戏内六项验证见 19 末节，均未执行。
+
 ## 未验证项（明确不声称通过）
 
 1. 客户端与专服双人场景、晚加入不串阶段、走出/走入跟踪范围。

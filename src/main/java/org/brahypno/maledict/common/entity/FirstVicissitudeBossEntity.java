@@ -32,6 +32,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -113,6 +114,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      * 从 1 血里喘口气的，不是给 Boss 的额外冷却。
      */
     public static final int PRESS_RECOVERY_TICKS = 30;
+    /**
+     * 一阶段名单空着多久就回到「未参战」。
+     *
+     * <p>没有对手的一阶段不该继续空转阶段计时、更不该自己走进二阶段：那只会留下一只
+     * 谁也叫不动的雕像（见 19 的实测记录）。五个呼吸之后重新打它一次就能从头再来。
+     */
+    public static final int EMPTY_ENCOUNTER_RESET_TICKS = 100;
     public static final int MAX_NON_HOMING_BOLTS = 48;
     public static final int MAX_HOMING_ORBS = 2;
     public static final double MELEE_REACH = 5.0D;
@@ -208,7 +216,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private final ServerBossEvent bossEvent = new ServerBossEvent(
             getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
     private final Set<UUID> phaseOneTargets = new LinkedHashSet<>();
-    private final Set<UUID> phaseTwoPlayers = new LinkedHashSet<>();
+    /**
+     * 二阶段参战名单。
+     *
+     * <p>存档键仍是 {@code PhaseTwoPlayers}（旧档兼容），但名单里装的不再只有玩家：
+     * 一阶段的参战者会整体带过来，宠物、召唤物和别的生物同样能打到二阶段。
+     */
+    private final Set<UUID> phaseTwoParticipants = new LinkedHashSet<>();
     private final Map<UUID, Integer> targetPlayerDeaths = new HashMap<>();
     private final Map<UUID, Integer> announcedPlayerDeaths = new HashMap<>();
     private final Map<UUID, Integer> phaseTwoPlayerDeaths = new HashMap<>();
@@ -246,6 +260,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private int rangedCooldown;
     /** 压血弹刚命中玩家后的喘息窗口，见 {@link #PRESS_RECOVERY_TICKS}。 */
     private int pressRecoveryTicks;
+    /** 一阶段名单已经空了多久，见 {@link #EMPTY_ENCOUNTER_RESET_TICKS}。 */
+    private int emptyEncounterTicks;
     private int meleeAlternator;
     private int currentBaseSlot;
     private int fanCount;
@@ -645,7 +661,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (!(level() instanceof ServerLevel serverLevel)) {
             return null;
         }
-        Set<UUID> roster = isPhaseTwo() ? phaseTwoPlayers : phaseOneTargets;
+        Set<UUID> roster = isPhaseTwo() ? phaseTwoParticipants : phaseOneTargets;
         if (roster.isEmpty()) {
             return null;
         }
@@ -700,11 +716,14 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     /**
-     * Mirrors the vanilla {@code NeutralMob#playerDied} contract: when
-     * {@code forgiveDeadPlayers} is on, a participant that died is forgotten, so respawning
-     * never drags the boss across the arena. With the rule off the boss keeps the grudge, just
-     * like an angry vanilla mob does. Death counters are the identity of one life, which is why
-     * they are stored when a player first engages.
+     * 每 10 tick 清一次参战名单，规则只有一条：**不在场的人退出名单**。
+     *
+     * <p>不在场 = 解不开 UUID（离线、所在区块没加载、已经不在世界上）、不在这个维度、
+     * 或者已经死了。玩家额外走原版的死亡计数规则（{@code forgiveDeadPlayers} 决定阵亡后
+     * 是原谅还是继续记仇），并且在被移出时一并删掉死亡记录与公告记录，不留悬空 UUID。
+     *
+     * <p>离线玩家同样退出名单：饰品返还走的是账本 + 登录/重生/克隆钩子
+     * （{@code VicissitudeCurioReturns}），不依赖这份名单，所以这里可以放心清干净。
      */
     private void forgetDeadParticipants() {
         if (!(level() instanceof ServerLevel serverLevel)) {
@@ -714,24 +733,24 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         var playerList = serverLevel.getServer().getPlayerList();
         for (UUID identity : new ArrayList<>(phaseOneTargets)) {
             if (updateParticipant(playerList.getPlayer(identity), identity, forgive,
-                    targetPlayerDeaths)) {
+                    targetPlayerDeaths, serverLevel)) {
                 phaseOneTargets.remove(identity);
                 announcedPlayerDeaths.remove(identity);
             }
         }
-        for (UUID identity : new ArrayList<>(phaseTwoPlayers)) {
+        for (UUID identity : new ArrayList<>(phaseTwoParticipants)) {
             if (updateParticipant(playerList.getPlayer(identity), identity, forgive,
-                    phaseTwoPlayerDeaths)) {
-                phaseTwoPlayers.remove(identity);
+                    phaseTwoPlayerDeaths, serverLevel)) {
+                phaseTwoParticipants.remove(identity);
             }
         }
     }
 
     private boolean updateParticipant(@Nullable ServerPlayer player, UUID identity, boolean forgive,
-                                      Map<UUID, Integer> deathRecords) {
+                                      Map<UUID, Integer> deathRecords, ServerLevel serverLevel) {
         if (player == null) {
-            // Offline: keep the record so the ledger can still return curios on login.
-            return false;
+            // 不是在线玩家：解不开、别的维度、死了都算不在场。
+            return dropAbsentParticipant(identity, serverLevel, deathRecords);
         }
         if (player.level() != level()) {
             // Leaving the dimension always ends the engagement.
@@ -755,6 +774,23 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             clearTargetIf(identity);
         }
         return false;
+    }
+
+    /**
+     * 非玩家参战者与离线玩家的共同清理：拿不到活的实体就退出名单。
+     *
+     * <p>这里不区分"区块没加载"与"已经不存在"——两者都不在场，留着只会变成悬空 UUID，
+     * 还会让 {@link #hasPossibleOpponent()} 误以为还有对手。
+     */
+    private boolean dropAbsentParticipant(UUID identity, ServerLevel serverLevel,
+                                          Map<UUID, Integer> deathRecords) {
+        Entity entity = serverLevel.getEntity(identity);
+        if (entity instanceof LivingEntity living && living.isAlive() && living.level() == level()) {
+            return false;
+        }
+        deathRecords.remove(identity);
+        clearTargetIf(identity);
+        return true;
     }
 
     private void clearTargetIf(UUID identity) {
@@ -861,6 +897,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 if (!isPhaseOneStarted()) {
                     break;
                 }
+                if (tickEmptyEncounter()) {
+                    break;
+                }
                 phaseOneTicks++;
                 if (phaseOneTicks >= phaseOneDurationTicks) {
                     beginTransition();
@@ -884,6 +923,59 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             case DYING -> {
             }
         }
+    }
+
+    /**
+     * 一阶段没有对手时倒数，数满就把遭遇战放回「未参战」，并把这份名单清干净。
+     *
+     * <p>判断的是「场上还有没有活的对手」，而不是名单里有没有 UUID：名单里的创造/旁观
+     * 玩家（打到一半切了模式）不算对手；解不开 UUID 的会在
+     * {@link #forgetDeadParticipants()} 里被清掉，这里只是不等它那 10 tick。
+     *
+     * <p>回到 DORMANT 只是解除阶段时长锁与计时，不动真生命、难度与武器。
+     *
+     * @return 这一 tick 是否已经放回未参战（调用方不再推进阶段计时）
+     */
+    private boolean tickEmptyEncounter() {
+        if (hasPossibleOpponent()) {
+            emptyEncounterTicks = 0;
+            return false;
+        }
+        if (++emptyEncounterTicks < EMPTY_ENCOUNTER_RESET_TICKS) {
+            return false;
+        }
+        emptyEncounterTicks = 0;
+        setStage(VicissitudeBossStage.DORMANT);
+        phaseOneDurationLocked = false;
+        phaseOneTicks = 0;
+        // 名单、死亡记录一起清：不放着任何指向"上一场"的 UUID。
+        // 二阶段名单在一阶段本就应当是空的，顺手清掉以防旧档带来残留。
+        phaseOneTargets.clear();
+        targetPlayerDeaths.clear();
+        phaseTwoParticipants.clear();
+        phaseTwoPlayerDeaths.clear();
+        setTarget(null);
+        clearGroundMarker();
+        return true;
+    }
+
+    /** 场上还有没有活着的、可以被当成对手的参战者，见 {@link #tickEmptyEncounter()}。 */
+    private boolean hasPossibleOpponent() {
+        if (phaseOneTargets.isEmpty()) {
+            return false;
+        }
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            // 客户端不会走到这里（tickStage 只在服务端推进）；拿不到世界时按"还有对手"处理。
+            return true;
+        }
+        for (UUID identity : phaseOneTargets) {
+            Entity entity = serverLevel.getEntity(identity);
+            if (entity instanceof LivingEntity living && living.isAlive()
+                && living.level() == level() && !isIgnoredPlayer(living)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void tickTransitionEffects() {
@@ -941,21 +1033,27 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         Set<ServerPlayer> recipients = new LinkedHashSet<>(bossEvent.getPlayers());
-        phaseTwoPlayers.clear();
+        phaseTwoParticipants.clear();
         for (UUID identity : phaseOneTargets) {
-            ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
-            if (player == null || player.level() != level()) {
+            LivingEntity member = resolveParticipant(serverLevel, identity);
+            if (member == null || member.level() != level() || !member.isAlive()) {
+                // 死掉或已经不在这个维度的不带走；离线的玩家留给账本处理返还。
                 continue;
             }
-            recipients.add(player);
-            if (!player.isAlive() || isIgnoredPlayer(player)) {
+            if (member instanceof ServerPlayer player) {
+                recipients.add(player);
+                // 名单里可能有中途切进创造/旁观的玩家：他们不带走，也不没收饰品。
+                if (isIgnoredPlayer(player)) {
+                    continue;
+                }
+                phaseTwoParticipants.add(identity);
+                phaseTwoPlayerDeaths.put(identity, getDeathCount(player));
+                if (bossDifficulty.confiscatesCurios()) {
+                    confiscateEquippedCurios(player);
+                }
                 continue;
             }
-            phaseTwoPlayers.add(identity);
-            phaseTwoPlayerDeaths.put(identity, getDeathCount(player));
-            if (bossDifficulty.confiscatesCurios()) {
-                confiscateEquippedCurios(player);
-            }
+            phaseTwoParticipants.add(identity);
         }
         for (ServerPlayer player : recipients) {
             player.displayClientMessage(announcement(PHASE_TWO_MESSAGE_KEY), true);
@@ -1701,10 +1799,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (preferredPlayer != null && returnOneCurioTo(preferredPlayer)) {
             return;
         }
-        if (!(level() instanceof ServerLevel serverLevel) || phaseTwoPlayers.isEmpty()) {
+        if (!(level() instanceof ServerLevel serverLevel) || phaseTwoParticipants.isEmpty()) {
             return;
         }
-        List<UUID> players = new ArrayList<>(phaseTwoPlayers);
+        List<UUID> players = new ArrayList<>(phaseTwoParticipants);
         int start = Math.floorMod(curioReturnCursor, players.size());
         for (int offset = 0; offset < players.size(); offset++) {
             int index = (start + offset) % players.size();
@@ -2194,8 +2292,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return false;
         }
         if (isPhaseTwo()) {
-            return living instanceof ServerPlayer player
-                   && phaseTwoPlayers.contains(player.getUUID());
+            return phaseTwoParticipants.contains(living.getUUID());
         }
         return phaseOneTargets.contains(living.getUUID());
     }
@@ -2230,32 +2327,109 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                && super.canBeAffected(effect);
     }
 
+    /**
+     * 原版式的仇恨：谁打它，谁就进它的名单——不看视线，隔着墙也一样。
+     *
+     * <p>三处与原版一致：受击即结仇（对应 {@code HurtByTargetGoal}，原版被隔墙打中也会还手）、
+     * 宠物与召唤物算在主人头上（对应原版的 {@code lastHurtByPlayer}，只是这里连非玩家的主人也算）、
+     * 创造与旁观不结仇也不挨揍（原版的目标选择同样排除这两种身份）。
+     *
+     * <p>挨打就醒：{@link VicissitudeBossStage#DORMANT} 的像被任何人打中都会进入一阶段，
+     * 只剩「没人在打它满 100 tick 就回去当像」这一条自有规则，见 {@link #tickEmptyEncounter()}。
+     */
     @Override
     protected void onIncomingAttack(DamageSource source, float amount) {
         LivingEntity attacker = resolveLivingAttacker(source);
-        if (stage == VicissitudeBossStage.TRANSITION || isPhaseTwo()) {
-            if (attacker instanceof ServerPlayer player) {
-                registerPhaseTwoAttacker(player);
-            }
+        if (isPhaseTwo()) {
+            LivingEntity owner = ownerOf(attacker);
+            registerPhaseTwoParticipant(attacker);
+            registerPhaseTwoParticipant(owner);
             return;
         }
-        if (attacker != null && attacker != this && attacker.isAlive()
-            && !isIgnoredPlayer(attacker) && attacker.hasLineOfSight(this)) {
-            phaseOneTargets.add(attacker.getUUID());
-            if (attacker instanceof ServerPlayer player) {
-                targetPlayerDeaths.put(player.getUUID(), getDeathCount(player));
+        if (attacker == null || attacker == this || !attacker.isAlive()
+            || isIgnoredPlayer(attacker)) {
+            return;
+        }
+        LivingEntity owner = ownerOf(attacker);
+        registerPhaseOneParticipant(attacker);
+        registerPhaseOneParticipant(owner);
+        if (stage == VicissitudeBossStage.DORMANT) {
+            lockPhaseOneDuration();
+            setStage(VicissitudeBossStage.PHASE_ONE);
+            phaseOneTicks = 0;
+            ServerPlayer starter = attacker instanceof ServerPlayer player ? player
+                                  : owner instanceof ServerPlayer ownerPlayer ? ownerPlayer : null;
+            if (starter != null) {
+                announceFirstAttack(starter);
             }
-            if (stage == VicissitudeBossStage.DORMANT) {
-                lockPhaseOneDuration();
-                setStage(VicissitudeBossStage.PHASE_ONE);
-                phaseOneTicks = 0;
-                if (attacker instanceof ServerPlayer starter) {
-                    announceFirstAttack(starter);
-                }
-            }
-            if (!isValidPhaseOneTarget(getTarget())) {
-                setTarget(attacker);
-            }
+        }
+        if (!isValidPhaseOneTarget(getTarget())) {
+            setTarget(preferredTarget(attacker, owner));
+        }
+    }
+
+    /**
+     * 宠物与召唤物的主人，没有主人的（野生生物、玩家自己）返回 null。
+     *
+     * <p>拿 {@code OwnableEntity#getOwnerUUID} 而不是 {@code getOwner()}：后者只认玩家，
+     * 而主人也可能是别的生物。解析方式与参战名单一致，主人离线时拿不到就当作没有。
+     */
+    @Nullable
+    private LivingEntity ownerOf(@Nullable LivingEntity attacker) {
+        if (!(attacker instanceof OwnableEntity ownable)
+            || !(level() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        UUID ownerId = ownable.getOwnerUUID();
+        if (ownerId == null) {
+            return null;
+        }
+        LivingEntity owner = resolveParticipant(serverLevel, ownerId);
+        return owner == this ? null : owner;
+    }
+
+    /**
+     * 把一名攻击者写进一阶段名单。
+     *
+     * <p>创造与旁观在这里就被挡掉（{@link #isIgnoredPlayer}）：他们永远不参战、也不挨揍，
+     * 出手不算数。围观者同理永远进不来，所以「不打旁观者」这条规则靠入口而不是靠过滤维持。
+     */
+    private void registerPhaseOneParticipant(@Nullable LivingEntity participant) {
+        if (participant == null || participant == this || !participant.isAlive()
+            || participant.level() != level() || isIgnoredPlayer(participant)) {
+            return;
+        }
+        phaseOneTargets.add(participant.getUUID());
+        if (participant instanceof ServerPlayer player) {
+            targetPlayerDeaths.put(player.getUUID(), getDeathCount(player));
+        }
+    }
+
+    /** 宠物、召唤物出手时账要算在主人头上：能选主人就选主人。 */
+    private LivingEntity preferredTarget(LivingEntity attacker, @Nullable LivingEntity owner) {
+        return owner != null && isValidPhaseOneTarget(owner) ? owner : attacker;
+    }
+
+    /**
+     * 二阶段的参战者：与一阶段同一套归属规则。
+     *
+     * <p>名单在这里从「玩家」放宽到任意存活生物，宠物、召唤物和别的生物都能一路打到底；
+     * 选目标时玩家优先，见 {@link #selectBalancedPhaseTwoTarget()}。
+     */
+    private void registerPhaseTwoParticipant(@Nullable LivingEntity participant) {
+        if (participant == null || participant == this || !participant.isAlive()
+            || participant.level() != level() || isIgnoredPlayer(participant)) {
+            return;
+        }
+        UUID identity = participant.getUUID();
+        phaseTwoParticipants.add(identity);
+        if (participant instanceof ServerPlayer player) {
+            phaseTwoPlayerDeaths.putIfAbsent(identity, getDeathCount(player));
+        }
+        LivingEntity target = getTarget();
+        if (target == null || !target.isAlive() || target.level() != level()
+            || isIgnoredPlayer(target)) {
+            setTarget(participant);
         }
     }
 
@@ -2283,20 +2457,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (!phaseOneDurationLocked) {
             phaseOneDurationTicks = bossDifficulty.phaseOneDurationTicks();
             phaseOneDurationLocked = true;
-        }
-    }
-
-    private void registerPhaseTwoAttacker(ServerPlayer player) {
-        if (!player.isAlive() || player.level() != level() || isIgnoredPlayer(player)) {
-            return;
-        }
-        UUID identity = player.getUUID();
-        phaseTwoPlayers.add(identity);
-        phaseTwoPlayerDeaths.putIfAbsent(identity, getDeathCount(player));
-        LivingEntity target = getTarget();
-        if (target == null || !target.isAlive() || target.level() != level()
-            || isIgnoredPlayer(target)) {
-            setTarget(player);
         }
     }
 
@@ -2339,7 +2499,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             setTarget(null);
             return null;
         }
-        List<UUID> targets = new ArrayList<>(phaseOneTargets);
+        List<UUID> targets = orderedPhaseOneTargets(serverLevel);
         int size = targets.size();
         int start = Math.floorMod(targetCursor, size);
         List<UUID> invalid = new ArrayList<>();
@@ -2362,20 +2522,51 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return null;
     }
 
+    /**
+     * 一阶段轮换用的名单：玩家排前面，宠物、召唤物与别的生物排后面。
+     *
+     * <p>玩家拖着无常、周围还围着一群僵尸时，无常盯的仍然是人；
+     * 名单里没有玩家时才会去招呼这群召唤物，见 19。
+     */
+    private List<UUID> orderedPhaseOneTargets(ServerLevel serverLevel) {
+        List<UUID> players = new ArrayList<>();
+        List<UUID> others = new ArrayList<>();
+        var playerList = serverLevel.getServer().getPlayerList();
+        for (UUID identity : phaseOneTargets) {
+            if (playerList.getPlayer(identity) != null) {
+                players.add(identity);
+            } else {
+                others.add(identity);
+            }
+        }
+        players.addAll(others);
+        return players;
+    }
+
     @Nullable
     private LivingEntity selectBalancedPhaseTwoTarget() {
         if (!(level() instanceof ServerLevel serverLevel)) {
             return null;
         }
-        LivingEntity selected = phaseTwoPlayers.stream()
-                .map(identity -> serverLevel.getServer().getPlayerList().getPlayer(identity))
-                .filter(player -> player != null && player.level() == level()
-                                  && player.isAlive() && !player.isSpectator() && !player.isCreative()
-                                  && distanceToSqr(player) <= engagementRangeSqr())
-                .max(Comparator.comparingDouble(LivingEntity::getHealth))
-                .orElse(null);
+        // 玩家优先，其次才是宠物/召唤物/别的生物：中途加入的玩家不会被一只高血量的宠物挡住。
+        LivingEntity selected = healthiestPhaseTwoTarget(serverLevel, true);
+        if (selected == null) {
+            selected = healthiestPhaseTwoTarget(serverLevel, false);
+        }
         setTarget(selected);
         return selected;
+    }
+
+    @Nullable
+    private LivingEntity healthiestPhaseTwoTarget(ServerLevel serverLevel, boolean playersOnly) {
+        return phaseTwoParticipants.stream()
+                .map(identity -> resolveParticipant(serverLevel, identity))
+                .filter(member -> member != null && member.level() == level()
+                                  && member.isAlive() && !isIgnoredPlayer(member)
+                                  && distanceToSqr(member) <= engagementRangeSqr())
+                .filter(member -> !playersOnly || member instanceof ServerPlayer)
+                .max(Comparator.comparingDouble(LivingEntity::getHealth))
+                .orElse(null);
     }
 
     private boolean isValidPhaseOneTarget(@Nullable LivingEntity target) {
@@ -2388,12 +2579,19 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         if (target instanceof ServerPlayer player) {
             Integer registeredDeathCount = targetPlayerDeaths.get(player.getUUID());
-            return !player.isSpectator() && !player.isCreative()
+            return !isIgnoredPlayer(player)
                    && (registeredDeathCount == null || registeredDeathCount == getDeathCount(player));
         }
         return !isIgnoredPlayer(target);
     }
 
+    /**
+     * 被无视的目标：创造与旁观的玩家。
+     *
+     * <p>他们永远不参战、也不挨揍，这一点不因为「受击还手」而改变：受击还手说的是
+     * 打它的人（宠物、召唤物、别的生物）会进名单，而创造/旁观从入口就被排除，
+     * 连自己出手都不算数——作者在创造模式下要试招，请让手下的生物去打它。
+     */
     private static boolean isIgnoredPlayer(@Nullable LivingEntity target) {
         return target instanceof Player player && (player.isCreative() || player.isSpectator());
     }
@@ -2649,7 +2847,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             tag.put("StashedWeapon", stashedWeapon.save(new CompoundTag()));
         }
         tag.put("PhaseOneTargets", saveUuidSet(phaseOneTargets));
-        tag.put("PhaseTwoPlayers", saveUuidSet(phaseTwoPlayers));
+        tag.put("PhaseTwoPlayers", saveUuidSet(phaseTwoParticipants));
         tag.put("PhaseOneTargetDeaths", savePlayerDeathMap(targetPlayerDeaths));
         tag.put("PhaseOneAnnouncements", savePlayerDeathMap(announcedPlayerDeaths));
         tag.put("PhaseTwoPlayerDeaths", savePlayerDeathMap(phaseTwoPlayerDeaths));
@@ -2702,7 +2900,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         stashedWeapon = ItemStack.of(tag.getCompound("StashedWeapon"));
         loadUuidSet(tag.getList("PhaseOneTargets", Tag.TAG_INT_ARRAY), phaseOneTargets);
-        loadUuidSet(tag.getList("PhaseTwoPlayers", Tag.TAG_INT_ARRAY), phaseTwoPlayers);
+        loadUuidSet(tag.getList("PhaseTwoPlayers", Tag.TAG_INT_ARRAY), phaseTwoParticipants);
         loadPlayerDeathMap(tag.getList("PhaseOneTargetDeaths", Tag.TAG_COMPOUND), targetPlayerDeaths);
         loadPlayerDeathMap(tag.getList("PhaseOneAnnouncements", Tag.TAG_COMPOUND), announcedPlayerDeaths);
         loadPlayerDeathMap(tag.getList("PhaseTwoPlayerDeaths", Tag.TAG_COMPOUND), phaseTwoPlayerDeaths);
