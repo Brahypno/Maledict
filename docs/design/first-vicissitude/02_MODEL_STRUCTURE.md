@@ -1,5 +1,9 @@
 # 02 — 模型、资产与锚点接口
 
+当前资产为 186 部件 / 3,572 三角面，历史对照、肢体与握拳修订见 [17](17_BODY_MASS_AND_HISTORY_REVIEW.md)。16 的 2,188 面和下方 1,792 面记录均为历史阶段。
+
+2026-09-20：保留本页骨架与锚点接口；最新骨翼/羽翼修订为 128 部件 / 1,792 三角面，见 [15](15_WING_STRUCTURE_AND_FEATHERS.md)。参考统计见 [14](14_REFERENCE_GEOMETRY_BUDGET.md)，行为修订见 [13](13_COMBAT_AND_STYLE_REFINEMENT.md)。
+
 采用 Forge 1.20.1 原版 HierarchicalModel/ModelPart，一套基础模型服务两阶段，建议不新增 GeckoLib。原稿层级的手臂和头部分居 root 下会增加躯干联动工作；采用下列实际父子关系。
 
 2026-09-13 用户要求使用 Blender 提升造型精度：现采用 Blender 多边形网格绑定下述原版关节，

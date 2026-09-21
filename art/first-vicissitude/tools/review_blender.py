@@ -3,6 +3,7 @@ import bpy
 import json
 import math
 import sys
+import shutil
 from pathlib import Path
 from mathutils import Vector, Matrix
 
@@ -48,6 +49,14 @@ bone=pixels[(32*256+160)*4:(32*256+160)*4+3]
 violet=pixels[(32*256+96)*4:(32*256+96)*4+3]
 assert min(bone)>.60 and sum(bone)/3-sum(violet)/3>.25, 'The bone atlas is darkened or lacks material contrast'
 assert violet[2]>violet[0]>violet[1], 'The violet shell hue has been lost'
+# Cutout feather materials must keep real gaps and cannot accidentally become emissive cards.
+feather_alpha=[]
+for tile in range(9,13):
+    values=[pixels[(y*256+x)*4+3]
+            for y in range((tile//4)*64+3,(tile//4)*64+61)
+            for x in range((tile%4)*64+3,(tile%4)*64+61)]
+    assert min(values)==0 and max(values)==1, 'Feather cutout lost its opaque/transparent pixels'
+    feather_alpha.append(sum(v==0 for v in values))
 bpy.data.images.remove(atlas)
 
 # Sample the core's actual projected extent, rather than merely inspecting a pretty render.
@@ -68,7 +77,8 @@ assert visible/max(total,1)<.5, 'The head shell exposes most of the core'
 report={'mesh_parts':len(meshes),'triangles':count,'finite_vertices_and_unit_normals':True,
         'uvs_in_atlas':True,'chest_clear_rays':sum(aperture),'chest_sample_rays':len(aperture),
         'front_core_visible_fraction':visible/max(total,1),
-        'surrounding_body_mass_present':True,'bone_srgb_sample':bone,'violet_srgb_sample':violet}
+        'surrounding_body_mass_present':True,'bone_srgb_sample':bone,'violet_srgb_sample':violet,
+        'feather_cutout_clear_pixels':feather_alpha}
 (OUT/'validation.json').write_text(json.dumps(report,indent=2))
 print('VALIDATION',json.dumps(report),flush=True)
 if '--check-only' in sys.argv:
@@ -84,17 +94,44 @@ def view(name,pos,target,scale,frame=1):
     bpy.ops.render.render(write_still=True)
     print('REVIEW_DONE',name,flush=True)
 
+scene.frame_set(1)
+bpy.context.view_layer.update()
+hand_center=(bpy.data.objects['hand_left'].matrix_world.translation+
+             bpy.data.objects['forearm_left'].matrix_world.translation)*.5
+view('hand_and_elbow_detail',hand_center+Vector((22,-100,15)),hand_center,29)
+
+for phase,frame in ([] if '--details-only' in sys.argv else [('phase_one',1),('phase_two',41)]):
+    for direction,position,scale in [('front',(0,-210,10),141),
+                                     ('side',(210,0,10),110),('back',(0,210,10),141)]:
+        name=phase+'_'+direction
+        view(name,position,(0,0,10),scale,frame)
+        shutil.copyfile(OUT/(name+'.png'),ART/'preview'/(name+'.png'))
+
 view('chest_and_crown_detail',(18,-130,30),(0,0,21),66)
 view('death_reveal',(60,-190,50),(0,0,10),141,81)
-grey=bpy.data.materials.new('Review clay')
-grey.use_nodes=True
-grey.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.32,.32,.32,1)
-grey.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.8
-scene.view_layers[0].material_override=grey
+view('wing_front_detail',(40,-160,34),(36,10,15),72)
+view('wing_back_detail',(40,170,34),(36,10,15),72)
+# Keep the alpha silhouette when checking a cutout wing in clay.
+original_materials={obj.name:list(obj.data.materials) for obj in meshes.values()}
+for obj in meshes.values():
+    material=obj.data.materials[0].copy()
+    shader=material.node_tree.nodes.get('Principled BSDF')
+    for link in list(material.node_tree.links):
+        if link.to_socket in (shader.inputs['Base Color'],shader.inputs['Emission Color']):
+            material.node_tree.links.remove(link)
+    shader.inputs['Base Color'].default_value=(.32,.32,.32,1)
+    shader.inputs['Emission Strength'].default_value=0
+    shader.inputs['Metallic'].default_value=0
+    shader.inputs['Roughness'].default_value=.8
+    obj.data.materials.clear()
+    obj.data.materials.append(material)
 view('grey_front',(0,-210,10),(0,0,10),141)
 view('grey_side',(210,0,10),(0,0,10),110)
 view('grey_back',(0,210,10),(0,0,10),141)
-scene.view_layers[0].material_override=None
+for obj in meshes.values():
+    obj.data.materials.clear()
+    for material in original_materials[obj.name]:
+        obj.data.materials.append(material)
 scene.world.node_tree.nodes.get('Background').inputs[1].default_value=.15
 for obj in scene.objects:
     if obj.type=='LIGHT': obj.data.energy*=.20

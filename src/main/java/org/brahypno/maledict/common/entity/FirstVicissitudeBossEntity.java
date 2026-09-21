@@ -212,6 +212,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private VicissitudeRig.Action action = VicissitudeRig.Action.NONE;
     private boolean actionLeft;
     private boolean actionReleased;
+    @Nullable private LivingEntity committedTarget;
+    private Vec3 committedAim = Vec3.ZERO;
+    private float committedYaw;
+    private float committedPitch;
+    private boolean scytheRecoveryPending;
     private int actionSequence;
     private int hurtTicks;
     private int transitionTicks;
@@ -481,15 +486,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return current == VicissitudeBossStage.DORMANT || current == VicissitudeBossStage.PHASE_ONE;
     }
 
-    /** Turns the body onto a world point and returns the yaw that was applied. */
-    private float faceTowards(Vec3 point) {
-        float wanted = yawTo(point);
-        setYRot(wanted);
-        setYHeadRot(wanted);
-        yBodyRot = wanted;
-        return wanted;
-    }
-
     public boolean isChargingRanged() {
         VicissitudeRig.Action current = getRenderAction();
         return current == VicissitudeRig.Action.WING_RANGED
@@ -536,20 +532,28 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         action = next;
         actionLeft = left;
         actionReleased = false;
+        committedTarget = getTarget();
+        committedAim = committedTarget == null ? position().add(getLookAngle().scale(8))
+                                               : aimPoint(committedTarget);
+        committedYaw = getYRot();
+        committedPitch = getXRot();
+        dashDirectionLocked = false;
+        dashTicks = 0;
+        barrageWaveTick = 0L;
+        lastBarrageWave = 0;
         actionSequence++;
         roundDamagedTargets.clear();
         entityData.set(DATA_ACTION, (byte) next.ordinal());
         entityData.set(DATA_ACTIVE_SIDE, (byte) (left ? 1 : 0));
         entityData.set(DATA_ACTION_SEQUENCE, actionSequence);
         entityData.set(DATA_ACTION_START, level().getGameTime());
-        if (next == VicissitudeRig.Action.SCYTHE_THROW) {
-            throwCooldown = 0;
-        }
     }
 
     private void endAction() {
         action = VicissitudeRig.Action.NONE;
         actionReleased = false;
+        committedTarget = null;
+        barrageWaveTick = 0L;
         entityData.set(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
         entityData.set(DATA_ACTION_START, level().getGameTime());
         actionSequence++;
@@ -622,8 +626,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     /**
      * Facing for several targets: a distance weighted blend of every engaged player inside the
      * engagement radius, so with two or three opponents the body settles on the group instead of
-     * snapping between individuals every time the attack target rotates. Attacks still snap onto
-     * their own target at the release frame, which is what keeps the swing and the hit aligned.
+     * snapping between individuals every time the attack target rotates. During an attack the
+     * committed target takes precedence, followed by a fixed direction through the recovery.
      */
     @Nullable
     private FacingAim blendedFacingAim() {
@@ -750,13 +754,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private static final float YAW_RATE_TRACKING = 20.0F;
-    /**
-     * Turn rate while an action is running. A player circling the boss at 2.25 blocks (phase two
-     * holding distance) sweeps about 5.5 degrees per tick, so anything slower than that means the
-     * body can never catch up and the boss ends up attacking with its back to the player.
-     */
-    private static final float YAW_RATE_ACTION = 14.0F;
-    /** Windup of a ranged attack: snap the body onto the firing line so the shots match it. */
+    /** Early windup catches the intended target before the direction locks. */
     private static final float YAW_RATE_WINDUP = 30.0F;
     /** A target far off axis gets a speed boost, so nobody can orbit faster than the body turns. */
     private static final float YAW_CATCH_UP_ARC = 90.0F;
@@ -773,15 +771,28 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (stage == VicissitudeBossStage.DORMANT || getHealth() <= 0.0F) {
             return;
         }
-        FacingAim facing = blendedFacingAim();
+        if (action != VicissitudeRig.Action.NONE && actionTicks() >= action.aimLockTick()) {
+            // Restore after vanilla movement/body controls, which also run during super.tick().
+            setYRot(committedYaw);
+            setYHeadRot(committedYaw);
+            yBodyRot = committedYaw;
+            setXRot(committedPitch);
+            return;
+        }
+        FacingAim facing = action != VicissitudeRig.Action.NONE && committedTarget != null
+                ? new FacingAim(aimPoint(committedTarget), committedTarget.getEyeY())
+                : blendedFacingAim();
         if (facing == null) {
             return;
         }
         Vec3 aim = facing.point();
+        if (action != VicissitudeRig.Action.NONE) {
+            committedAim = aim;
+        }
         double aimEyeY = facing.eyeY();
         float rate = YAW_RATE_TRACKING;
         if (action != VicissitudeRig.Action.NONE) {
-            rate = actionTicks() < action.releaseTick() ? YAW_RATE_WINDUP : YAW_RATE_ACTION;
+            rate = YAW_RATE_WINDUP;
         }
         float wanted = yawTo(aim);
         float delta = Mth.wrapDegrees(wanted - getYRot());
@@ -794,6 +805,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         double horizontal = Math.sqrt(distanceToSqr(aim.x, getEyeY(), aim.z));
         float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.max(0.25D, horizontal)));
         setXRot(getXRot() + Mth.clamp(Mth.clamp(pitch, -35.0F, 35.0F) - getXRot(), -allowed, allowed));
+        committedYaw = yaw;
+        committedPitch = getXRot();
     }
 
 
@@ -942,6 +955,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         int ticks = actionTicks();
+        if (action != VicissitudeRig.Action.SCYTHE_RECOVER && (committedTarget == null
+                || !committedTarget.isAlive() || committedTarget.level() != level()
+                || isIgnoredPlayer(committedTarget))) {
+            endAction();
+            return;
+        }
         if (ticks >= action.duration()) {
             finishAction();
             return;
@@ -1042,6 +1061,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (action != VicissitudeRig.Action.NONE) {
             return;
         }
+        if (scytheRecoveryPending) {
+            scytheRecoveryPending = false;
+            startAction(VicissitudeRig.Action.SCYTHE_RECOVER, false);
+            return;
+        }
         LivingEntity target = getTarget();
         if (target == null || !target.isAlive() || target.level() != level()
             || isIgnoredPlayer(target)) {
@@ -1071,14 +1095,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 startAction(VicissitudeRig.Action.SCYTHE_THROW, false);
                 return;
             }
-            // Phase two reuses the wing barrage, chest mark and halo verdict as ranged options;
-            // their projectiles deal ordinary damage there instead of pressing health.
-            if (tryRangedSpecialSkill(target)) {
-                return;
-            }
-            if (dashCooldown <= 0 && distance >= DASH_MIN_RANGE && distance <= DASH_MAX_RANGE) {
+            if (dashCooldown <= 0 && hasWeaponInHand() && scytheToken == null
+                    && distance >= DASH_MIN_RANGE && distance <= DASH_MAX_RANGE
+                    && hasLineOfSight(target)) {
                 dashCooldown = DASH_COOLDOWN;
                 startAction(VicissitudeRig.Action.DASH, false);
+                return;
+            }
+            // Give a ready pursuit its turn before the ranged rotation consumes the opening.
+            if (tryRangedSpecialSkill(target)) {
                 return;
             }
             if (rangedCooldown <= 0) {
@@ -1101,12 +1126,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             startAction(VicissitudeRig.Action.HEAVY_ATTACK, false);
             return;
         }
-        meleeAlternator++;
-        if (meleeAlternator % 3 == 0) {
+        if ((meleeAlternator + 1) % 3 == 0) {
             if (verticalSlashCooldown > 0) {
                 return;
             }
             verticalSlashCooldown = VERTICAL_SLASH_COOLDOWN;
+            meleeAlternator++;
             startAction(VicissitudeRig.Action.SLASH_VERTICAL, false);
             return;
         }
@@ -1114,6 +1139,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         slashCooldown = SLASH_COOLDOWN;
+        meleeAlternator++;
         startAction(VicissitudeRig.Action.SLASH_HORIZONTAL, baseSlotIndex++ % 2 == 0);
     }
 
@@ -1125,7 +1151,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     // ------------------------------------------------------------------ release events
 
     private void releaseAction() {
-        LivingEntity target = getTarget();
+        LivingEntity target = committedTarget;
         switch (action) {
             case WING_RANGED -> fireFan(target);
             case WING_BARRAGE -> fireBarrageWave(target, 0);
@@ -1149,8 +1175,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         boolean left = actionLeft;
         boolean homingSlot = fanCount % 2 == 1 && isPhaseOneStage();
-        Vec3 aim = aimPoint(target);
-        faceTowards(aim);
+        Vec3 aim = committedAim;
         for (int index = 0; index < 5; index++) {
             float offset = -24.0F + index * 12.0F;
             Vec3 origin = wingOrigin(left, index);
@@ -1166,15 +1191,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void fireBarrageWave(@Nullable LivingEntity target, int wave) {
-        if (target == null || !(level() instanceof ServerLevel serverLevel)) {
+        if (target == null || !target.isAlive() || target.level() != level()
+                || isIgnoredPlayer(target) || !(level() instanceof ServerLevel serverLevel)) {
             // No live target: the wave is dropped instead of being fired into empty air.
             barrageWaveTick = 0L;
             lastBarrageWave = 0;
             return;
         }
-        Vec3 aim = target == null ? position().add(getLookAngle().scale(8.0D)) : aimPoint(target);
-        faceTowards(aim);
-        double distance = target == null ? 8.0D : distanceTo(target);
+        Vec3 aim = committedAim;
+        double distance = position().distanceTo(committedAim);
         double spread = Math.min(30.0D, 6.0D + distance * 1.5D);
         for (int index = 0; index < 4; index++) {
             // A deliberate center gap keeps at least one passable lane in every wave.
@@ -1191,6 +1216,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (wave < 2) {
             lastBarrageWave = wave + 1;
             barrageWaveTick = level().getGameTime() + 8;
+        } else {
+            barrageWaveTick = 0L;
         }
     }
 
@@ -1202,8 +1229,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         if (level().getGameTime() >= barrageWaveTick && lastBarrageWave <= 2) {
-            fireBarrageWave(getTarget(), lastBarrageWave);
-            barrageWaveTick = level().getGameTime() + 8;
+            fireBarrageWave(committedTarget, lastBarrageWave);
         }
     }
 
@@ -1212,8 +1238,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         float damage = attackDamage() * 0.75F;
-        Vec3 aim = aimPoint(target);
-        faceTowards(aim);
+        Vec3 aim = committedAim;
         for (int index = -1; index <= 1; index++) {
             Vec3 origin = wingOrigin(index >= 0, Math.abs(index));
             spawnBolt(serverLevel, origin,
@@ -1313,11 +1338,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void resolveMelee(float arcDegrees, double reach, float multiplier, boolean heavy) {
-        LivingEntity swingTarget = getTarget();
-        if (swingTarget != null && swingTarget.isAlive()) {
-            // The swing has to line up with the player being hit, not with the facing blend.
-            faceTowards(swingTarget.position());
-        }
         Vec3 look = getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
         float damage = attackDamage() * multiplier;
         boolean hitAny = false;
@@ -1348,10 +1368,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void resolveVerticalSlash() {
-        LivingEntity swingTarget = getTarget();
-        if (swingTarget != null && swingTarget.isAlive()) {
-            faceTowards(swingTarget.position());
-        }
         Vec3 look = getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
         Vec3 right = new Vec3(-look.z, 0.0D, look.x);
         float damage = attackDamage() * 1.25F;
@@ -1445,8 +1461,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 .getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
             // A solid obstacle stops the charge; the boss never teleports through walls.
             setDeltaMovement(Vec3.ZERO);
+            dashTicks = 12;
             return;
         }
+        if (!level().noCollision(this, getBoundingBox().expandTowards(step))) {
+            dashTicks = 12;
+            setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+        setDeltaMovement(Vec3.ZERO);
         setPos(getX() + step.x, getY() + step.y, getZ() + step.z);
         AABB sweep = getBoundingBox().inflate(0.6D);
         for (Entity entity : level().getEntities(this, sweep)) {
@@ -1474,9 +1497,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             // A disarm must not skip the throw either: fall back to the code owned copy.
             weapon = createWeaponForDifficulty(bossDifficulty);
         }
-        Vec3 direction = target != null
-                         ? target.getEyePosition().subtract(handAnchorWorldPosition()).normalize()
-                         : getLookAngle();
+        Vec3 direction = committedAim.subtract(handAnchorWorldPosition()).normalize();
         VicissitudeScytheProjectileEntity scythe = new VicissitudeScytheProjectileEntity(
                 serverLevel, this, handAnchorWorldPosition(), direction, weapon, attackDamage());
         if (!serverLevel.addFreshEntity(scythe)) {
@@ -1503,13 +1524,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             setItemSlot(EquipmentSlot.MAINHAND, stack.copy());
         }
         setWeaponState(1);
+        // A catch must not erase a ground tell or truncate a volley already in progress.
+        scytheRecoveryPending = true;
         if (caught) {
-            startAction(VicissitudeRig.Action.SCYTHE_RECOVER, false);
             SoundHelper.playSound(this, (SoundEvent) SoundRegistry.SCYTHE_CATCH.get(), 1.0F,
                     RandomHelper.randomBetween(level().getRandom(), 0.9F, 1.1F));
             sendEvent(VicissitudeEffectPacket.EVENT_SCYTHE_CATCH, handAnchorWorldPosition());
-        } else {
-            startAction(VicissitudeRig.Action.SCYTHE_RECOVER, false);
         }
         applyDeferredWeaponTier();
     }
@@ -2314,7 +2334,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             steerToward(new Vec3(getX(), wantedY, getZ()), MAX_FLIGHT_SPEED);
             return;
         }
-        if (action != VicissitudeRig.Action.NONE && actionTicks() <= action.releaseTick() + 4) {
+        if (action != VicissitudeRig.Action.NONE) {
             // Hold the station through the windup and the release: casting has to read as
             // aiming at the target, not as drifting past it.
             setDeltaMovement(getDeltaMovement().scale(0.5D));
@@ -2348,6 +2368,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             && actionTicks() >= action.releaseTick()) {
             return;
         }
+        if (action != VicissitudeRig.Action.NONE) {
+            // Plant the floating body through the tell and recovery; the rig supplies recoil.
+            setDeltaMovement(getDeltaMovement().scale(0.5D));
+            hasImpulse = true;
+            return;
+        }
         Vec3 away = position().subtract(target.position()).multiply(1.0D, 0.0D, 1.0D);
         if (away.lengthSqr() < 0.01D) {
             double angle = tickCount * ORBIT_STEP;
@@ -2358,10 +2384,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         double wantedY = Mth.clamp(target.getY() + PHASE_TWO_HOVER_HEIGHT,
                 level().getMinBuildHeight() + 1.0D,
                 level().getMaxBuildHeight() - getBbHeight() - 1.0D);
+        double holdingDistance = scytheToken == null ? PHASE_TWO_DISTANCE : 8.0D;
+        double orbit = scytheToken == null ? 0.0D : (actionSequence % 2 == 0 ? 1.5D : -1.5D);
         Vec3 destination = new Vec3(
-                target.getX() + away.x * PHASE_TWO_DISTANCE,
+                target.getX() + away.x * holdingDistance - away.z * orbit,
                 wantedY,
-                target.getZ() + away.z * PHASE_TWO_DISTANCE);
+                target.getZ() + away.z * holdingDistance + away.x * orbit);
         steerToward(destination, PHASE_TWO_MAX_FLIGHT_SPEED);
     }
 
@@ -2820,12 +2848,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                     boss.updatePhaseOneMovement(target);
                 }
                 case PHASE_TWO -> {
-                    if (targetRefreshCooldown-- <= 0) {
+                    if (boss.action == VicissitudeRig.Action.NONE && targetRefreshCooldown-- <= 0) {
                         boss.selectBalancedPhaseTwoTarget();
                         targetRefreshCooldown = 10;
                     }
                     LivingEntity target = boss.getTarget();
-                    if (target == null || !target.isAlive() || target.level() != boss.level()) {
+                    if (boss.action == VicissitudeRig.Action.NONE
+                            && (target == null || !target.isAlive() || target.level() != boss.level())) {
                         target = boss.selectBalancedPhaseTwoTarget();
                     }
                     boss.tickPhaseTwoCombat();

@@ -1075,6 +1075,21 @@ public final class VicissitudeRig {
             return releaseTick;
         }
 
+        /** The last part of the tell commits to a direction, leaving time to sidestep. */
+        public int aimLockTick() {
+            return switch (this) {
+                case SLASH_HORIZONTAL -> 4;
+                case SLASH_VERTICAL -> 8;
+                case HEAVY_ATTACK -> 14;
+                case DASH -> 14;
+                case WING_RANGED -> 8;
+                case WING_BARRAGE -> 14;
+                case SCYTHE_THROW, RANGED_FALLBACK -> 10;
+                case CAST_FROM_CHEST, CAST_FROM_HALO -> 10;
+                default -> 0;
+            };
+        }
+
         public boolean isPhaseOneSkill() {
             return phaseOne;
         }
