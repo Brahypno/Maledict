@@ -41,6 +41,7 @@ import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
@@ -54,6 +55,7 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.curio.VicissitudeCurioLedger;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.common.curio.VicissitudeCurioReturns;
+import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.network.VicissitudeEffectPacket;
@@ -104,6 +106,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public static final int DASH_COOLDOWN = 160;
     public static final int THROW_COOLDOWN = 120;
     public static final int RANGED_FALLBACK_COOLDOWN = 60;
+    /**
+     * 一阶段的压血弹把玩家按到 1 血之后，下一次释放至少推迟这么久（一个基础攻击槽）。
+     *
+     * <p>追踪球最多能飞 200 tick，常常正好在胸/环的伤害释放前一刻落地；这段时间是给玩家
+     * 从 1 血里喘口气的，不是给 Boss 的额外冷却。
+     */
+    public static final int PRESS_RECOVERY_TICKS = 30;
     public static final int MAX_NON_HOMING_BOLTS = 48;
     public static final int MAX_HOMING_ORBS = 2;
     public static final double MELEE_REACH = 5.0D;
@@ -235,6 +244,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private int dashCooldown;
     private int throwCooldown;
     private int rangedCooldown;
+    /** 压血弹刚命中玩家后的喘息窗口，见 {@link #PRESS_RECOVERY_TICKS}。 */
+    private int pressRecoveryTicks;
     private int meleeAlternator;
     private int currentBaseSlot;
     private int fanCount;
@@ -841,6 +852,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         throwCooldown = Math.max(0, throwCooldown - 1);
         rangedCooldown = Math.max(0, rangedCooldown - 1);
         unstickCooldown = Math.max(0, unstickCooldown - 1);
+        pressRecoveryTicks = Math.max(0, pressRecoveryTicks - 1);
     }
 
     private void tickStage() {
@@ -998,6 +1010,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private void tickPhaseOneCombat() {
         if (action != VicissitudeRig.Action.NONE) {
+            return;
+        }
+        if (pressRecoveryTicks > 0) {
+            // 压血刚落地：这一槽不开始新动作，下一次释放自然被推后。
             return;
         }
         if (phaseOneTicks < PHASE_ONE_WARMUP_TICKS) {
@@ -1388,6 +1404,33 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         spawnSlashEffect(true);
     }
 
+    /**
+     * 一阶段的压血弹（扇射球与追踪球）把玩家压到 1 血时，由弹体回调这里。
+     *
+     * <p>压血本身不掉血，真正会杀人的只有胸/环那两次普通伤害；而追踪球可以飞 200 tick，
+     * 往往正好在释放帧前几 tick 才落地，于是「压到 1 血」和「释放」看起来是同一瞬间发生的。
+     * 处理办法是把这次喘息记下来：{@link #PRESS_RECOVERY_TICKS} 之内不再开始新动作，
+     * 并且把已经起手、还没释放的胸部/环技能直接作废（连预兆一起撤掉），下一轮重新起手。
+     * 压血球与羽片齐射本身不造成伤害，不在这里打断。
+     *
+     * <p>只对玩家生效：宠物与召唤物被压血不需要这个窗口。
+     */
+    public void onPressLanded(LivingEntity victim) {
+        if (!isPhaseOne() || !(victim instanceof Player)) {
+            return;
+        }
+        pressRecoveryTicks = Math.max(pressRecoveryTicks, PRESS_RECOVERY_TICKS);
+        if (action != VicissitudeRig.Action.NONE && !actionReleased && dealsPlayerDamage(action)) {
+            endAction();
+        }
+    }
+
+    /** 一阶段里唯一会对玩家造成伤害的两个技能，见 {@link #onPressLanded}。 */
+    private static boolean dealsPlayerDamage(VicissitudeRig.Action action) {
+        return action == VicissitudeRig.Action.CAST_FROM_CHEST
+               || action == VicissitudeRig.Action.CAST_FROM_HALO;
+    }
+
     private boolean hurtBySkill(LivingEntity victim, float damage, boolean area) {
         UUID identity = victim.getUUID();
         if (!roundDamagedTargets.add(identity)) {
@@ -1401,10 +1444,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     /**
      * The encounter's only damage entry point for combat participants.
      *
-     * <p>Players are hit through the ChangeLib probe ladder the difficulty table selects: the two
-     * easy modes use the light ladder, which stops after the first authoritative hit and lets
-     * armour, enchantments and caps do their job, while COMPLETE and EXTREME use the medium
-     * ladder, which keeps pressing until the authored amount has actually been taken. Everything
+     * <p>Players are hit through the ChangeLib probe ladder. Phase one always uses the light
+     * ladder: its damage lands after the press projectiles have already driven the player down to
+     * a single hit point, so armour, enchantments and caps keep deciding how much of it lands
+     * (see {@link #onPressLanded}). Phase two keeps the per difficulty table of {@code 07}:
+     * SIMPLE and DIFFICULT use the light ladder, COMPLETE and EXTREME the medium one. Everything
      * that is not a player is hit normally.
      */
     public boolean hurtParticipant(LivingEntity victim, DamageSource source, float damage) {
@@ -1416,7 +1460,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (!(victim instanceof Player)) {
             return victim.hurt(source, damage);
         }
-        return bossDifficulty.damagePress() == DamagePress.MEDIUM
+        DamagePress press = isPhaseOne() ? DamagePress.LIGHT : bossDifficulty.damagePress();
+        return press == DamagePress.MEDIUM
                ? DamageProbe.mediumDamageMethod(victim, source, damage).success()
                : DamageProbe.lighterDamageMethod(victim, source, damage).success();
     }
@@ -1556,7 +1601,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     /**
-     * 掉落物表跟着难度走：四档各一张表，表里写着该档的启蒙之年等级与珍金块数量。
+     * 常规掉落物表跟着难度走：四档各有一张表，内容见 {@code MaledictEntityLoot}
+     * （珍金块、虚无板石、虚空盐）。
      *
      * <p>盖的是 {@code Mob#getDefaultLootTable}：Mob 把 {@code getLootTable()} 定成了 final，
      * 实体自己带一份显式表（NBT 上的 {@code DeathLootTable}）时才不经过这里——本实体不会带。
@@ -1567,6 +1613,30 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     protected ResourceLocation getDefaultLootTable() {
         return bossDifficulty.lootTable();
+    }
+
+    /**
+     * 启蒙之年的专属额外掉落，写法照抄下界之星：原版凋灵在 {@code dropCustomDeathLoot} 里
+     * 把下界之星放进世界并让它不自然消失，这里同样——只不过额外交给 {@code recentlyHit} 把关。
+     *
+     * <p>{@code recentlyHit} 是原版 {@code lastHurtByPlayerTime > 0}，也就是最后 100 tick 内
+     * 有玩家（含玩家射出的弹体、玩家驯服的宠物）对它造成过伤害：不是玩家杀的就不发。
+     * 等级仍跟难度走（I–IV 级），见 {@link BossDifficulty#enlightenmentLevel()}。
+     *
+     * <p>调用时机由原版死亡流程保证：{@code VicissitudeBossEntity#dropAllDeathLoot} 只在真死
+     * 那一次放行，所以这里不需要自己记账；{@code doMobLoot} 关闭时同一条路也不会走到。
+     */
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        super.dropCustomDeathLoot(source, looting, recentlyHit);
+        if (!recentlyHit) {
+            return;
+        }
+        ItemEntity drop = spawnAtLocation(
+                AgeOfEnlightenmentItem.create(bossDifficulty.enlightenmentLevel()));
+        if (drop != null) {
+            drop.setExtendedLifetime();
+        }
     }
 
     @Override
@@ -1672,6 +1742,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     // ------------------------------------------------------------------ part multipliers
 
+    /**
+     * 非玩家来源的伤害固定减半：这个 Boss 只认真打它的人，其余来源（别的生物、环境爆炸、
+     * 别人的宠物）吃 50% 减免。部位倍率先算，再乘这一档，所以背刺之类仍然照常生效。
+     */
+    private static final float NON_PLAYER_DAMAGE_MULTIPLIER = 0.5F;
+
     @Override
     protected float modifyIncomingDamage(DamageSource source, float amount) {
         List<VicissitudeRig.SegmentVolume> volumes = segmentVolumes();
@@ -1686,7 +1762,18 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                       : VicissitudeRig.nearestSegment(volumes, attacker.getX(),
                               attacker.getEyeY(), attacker.getZ());
         }
-        return amount * segment.multiplier();
+        float scaled = amount * segment.multiplier();
+        return isPlayerDamage(source) ? scaled : scaled * NON_PLAYER_DAMAGE_MULTIPLIER;
+    }
+
+    /**
+     * 这一击算不算玩家的账。
+     *
+     * <p>看 {@code getEntity()}（箭矢这类弹体的出手者就是玩家）与 {@code getDirectEntity()}：
+     * 玩家本人近战、玩家射出的弹体、玩家扣下的爆炸都算，玩家宠物与别的生物则不算。
+     */
+    private static boolean isPlayerDamage(DamageSource source) {
+        return source.getEntity() instanceof Player || source.getDirectEntity() instanceof Player;
     }
 
     private List<VicissitudeRig.SegmentVolume> segmentVolumes() {
@@ -2734,29 +2821,34 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
          * attribute modifiers, which {@link #applyWeaponAttributes()} bakes into the entity.
          *
          * <p>{@code damagePress} picks the ChangeLib damage ladder used when the boss damages a
-         * player: {@code LIGHT} stops after the first authoritative hit, so armour, enchantments
-         * and damage caps still decide how much lands, while {@code MEDIUM} keeps pressing until
-         * the authored amount has actually been taken. The two easy modes use the light ladder,
-         * the two hard modes the medium one.
+         * player in <em>phase two</em>: {@code LIGHT} stops after the first authoritative hit, so
+         * armour, enchantments and damage caps still decide how much lands, while {@code MEDIUM}
+         * keeps pressing until the authored amount has actually been taken. The two easy modes use
+         * the light ladder, the two hard modes the medium one; phase one always uses the light
+         * ladder whatever the mode, see {@code hurtParticipant}.
          *
-         * <p>The trailing path is this mode's loot table, see {@link #lootTable()}.
+         * <p>The trailing path is this mode's loot table, see {@link #lootTable()}; the number
+         * after it is the Age of Enlightenment level handed out by
+         * {@link #enlightenmentLevel()} when a player lands the kill.
          */
-        SIMPLE(1800, 500.0D, DamagePress.LIGHT, "entities/first_vicissitude"),
-        DIFFICULT(1400, 750.0D, DamagePress.LIGHT, "entities/first_vicissitude_difficult"),
-        COMPLETE(1000, 1000.0D, DamagePress.MEDIUM, "entities/first_vicissitude_complete"),
-        EXTREME(750, 1500.0D, DamagePress.MEDIUM, "entities/first_vicissitude_extreme");
+        SIMPLE(1800, 500.0D, DamagePress.LIGHT, "entities/first_vicissitude", 0),
+        DIFFICULT(1400, 750.0D, DamagePress.LIGHT, "entities/first_vicissitude_difficult", 1),
+        COMPLETE(1000, 1000.0D, DamagePress.MEDIUM, "entities/first_vicissitude_complete", 2),
+        EXTREME(750, 1500.0D, DamagePress.MEDIUM, "entities/first_vicissitude_extreme", 3);
 
         private final int phaseOneDurationTicks;
         private final double maxHealth;
         private final DamagePress damagePress;
         private final ResourceLocation lootTable;
+        private final int enlightenmentLevel;
 
         BossDifficulty(int phaseOneDurationTicks, double maxHealth, DamagePress damagePress,
-                       String lootTablePath) {
+                       String lootTablePath, int enlightenmentLevel) {
             this.phaseOneDurationTicks = phaseOneDurationTicks;
             this.maxHealth = maxHealth;
             this.damagePress = damagePress;
             this.lootTable = ResourceLocation.fromNamespaceAndPath(Maledict.MODID, lootTablePath);
+            this.enlightenmentLevel = enlightenmentLevel;
         }
 
         public int phaseOneDurationTicks() {
@@ -2772,15 +2864,26 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
 
         /**
-         * 该难度使用的掉落物表。
+         * 该难度使用的常规掉落物表。
          *
-         * <p>每一档都有自己的表，难度越高启蒙之年的等级越高；内容见
-         * {@code MaledictEntityLoot}，这里只保存 ID。SIMPLE 用的就是实体默认路径
+         * <p>每一档都有自己的表，内容见 {@code MaledictEntityLoot}（四张表内容相同），
+         * 这里只保存 ID。SIMPLE 用的就是实体默认路径
          * {@code maledict:entities/first_vicissitude}，所以照着默认 ID 找表的一方看到的
-         * 是最低一档的奖励，而不是一张空表。
+         * 是一份真奖励，而不是一张空表。
          */
         public ResourceLocation lootTable() {
             return lootTable;
+        }
+
+        /**
+         * 该难度的启蒙之年等级，也就是物品 NBT 上的 amplifier：0 即游戏里显示的一级
+         * （见 {@code EnlightenmentLevel}），四档由易到难正好是 I–IV 级。
+         *
+         * <p>这个数字曾经写在掉落物表里；启蒙之年改成玩家击杀才发的专属掉落后，
+         * 它跟着发奖励的 {@code dropCustomDeathLoot} 一起搬到了实体侧，仍然只有这一处权威。
+         */
+        public int enlightenmentLevel() {
+            return enlightenmentLevel;
         }
 
         private boolean confiscatesCurios() {

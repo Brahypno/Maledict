@@ -73,6 +73,11 @@ public final class VicissitudeLightOrbEntity extends FloatingEntity {
             return;
         }
         owner.setHealth(Math.min(owner.getHealth(), 1.0F));
+        // 追踪球飞得慢，常常正好在胸/环的释放帧前落地；这一声回调让 Boss 把释放推开，
+        // 而不是在刚被压到 1 血的玩家头上立刻结算，见 FirstVicissitudeBossEntity#onPressLanded。
+        if (caster() instanceof FirstVicissitudeBossEntity boss) {
+            boss.onPressLanded(owner);
+        }
         playSound((SoundEvent) SoundRegistry.SPIRIT_PICKUP.get(), 0.4F,
                 Mth.nextFloat(random, 0.8F, 1.1F));
     }

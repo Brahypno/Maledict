@@ -1,0 +1,38 @@
+{
+  "registry_name": "maledict:first_vicissitude",
+  "primary_type": "eldritch",
+  "spirits": [
+    {
+      "spirit": "sacred",
+      "count": 6
+    },
+    {
+      "spirit": "wicked",
+      "count": 6
+    },
+    {
+      "spirit": "arcane",
+      "count": 6
+    },
+    {
+      "spirit": "eldritch",
+      "count": 6
+    },
+    {
+      "spirit": "aerial",
+      "count": 6
+    },
+    {
+      "spirit": "aqueous",
+      "count": 6
+    },
+    {
+      "spirit": "earthen",
+      "count": 6
+    },
+    {
+      "spirit": "infernal",
+      "count": 6
+    }
+  ]
+}

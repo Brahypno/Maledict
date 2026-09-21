@@ -18,6 +18,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.curio.EnlightenmentLevel;
+import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
@@ -165,6 +166,23 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
         return CuriosApi.getCuriosInventory(entity)
                 .map(handler -> handler.isEquipped(stack -> stack.getItem() instanceof AgeOfEnlightenmentItem))
                 .orElse(false);
+    }
+
+    /**
+     * 一枚写着指定等级的启蒙之年，等级见 {@link EnlightenmentLevel}。
+     *
+     * <p>唯一的写等级入口：从前这一步由无常常规掉落表的 {@code SetNbtFunction} 完成，
+     * 现在启蒙之年是玩家击杀才发的专属掉落（见
+     * {@code FirstVicissitudeBossEntity#dropCustomDeathLoot}），
+     * 也就是由代码而不是 JSON 发出来，键名与夹取都得有个归口。
+     *
+     * <p>负数按 {@link EnlightenmentLevel#FALLBACK} 处理，与读回来的行为一致。
+     */
+    public static ItemStack create(int level) {
+        ItemStack stack = new ItemStack(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+        stack.getOrCreateTag().putInt(EnlightenmentLevel.TAG,
+                Math.max(EnlightenmentLevel.FALLBACK, level));
+        return stack;
     }
 
     /**

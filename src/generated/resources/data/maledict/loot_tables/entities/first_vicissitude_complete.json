@@ -8,11 +8,12 @@
           "type": "minecraft:item",
           "functions": [
             {
-              "function": "minecraft:set_nbt",
-              "tag": "{\"Maldict:EnlightenmentLevel\":2}"
+              "add": false,
+              "count": 2.0,
+              "function": "minecraft:set_count"
             }
           ],
-          "name": "maledict:age_of_enlightenment"
+          "name": "malum:block_of_cthonic_gold"
         }
       ],
       "rolls": 1.0
@@ -25,11 +26,28 @@
           "functions": [
             {
               "add": false,
-              "count": 2.0,
+              "count": 6.0,
               "function": "minecraft:set_count"
             }
           ],
-          "name": "malum:block_of_cthonic_gold"
+          "name": "malum:null_slate"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": 6.0,
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "malum:void_salts"
         }
       ],
       "rolls": 1.0

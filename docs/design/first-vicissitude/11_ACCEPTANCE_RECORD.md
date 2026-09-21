@@ -478,6 +478,17 @@
 - Blender 网格法线、UV、12/12 胸腔射线及材质检查通过；159,744 次翼网格检查、3,060 次翼姿态及环旋转检查通过。
 - 设计文档已移除具体外部参考名称和来源链接，只保留项目设计原则。资源统一重新导出；未改动 `src/generated`。
 
+## 2026-09-20：掉落、非玩家减伤与一阶段伤害修订（第十五轮）
+
+见 [18 掉落、非玩家减伤与一阶段伤害修订](18_LOOT_AND_PHASE_ONE_DAMAGE.md)。
+
+- 启蒙之年从四张常规掉落表中移除，改为 `dropCustomDeathLoot` 里「仅玩家击杀才发」的专属额外掉落（下界之星写法，含 `setExtendedLifetime`），等级仍按难度 I–IV，归 `BossDifficulty#enlightenmentLevel()`。
+- 常规表改为珍金块 ×2 + 虚无板石 ×6 + 虚空盐 ×6；`runData` 重生成四张表。
+- 新增 `data/maledict/spirit_data/entity/first_vicissitude.json`：Malum 的逐实体精魂表，八种精魂各 6（提尔锋按 `totalSpirits` 算额外伤害，暴露灵魂后击杀按它放精魂）。
+- 非玩家来源的伤害在部位倍率之后固定 ×0.5。
+- 一阶段对玩家恒用 `DamageProbe.lighterDamageMethod`（难度表只管二阶段）；压血弹把玩家压到 1 血后 30 tick 内不释放，已经起手未释放的胸/环作废重起。
+- 命令：`compileJava test --offline`（7 类全绿，新增 `FirstVicissitudeSpiritDataTest` 5 项）、`runData --offline`（四张表重写）。以上均未进游戏验证。
+
 ## 未验证项（明确不声称通过）
 
 1. 客户端与专服双人场景、晚加入不串阶段、走出/走入跟踪范围。

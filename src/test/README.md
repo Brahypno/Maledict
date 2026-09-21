@@ -1,12 +1,16 @@
 # 测试示例
 
-测试代码位于 `src/test/java`，目前有三个类：
+测试代码位于 `src/test/java`，目前有七个类：
 
 | 类 | 覆盖 |
 | --- | --- |
 | `common/entity/VicissitudeVitalityTest` | 无常 Boss 的真生命、击杀计数与世界存档 |
 | `common/curio/HalfHealthTest` | 启蒙之年的半血判定（纯数值） |
 | `common/curio/EnlightenmentLevelTest` | 启蒙之年护符 NBT 上的等级读取（纯数值） |
+| `common/effect/BlessedRegenerationTest` | 生命祝福的额外自然回血量（纯数值） |
+| `common/effect/RipeningBonusTest` | 熟成之赐的经验加成取整（纯数值） |
+| `rig/VicissitudeRigTest` | 无常骨架的释放曲线、姿态拷贝与锚点 |
+| `data/FirstVicissitudeSpiritDataTest` | 无常交给 Malum 的精魂表（手写资源，八种各 6） |
 
 每个 `@Test` 方法对应一个完整场景，使用 JUnit 5 的断言检查结果。
 
@@ -77,6 +81,23 @@ tooltip 的字面规则「攻击半血生物时触发魂息虚空」——与监
 黑暗年代的传染（`AgeOfEnlightenmentEvents#onDarknessBearerHurt`）没有单测：它要真事件、
 真实体和真世界。那一段的规则是「受击者身上有黑暗年代 + 伤害源身上有启蒙之年 →
 黑暗年代跳到受击者附近最近的一名敌人，等级取伤害源的启蒙之年等级」，只能在游戏内验证。
+
+## 无常的精魂表
+
+`FirstVicissitudeSpiritDataTest` 读的是手写资源
+`src/main/resources/data/maledict/spirit_data/entity/first_vicissitude.json`——Malum 的逐实体
+精魂掉落数据，提尔锋按它算额外伤害。它不是 runData 产物，写错键名或数量不会有编译错误，
+只会在游戏里静静地少掉奖励，所以用测试钉住本轮需求的字面值：
+
+| 方法 | 操作及预期 |
+| --- | --- |
+| `theBossIsRegisteredUnderItsOwnRegistryName` | `registry_name` 是 `maledict:first_vicissitude`。 |
+| `thePrimaryTypeIsOneOfTheEight` | `primary_type` 必须是八种之一，不能是 Malum 认不出的拼写。 |
+| `eightSpiritsAtSixEach` | 正好八种精魂，各 6 枚，不重不漏。 |
+| `theTotalSpiritCountIsFortyEight` | 合计 48 点灵魂强度（提尔锋那条公式的输入）。 |
+| `umbralIsNotHandedOut` | 幽影不在表里：本模组的「八种」不含它。 |
+
+资源是否真的被 Malum 加载（`spirit_data` 目录、主键、命名空间）只能进游戏验证。
 
 增加场景时，在 `src/test/java` 中新增测试类，或在已有类中增加 `@Test` 方法；不需要修改 `build.gradle`。
 

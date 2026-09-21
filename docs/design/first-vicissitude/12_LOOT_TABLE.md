@@ -1,5 +1,9 @@
 # 12 — 无常常规掉落物表
 
+> 2026-09-20（第十五轮）起，本文的掉落规格已被 [18](18_LOOT_AND_PHASE_ONE_DAMAGE.md) 覆盖：
+> 启蒙之年不再进表（改为玩家击杀才发的专属额外掉落），表里新增虚无板石 ×6 与虚空盐 ×6。
+> 下面 2026-09-16 的记录保留用于溯源。
+
 2026-09-16 用户需求：无常（`first_vicissitude`）要有掉落物表——四个难度等级各掉一件等级递增的
 启蒙之年饰品，每级再掉两个深岩珍金块。等级档位与「块」的所指由用户当轮确认。
 
@@ -34,6 +38,8 @@
   `VicissitudeDifficulty`（旧档缺失时已退到 SIMPLE），不会出现「表在、东西不掉」。
 - 发放仍由基类的一次性死亡事务负责：`VicissitudeBossEntity#dropAllDeathLoot` 只在真死时调用一次
   原版流程，死亡动画、存档重载与 probe 都不会重复结算。
+- 启蒙之年（第十五轮起）改由 `FirstVicissitudeBossEntity#dropCustomDeathLoot` 发放，
+  等级归 `BossDifficulty#enlightenmentLevel()`，见 [18](18_LOOT_AND_PHASE_ONE_DAMAGE.md)。
 - `data/maledict/loot_tables/entities/*.json` 是 runData 产物，禁止直接编辑 `src/generated`。
 - 调数值只动两处：`MaledictEntityLoot#enlightenmentLevel`（等级阶梯）与 `CTHONIC_GOLD_BLOCKS`
   （珍金块数量），改完重跑 runData。
@@ -44,3 +50,13 @@
   启蒙之年分别带 `{"Maldict:EnlightenmentLevel":0..3}`，珍金块 `count 2.0`，两池 `rolls 1.0`。
 - 游戏内未验证：四档各实际击杀一次，核对掉落数量、启蒙之年 NBT 等级与效果实际等级；
   用 `/loot` 或战利品查看类模组逐张读表。
+
+## 第十五轮之后的实际内容
+
+| 奖励 | 数量 | 条目 |
+| --- | --- | --- |
+| 深岩珍金块 | ×2 | `malum:block_of_cthonic_gold` |
+| 虚无板石 | ×6 | `malum:null_slate` |
+| 虚空盐 | ×6 | `malum:void_salts` |
+
+启蒙之年不在这里：它是玩家击杀才发的专属额外掉落，见 [18](18_LOOT_AND_PHASE_ONE_DAMAGE.md)。
