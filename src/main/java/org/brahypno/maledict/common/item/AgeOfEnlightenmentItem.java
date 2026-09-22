@@ -61,8 +61,10 @@ import java.util.function.Consumer;
  */
 public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoidItem {
 
-    /** Curios 的护符槽标识；本饰品自身就装在 charm 里，额外送的那个也是 charm。 */
-    private static final String CHARM_SLOT = "charm";
+    /**
+     * Curios 的护符槽标识；本饰品自身就装在 curio 里，额外送的那个也是 curio。
+     */
+    private static final String CURIO_SLOT = "curio";
 
     /**
      * 槽位修饰符的 UUID：由物品名算死。
@@ -71,7 +73,7 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
      * 存档之间保持一致，不会每次加载都换一个身份。
      */
     private static final UUID SLOT_MODIFIER_ID =
-            UUID.nameUUIDFromBytes("maledict:age_of_enlightenment/charm_slot".getBytes(StandardCharsets.UTF_8));
+            UUID.nameUUIDFromBytes("maledict:age_of_enlightenment/curio_slot".getBytes(StandardCharsets.UTF_8));
 
     /**
      * 效果行的翻译键前缀。
@@ -87,7 +89,9 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
     private static final String SHIFT_LINE = "tooltip.maledict.age_of_enlightenment.shift";
     private static final String ENLIGHTENED_SHIFT_LINE = "tooltip.maledict.age_of_enlightenment.shift.enlightened";
 
-    /** 模型覆盖用的物品属性：{@code 1.0} 表示佩戴者身上有启蒙之年，切到第二张贴图。 */
+    /**
+     * 模型覆盖用的物品属性：{@code 1.0} 表示佩戴者身上有启蒙之年，切到第二张贴图。
+     */
     public static final ResourceLocation ENLIGHTENED_PROPERTY =
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "enlightened");
 
@@ -105,10 +109,11 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
      * {@code getSlotsTooltip}——重复写会出两行。
      */
     @Override
-    public void addAttributeModifiers(Multimap<Attribute, AttributeModifier> attributeMap,
-                                      SlotContext slotContext, ItemStack stack) {
-        CuriosApi.addSlotModifier(attributeMap, CHARM_SLOT, SLOT_MODIFIER_ID, 1.0D,
-                AttributeModifier.Operation.ADDITION);
+    public void addAttributeModifiers(
+            Multimap<Attribute, AttributeModifier> attributeMap,
+            SlotContext slotContext, ItemStack stack) {
+        CuriosApi.addSlotModifier(attributeMap, CURIO_SLOT, SLOT_MODIFIER_ID, 1.0D,
+                                  AttributeModifier.Operation.ADDITION);
     }
 
     /**
@@ -129,12 +134,12 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
         tooltip.accept(positiveEffect(EFFECT_PREFIX + "spirit_void"));
         tooltip.accept(positiveEffect(EFFECT_PREFIX + "enlightenment"));
 
-        if (!Screen.hasShiftDown()) {
+        if (!Screen.hasShiftDown()){
             tooltip.accept(Component.translatable(HOLD_SHIFT).withStyle(ChatFormatting.DARK_GRAY));
             return;
         }
         tooltip.accept(Component.translatable(hasEnlightenment() ? ENLIGHTENED_SHIFT_LINE : SHIFT_LINE)
-                .withStyle(ChatFormatting.DARK_PURPLE));
+                                .withStyle(ChatFormatting.DARK_PURPLE));
     }
 
     /**
@@ -146,7 +151,7 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
      * <p>客户端之外（专用服务器）永远返回 false，所以 tooltip 逻辑在服务端跑也不会去碰客户端类。
      */
     private static boolean hasEnlightenment() {
-        if (FMLEnvironment.dist != Dist.CLIENT) {
+        if (FMLEnvironment.dist != Dist.CLIENT){
             return false;
         }
         Player player = Minecraft.getInstance().player;
@@ -160,12 +165,12 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
      * 数量修正和「物品被无常临时没收」这类移出，直接问它比我们猜更准。
      */
     public static boolean isEquipped(LivingEntity entity) {
-        if (entity == null) {
+        if (entity == null){
             return false;
         }
         return CuriosApi.getCuriosInventory(entity)
-                .map(handler -> handler.isEquipped(stack -> stack.getItem() instanceof AgeOfEnlightenmentItem))
-                .orElse(false);
+                        .map(handler -> handler.isEquipped(stack -> stack.getItem() instanceof AgeOfEnlightenmentItem))
+                        .orElse(false);
     }
 
     /**
@@ -181,7 +186,7 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
     public static ItemStack create(int level) {
         ItemStack stack = new ItemStack(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
         stack.getOrCreateTag().putInt(EnlightenmentLevel.TAG,
-                Math.max(EnlightenmentLevel.FALLBACK, level));
+                                      Math.max(EnlightenmentLevel.FALLBACK, level));
         return stack;
     }
 
@@ -206,18 +211,18 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
      * 这件饰品 {@code stacksTo(1)}，场上最多一枚。
      */
     private static ItemStack equippedStack(LivingEntity entity) {
-        if (entity == null) {
+        if (entity == null){
             return ItemStack.EMPTY;
         }
         ICuriosItemHandler inventory = CuriosApi.getCuriosInventory(entity).orElse(null);
-        if (inventory == null) {
+        if (inventory == null){
             return ItemStack.EMPTY;
         }
         for (ICurioStacksHandler stacks : inventory.getCurios().values()) {
             IDynamicStackHandler slots = stacks.getStacks();
             for (int slot = 0; slot < slots.getSlots(); slot++) {
                 ItemStack stack = slots.getStackInSlot(slot);
-                if (stack.getItem() instanceof AgeOfEnlightenmentItem) {
+                if (stack.getItem() instanceof AgeOfEnlightenmentItem){
                     return stack;
                 }
             }
