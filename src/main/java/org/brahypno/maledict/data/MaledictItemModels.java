@@ -65,6 +65,14 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", modLoc("item/runes/rune_of_ripening"));
 
+        getBuilder("rune_of_stagnant_evolution")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/runes/rune_of_stagnant_evolution"));
+
+        getBuilder("malignant_pewter_tablet")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/malignant_pewter_tablet"));
+
         getBuilder("mnemonic_obelisk")
                 .parent(new ModelFile.UncheckedModelFile(
                         ResourceLocation.fromNamespaceAndPath("malum", "item/runewood_obelisk")))

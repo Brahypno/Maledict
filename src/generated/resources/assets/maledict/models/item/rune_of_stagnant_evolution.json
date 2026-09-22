@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "maledict:item/runes/rune_of_stagnant_evolution"
+  }
+}

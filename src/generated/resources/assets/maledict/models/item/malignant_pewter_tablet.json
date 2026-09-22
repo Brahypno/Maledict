@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "maledict:item/malignant_pewter_tablet"
+  }
+}

@@ -66,6 +66,12 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.headline." + RUNE_OF_RIPENING_ENTRY, "熟成符文");
             add("malum.gui.book.entry.page.text." + RUNE_OF_RIPENING_ENTRY + ".1",
                 "熟成符文的脉动只做一件事： 把佩戴者学到的经验熬得更浓 。每一份经验都会多出四分之一 ，零头按概率进位，长期下来 分毫不差。");
+            add("malum.gui.book.entry." + VOID_RUNEWORKING_ENTRY, "虚空符文工艺：拾遗");
+            add("malum.gui.book.entry." + VOID_RUNEWORKING_ENTRY + ".description", "拗转白镴");
+            add("malum.gui.book.entry.page.headline." + VOID_RUNEWORKING_ENTRY, "虚空符文工艺：拾遗");
+            add("malum.gui.book.entry.page.text." + VOID_RUNEWORKING_ENTRY + ".1",
+                "作为与这本书原作者不同的魔 法施行者，将恶念白镴这一反 魔法金属拗转到能为魔法所用 是我一直以来的研究。基于虚 "
+                + "空符文的工艺，我引入了一些 变量来突出白镴的一面而拒绝 其另一面。");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "回忆方尖碑");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "灵魂木方尖碑");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "神圣精魂箭");
@@ -77,13 +83,16 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.EARTHEN_SPIRIT_ARROW, "大地精魂箭");
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "狱火精魂箭");
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
+            add("attribute.name.lodestone.magic_resistance", "魔法抗性");
             add("entity.maledict.first_vicissitude", "无常(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "启蒙之年");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "保管凭证");
+            addItem(MaledictItems.MALIGNANT_PEWTER_TABLET, "恶念白镴符板");
             addItem(MaledictItems.RUNE_OF_SATIATION, "饱食符文");
             addItem(MaledictItems.RUNE_OF_DECAY, "衰朽符文");
             addItem(MaledictItems.RUNE_OF_THINNING, "汰余符文");
             addItem(MaledictItems.RUNE_OF_RIPENING, "熟成符文");
+            addItem(MaledictItems.RUNE_OF_STAGNANT_EVOLUTION, "演进凝滞符文");
             add("effect.maledict.age_of_enlightenment", "启蒙之年");
             add("effect.maledict.age_of_darkness", "黑暗时代");
             add("effect.maledict.age_of_enlightenment.description",
@@ -229,6 +238,16 @@ public final class MaledictLanguage extends LanguageProvider {
                 "The pulse cut into this tablet does one thing: it steeps whatever the wearer learns until it "
                 + "is richer. Every share of experience comes with a quarter more; the remainder is settled by "
                 + "chance, and in the long run the books balance exactly.");
+            add("malum.gui.book.entry." + VOID_RUNEWORKING_ENTRY, "Voidish Runecraft: Addenda");
+            add("malum.gui.book.entry." + VOID_RUNEWORKING_ENTRY + ".description",
+                "Pewter bent to purpose");
+            add("malum.gui.book.entry.page.headline." + VOID_RUNEWORKING_ENTRY,
+                "Voidish Runecraft: Addenda");
+            add("malum.gui.book.entry.page.text." + VOID_RUNEWORKING_ENTRY + ".1",
+                "As a practitioner of magic unlike the author of this book, bending Malignant Pewter - a metal "
+                + "that refuses magic - to the service of magic has long been my study. Building upon the craft "
+                + "of Voidish Runecraft, I introduced certain variables, that one face of the pewter might be "
+                + "exalted and the other refused.");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "Mnemonic Obelisk");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "Soulwood Obelisk");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "Sacred Spirit Arrow");
@@ -243,10 +262,12 @@ public final class MaledictLanguage extends LanguageProvider {
             add("entity.maledict.first_vicissitude", "Vicissitude(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "Age of Enlightenment");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "Custody Token");
+            addItem(MaledictItems.MALIGNANT_PEWTER_TABLET, "Malignant Pewter Tablet");
             addItem(MaledictItems.RUNE_OF_SATIATION, "Rune of Satiation");
             addItem(MaledictItems.RUNE_OF_DECAY, "Rune of Decay");
             addItem(MaledictItems.RUNE_OF_THINNING, "Rune of Thinning");
             addItem(MaledictItems.RUNE_OF_RIPENING, "Rune of Ripening");
+            addItem(MaledictItems.RUNE_OF_STAGNANT_EVOLUTION, "Rune of Stagnant Evolution");
             add("effect.maledict.age_of_enlightenment", "Age of Enlightenment");
             add("effect.maledict.age_of_darkness", "Age of Darkness");
             add("effect.maledict.age_of_enlightenment.description",
@@ -364,6 +385,7 @@ public final class MaledictLanguage extends LanguageProvider {
     private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";
     private static final String RUNE_OF_THINNING_ENTRY = "maledict.rune_of_thinning";
     private static final String RUNE_OF_RIPENING_ENTRY = "maledict.rune_of_ripening";
+    private static final String VOID_RUNEWORKING_ENTRY = "void.maledict.runeworking";
     private static final String VICISSITUDE_RITE_ID = "vicissitude_rite";
     private static final String GREATER_RITE_ID = "greater_vicissitude_rite";
     private static final String ELDRITCH_RITE_ID = "eldritch_vicissitude_rite";

@@ -9,8 +9,8 @@ import com.sammy.malum.client.screen.codex.pages.EntrySelectorPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.RuneworkingPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.SpiritInfusionPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.SpiritRiteRecipePage;
-import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextPage;
 import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextItemPage;
+import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextPage;
 import com.sammy.malum.client.screen.codex.pages.text.TextPage;
 import com.sammy.malum.client.screen.codex.screens.ArcanaProgressionScreen;
 import com.sammy.malum.client.screen.codex.screens.VoidProgressionScreen;
@@ -44,12 +44,8 @@ public final class MaledictCodexEntries {
     private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";
     private static final String RUNE_OF_THINNING_ENTRY = "maledict.rune_of_thinning";
     private static final String RUNE_OF_RIPENING_ENTRY = "maledict.rune_of_ripening";
+    private static final String VOID_RUNEWORKING_ENTRY = "void.maledict.runeworking";
 
-    /**
-     * 「图腾符文：续」的落点：与 Malum 的图腾符文条目 (-4, 15) 关于书的中轴对称，
-     * 所以横坐标取 +4、纵坐标不动——两个条目连起来是一条横线，
-     * 与左右边框成 90 度、与上下边框成 0 度。
-     */
     private static final int TOTEMIC_RUNES_CONTINUED_X = 4;
     private static final int TOTEMIC_RUNES_CONTINUED_Y = 15;
 
@@ -59,19 +55,17 @@ public final class MaledictCodexEntries {
      * 于是邪恶线那三枚竖着连在左边，神圣线的熟成符文落在右边的 (-12, 8)，与 Malum 的符文排成一行。
      */
     private static final int RUNE_COLUMN_X = -15;
-
-    /** 「衰朽符文」的落点，左边一列的最上面。 */
     private static final int RUNE_OF_DECAY_Y = 7;
-
-    /** 「饱食符文」的落点，紧挨 rune_of_dexterity 的空格，三枚里居中。 */
     private static final int RUNE_OF_SATIATION_Y = 8;
-
-    /** 「汰余符文」的落点，左边一列的最下面。 */
     private static final int RUNE_OF_THINNING_Y = 9;
-
-    /** 「熟成符文」的落点：右边那片空格的顶部，(x, y)。 */
     private static final int RUNE_OF_RIPENING_X = -12;
     private static final int RUNE_OF_RIPENING_Y = 8;
+
+    /**
+     * 「虚空符文工艺：拾遗」的落点：(6, 10)，神侵恶刃条目 (6, 11) 的正下方。
+     */
+    private static final int VOID_RUNEWORKING_X = 6;
+    private static final int VOID_RUNEWORKING_Y = 10;
 
     @SubscribeEvent
     public static void setupEntries(SetupMalumCodexEntriesEvent event) {
@@ -80,20 +74,44 @@ public final class MaledictCodexEntries {
         addObelisksEntry();
         addIncursusBladeEntry();
         addVicissitudeRiteEntry();
+        addVoidRuneworkingEntry();
 
         PlacedBookEntry satiationRune = addRuneEntry(RUNE_OF_SATIATION_ENTRY, MaledictItems.RUNE_OF_SATIATION,
-                RUNE_COLUMN_X, RUNE_OF_SATIATION_Y, BookWidgetStyle.SOULWOOD);
+                                                     RUNE_COLUMN_X, RUNE_OF_SATIATION_Y, BookWidgetStyle.SOULWOOD);
         PlacedBookEntry decayRune = addRuneEntry(RUNE_OF_DECAY_ENTRY, MaledictItems.RUNE_OF_DECAY,
-                RUNE_COLUMN_X, RUNE_OF_DECAY_Y, BookWidgetStyle.RUNEWOOD);
+                                                 RUNE_COLUMN_X, RUNE_OF_DECAY_Y, BookWidgetStyle.RUNEWOOD);
         PlacedBookEntry thinningRune = addRuneEntry(RUNE_OF_THINNING_ENTRY, MaledictItems.RUNE_OF_THINNING,
-                RUNE_COLUMN_X, RUNE_OF_THINNING_Y, BookWidgetStyle.SOULWOOD);
+                                                    RUNE_COLUMN_X, RUNE_OF_THINNING_Y, BookWidgetStyle.SOULWOOD);
         PlacedBookEntry ripeningRune = addRuneEntry(RUNE_OF_RIPENING_ENTRY, MaledictItems.RUNE_OF_RIPENING,
-                RUNE_OF_RIPENING_X, RUNE_OF_RIPENING_Y, BookWidgetStyle.SOULWOOD);
+                                                    RUNE_OF_RIPENING_X, RUNE_OF_RIPENING_Y, BookWidgetStyle.SOULWOOD);
         addTotemicRunesContinuedEntry(List.of(
                 new EntryReference(MaledictItems.RUNE_OF_SATIATION, satiationRune),
                 new EntryReference(MaledictItems.RUNE_OF_DECAY, decayRune),
                 new EntryReference(MaledictItems.RUNE_OF_THINNING, thinningRune),
                 new EntryReference(MaledictItems.RUNE_OF_RIPENING, ripeningRune)));
+    }
+
+    /**
+     * 虚空线的符文工艺：正文一页，接符板的精魂灌注配方，再接符文的符文工艺配方。
+     */
+    private static void addVoidRuneworkingEntry() {
+        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, VOID_RUNEWORKING_ENTRY)){
+            return;
+        }
+
+        PlacedBookEntryBuilder builder = BookEntry.build(VOID_RUNEWORKING_ENTRY, VOID_RUNEWORKING_X, VOID_RUNEWORKING_Y);
+        builder.configureWidget(widget -> widget
+                .setIcon(MaledictItems.MALIGNANT_PEWTER_TABLET)
+                .setStyle(BookWidgetStyle.DARK_SOULWOOD));
+        builder.addPage(new HeadlineTextItemPage(
+                VOID_RUNEWORKING_ENTRY,
+                VOID_RUNEWORKING_ENTRY + ".1",
+                MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
+        builder.addPage(RuneworkingPage.fromOutput(MaledictItems.RUNE_OF_STAGNANT_EVOLUTION.get()));
+        builder.afterUmbralCrystal();
+
+        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
     }
 
     /**
@@ -107,7 +125,7 @@ public final class MaledictCodexEntries {
         VicissitudeRiteType complete = SummoningRite.rite(BossDifficulty.COMPLETE);
         VicissitudeRiteType extreme = SummoningRite.rite(BossDifficulty.EXTREME);
         if (simple == null || difficult == null || complete == null || extreme == null
-            || containsEntry(VoidProgressionScreen.VOID_ENTRIES, RITE_ENTRY)) {
+            || containsEntry(VoidProgressionScreen.VOID_ENTRIES, RITE_ENTRY)){
             return;
         }
 
@@ -135,10 +153,11 @@ public final class MaledictCodexEntries {
      *
      * <p>框架颜色跟着符板走：符文木的符文用 {@code RUNEWOOD}，灵魂木的用 {@code SOULWOOD}。
      */
-    private static PlacedBookEntry addRuneEntry(String identifier, RegistryObject<Item> rune, int x, int y,
-                                                BookWidgetStyle style) {
+    private static PlacedBookEntry addRuneEntry(
+            String identifier, RegistryObject<Item> rune, int x, int y,
+            BookWidgetStyle style) {
         PlacedBookEntry existing = findEntry(ArcanaProgressionScreen.ENTRIES, identifier);
-        if (existing != null) {
+        if (existing != null){
             return existing;
         }
 
@@ -163,7 +182,7 @@ public final class MaledictCodexEntries {
      * 点哪个进哪个条目看合成——现在摆的是我们刻出来的四枚：饱食、衰朽、汰余、熟成。
      */
     private static void addTotemicRunesContinuedEntry(List<EntryReference> runes) {
-        if (containsEntry(ArcanaProgressionScreen.ENTRIES, TOTEMIC_RUNES_CONTINUED_ENTRY)) {
+        if (containsEntry(ArcanaProgressionScreen.ENTRIES, TOTEMIC_RUNES_CONTINUED_ENTRY)){
             return;
         }
 
@@ -182,7 +201,7 @@ public final class MaledictCodexEntries {
     }
 
     private static void addRemembranceBowEntry() {
-        if (containsEntry(ArcanaProgressionScreen.ENTRIES, REMEMBRANCE_BOW_ENTRY)) {
+        if (containsEntry(ArcanaProgressionScreen.ENTRIES, REMEMBRANCE_BOW_ENTRY)){
             return;
         }
 
@@ -201,7 +220,7 @@ public final class MaledictCodexEntries {
     }
 
     private static void addElegyBowEntry() {
-        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, ELEGY_BOW_ENTRY)) {
+        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, ELEGY_BOW_ENTRY)){
             return;
         }
 
@@ -221,7 +240,7 @@ public final class MaledictCodexEntries {
     }
 
     private static void addObelisksEntry() {
-        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, OBELISKS_ENTRY)) {
+        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, OBELISKS_ENTRY)){
             return;
         }
 
@@ -242,7 +261,7 @@ public final class MaledictCodexEntries {
     }
 
     private static void addIncursusBladeEntry() {
-        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, INCURSUS_BLADE_ENTRY)) {
+        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, INCURSUS_BLADE_ENTRY)){
             return;
         }
 
@@ -278,7 +297,7 @@ public final class MaledictCodexEntries {
      */
     private static <T extends BookEntry> T findEntry(Iterable<T> entries, String identifier) {
         for (T entry : entries) {
-            if (identifier.equals(entry.identifier)) {
+            if (identifier.equals(entry.identifier)){
                 return entry;
             }
         }

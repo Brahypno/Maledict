@@ -30,10 +30,12 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.EARTHEN_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+                               output.accept(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
                                output.accept(MaledictItems.RUNE_OF_SATIATION.get());
                                output.accept(MaledictItems.RUNE_OF_DECAY.get());
                                output.accept(MaledictItems.RUNE_OF_THINNING.get());
                                output.accept(MaledictItems.RUNE_OF_RIPENING.get());
+                               output.accept(MaledictItems.RUNE_OF_STAGNANT_EVOLUTION.get());
                            })
                            .build());
 

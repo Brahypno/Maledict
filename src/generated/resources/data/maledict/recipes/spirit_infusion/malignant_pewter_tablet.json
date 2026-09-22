@@ -1,0 +1,39 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 4,
+      "item": "malum:mnemonic_fragment"
+    }
+  ],
+  "input": {
+    "count": 4,
+    "item": "malum:malignant_pewter_plating"
+  },
+  "output": {
+    "count": 2,
+    "item": "maledict:malignant_pewter_tablet"
+  },
+  "spirits": [
+    {
+      "type": "aqueous",
+      "count": 8
+    },
+    {
+      "type": "earthen",
+      "count": 8
+    },
+    {
+      "type": "wicked",
+      "count": 8
+    },
+    {
+      "type": "sacred",
+      "count": 8
+    },
+    {
+      "type": "arcane",
+      "count": 8
+    }
+  ]
+}

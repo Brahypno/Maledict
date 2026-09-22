@@ -61,13 +61,15 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(ItemTagRegistry.MAGIC_CAPABLE_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.INCURSUS_BLADE.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.ELEGY_BOW.get());
+        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
         tag(GOETY_GRAVE_GLOVE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(L2_NO_SEAL).add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
         tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
         tag(CURIOS_RUNE).add(MaledictItems.RUNE_OF_SATIATION.get(),
-                MaledictItems.RUNE_OF_DECAY.get(),
-                MaledictItems.RUNE_OF_THINNING.get(),
-                MaledictItems.RUNE_OF_RIPENING.get());
+                             MaledictItems.RUNE_OF_DECAY.get(),
+                             MaledictItems.RUNE_OF_THINNING.get(),
+                             MaledictItems.RUNE_OF_RIPENING.get(),
+                             MaledictItems.RUNE_OF_STAGNANT_EVOLUTION.get());
         // Generated empty on purpose: modpacks extend it through a data pack.
         tag(MaledictTags.VICISSITUDE_CONFISCATION_IMMUNE)
                 .addOptional(ResourceLocation.fromNamespaceAndPath("sophisticatedbackpacks", "backpack"));

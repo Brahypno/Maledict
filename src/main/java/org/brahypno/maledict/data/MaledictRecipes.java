@@ -128,6 +128,23 @@ public final class MaledictRecipes extends RecipeProvider {
                 .setSecondaryInput(SpiritTypeRegistry.SACRED_SPIRIT.spiritShard.get(), 32)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "runeworking/rune_of_ripening"));
 
+        new SpiritInfusionRecipeBuilder(
+                ItemRegistry.MALIGNANT_PEWTER_PLATING.get(), 4, MaledictItems.MALIGNANT_PEWTER_TABLET.get(), 2)
+                .addExtraItem(ItemRegistry.MNEMONIC_FRAGMENT.get(), 4)
+                .addSpirit(SpiritTypeRegistry.AQUEOUS_SPIRIT, 8)
+                .addSpirit(SpiritTypeRegistry.EARTHEN_SPIRIT, 8)
+                .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 8)
+                .addSpirit(SpiritTypeRegistry.SACRED_SPIRIT, 8)
+                .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 8)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "spirit_infusion/malignant_pewter_tablet"));
+
+        new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_STAGNANT_EVOLUTION.get(), 1)
+                .setPrimaryInput(MaledictItems.MALIGNANT_PEWTER_TABLET.get(), 1)
+                .setSecondaryInput(ItemRegistry.FUSED_CONSCIOUSNESS.get(), 2)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "runeworking/rune_of_stagnant_evolution"));
+
         new SpiritRepairRecipeBuilder(1.0f, Ingredient.of(ItemRegistry.NULL_SLATE.get()), 1)
                 .addItem(MaledictItems.ELEGY_BOW.get())
                 .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 11)
