@@ -7,6 +7,7 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec CLIENT_SPEC;
     public static final ForgeConfigSpec.DoubleValue SCREENSHAKE_INTENSITY;
     public static final ForgeConfigSpec.DoubleValue VICISSITUDE_ENGAGEMENT_RANGE;
+    public static final ForgeConfigSpec.IntValue VICISSITUDE_ADAPTATION_LEVEL;
     public static final ForgeConfigSpec.BooleanValue SUMMONING_RITE;
     public static final ForgeConfigSpec.ConfigValue<String> SUMMONING_RITE_ENTITY;
     public static final ForgeConfigSpec.BooleanValue AERIAL_POTION_EFFECTS_ONLY;
@@ -56,6 +57,18 @@ public final class MaledictConfig {
                         "before the approach-without-firing behaviour it is built around can happen.",
                         "Lower it to make the boss less willing to cross the arena towards you.")
                 .defineInRange("engagementRange", 96.0D, 4.0D, 256.0D);
+        VICISSITUDE_ADAPTATION_LEVEL = builder
+                .comment("Which adaptation this boss is - the number of damage messages it can",
+                        "record at once. 2 is the authored 'adaptation two'. The boss records the",
+                        "damage message (the id behind the death message, such as 'player',",
+                        "'arrow' or 'scythe_sweep') of every hit it takes, and a message it has",
+                        "already recorded deals exponentially less damage - the second hit is",
+                        "e^-1, the third e^-2 and so on. The record has no timer: it is per",
+                        "encounter and only wiped when the boss goes back to being dormant. Once",
+                        "every slot is full, a new message replaces the oldest record, so rotating",
+                        "through three or more damage types stays at full damage. 0 turns the whole",
+                        "adaptation off.")
+                .defineInRange("adaptationLevel", 2, 0, 16);
         SUMMONING_RITE = builder
                 .comment("When true, the Vicissitude Rites - spirit recipes no other totemic rite",
                         "uses - do what their page promises and create something above the totem.",

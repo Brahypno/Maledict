@@ -1,16 +1,18 @@
 # 测试示例
 
-测试代码位于 `src/test/java`，目前有七个类：
+测试代码位于 `src/test/java`，目前有九个类：
 
 | 类 | 覆盖 |
 | --- | --- |
 | `common/entity/VicissitudeVitalityTest` | 无常 Boss 的真生命、击杀计数与世界存档 |
+| `common/entity/DamageAdaptationTest` | 无常的适应效果：按伤害消息记账与自然指数递减（纯数值） |
 | `common/curio/HalfHealthTest` | 启蒙之年的半血判定（纯数值） |
 | `common/curio/EnlightenmentLevelTest` | 启蒙之年护符 NBT 上的等级读取（纯数值） |
 | `common/effect/BlessedRegenerationTest` | 生命祝福的额外自然回血量（纯数值） |
 | `common/effect/RipeningBonusTest` | 熟成之赐的经验加成取整（纯数值） |
 | `rig/VicissitudeRigTest` | 无常骨架的释放曲线、姿态拷贝与锚点 |
-| `data/FirstVicissitudeSpiritDataTest` | 无常交给 Malum 的精魂表（手写资源，八种各 6） |
+| `rig/VicissitudeFeatherShedTest` | 转场落羽的错时曲线与二阶段碰撞组 |
+| `data/FirstVicissitudeSpiritDataTest` | 无常交给 Malum 的精魂表（手写资源，八种各 6 + 幽影 1） |
 
 每个 `@Test` 方法对应一个完整场景，使用 JUnit 5 的断言检查结果。
 
@@ -92,12 +94,34 @@ tooltip 的字面规则「攻击半血生物时触发魂息虚空」——与监
 | 方法 | 操作及预期 |
 | --- | --- |
 | `theBossIsRegisteredUnderItsOwnRegistryName` | `registry_name` 是 `maledict:first_vicissitude`。 |
-| `thePrimaryTypeIsOneOfTheEight` | `primary_type` 必须是八种之一，不能是 Malum 认不出的拼写。 |
-| `eightSpiritsAtSixEach` | 正好八种精魂，各 6 枚，不重不漏。 |
-| `theTotalSpiritCountIsFortyEight` | 合计 48 点灵魂强度（提尔锋那条公式的输入）。 |
-| `umbralIsNotHandedOut` | 幽影不在表里：本模组的「八种」不含它。 |
+| `thePrimaryTypeIsARealSpirit` | `primary_type` 必须是九种真精魂之一，不能是 Malum 认不出的拼写。 |
+| `eightSpiritsAtSixEachPlusOneUmbral` | 八种精魂各 6 枚，外加幽影 1 枚，不重不漏。 |
+| `theTotalSpiritCountIsFortyNine` | 合计 49 点灵魂强度（提尔锋那条公式的输入，即 98 点额外伤害）。 |
+| `umbralIsHandedOutExactlyOnce` | 幽影只有一枚：它是第十六轮追加的第九种，不跟着八种凑 6。 |
 
 资源是否真的被 Malum 加载（`spirit_data` 目录、主键、命名空间）只能进游戏验证。
+
+## 无常的适应效果
+
+`DamageAdaptationTest` 只测 `DamageAdaptation` 这个纯记账类，不启动 Minecraft。
+需求是「记录 damage message，已记录的 message 再次命中时伤害指数递减；默认适应二、
+可配置」，测试钉住的是换算与淘汰规则（适应只按次数，不带时限）：
+
+| 方法 | 操作及预期 |
+| --- | --- |
+| `theFirstHitOfAMessageIsFullDamage` | 没见过的消息第一下全额，并就此记上一笔。 |
+| `aRecordedMessageDecaysOnTheNaturalExponential` | 同一消息第 2/3/4 下依次是 e⁻¹、e⁻²、e⁻³。 |
+| `eachMessageKeepsItsOwnCount` | 适应二是两格各自记账：另一种消息第一次来仍是全额。 |
+| `aThirdMessageReplacesTheOldestRecord` | 两格满了，第三条消息顶掉最早记下的那条；三条轮换一直全额。 |
+| `zeroAdaptationDisablesTheEffect` | 适应几为 0 或负数等于关掉：永远全额，也什么都不记。 |
+| `aMissingMessageIsNeverAdapted` | null / 空串不减伤也不记账。 |
+| `clearingForgetsEveryRecord` | 清账之后同一消息重新从全额开始（回到未参战时用）。 |
+| `snapshotAndRestoreKeepTheRecords` | 存档往返后次数与先后顺序都还在。 |
+| `theSnapshotIsAReadOnlyCopy` | 快照不可写，改它不影响内部账目。 |
+| `restoringDropsUnusableEntries` | 次数非正、消息为空的行一律丢掉，不把记过的消息洗成全额。 |
+
+「配置读多少、什么时候清账、减伤落在哪一档」在实体那一层（`modifyIncomingDamage`、
+`tickEmptyEncounter`、NBT `DamageAdaptation`），只能进游戏验证。
 
 增加场景时，在 `src/test/java` 中新增测试类，或在已有类中增加 `@Test` 方法；不需要修改 `build.gradle`。
 

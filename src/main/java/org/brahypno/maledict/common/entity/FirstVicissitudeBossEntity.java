@@ -108,13 +108,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public static final int THROW_COOLDOWN = 120;
     public static final int RANGED_FALLBACK_COOLDOWN = 60;
     /**
-     * 一阶段的压血弹把玩家按到 1 血之后，下一次释放至少推迟这么久（一个基础攻击槽）。
-     *
-     * <p>追踪球最多能飞 200 tick，常常正好在胸/环的伤害释放前一刻落地；这段时间是给玩家
-     * 从 1 血里喘口气的，不是给 Boss 的额外冷却。
-     */
-    public static final int PRESS_RECOVERY_TICKS = 30;
-    /**
      * 一阶段名单空着多久就回到「未参战」。
      *
      * <p>没有对手的一阶段不该继续空转阶段计时、更不该自己走进二阶段：那只会留下一只
@@ -260,8 +253,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private int dashCooldown;
     private int throwCooldown;
     private int rangedCooldown;
-    /** 压血弹刚命中玩家后的喘息窗口，见 {@link #PRESS_RECOVERY_TICKS}。 */
-    private int pressRecoveryTicks;
+    /** 适应效果：记过的伤害消息吃自然指数递减，见 {@link DamageAdaptation}。 */
+    private final DamageAdaptation damageAdaptation = new DamageAdaptation();
     /** 一阶段名单已经空了多久，见 {@link #EMPTY_ENCOUNTER_RESET_TICKS}。 */
     private int emptyEncounterTicks;
     private int meleeAlternator;
@@ -891,7 +884,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         throwCooldown = Math.max(0, throwCooldown - 1);
         rangedCooldown = Math.max(0, rangedCooldown - 1);
         unstickCooldown = Math.max(0, unstickCooldown - 1);
-        pressRecoveryTicks = Math.max(0, pressRecoveryTicks - 1);
     }
 
     private void tickStage() {
@@ -957,6 +949,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         targetPlayerDeaths.clear();
         phaseTwoParticipants.clear();
         phaseTwoPlayerDeaths.clear();
+        // 适应是「这一场」的账：回到未参战就连它一起清，下一场重新记。
+        damageAdaptation.clear();
         setTarget(null);
         clearGroundMarker();
         return true;
@@ -1112,10 +1106,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private void tickPhaseOneCombat() {
         if (action != VicissitudeRig.Action.NONE) {
-            return;
-        }
-        if (pressRecoveryTicks > 0) {
-            // 压血刚落地：这一槽不开始新动作，下一次释放自然被推后。
             return;
         }
         if (phaseOneTicks < PHASE_ONE_WARMUP_TICKS) {
@@ -1506,33 +1496,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         spawnSlashEffect(true);
     }
 
-    /**
-     * 一阶段的压血弹（扇射球与追踪球）把玩家压到 1 血时，由弹体回调这里。
-     *
-     * <p>压血本身不掉血，真正会杀人的只有胸/环那两次普通伤害；而追踪球可以飞 200 tick，
-     * 往往正好在释放帧前几 tick 才落地，于是「压到 1 血」和「释放」看起来是同一瞬间发生的。
-     * 处理办法是把这次喘息记下来：{@link #PRESS_RECOVERY_TICKS} 之内不再开始新动作，
-     * 并且把已经起手、还没释放的胸部/环技能直接作废（连预兆一起撤掉），下一轮重新起手。
-     * 压血球与羽片齐射本身不造成伤害，不在这里打断。
-     *
-     * <p>只对玩家生效：宠物与召唤物被压血不需要这个窗口。
-     */
-    public void onPressLanded(LivingEntity victim) {
-        if (!isPhaseOne() || !(victim instanceof Player)) {
-            return;
-        }
-        pressRecoveryTicks = Math.max(pressRecoveryTicks, PRESS_RECOVERY_TICKS);
-        if (action != VicissitudeRig.Action.NONE && !actionReleased && dealsPlayerDamage(action)) {
-            endAction();
-        }
-    }
-
-    /** 一阶段里唯一会对玩家造成伤害的两个技能，见 {@link #onPressLanded}。 */
-    private static boolean dealsPlayerDamage(VicissitudeRig.Action action) {
-        return action == VicissitudeRig.Action.CAST_FROM_CHEST
-               || action == VicissitudeRig.Action.CAST_FROM_HALO;
-    }
-
     private boolean hurtBySkill(LivingEntity victim, float damage, boolean area) {
         UUID identity = victim.getUUID();
         if (!roundDamagedTargets.add(identity)) {
@@ -1548,10 +1511,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      *
      * <p>Players are hit through the ChangeLib probe ladder. Phase one always uses the light
      * ladder: its damage lands after the press projectiles have already driven the player down to
-     * a single hit point, so armour, enchantments and caps keep deciding how much of it lands
-     * (see {@link #onPressLanded}). Phase two keeps the per difficulty table of {@code 07}:
-     * SIMPLE and DIFFICULT use the light ladder, COMPLETE and EXTREME the medium one. Everything
-     * that is not a player is hit normally.
+     * a single hit point, so armour, enchantments and caps keep deciding how much of it lands.
+     * The press no longer buys a pause afterwards (see {@code 21}), which is exactly why this
+     * ladder matters. Phase two keeps the per difficulty table of {@code 07}: SIMPLE and
+     * DIFFICULT use the light ladder, COMPLETE and EXTREME the medium one. Everything that is not
+     * a player is hit normally.
      */
     public boolean hurtParticipant(LivingEntity victim, DamageSource source, float damage) {
         if (damage <= 0.0F || victim.level().isClientSide) {
@@ -1850,6 +1814,22 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     private static final float NON_PLAYER_DAMAGE_MULTIPLIER = 0.5F;
 
+    /**
+     * 适应效果：这里的返回值再乘一档「伤害消息」的适应倍率。
+     *
+     * <p>记账写在 {@link DamageAdaptation} 里：挨过的消息第 n 次命中吃 e⁻⁽ⁿ⁻¹⁾，没挨过的全额
+     * 并占一格；能记几种由 {@code firstVicissitude.adaptationLevel}（「适应几」）决定，默认 2。
+     * 放在最后一档乘，是因为它压的是「这一击最后落到真生命上的量」——部位倍率、
+     * 非玩家减半与适应都是各自独立的缩减，谁先谁后不影响乘积。
+     *
+     * <p>适应<b>没有时限</b>：账目按次数累计，整场遭遇战里一直有效，只有回到未参战才清。
+     * 它与本实体自己的无敌帧也无关——{@code VicissitudeVitality} 的 {@code nextHit} 那套
+     * 线性缩放是每次有效命中重算 20 tick 的独立一层，适应既不读它也不改它。
+     *
+     * <p>只认伤害消息、不认实体：同一种消息（玩家近战都是 {@code player}）无论谁来打都吃
+     * 同一份递减。一阶段、转场与无来源的环境伤害都在 {@code hurt} 里被 {@link #isDamageImmune}
+     * 挡掉，走不到这里——所以真正记账的只有二阶段那些会扣血的打击。
+     */
     @Override
     protected float modifyIncomingDamage(DamageSource source, float amount) {
         List<VicissitudeRig.SegmentVolume> volumes = segmentVolumes();
@@ -1865,7 +1845,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                               attacker.getEyeY(), attacker.getZ());
         }
         float scaled = amount * segment.multiplier();
-        return isPlayerDamage(source) ? scaled : scaled * NON_PLAYER_DAMAGE_MULTIPLIER;
+        if (!isPlayerDamage(source)) {
+            scaled *= NON_PLAYER_DAMAGE_MULTIPLIER;
+        }
+        return scaled * damageAdaptation.adapt(source.getMsgId(), adaptationLevel());
+    }
+
+    /** 这个 Boss 是「适应几」：{@code firstVicissitude.adaptationLevel}，默认 2（适应二）。 */
+    private static int adaptationLevel() {
+        return Math.max(0, MaledictConfig.VICISSITUDE_ADAPTATION_LEVEL.get());
     }
 
     /**
@@ -2856,6 +2844,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         tag.put("PhaseOneAnnouncements", savePlayerDeathMap(announcedPlayerDeaths));
         tag.put("PhaseTwoPlayerDeaths", savePlayerDeathMap(phaseTwoPlayerDeaths));
         tag.put("ConfiscatedCurios", saveConfiscatedCurios());
+        tag.put("DamageAdaptation", saveAdaptation());
     }
 
     @Override
@@ -2910,6 +2899,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         loadPlayerDeathMap(tag.getList("PhaseOneAnnouncements", Tag.TAG_COMPOUND), announcedPlayerDeaths);
         loadPlayerDeathMap(tag.getList("PhaseTwoPlayerDeaths", Tag.TAG_COMPOUND), phaseTwoPlayerDeaths);
         loadConfiscatedCurios(tag.getList("ConfiscatedCurios", Tag.TAG_COMPOUND));
+        loadAdaptation(tag.getList("DamageAdaptation", Tag.TAG_COMPOUND));
         entityData.set(DATA_STAGE, (byte) stage.ordinal());
         entityData.set(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
         action = VicissitudeRig.Action.NONE;
@@ -2952,6 +2942,34 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 values.put(value.getUUID("Player"), value.getInt("Deaths"));
             }
         }
+    }
+
+    /**
+     * 适应账目：一条记录一个伤害消息与已经挨过的次数，列表顺序就是记下的先后。
+     *
+     * <p>跟着实体一起存档，是因为这份账属于「这一场遭遇战」：区块卸载再回来、或者存档重载，
+     * 适应过的消息不该被洗白。真正清账只有一条路——回到未参战（见 {@link #tickEmptyEncounter}）。
+     */
+    private ListTag saveAdaptation() {
+        ListTag entries = new ListTag();
+        for (Map.Entry<String, Integer> entry : damageAdaptation.snapshot().entrySet()) {
+            CompoundTag value = new CompoundTag();
+            value.putString("Message", entry.getKey());
+            value.putInt("Hits", entry.getValue());
+            entries.add(value);
+        }
+        return entries;
+    }
+
+    /** 读回适应账目；坏行（缺消息、次数非正）由 {@link DamageAdaptation#restore} 丢掉。 */
+    private void loadAdaptation(ListTag entries) {
+        Map<String, Integer> saved = new LinkedHashMap<>();
+        for (Tag entry : entries) {
+            if (entry instanceof CompoundTag value) {
+                saved.put(value.getString("Message"), value.getInt("Hits"));
+            }
+        }
+        damageAdaptation.restore(saved);
     }
 
     private ListTag saveConfiscatedCurios() {

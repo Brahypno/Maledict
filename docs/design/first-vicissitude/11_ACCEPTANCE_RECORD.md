@@ -517,6 +517,17 @@
 - `compileJava test --offline` 通过；落羽时序和骨翼碰撞切换有单元测试。实际翼网格检查 140,544 次、胸环检查 23,736 次、翼姿态检查 3,060 次通过；胸洞与洞缘射线全部通过。
 - 离线两阶段、三视图、灰模和细节图已更新。连续落羽的游戏内节奏、晚加入及重载目视验收仍未完成。规格见 [20](20_PAINTED_MASS_AND_FEATHER_SHEDDING.md)。
 
+## 2026-09-21：适应效果、幽影精魂与压血节奏（第十六轮）
+
+见 [21 适应效果、幽影精魂与压血节奏](21_ADAPTATION_UMBRAL_AND_PRESS_PRESSURE.md)。
+
+- 精魂表追加幽影精魂 ×1（用户答复「字面再加一个」，八种仍各 6）：总数 48 → 49 点灵魂强度，提尔锋额外伤害 96 → 98；`FirstVicissitudeSpiritDataTest` 由「八种各 6、不许有幽影」改为「九种、合计 49」。
+- 新增适应效果：以 `DamageSource#getMsgId()`（damage message）记账，已记录的消息第 n 次命中吃 e⁻⁽ⁿ⁻¹⁾（用户答复「自然对数最简单、这个不用 config」，因此不设倍率配置），只按次数、**不设时限**（用户明确「适应与时间无关」），这个 Boss 是「适应几」由 `firstVicissitude.adaptationLevel`（默认 2，0–16，0 关闭）决定，记满顶掉最早一条；挂在 `modifyIncomingDamage` 最后一档，NBT `DamageAdaptation` 持久化，回到未参战时清账。无常自身那层「无敌帧」（每次有效命中重算 20 tick 的线性缩放）是独立的一层，未改动。
+- 新增纯逻辑类 `common/entity/DamageAdaptation` 与 `DamageAdaptationTest`（10 项：首击全额、e⁻¹/e⁻²/e⁻³、分消息各记、FIFO 顶替、适应几为 0 时关闭、空消息不减伤、清账、快照只读与往返、坏行丢弃）。
+- 取消压血喘息：删除 `PRESS_RECOVERY_TICKS`、`pressRecoveryTicks`、`onPressLanded`、`dealsPlayerDamage` 与 `VicissitudeSpiritBoltEntity`/`VicissitudeLightOrbEntity` 两处回调；压血行为与一阶段 light 档不变。
+- 「一阶段弹攻击伤害改成 0.5」经追问后确认不改：一阶段所有弹都只压血、伤害为 0（同款扇射/齐射弹到二阶段才是 `attackDamage × 0.75`），用户答复「如果你确定一阶段只压血无伤害，那就这样」；弹体类型与伤害类型均未动。
+- 命令：`compileJava test --offline` 全绿（54 项，含新增 10 项）。本轮不动战利品表，无需 `runData`。未进游戏验证。
+
 ## 未验证项（明确不声称通过）
 
 1. 客户端与专服双人场景、晚加入不串阶段、走出/走入跟踪范围。

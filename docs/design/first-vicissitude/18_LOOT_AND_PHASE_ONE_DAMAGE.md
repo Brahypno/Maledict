@@ -63,8 +63,10 @@
 | `spirits` | sacred / wicked / arcane / eldritch / aerial / aqueous / earthen / infernal，各 6 |
 
 - 八种就是本模组「八种精魂」那一套（与神侵恶刃灌注配方同一组），幽影（umbral）不在其中。
+  **第十六轮修订**：用户要求「再加一个幽影精魂」，表里因此在八种之后追加 umbral ×1，
+  总数 48 → 49 点灵魂强度（提尔锋额外伤害 96 → 98），见 [21](21_ADAPTATION_UMBRAL_AND_PRESS_PRESSURE.md)。
 - 总数 48 点灵魂强度：提尔锋在能触发魔法的伤害类型上每一下额外 96 点魔法伤害
-  （`totalSpirits × 2`），这是这张表的直接后果。
+  （`totalSpirits × 2`），这是这张表的直接后果（第十六轮追加幽影之后是 49 点 / 98 点）。
 - 精魂只在 Malum 认定的「灵魂暴露」状态下击杀才爆出（需要用带 `malum:soul_hunter_weapon`
   标签的武器，例如各类镰刀、法杖、提尔锋、灵魂染钢系列）。本模组的神侵恶刃目前不在那个
   标签里，所以拿它砍死无常不会触发精魂爆发——这张表只负责「掉多少、掉哪几种」。
@@ -108,6 +110,11 @@
 这条按「压血落地之后不许紧接着释放」实现；若用户的本意是「压血弹射出之后不许紧接着
 追击」，只需把回调点从落地改到出手，其余逻辑不变。
 
+> **第十六轮已整条取消**（[21](21_ADAPTATION_UMBRAL_AND_PRESS_PRESSURE.md)）：
+> 用户要求去掉「释放改血弹后一段时间不攻击」。`onPressLanded`、`PRESS_RECOVERY_TICKS`
+> 与两处弹体回调全部删除，压血弹落地后只按原本的攻击槽与前摇走；压血行为本身、
+> 「一阶段弹伤害为 0」与一阶段恒用 light 档都不变。上面这段作为历史记录保留。
+
 ## 六、实现位置
 
 - `common/entity/FirstVicissitudeBossEntity`：`dropCustomDeathLoot`、`BossDifficulty`
@@ -121,6 +128,9 @@
 - 顺手修回工作区里 `IncursusBladeItem#applyTieredDamage` 被改坏的一行
   （`DamageProbe(target, source, damage)`，不是合法 Java），恢复为 HEAD 的
   `DamageProbe.lighterDamageMethod(target, source, damage)`；该文件本轮无其它改动。
+
+> 第十六轮：上表里的 `onPressLanded`、`pressRecoveryTicks`、`PRESS_RECOVERY_TICKS` 与两处
+> 弹体压血回调均已删除（见 [21](21_ADAPTATION_UMBRAL_AND_PRESS_PRESSURE.md)），其余条目仍然有效。
 
 ## 七、验证
 

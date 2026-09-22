@@ -10,7 +10,9 @@
 
 第十轮补充：**对玩家的伤害档由难度决定**（03 表）。SIMPLE/DIFFICULT 用 ChangeLib 的 `lighterDamageMethod`，首次生效即停止补偿，护甲、附魔与伤害上限照常起作用；COMPLETE/EXTREME 用 `mediumDamageMethod`，会持续尝试直到指定数值真正扣掉，因此高难度下护甲不再能"吃掉"Boss 的伤害。非玩家目标（宠物、召唤物）始终走普通 `hurt`，不使用探针。
 
-第十五轮修订（[18](18_LOOT_AND_PHASE_ONE_DAMAGE.md)）：难度表只管**二阶段**。一阶段对玩家的伤害恒用 `lighterDamageMethod`（一阶段的伤害都发生在压血之后，medium/final 会让护甲形同虚设），并且压血弹把玩家按到 1 血后 30 tick 内不再释放，已经起手未释放的胸/环技能作废重起。一阶段的两处玩家伤害仍只有胸与环。
+第十五轮修订（[18](18_LOOT_AND_PHASE_ONE_DAMAGE.md)）：难度表只管**二阶段**。一阶段对玩家的伤害恒用 `lighterDamageMethod`（一阶段的伤害都发生在压血之后，medium/final 会让护甲形同虚设）。一阶段的两处玩家伤害仍只有胸与环。该轮曾同时规定「压血弹把玩家按到 1 血后 30 tick 内不再释放、已经起手未释放的胸/环技能作废重起」，**这一条已在第十六轮取消**（[21](21_ADAPTATION_UMBRAL_AND_PRESS_PRESSURE.md)）：压血之后只按原本的攻击槽与前摇走，压血行为与「一阶段弹伤害为 0」都不变。
+
+第十六轮补充（[21](21_ADAPTATION_UMBRAL_AND_PRESS_PRESSURE.md)）：无常新增**适应**效果——按 `DamageSource#getMsgId()`（damage message）记账，已记录的消息第 n 次命中吃 e⁻⁽ⁿ⁻¹⁾，只按次数、不设时限；这个 Boss 是「适应几」由它自己的配置项 `firstVicissitude.adaptationLevel` 决定（默认 2，0 关闭，记满顶掉最早一条）；挂在 `modifyIncomingDamage` 的最后一档（部位倍率 → 非玩家 ×0.5 → 适应），一阶段免疫的伤害不记账。无常自身那层 20 tick 线性缩放的「无敌帧」是独立的一层，两者互不影响。精魂表追加幽影 ×1。
 
 第十五轮补充（[19](19_ENGAGEMENT_AND_RETALIATION.md)）：仇恨按**原版 `HurtByTargetGoal`** 那一套来——谁打它谁进名单（**不检查视线，隔着墙打也会还手**），宠物与召唤物把主人一起算，创造/旁观玩家不结仇也不挨揍；二阶段同样接受非玩家参战者，选目标玩家优先。一阶段连续 100 tick 没有活着的对手就回到未参战，并把名单与死亡记录清空（UUID 清理表见 19）。
 

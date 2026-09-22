@@ -110,11 +110,6 @@ public final class VicissitudeSpiritBoltEntity extends Projectile {
             && entityHit.getEntity() instanceof LivingEntity living) {
             if (shouldPressHealth()) {
                 living.setHealth(Math.min(living.getHealth(), 1.0F));
-                // 压血落地要告诉 Boss：下一次释放不能紧跟着压血，
-                // 见 FirstVicissitudeBossEntity#onPressLanded。
-                if (getOwner() instanceof FirstVicissitudeBossEntity boss) {
-                    boss.onPressLanded(living);
-                }
             } else {
                 Entity owner = getOwner();
                 // Phase two bolts belong to the encounter: they go through the same difficulty
