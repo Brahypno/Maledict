@@ -28,7 +28,7 @@ for part in data['parts']:
         for v in tri['v']:
             assert 0<=v[3]<=1 and 0<=v[4]<=1
             if part['joint'].startswith('wing_'):
-                wing_samples.add(part['joint'].upper()+','+','.join(str(c) for c in v[:3]))
+                wing_samples.add(part['joint'].upper()+','+','.join(str(c) for c in v[:3])+(','+'1' if 'shed_delay' in part else ',0'))
         count+=1
 (ROOT/'build/rig-tool').mkdir(parents=True,exist_ok=True)
 (ROOT/'build/rig-tool/wing-vertices.csv').write_text('\n'.join(sorted(wing_samples)))
@@ -40,9 +40,28 @@ for x in (-.6,0,.6):
         hit,*_ = scene.ray_cast(depsgraph,Vector((x,-100,z)),Vector((0,1,0)))
         aperture.append(not hit)
 assert all(aperture), 'Geometry obstructs the central chest aperture'
-for x,z in [(0,17),(5,10),(-5,10),(0,3)]:
+for x,z in [(0,17),(8,10),(-8,10),(0,0)]:
     hit,*_=scene.ray_cast(depsgraph,Vector((x,-100,z)),Vector((0,1,0)))
     assert hit, 'Pectoral/flank/abdominal body mass is missing around the aperture'
+hub=json.loads(scene['runtime_rig'])['chest_hub']
+for i in range(32):
+    a=math.tau*i/32
+    hit,*_=scene.ray_cast(depsgraph,Vector((hub[0]+3.9*math.cos(a),-100,-hub[1]+3.9*math.sin(a))),Vector((0,1,0)))
+    assert not hit, 'Circular chest opening is obstructed away from its centerline'
+# Check exported ring geometry against its actual runtime rotation hub, not just its pivots.
+rig=json.loads(scene['runtime_rig'])
+pivots={j['name']:j['pivot'] for j in rig['joints']}
+ring_radii=[]
+ring_samples=set()
+for part in data['parts']:
+    if part['name'].startswith('Fate ring stock'):
+        pivot=pivots[part['joint']]
+        ring_radii += [math.hypot(v[0]+pivot[0]-hub[0],v[1]+pivot[1]-hub[1])
+                       for tri in part['triangles'] for v in tri['v']]
+        ring_samples.update(part['joint'].upper()+','+','.join(str(c) for c in v[:3])
+                            for tri in part['triangles'] for v in tri['v'])
+assert ring_radii and min(ring_radii)>4.4 and max(ring_radii)<5.6, 'Ring stock is eccentric to the runtime hub'
+(ROOT/'build/rig-tool/chest-ring-vertices.csv').write_text('\n'.join(sorted(ring_samples)))
 atlas=bpy.data.images.load(str(ROOT/'src/main/resources/assets/maledict/textures/entity/first_vicissitude.png'),check_existing=False)
 pixels=atlas.pixels[:]
 bone=pixels[(32*256+160)*4:(32*256+160)*4+3]
@@ -78,7 +97,8 @@ report={'mesh_parts':len(meshes),'triangles':count,'finite_vertices_and_unit_nor
         'uvs_in_atlas':True,'chest_clear_rays':sum(aperture),'chest_sample_rays':len(aperture),
         'front_core_visible_fraction':visible/max(total,1),
         'surrounding_body_mass_present':True,'bone_srgb_sample':bone,'violet_srgb_sample':violet,
-        'feather_cutout_clear_pixels':feather_alpha}
+        'feather_cutout_clear_pixels':feather_alpha,
+        'circular_socket_clear_rays':32,'chest_ring_radius_range':[min(ring_radii),max(ring_radii)]}
 (OUT/'validation.json').write_text(json.dumps(report,indent=2))
 print('VALIDATION',json.dumps(report),flush=True)
 if '--check-only' in sys.argv:
@@ -98,7 +118,8 @@ scene.frame_set(1)
 bpy.context.view_layer.update()
 hand_center=(bpy.data.objects['hand_left'].matrix_world.translation+
              bpy.data.objects['forearm_left'].matrix_world.translation)*.5
-view('hand_and_elbow_detail',hand_center+Vector((22,-100,15)),hand_center,29)
+if '--views-only' not in sys.argv:
+    view('hand_and_elbow_detail',hand_center+Vector((22,-100,15)),hand_center,29)
 
 for phase,frame in ([] if '--details-only' in sys.argv else [('phase_one',1),('phase_two',41)]):
     for direction,position,scale in [('front',(0,-210,10),141),
@@ -107,6 +128,8 @@ for phase,frame in ([] if '--details-only' in sys.argv else [('phase_one',1),('p
         view(name,position,(0,0,10),scale,frame)
         shutil.copyfile(OUT/(name+'.png'),ART/'preview'/(name+'.png'))
 
+if '--views-only' in sys.argv:
+    sys.exit(0)
 view('chest_and_crown_detail',(18,-130,30),(0,0,21),66)
 view('death_reveal',(60,-190,50),(0,0,10),141,81)
 view('wing_front_detail',(40,-160,34),(36,10,15),72)

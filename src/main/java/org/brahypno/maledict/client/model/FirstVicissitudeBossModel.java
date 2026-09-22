@@ -29,6 +29,27 @@ public final class FirstVicissitudeBossModel
     private final Map<VicissitudeRigData.Joint, ModelPart> parts =
             new EnumMap<>(VicissitudeRigData.Joint.class);
     private final VicissitudeRig.Pose pose = VicissitudeRig.newPose();
+    private final VicissitudeRig.Pose releasePose = VicissitudeRig.newPose();
+    private float sheddingTicks;
+    private float renderAge;
+    private float renderWingFold;
+
+    float sheddingTicks() { return sheddingTicks; }
+
+    void poseStackToRelease(VicissitudeRigData.Joint joint, PoseStack stack, float delay, float elapsed) {
+        VicissitudeRig.compute(releasePose, false, delay / FirstVicissitudeBossEntity.TRANSITION_TICKS,
+                VicissitudeRig.Action.NONE, 0, false, 0, renderAge - elapsed, renderWingFold, -1);
+        List<VicissitudeRigData.Joint> chain = new ArrayList<>();
+        for (var current = joint; current != null; current = current.parent()) chain.add(current);
+        for (int i = chain.size()-1; i >= 0; i--) {
+            var j = chain.get(i);
+            stack.translate((j.localX()+releasePose.offX(j))/16F,
+                    (j.localY()+releasePose.offY(j))/16F, (j.localZ()+releasePose.offZ(j))/16F);
+            stack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(releasePose.rotZ(j)));
+            stack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(releasePose.rotY(j)));
+            stack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(releasePose.rotX(j)));
+        }
+    }
 
     public FirstVicissitudeBossModel(ModelPart root) {
         this.root = root;
@@ -103,6 +124,11 @@ public final class FirstVicissitudeBossModel
         root.getAllParts().forEach(ModelPart::resetPose);
         // Sample the same clock and pose as the effect anchors, independent of render frequency.
         float partialTick = net.minecraft.util.Mth.clamp(ageInTicks - entity.tickCount, 0.0F, 1.0F);
+        renderAge = entity.level().getGameTime() + partialTick;
+        renderWingFold = entity.getWingFold();
+        float blend = entity.getPhaseTwoBlend();
+        sheddingTicks = blend * FirstVicissitudeBossEntity.TRANSITION_TICKS;
+        if (blend > 0 && blend < 1) sheddingTicks += partialTick;
         pose.copyFrom(entity.poseForRender(partialTick));
         applyPose(pose);
     }

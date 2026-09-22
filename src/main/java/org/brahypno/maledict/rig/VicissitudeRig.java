@@ -130,6 +130,7 @@ public final class VicissitudeRig {
      * Mutable per-frame pose; reuse one instance per entity.
      */
     public static final class Pose {
+        private boolean bareWings;
         private final float[] rotX = new float[JOINT_COUNT];
         private final float[] rotY = new float[JOINT_COUNT];
         private final float[] rotZ = new float[JOINT_COUNT];
@@ -142,6 +143,7 @@ public final class VicissitudeRig {
         }
 
         public void reset() {
+            bareWings = false;
             java.util.Arrays.fill(rotX, 0.0F);
             java.util.Arrays.fill(rotY, 0.0F);
             java.util.Arrays.fill(rotZ, 0.0F);
@@ -206,6 +208,7 @@ public final class VicissitudeRig {
          * Copies every channel and solved matrix of another pose.
          */
         public void copyFrom(Pose other) {
+            bareWings = other.bareWings;
             System.arraycopy(other.rotX, 0, rotX, 0, JOINT_COUNT);
             System.arraycopy(other.rotY, 0, rotY, 0, JOINT_COUNT);
             System.arraycopy(other.rotZ, 0, rotZ, 0, JOINT_COUNT);
@@ -220,6 +223,7 @@ public final class VicissitudeRig {
          * is what keeps action changes continuous instead of snapping between keyframes.
          */
         public void interpolate(Pose target, float delta) {
+            bareWings = target.bareWings;
             float amount = Math.max(0.0F, Math.min(1.0F, delta));
             for (int index = 0; index < JOINT_COUNT; index++) {
                 rotX[index] += (target.rotX[index] - rotX[index]) * amount;
@@ -253,6 +257,7 @@ public final class VicissitudeRig {
             float actionTicks, boolean actionLeft, float hurtTicks,
             float idleTicks, float wingFold, float deathTicks) {
         pose.reset();
+        pose.bareWings = phaseTwo || phaseTwoBlend >= 1.0F;
         applyStage(pose, phaseTwoBlend);
         applyIdle(pose, idleTicks, phaseTwoBlend);
         applyAction(pose, action, actionTicks, actionLeft);
@@ -878,7 +883,7 @@ public final class VicissitudeRig {
                                                               -6.0F, -14.0F, -6.0F, 6.0F, 2.0F, 7.0F, 0.0F,
                                                               entityX, entityY, entityZ, yawDegrees)));
         // Blender exports one bound per articulated wing mesh group, including each feather.
-        for (var bounds : VicissitudeMeshGeometry.WINGS) {
+        for (var bounds : pose.bareWings ? VicissitudeMeshGeometry.BONE_WINGS : VicissitudeMeshGeometry.WINGS) {
             boolean left = bounds.joint().name().startsWith("WING_LEFT_");
             boolean root = bounds.joint() == Joint.WING_LEFT_UPPER
                            || bounds.joint() == Joint.WING_RIGHT_UPPER;

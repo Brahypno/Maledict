@@ -167,6 +167,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TRANSITION_TICKS =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_PHASE_TWO_REACHED =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_WING_FOLD =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_CORE_GLOW =
@@ -415,6 +417,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         entityData.define(DATA_ACTION_START, 0L);
         entityData.define(DATA_HURT_TICKS, 0);
         entityData.define(DATA_TRANSITION_TICKS, 0);
+        entityData.define(DATA_PHASE_TWO_REACHED, false);
         entityData.define(DATA_WING_FOLD, 0.0F);
         entityData.define(DATA_CORE_GLOW, 0.55F);
         entityData.define(DATA_GROUND_X, 0.0F);
@@ -461,11 +464,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     public boolean isPhaseTwoVisual() {
-        return phaseTwoReached;
+        return phaseTwoReached || entityData.get(DATA_PHASE_TWO_REACHED);
     }
 
     public float getPhaseTwoBlend() {
-        if (phaseTwoReached) {
+        if (isPhaseTwoVisual()) {
             return 1.0F;
         }
         if (getStage() == VicissitudeBossStage.TRANSITION) {
@@ -1029,6 +1032,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private void completeTransition() {
         setStage(VicissitudeBossStage.PHASE_TWO);
         phaseTwoReached = true;
+        entityData.set(DATA_PHASE_TWO_REACHED, true);
         if (!(level() instanceof ServerLevel serverLevel)) {
             return;
         }
@@ -2873,6 +2877,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         phaseOneDurationLocked = tag.getBoolean("PhaseOneDurationLocked");
         phaseTwoReached = stage == VicissitudeBossStage.PHASE_TWO || tag.getBoolean("PhaseTwoReached");
+        entityData.set(DATA_PHASE_TWO_REACHED, phaseTwoReached);
         int savedDuration = tag.getInt("PhaseOneDuration");
         int savedTicks = Mth.clamp(tag.getInt("PhaseOneTicks"), 0, 6000);
         if (savedDuration > 0) {

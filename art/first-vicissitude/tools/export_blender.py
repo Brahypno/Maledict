@@ -24,6 +24,7 @@ def export(root):
     children = {j:[] for j in joints}
     triangles = 0
     wing_bounds = {}
+    bone_bounds = {}
     for obj in meshes:
         data = obj.data
         data.calc_loop_triangles()
@@ -32,6 +33,8 @@ def export(root):
         verts = [[round(c,5) for c in jv(local @ v.co)] for v in data.vertices]
         if joint.startswith('wing_'):
             wing_bounds.setdefault(joint,[]).extend(verts)
+            if 'shed_delay' not in obj:
+                bone_bounds.setdefault(joint,[]).extend(verts)
         faces = []
         for tri in data.loop_triangles:
             corners = []
@@ -40,7 +43,9 @@ def export(root):
                 corners.append([*verts[vi],round(uv.x,6),round(1-uv.y,6)])
             n = jv(local.to_3x3().inverted().transposed() @ tri.normal).normalized()
             faces.append({'n':[round(c,5) for c in n],'v':corners})
-        result['parts'].append({'joint':joint,'name':obj.name,'triangles':faces})
+        part={'joint':joint,'name':obj.name,'triangles':faces}
+        if 'shed_delay' in obj: part['shed_delay']=obj['shed_delay']
+        result['parts'].append(part)
         triangles += len(faces)
         uid = str(uuid.uuid5(uuid.NAMESPACE_URL,obj.name))
         children[joint].append(uid)
@@ -58,6 +63,10 @@ def export(root):
     for joint,points in wing_bounds.items():
         values = [min(p[k] for p in points) for k in range(3)] + [max(p[k] for p in points) for k in range(3)]
         bounds.append('            new Bounds(Joint.'+joint.upper()+', '+', '.join('%.5fF'%v for v in values)+')')
+    bare_bounds=[]
+    for joint,points in bone_bounds.items():
+        values=[min(p[k] for p in points) for k in range(3)]+[max(p[k] for p in points) for k in range(3)]
+        bare_bounds.append('            new Bounds(Joint.'+joint.upper()+', '+', '.join('%.5fF'%v for v in values)+')')
     java = '''package org.brahypno.maledict.rig;
 
 import java.util.List;
@@ -69,6 +78,8 @@ public final class VicissitudeMeshGeometry {
                          float maxX, float maxY, float maxZ) {}
     public static final List<Bounds> WINGS = List.of(
 '''+',\n'.join(bounds)+''');
+    public static final List<Bounds> BONE_WINGS = List.of(
+'''+',\n'.join(bare_bounds)+''');
     private VicissitudeMeshGeometry() {}
 }
 '''
@@ -90,6 +101,7 @@ public final class VicissitudeMeshGeometry {
                        'source':'data:image/png;base64,'+base64.b64encode((TEX/'first_vicissitude.png').read_bytes()).decode()}]}
     (ART/'first_vicissitude.bbmodel').write_text(json.dumps(bb,separators=(',',':')))
     report = {'objects':len(meshes),'triangles':triangles,'joints':len(joints),
+              'phase_two_triangles':sum(len(p['triangles']) for p in result['parts'] if 'shed_delay' not in p),
               'source':'Blender mesh, same geometry exported to runtime and Blockbench',
               'texture_size':[256,256]}
     (PREVIEW/'mesh-report.json').write_text(json.dumps(report,indent=2))

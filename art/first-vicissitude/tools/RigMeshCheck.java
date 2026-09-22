@@ -7,7 +7,7 @@ import java.util.List;
 
 /** Integration check: actual exported mesh vertices stay inside posed server wing volumes. */
 public final class RigMeshCheck {
-    private record Sample(Joint joint, float x, float y, float z) {}
+    private record Sample(Joint joint, float x, float y, float z, boolean feather) {}
     public static void main(String[] args) throws Exception {
         // The ring must stay face-on to its head-local plane while it rotates over time.
         for (var action : new VicissitudeRig.Action[]{VicissitudeRig.Action.NONE, VicissitudeRig.Action.CAST_FROM_HALO}) {
@@ -25,12 +25,13 @@ public final class RigMeshCheck {
         }
         System.out.println("PASS: halo stays in its plane during idle and halo casting");
         checkRingSpin();
+        checkActualRingMesh();
         checkWingComposure();
         List<Sample> points = new ArrayList<>();
         for (String line : Files.readAllLines(Path.of("build/rig-tool/wing-vertices.csv"))) {
             String[] fields = line.split(",");
             points.add(new Sample(Joint.valueOf(fields[0]), Float.parseFloat(fields[1]),
-                    Float.parseFloat(fields[2]), Float.parseFloat(fields[3])));
+                    Float.parseFloat(fields[2]), Float.parseFloat(fields[3]), fields[4].equals("1")));
         }
         long checks = 0;
         for (int phase = 0; phase < 2; phase++) {
@@ -42,6 +43,7 @@ public final class RigMeshCheck {
                                 true, 0, 13, fold, -1);
                         var volumes = VicissitudeRig.segmentVolumes(pose, 10, 64, -23, yaw);
                         for (Sample sample : points) {
+                            if (phase == 1 && sample.feather) continue;
                             var p = VicissitudeRig.worldPoint(pose, sample.joint, sample.x, sample.y,
                                     sample.z, 10, 64, -23, yaw);
                             boolean inside = volumes.stream().anyMatch(v -> v.segment().isWing()
@@ -61,6 +63,33 @@ public final class RigMeshCheck {
      * The chest ring and the halo are one mechanism: the chest arcs must travel rigidly around
      * their hub, and they must turn the other way at the same rate as the ring behind the head.
      */
+    private static void checkActualRingMesh() throws Exception {
+        long checks = 0;
+        var lines = Files.readAllLines(Path.of("build/rig-tool/chest-ring-vertices.csv"));
+        if (lines.isEmpty()) throw new AssertionError("Missing chest ring mesh samples");
+        for (int phase = 0; phase < 2; phase++) {
+            for (int tick = 0; tick <= 600; tick += 7) {
+                var pose = VicissitudeRig.newPose();
+                VicissitudeRig.compute(pose, phase == 1, phase, VicissitudeRig.Action.NONE,
+                        0, false, 0, tick, 0, -1);
+                var hub = VicissitudeRig.transform(pose, Joint.TORSO,
+                        VicissitudeRig.CHEST_RING_HUB_X, VicissitudeRig.CHEST_RING_HUB_Y, 0);
+                var ax = offset(pose, Joint.TORSO, 1, 0, 0);
+                var ay = offset(pose, Joint.TORSO, 0, 1, 0);
+                for (String line : lines) {
+                    String[] f = line.split(",");
+                    var v = VicissitudeRig.transform(pose, Joint.valueOf(f[0]),
+                            Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3]));
+                    float dx = v.x()-hub.x(), dy = v.y()-hub.y(), dz = v.z()-hub.z();
+                    double radius = Math.hypot(dx*ax[0]+dy*ax[1]+dz*ax[2], dx*ay[0]+dy*ay[1]+dz*ay[2]);
+                    if (radius < 4.4 || radius > 5.6) throw new AssertionError("Chest mesh left its socket: " + radius);
+                    checks++;
+                }
+            }
+        }
+        System.out.println("PASS: " + checks + " actual chest-ring vertices stay concentric through a full idle turn in both phases");
+    }
+
     private static void checkRingSpin() {
         float hubX = VicissitudeRig.CHEST_RING_HUB_X;
         float hubY = VicissitudeRig.CHEST_RING_HUB_Y;

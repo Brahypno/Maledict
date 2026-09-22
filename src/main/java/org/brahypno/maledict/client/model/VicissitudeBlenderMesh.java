@@ -8,6 +8,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.rig.VicissitudeRigData.Joint;
+import org.brahypno.maledict.rig.VicissitudeFeatherShed;
+import com.mojang.math.Axis;
 
 import java.io.IOException;
 import java.util.*;
@@ -18,7 +20,8 @@ import java.util.*;
 final class VicissitudeBlenderMesh {
     private static final ResourceLocation RESOURCE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "models/entity/first_vicissitude.mesh.json");
-    private final Map<Joint, List<Triangle>> triangles = new EnumMap<>(Joint.class);
+    private final List<MeshPart> parts = new ArrayList<>();
+    private record MeshPart(Joint joint, List<Triangle> triangles, float delay, Vertex center) {}
 
     private record Vertex(float x, float y, float z, float u, float v) {}
 
@@ -35,7 +38,7 @@ final class VicissitudeBlenderMesh {
             for (var element : root.getAsJsonArray("parts")) {
                 var part = element.getAsJsonObject();
                 Joint joint = Joint.valueOf(part.get("joint").getAsString().toUpperCase(Locale.ROOT));
-                var target = triangles.computeIfAbsent(joint, ignored -> new ArrayList<>());
+                List<Triangle> target = new ArrayList<>();
                 for (var face : part.getAsJsonArray("triangles")) {
                     var triangle = face.getAsJsonObject();
                     var normal = triangle.getAsJsonArray("n");
@@ -44,6 +47,11 @@ final class VicissitudeBlenderMesh {
                                             vertex(corners.get(1).getAsJsonArray()), vertex(corners.get(2).getAsJsonArray()),
                                             normal.get(0).getAsFloat(), normal.get(1).getAsFloat(), normal.get(2).getAsFloat()));
                 }
+                float x=0, y=0, z=0;
+                for (Triangle t : target) { x+=t.a.x+t.b.x+t.c.x; y+=t.a.y+t.b.y+t.c.y; z+=t.a.z+t.b.z+t.c.z; }
+                float count=target.size()*3F;
+                parts.add(new MeshPart(joint, target, part.has("shed_delay") ? part.get("shed_delay").getAsFloat() : -1,
+                        new Vertex(x/count,y/count,z/count,0,0)));
             }
         }
         catch (IOException exception) {
@@ -60,11 +68,24 @@ final class VicissitudeBlenderMesh {
     void render(
             FirstVicissitudeBossModel model, PoseStack stack, VertexConsumer buffer,
             int light, int overlay, float red, float green, float blue, float alpha) {
-        for (var entry : triangles.entrySet()) {
+        for (var part : parts) {
+            float elapsed = part.delay < 0 ? 0 : VicissitudeFeatherShed.elapsed(model.sheddingTicks(),part.delay);
+            if (elapsed >= VicissitudeFeatherShed.FALL_TICKS) continue;
             stack.pushPose();
-            model.poseStackTo(entry.getKey(), stack);
+            if (elapsed > 0) {
+                float side=part.joint.name().startsWith("WING_LEFT") ? 1 : -1;
+                stack.translate(side*.014F*elapsed, VicissitudeFeatherShed.drop(elapsed)/16F,
+                        .06F*(float)(Math.sin(elapsed*.3F+part.delay)-Math.sin(part.delay)));
+                model.poseStackToRelease(part.joint,stack,part.delay,elapsed);
+                stack.translate(part.center.x,part.center.y,part.center.z);
+                stack.mulPose(Axis.ZP.rotationDegrees(side*elapsed*5));
+                stack.mulPose(Axis.XP.rotationDegrees(elapsed*8));
+                float scale=VicissitudeFeatherShed.scale(elapsed);
+                stack.scale(scale,scale,scale);
+                stack.translate(-part.center.x,-part.center.y,-part.center.z);
+            } else model.poseStackTo(part.joint, stack);
             var pose = stack.last();
-            for (Triangle triangle : entry.getValue()) {
+            for (Triangle triangle : part.triangles) {
                 emit(triangle.a, triangle, pose, buffer, light, overlay, red, green, blue, alpha);
                 emit(triangle.b, triangle, pose, buffer, light, overlay, red, green, blue, alpha);
                 emit(triangle.c, triangle, pose, buffer, light, overlay, red, green, blue, alpha);

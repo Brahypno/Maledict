@@ -1,6 +1,6 @@
 {
-  "mesh_parts": 186,
-  "triangles": 3572,
+  "mesh_parts": 221,
+  "triangles": 5244,
   "finite_vertices_and_unit_normals": true,
   "uvs_in_atlas": true,
   "chest_clear_rays": 12,
@@ -22,5 +22,10 @@
     90,
     391,
     90
+  ],
+  "circular_socket_clear_rays": 32,
+  "chest_ring_radius_range": [
+    4.459993495084944,
+    5.540004755386046
   ]
 }

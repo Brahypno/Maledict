@@ -102,12 +102,11 @@ def atlas(emissive=False):
                 broken = idx==11 and v>.67 and u>.68 and int(v*24)%5<3
                 a = 0 if emissive or slit or broken else 1
             if idx in (13,14):
-                # Quiet broad planes, inset border and sparse stepped wear, not all-over noise.
-                shade=.88
-                if px in (1,14) or py in (1,14): shade=.65
-                if px in (2,13) or py==13: shade=1.06
-                if px<4: shade+=.045
-                if (px,py) in ((3,12),(4,12),(12,3),(12,4)): shade=.73
+                # Broad baked light/shadow planes stay readable at combat distance.
+                shade=.96 if 3<=px<=9 else .69 if px>=12 else .80
+                if py<4: shade*=.76
+                if py in (4,5) and px>8: shade*=.85
+                if px in (3,4) and 5<=py<=12: shade+=.10
             if idx==15:
                 # The silver track and crossbars are painted into the ring's radial UV.
                 silver=px in (6,7,8,9) or (py in (3,11) and 3<=px<=12)
@@ -254,7 +253,9 @@ def feather(name,joint,start,end,width,mat=9,bend=1.4):
             for lane in range(2):
                 k=(i-1)*3+lane
                 faces.append((k,k+1,k+4,k+3))
-    return mesh(name,joint,verts,faces,mat,uvs)
+    obj=mesh(name,joint,verts,faces,mat,uvs)
+    obj['shed_delay']=8+abs(a.x)*.28+(2 if 'Dorsal' in name else 0)
+    return obj
 
 def arc(name,joint,center,rx,ry,start,end,thickness=1,mat=4,zshift=0):
     return relic_arc(name,joint,Vector(center)+Vector((0,0,zshift)),rx,ry,start,end,thickness,mat)
@@ -267,71 +268,81 @@ def block(name,joint,center,size,mat=1):
                                 (2,3,7,6),(0,2,6,4),(1,5,7,3)],mat)
 
 def armor(name,joint,outline,front,back,mat=1):
-    # Broad inset face, chamfer and substantial sidewall; no pyramid fan across the chest.
+    # Silhouette and thickness only; broad painted shading replaces bevel geometry.
     n=len(outline)
-    cx,cy=sum(x for x,y in outline)/n,sum(y for x,y in outline)/n
-    bevel=min(.7,(back-front)*.4)
-    verts=[(x,y,z) for z in (front+bevel,back) for x,y in outline]
-    verts += [(cx+(x-cx)*.82,cy+(y-cy)*.82,front) for x,y in outline]
-    faces=[tuple(range(2*n,3*n)),tuple(range(n,2*n))]
-    faces += [(2*n+i,2*n+(i+1)%n,(i+1)%n,i) for i in range(n)]
+    verts=[(x,y,z) for z in (front,back) for x,y in outline]
+    faces=[tuple(range(n)),tuple(range(n,2*n))]
     faces += [(i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n)]
     return mesh(name,joint,verts,faces,mat)
 
-def relic_arc(name,joint,center,rx,ry,start,end,width=1.3,mat=2):
-    # Flat annular band with tangible broken ends; radial UV follows its engraved track.
+def relic_arc(name,joint,center,rx,ry,start,end,width=1.3,mat=2,depth=.55):
+    # Beveled relic stock with flat front, sidewall and capped fractures.
     c=Vector(center)
     verts,faces,uvs=[],[],[]
     steps=max(3,math.ceil(abs(end-start)/15))
     for i in range(steps+1):
         t=i/steps
         a=math.radians(start+(end-start)*t)
-        p=c+Vector((rx*math.cos(a),ry*math.sin(a),math.sin(t*math.pi)*.7))
+        p=c+Vector((rx*math.cos(a),ry*math.sin(a),0))
         radial=Vector((math.cos(a),math.sin(a),0))
-        w=width*(.65+.35*math.sin(t*math.pi)**.7)
-        for dr,dz,u in [(-w,-.48,0),(w,-.48,1),(w,.48,1),(-w,.48,0)]:
+        w=width*(.84 if i in (0,steps) else 1)
+        for dr,dz,u in [(-w,-depth*.4,0),(-w*.72,-depth,.14),(w*.72,-depth,.86),
+                        (w,-depth*.4,1),(w,depth,1),(-w,depth,0)]:
             verts.append(p+radial*dr+Vector((0,0,dz)))
             uvs.append((u,t))
         if i:
-            for k in range(4): faces.append(((i-1)*4+k,(i-1)*4+(k+1)%4,i*4+(k+1)%4,i*4+k))
-    faces.extend([(3,2,1,0),tuple(range(steps*4,steps*4+4))])
+            for k in range(6): faces.append(((i-1)*6+k,(i-1)*6+(k+1)%6,i*6+(k+1)%6,i*6+k))
+    faces.extend([tuple(reversed(range(6))),tuple(range(steps*6,steps*6+6))])
     return mesh(name,joint,verts,faces,mat,uvs)
 
-# Broad shoulder/chest masses taper into an open rib cage; load-bearing joints stay thick.
-for s,label in [(1,'left'),(-1,'right')]:
+# The cavity and all moving arcs share the runtime hub, not three guessed centers.
+CX,CY=RIG['chest_hub']
+SOCKET_RADIUS=6.4
+RING_RADIUS=5.0
+for side,label in [(1,'left'),(-1,'right')]:
     j='chest_shell_'+label
-    tube('Thoracic arch '+label,j,[(s*5,-21,3),(s*9.3,-16,3),(s*9,-8,3),(s*5,-2,3)],
-         [1.8,2.1,1.7,1.25],3,6)
-    armor('Clavicular yoke '+label,'torso',
-          [(s*x,y) for x,y in [(1,-24),(5,-24.5),(11.5,-21.5),(11,-19),(5,-20),(1,-22)]],-2.9,3.5,14)
-    tube('Scapular wing load bridge '+label,'body',[(s*5,-22,4),(s*8,-21,7),(s*10,-18,9)],[2.8,3.4,2.8],3,6)
-    armor('Dorsal scapular plate '+label,'chest_shell_back',
-          [(s*x,y) for x,y in [(2,-22),(7,-23),(10,-19),(8,-12),(4,-14)]],5.3,8,13)
-    armor('Faceted thoracic flank '+label,j,
-          [(s*x,y) for x,y in [(3.8,-14.8),(8.3,-17),(9,-11),(7.6,-5),(3.7,-5.8),(3.1,-9.5)]],-3.7,5.5,13)
-    armor('Pectoral shield '+label,'torso',
-          [(s*x,y) for x,y in [(.45,-22.4),(6.2,-23),(10,-20),(9,-15.2),(4,-13.7),(.45,-15.4)]],-5.8,2.8,13)
-    armor('Pectoral ivory rim '+label,'torso',
-          [(s*x,y) for x,y in [(1,-22.5),(6,-23.1),(9.9,-20.2),(9.4,-18.8),(5.6,-21),(1,-20.8)]],-6.1,-5.5,14)
-    tube('Cervical fork '+label,'body',[(0,-26,3),(s*5,-20,3)],[1.4,1.8],2)
-    tube('Lumbar connection '+label,'lower_root',[(s*5,-3,3),(0,3,2)],[1.6,1.7],3)
-    for i,y in enumerate((-14,-9.8,-5.6)):
+    tube('Thoracic load arch '+label,j,
+         [(side*5,-22,3),(side*9.5,-17,3),(side*10,-9,3),(side*7,-2,3)],
+         [2.3,2.8,2.4,1.6],3,6)
+    tube('Clavicular bone arch '+label,'torso',
+         [(side*.9,-23,0),(side*5,-23.5,-1),(side*10.5,-19.5,0)],
+         [1.4,2.5,2.1],14,6)
+    tube('Scapular wing load bridge '+label,'body',
+         [(side*5,-22,4),(side*8,-21,7),(side*10,-18,9)],[2.8,3.4,2.8],3,6)
+    armor('Broken dorsal scapula '+label,'chest_shell_back',
+          [(side*x,y) for x,y in [(3,-23),(8,-22),(10,-17),(8,-13),(6,-15),(4,-14)]],5.3,8,0)
+    # Irregular side remnants stay outside the circular socket, front and back.
+    armor('Thoracic remnant '+label,j,
+          [(side*x,y) for x,y in [(7,-16.5),(10,-15),(10.5,-9),(8.6,-3),(6.8,-3.5),(7.4,-8)]],-3.5,5.5,0)
+    armor('Pectoral remnant '+label,'torso',
+          [(side*x,y) for x,y in [(.6,-22),(5,-23),(9,-20),(8,-17),(5.5,-16),
+                                 (4.2,-17.2),(2,-15.7),(.7,-16.2)]],-4.3,2.8,13)
+    tube('Pectoral bone ridge '+label,'torso',
+         [(side*.9,-21,-4.7),(side*4.5,-20.8,-5),(side*8,-18,-3.8)],
+         [.85,1.35,.65],14,4)
+    tube('Cervical fork '+label,'body',[(0,-26,3),(side*5,-20,3)],[1.4,1.8],2)
+    tube('Lumbar connection '+label,'lower_root',[(side*6,-2,3),(0,3,2)],[1.7,1.8],3)
+    for i,y in enumerate((-15,-10,-5)):
         tube('Wrapping costal arch %s %d'%(label,i),j,
-             [(s*5.8,y,6),(s*9.3,y+.2,3.5),(s*9.3,y+.7,-1.5),(s*5.2,y+1.4,-4.8)],
-             [.75,1.05,1.1,.7],14,4)
-armor('Recessed sternal bridge','torso',
-      [(-.85,-22.5),(.85,-22.5),(.85,-16),(0,-14.2),(-.85,-16)],-4.9,3.8,0)
-armor('Faceted abdominal body','torso',
-      [(-5.5,-5.8),(0,-5.2),(5.5,-5.8),(6.5,-2),(3,1.5),(-3,1.5),(-6.5,-2)],-3.6,5,0)
-for s,label in [(1,'left'),(-1,'right')]:
-    armor('Abdominal overlapping plate '+label,'torso',
-          [(s*x,y) for x,y in [(.5,-4.5),(5.8,-5.4),(6,-1),(2,2),(.5,.5)]],-4.4,-2.8,13)
-for name,joint,center,rx,ry,a,b,w in [
-    ('Ascending fate remnant','chest_ring_left',(.25,-10,-5.7),3.6,4.6,-62,24,.65),
-    ('Displaced fate remnant','chest_ring_right',(-.3,-10,-6.1),3.8,4.5,134,214,.8),
-    ('Fallen fate remnant','chest_ring_bottom',(.3,-10,-5.5),3.5,4.6,54,92,.8)]:
-    relic_arc(name,joint,center,rx,ry,a,b,w,2)
-    relic_arc(name+' dark socket rim',joint,Vector(center)+Vector((0,0,.9)),rx+.35,ry+.35,a-3,b+3,w*1.25,13)
+             [(side*7,y,6),(side*10,y+.2,3.5),(side*9.7,y+.7,-1.5),(side*7.2,y+1,-4.2)],
+             [1.05,1.35,1.3,.75],14,4)
+armor('Upper sternal keel','torso',[(-1,-23),(1,-23),(1.2,-17),(0,-15.8),(-1.2,-17)],-4.2,3,3)
+armor('Lower ossuary bridge','torso',[(-6.5,-2.3),(-3,-2.7),(0,-1.8),(3,-2.7),(6.5,-2.3),
+                                     (5,1.5),(0,3),(-5,1.5)],-3.6,5,0)
+# Fixed circular seat surrounds, rather than fills, the moving ring's swept envelope.
+for i,(a,b) in enumerate([(-177,-96),(-87,-3),(6,84),(95,171)]):
+    relic_arc('Ossuary socket seat %d'%i,'torso',(CX,CY,-3.8),SOCKET_RADIUS,SOCKET_RADIUS,a,b,.65,3,.9)
+    relic_arc('Socket lip %d'%i,'torso',(CX,CY,-4.6),SOCKET_RADIUS,SOCKET_RADIUS,a+3,b-3,.27,14,.25)
+for i,(joint,a,b) in enumerate([('chest_ring_left',-83,22),('chest_ring_right',132,250),
+                               ('chest_ring_bottom',43,108)]):
+    center=(CX,CY,-6.0)
+    relic_arc('Fate ring stock %d'%i,joint,center,RING_RADIUS,RING_RADIUS,a,b,.54,0,.62)
+    relic_arc('Fate ring inset %d'%i,joint,(CX,CY,-6.66),RING_RADIUS,RING_RADIUS,a+4,b-4,.26,4,.15)
+    for angle in (a+17,b-17):
+        r=math.radians(angle)
+        c=Vector((CX+RING_RADIUS*math.cos(r),CY+RING_RADIUS*math.sin(r),-6.85))
+        dr=Vector((math.cos(r),math.sin(r),0))
+        tube('Fate ring clasp %d %d'%(i,angle),joint,[c-dr*.46,c+dr*.46],[.13,.13],14,4)
 
 # Preserve the nested nonhuman crystal and shell joints used by the death reveal.
 head_center=Vector((0,-32,0))
@@ -361,7 +372,15 @@ blade('Offset star splinter','head_shell_right',(5.5,-32,0),(8.2,-33.1,.4),.55,1
 legacy=[-30,99,163,-108]
 for i,(start,end) in enumerate([(-162,-74),(-57,19),(42,105),(126,158)],1):
     before=len(meshes)
-    arc('Fate arc %d'%i,'halo_fragment_'+str(i),(0,-28,9),14.1,15,start,end,1.15,15)
+    joint='halo_fragment_'+str(i)
+    relic_arc('Fate arc %d'%i,joint,(0,-28,9),14.1,15,start,end,1.2,0,.85)
+    relic_arc('Halo silver rail %d'%i,joint,(0,-28,8.05),14.1,15,start+3,end-3,.33,4,.2)
+    relic_arc('Halo inner recess %d'%i,joint,(0,-28,9),12.8,13.7,start+9,end-8,.18,13,.3)
+    for angle in range(start+14,end-7,23):
+        a=math.radians(angle)
+        c=Vector((14.1*math.cos(a),-28+15*math.sin(a),7.8))
+        dr=Vector((math.cos(a),math.sin(a),0))
+        tube('Halo transverse seal %d %d'%(i,angle),joint,[c-dr*.8,c+dr*.8],[.19,.19],14,4)
     rot=BASIS @ Euler((0,0,math.radians(-legacy[i-1]))).to_matrix() @ BASIS.transposed()
     for obj in meshes[before:]:
         for v in obj.data.vertices: v.co=rot @ v.co
@@ -370,22 +389,29 @@ for s,label in [(1,'left'),(-1,'right')]:
     p=Vector((s*10,-15,0))
     upper,fore,hand='upper_arm_'+label,'forearm_'+label,'hand_'+label
     tube('Humerus '+label,upper,[p,p+Vector((s*.4,5,0)),p+Vector((0,12,0))],[2.4,2.1,2],3,6)
-    armor('Load bearing pauldron '+label,upper,
-          [(s*x,y) for x,y in [(8,-21.8),(12,-22.3),(16,-19.5),(16.6,-15),(13.6,-11.8),(8,-13.5)]],-3.6,5.8,13)
-    armor('Pauldron ivory crown '+label,upper,
-          [(s*x,y) for x,y in [(8.2,-22),(12,-22.5),(16.2,-19.5),(16.5,-17.8),(12,-20.2),(8.2,-19.8)]],-4,-3.3,14)
-    armor('Upper arm ossuary mass '+label,upper,
-          [(p.x+s*x,p.y+y) for x,y in [(-2.2,1),(2.6,.5),(3,4.8),(2,10),(-1.8,10),(-2.6,4.5)]],-2.9,2.4,14)
+    tube('Shoulder ossuary crown '+label,upper,
+         [(s*8,-19,1),(s*11,-19.5,0),(s*14,-16,0),(s*12.5,-12,0)],
+         [2.0,3.5,3.3,2.1],14,6)
+    armor('Broken shoulder carapace '+label,upper,
+          [(s*x,y) for x,y in [(10,-22),(13,-22.5),(16,-19),(15.7,-14),(13.8,-15.5),(12.4,-13),(11,-17)]],1,5.3,0)
+    tube('Upper arm bone belly '+label,upper,
+         [p+Vector((s*.3,1,-.8)),p+Vector((s*.9,4,-1)),p+Vector((0,9,-.5))],
+         [2.65,3.05,1.9],14,6)
     tube('Elbow axle '+label,fore,[p+Vector((-2.3,12,0)),p+Vector((2.3,12,0))],[1.8,1.8],3,6)
     for side in (-1,1):
         block('Elbow cheek %s %d'%(label,side),upper,p+Vector((side*2.1,10.7,.2)),(1.1,3.1,3.5),13)
     for k in (-1,1):
         tube('Forearm paired strut %s %d'%(label,k),fore,
              [p+Vector((k*1.05,12,0)),p+Vector((k*1.1,22,0))],[1.05,.95],3,4)
-    armor('Weighted vambrace '+label,fore,
-          [(p.x+s*x,p.y+y) for x,y in [(-2.4,12.7),(2.5,12.3),(3.2,15.3),(2.8,19.5),(1.9,22),(-1.9,22),(-2.9,17)]],-3.1,2.6,13)
-    armor('Vambrace ivory keel '+label,fore,
-          [(p.x+s*x,p.y+y) for x,y in [(-1.3,14),(1.3,14),(1.65,17),(.7,20.6),(-.7,20.6),(-1.65,17)]],-3.5,-2.8,14)
+    tube('Forearm radial crest '+label,fore,
+         [p+Vector((-s*1.1,13,-.8)),p+Vector((-s*1.7,16,-1)),p+Vector((-s*.9,21,-.3))],
+         [1.65,1.9,1.2],14,6)
+    tube('Forearm ulnar crest '+label,fore,
+         [p+Vector((s*1.3,13,.6)),p+Vector((s*1.8,17,.4)),p+Vector((s*.9,21,.1))],
+         [1.55,1.8,1.15],3,6)
+    armor('Broken outer bracer '+label,fore,
+          [(p.x+s*x,p.y+y) for x,y in [(.4,13),(2.7,14),(3.1,17),(2.1,18.4),
+                                      (2.5,20.2),(.7,21),(-.2,18),(.6,17)]],-.9,2.8,0)
     block('Continuous wrist cuff '+label,fore,p+Vector((0,21.4,0)),(4.3,1.6,4.3),3)
     block('Inset wrist bridge '+label,hand,p+Vector((0,22.3,0)),(3.3,2.5,3.4),0)
     block('Closed gauntlet palm '+label,hand,p+Vector((0,23.7,.65)),(4.8,3.8,3.5),13)
@@ -405,26 +431,35 @@ for s,label in [(1,'left'),(-1,'right')]:
 for s,label in [(1,'left'),(-1,'right')]:
     def pt(x,y,z=10): return (s*x,y,z)
     prefix='wing_'+label+'_'
+    # A continuous dark load-bearing ridge, without pale scaffold collars.
     for part,points,radii in [
         ('upper',[pt(9,-18,9),pt(18,-23,10),pt(27,-20,11)],[2.6,2.1,1.7]),
         ('outer',[pt(27,-20,11),pt(34,-26,12),pt(41,-22,12)],[1.9,1.55,1.3]),
         ('lower',[pt(41,-22,12),pt(52,-26,12),pt(61,-27,12)],[1.5,1,.25])]:
-        tube('Articulated wing spar '+label+' '+part,prefix+part,points,radii,2)
-    # Fork below the elbow: a visible negative space instead of a membrane-filled triangle.
-    tube('Open radial fork '+label,prefix+'upper',
-         [pt(12,-18,11),pt(19,-13,13),pt(27,-20,11)],[1.25,1.05,1.5],3)
-    for i,(x,y,part) in enumerate([(27,-20,'outer'),(41,-22,'lower')]):
-        block('Wing joint collar %s %d'%(label,i),prefix+part,pt(x,y,11),(3,3,3),3)
-    # Bone fingers radiate from the elbow/wrist; their ends remain visible among the vanes.
-    for i,(root,end,part) in enumerate([
-        ((21,-20,12),(24,1,14),'upper'),
-        ((29,-22,12),(38,3,16),'outer'),
-        ((41,-23,12),(55,-2,16),'lower')]):
-        a,b=Vector(pt(*root)),Vector(pt(*end))
-        tube('Radiating bone finger %s %d'%(label,i),prefix+part,
-             [a,a.lerp(b,.54)+Vector((s*1.5,0,0)),b],[1.0,.7,.16],2)
-
-    # Inner secondaries close the shoulder-to-elbow surface; tips remain individually readable.
+        tube('Swept load ridge '+label+' '+part,prefix+part,points,radii,13)
+    # Broad branching silhouettes: each hook grows outwards from the wing root,
+    # opens a long negative-space notch, then returns to a sharp swept tip.
+    # Five unequal blades replace the previous parallel hanging rods and crossbarbs.
+    branches = [
+        ('upper',[(12,-19),(23,-29),(34,-43),(43,-53),(38,-39),(51,-48),
+                  (41,-32),(29,-24),(18,-16)],[(13,-19),(28,-30),(42,-43)]),
+        ('outer',[(25,-22),(38,-30),(53,-33),(68,-42),(61,-29),(50,-22),
+                  (62,-25),(69,-22),(53,-16),(39,-19),(29,-17)],
+                 [(27,-22),(44,-27),(61,-34)]),
+        ('lower',[(38,-23),(48,-22),(57,-18),(72,-21),(63,-11),(55,-9),
+                  (64,-8),(67,-4),(51,-5),(44,-14)],[(40,-22),(52,-15),(65,-15)]),
+        ('outer',[(26,-19),(34,-14),(41,-6),(61,1),(51,4),(43,1),
+                  (47,9),(41,6),(33,-3),(27,-11)],[(28,-18),(38,-5),(53,1)]),
+        ('upper',[(15,-18),(23,-15),(27,-6),(34,5),(44,13),(32,10),
+                  (26,4),(28,13),(22,9),(19,-1)],[(17,-17),(25,-4),(37,9)])
+    ]
+    for i,(part,outline,keel) in enumerate(branches):
+        z=12+i*.45
+        armor('Swept fork blade %s %d'%(label,i),prefix+part,
+              [(s*x,y) for x,y in outline],z-.85,z+.85,13)
+        # Restrained pale ridge reads as bone, without rebuilding a white ladder.
+        tube('Fork blade crest %s %d'%(label,i),prefix+part,
+             [pt(x,y,z-1) for x,y in keel],[.75,.55,.06],3,4)
     for i in range(5):
         x=13+i*3.4
         feather('Inner secondary %s %d'%(label,i),prefix+('upper' if i<3 else 'outer'),
@@ -449,13 +484,6 @@ for s,label in [(1,'left'),(-1,'right')]:
             feather('Dorsal covert %s %d'%(label,i),joint,a+Vector((s*.5,-1,2.0)),
                     a.lerp(b,.48)+Vector((s,0,2.4)),4.1,10,-s*.6)
 
-    # The damaged right wing exposes two extra distal bone lengths, not uniformly shorter feathers.
-    for i in range(2):
-        x=41+i*10
-        joint=prefix+'broken_'+str(i+1)
-        end=pt(x+7,-1-i*4,14) if label=='right' else pt(x+5,-7-i*4,14)
-        tube('Exposed broken quill %s %d'%(label,i),joint,
-             [pt(x,-23,13),end],[.7,.12],2)
 
 for i in range(3):
     joint='spine_tail_'+str(i+1)
@@ -498,6 +526,12 @@ for frame,name in [(1,'phase_one'),(41,'phase_two'),(81,'death_reveal')]:
     for obj in joints.values():
         obj.keyframe_insert('location',frame=frame)
         obj.keyframe_insert('rotation_quaternion',frame=frame)
+    for obj in meshes:
+        if 'shed_delay' in obj:
+            obj.hide_render=name!='phase_one'
+            obj.hide_viewport=name!='phase_one'
+            obj.keyframe_insert('hide_render',frame=frame)
+            obj.keyframe_insert('hide_viewport',frame=frame)
     bpy.context.scene.timeline_markers.new(name,frame=frame)
 bpy.context.scene.frame_end = 81
 bpy.context.scene.frame_set(1)

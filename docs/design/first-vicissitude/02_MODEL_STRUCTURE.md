@@ -1,6 +1,8 @@
 # 02 — 模型、资产与锚点接口
 
-当前资产为 186 部件 / 3,572 三角面，历史对照、肢体与握拳修订见 [17](17_BODY_MASS_AND_HISTORY_REVIEW.md)。16 的 2,188 面和下方 1,792 面记录均为历史阶段。
+最新交付为 237 部件 / 5,260 三角面，二阶段可见 4,660 面，见 [20](20_PAINTED_MASS_AND_FEATHER_SHEDDING.md)。胸环中心从运行时骨架导出，供洞缘和环片共同使用；以下较早交付数量保留为历史。
+
+上一阶段资产为 186 部件 / 3,572 三角面，历史对照、肢体与握拳修订见 [17](17_BODY_MASS_AND_HISTORY_REVIEW.md)。16 的 2,188 面和下方 1,792 面记录均为历史阶段。
 
 2026-09-20：保留本页骨架与锚点接口；最新骨翼/羽翼修订为 128 部件 / 1,792 三角面，见 [15](15_WING_STRUCTURE_AND_FEATHERS.md)。参考统计见 [14](14_REFERENCE_GEOMETRY_BUDGET.md)，行为修订见 [13](13_COMBAT_AND_STYLE_REFINEMENT.md)。
 

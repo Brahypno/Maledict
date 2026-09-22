@@ -15,7 +15,9 @@ public final class RigPoseExporter {
                     j.partName(), j.parent() == null ? "" : j.parent().partName(),
                     j.pivotX(), j.pivotY(), j.pivotZ()));
         }
-        out.append("],\"poses\":{");
+        out.append(String.format("],\"chest_hub\":[%f,%f],\"poses\":{",
+                Joint.TORSO.pivotX() + VicissitudeRig.CHEST_RING_HUB_X,
+                Joint.TORSO.pivotY() + VicissitudeRig.CHEST_RING_HUB_Y));
         String[] names = {"phase_one", "phase_two", "death_reveal"};
         for (int i = 0; i < names.length; i++) {
             if (i > 0) out.append(',');
