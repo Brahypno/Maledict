@@ -30,6 +30,9 @@ def export(root):
         data.calc_loop_triangles()
         joint = obj['runtime_joint']
         local = obj.matrix_parent_inverse @ obj.matrix_basis
+        if 'deploy_scale' in obj:
+            # Export the fully extended mesh independently of the preview frame.
+            local = local @ Matrix.Diagonal((1/obj.scale.x,1/obj.scale.y,1/obj.scale.z,1))
         verts = [[round(c,5) for c in jv(local @ v.co)] for v in data.vertices]
         if joint.startswith('wing_'):
             wing_bounds.setdefault(joint,[]).extend(verts)
@@ -45,6 +48,7 @@ def export(root):
             faces.append({'n':[round(c,5) for c in n],'v':corners})
         part={'joint':joint,'name':obj.name,'triangles':faces}
         if 'shed_delay' in obj: part['shed_delay']=obj['shed_delay']
+        if 'deploy_scale' in obj: part['deploy_scale']=obj['deploy_scale']
         result['parts'].append(part)
         triangles += len(faces)
         uid = str(uuid.uuid5(uuid.NAMESPACE_URL,obj.name))

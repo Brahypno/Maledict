@@ -7,7 +7,7 @@ import java.util.List;
 
 /** Integration check: actual exported mesh vertices stay inside posed server wing volumes. */
 public final class RigMeshCheck {
-    private record Sample(Joint joint, float x, float y, float z, boolean feather) {}
+    private record Sample(Joint joint, float x, float y, float z, boolean feather, float deployScale) {}
     public static void main(String[] args) throws Exception {
         // The ring must stay face-on to its head-local plane while it rotates over time.
         for (var action : new VicissitudeRig.Action[]{VicissitudeRig.Action.NONE, VicissitudeRig.Action.CAST_FROM_HALO}) {
@@ -31,7 +31,7 @@ public final class RigMeshCheck {
         for (String line : Files.readAllLines(Path.of("build/rig-tool/wing-vertices.csv"))) {
             String[] fields = line.split(",");
             points.add(new Sample(Joint.valueOf(fields[0]), Float.parseFloat(fields[1]),
-                    Float.parseFloat(fields[2]), Float.parseFloat(fields[3]), fields[4].equals("1")));
+                    Float.parseFloat(fields[2]), Float.parseFloat(fields[3]), fields[4].equals("1"),Float.parseFloat(fields[5])));
         }
         long checks = 0;
         for (int phase = 0; phase < 2; phase++) {
@@ -44,8 +44,9 @@ public final class RigMeshCheck {
                         var volumes = VicissitudeRig.segmentVolumes(pose, 10, 64, -23, yaw);
                         for (Sample sample : points) {
                             if (phase == 1 && sample.feather) continue;
-                            var p = VicissitudeRig.worldPoint(pose, sample.joint, sample.x, sample.y,
-                                    sample.z, 10, 64, -23, yaw);
+                            float scale=phase==0 ? sample.deployScale : 1;
+                            var p = VicissitudeRig.worldPoint(pose, sample.joint, sample.x*scale, sample.y*scale,
+                                    sample.z*scale, 10, 64, -23, yaw);
                             boolean inside = volumes.stream().anyMatch(v -> v.segment().isWing()
                                     && v.box().inflate(.00002).contains(p.x(), p.y(), p.z()));
                             if (!inside) throw new AssertionError("Mesh outside wing collision: "

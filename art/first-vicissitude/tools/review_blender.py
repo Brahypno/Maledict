@@ -4,6 +4,8 @@ import json
 import math
 import sys
 import shutil
+import time
+import uuid
 from pathlib import Path
 from mathutils import Vector, Matrix
 
@@ -28,7 +30,7 @@ for part in data['parts']:
         for v in tri['v']:
             assert 0<=v[3]<=1 and 0<=v[4]<=1
             if part['joint'].startswith('wing_'):
-                wing_samples.add(part['joint'].upper()+','+','.join(str(c) for c in v[:3])+(','+'1' if 'shed_delay' in part else ',0'))
+                wing_samples.add(part['joint'].upper()+','+','.join(str(c) for c in v[:3])+(','+'1' if 'shed_delay' in part else ',0')+','+str(part.get('deploy_scale',1)))
         count+=1
 (ROOT/'build/rig-tool').mkdir(parents=True,exist_ok=True)
 (ROOT/'build/rig-tool/wing-vertices.csv').write_text('\n'.join(sorted(wing_samples)))
@@ -111,7 +113,18 @@ def view(name,pos,target,scale,frame=1):
     camera.rotation_euler=(Vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
     camera.data.ortho_scale=scale
     scene.render.filepath=str(OUT/(name+'.png'))
-    bpy.ops.render.render(write_still=True)
+    # Render to an unwatched temporary path before replacing the visible preview.
+    # Direct overwrites can fail while a Windows image preview reads the PNG.
+    bpy.ops.render.render(write_still=False)
+    temporary=ROOT/'build/rig-tool'/('review-'+uuid.uuid4().hex+'.png')
+    bpy.data.images['Render Result'].save_render(str(temporary),scene=scene)
+    for attempt in range(4):
+        try:
+            temporary.replace(OUT/(name+'.png'))
+            break
+        except PermissionError:
+            if attempt==3: raise
+            time.sleep(.25)
     print('REVIEW_DONE',name,flush=True)
 
 scene.frame_set(1)
@@ -122,8 +135,8 @@ if '--views-only' not in sys.argv:
     view('hand_and_elbow_detail',hand_center+Vector((22,-100,15)),hand_center,29)
 
 for phase,frame in ([] if '--details-only' in sys.argv else [('phase_one',1),('phase_two',41)]):
-    for direction,position,scale in [('front',(0,-210,10),141),
-                                     ('side',(210,0,10),110),('back',(0,210,10),141)]:
+    for direction,position,scale in [('front',(0,-210,10),175),
+                                     ('side',(210,0,10),110),('back',(0,210,10),175)]:
         name=phase+'_'+direction
         view(name,position,(0,0,10),scale,frame)
         shutil.copyfile(OUT/(name+'.png'),ART/'preview'/(name+'.png'))
@@ -131,9 +144,10 @@ for phase,frame in ([] if '--details-only' in sys.argv else [('phase_one',1),('p
 if '--views-only' in sys.argv:
     sys.exit(0)
 view('chest_and_crown_detail',(18,-130,30),(0,0,21),66)
-view('death_reveal',(60,-190,50),(0,0,10),141,81)
+view('death_reveal',(60,-190,50),(0,0,10),175,81)
 view('wing_front_detail',(40,-160,34),(36,10,15),72)
 view('wing_back_detail',(40,170,34),(36,10,15),72)
+view('phase_two_wing_detail',(45,-190,38),(45,10,20),100,41)
 # Keep the alpha silhouette when checking a cutout wing in clay.
 original_materials={obj.name:list(obj.data.materials) for obj in meshes.values()}
 for obj in meshes.values():
@@ -148,9 +162,9 @@ for obj in meshes.values():
     shader.inputs['Roughness'].default_value=.8
     obj.data.materials.clear()
     obj.data.materials.append(material)
-view('grey_front',(0,-210,10),(0,0,10),141)
+view('grey_front',(0,-210,10),(0,0,10),175)
 view('grey_side',(210,0,10),(0,0,10),110)
-view('grey_back',(0,210,10),(0,0,10),141)
+view('grey_back',(0,210,10),(0,0,10),175)
 for obj in meshes.values():
     obj.data.materials.clear()
     for material in original_materials[obj.name]:
@@ -158,4 +172,4 @@ for obj in meshes.values():
 scene.world.node_tree.nodes.get('Background').inputs[1].default_value=.15
 for obj in scene.objects:
     if obj.type=='LIGHT': obj.data.energy*=.20
-view('night',(65,-190,48),(0,0,10),141)
+view('night',(65,-190,48),(0,0,10),175)

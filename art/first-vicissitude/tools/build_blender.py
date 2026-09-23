@@ -49,7 +49,7 @@ PALETTE = [
     ('Cold star core', 'E6EDF5', .85),
     ('Muted fate seam', '7960A5', .55),
     ('Charcoal vestment', '211C2D', 0),
-    ('Ash feather edge', '8598B5', 0),
+    ('Painted ossuary wing', '776185', 0),
     ('Umbral primary feather', '51485F', 0),
     ('Slate overlapping feather', '8794AC', 0),
     ('Broken slate feather', '8794AC', 0),
@@ -101,12 +101,48 @@ def atlas(emissive=False):
                 slit = barb in (4,9,14,18) and edge_distance < (.14 if idx==11 else .055)
                 broken = idx==11 and v>.67 and u>.68 and int(v*24)%5<3
                 a = 0 if emissive or slit or broken else 1
-            if idx in (13,14):
-                # Broad baked light/shadow planes stay readable at combat distance.
-                shade=.96 if 3<=px<=9 else .69 if px>=12 else .80
-                if py<4: shade*=.76
-                if py in (4,5) and px>8: shade*=.85
-                if px in (3,4) and 5<=py<=12: shade+=.10
+            if idx in (2,3,8,13,14):
+                # Original two-pixel clusters: material depth lives in the atlas.
+                # UV direction follows the wing/limb, not world-space projection.
+                qx,qy=(x%64)//2,(y%64)//2
+                if idx==8:
+                    spine=13+(1 if 9<=qy<19 else 0)
+                    shade=.94 if qx<spine else .65
+                    if qx<4: shade=.58
+                    if qx in (4,5): shade=1.18
+                    if qx==6: shade=1.04
+                    if qx==spine: shade=1.22
+                    if qx==spine+1: shade=.43
+                    if qx>27: shade=.46
+                    # Broken pale mineral edge; deliberately not a continuous neon stripe.
+                    if qx in (4,5) and qy not in (5,6,17,18,26):
+                        rgb=[.61,.58,.67]
+                        shade=1 if qx==4 else .88
+                    # Two stepped fissures with a lit lip, and small worn chips.
+                    crack=20+(qy-8)//3 if 7<=qy<=17 else 9+(qy-22)//2
+                    if (7<=qy<=17 or 22<=qy<=27) and qx==crack: shade=.40
+                    if (7<=qy<=17 or 22<=qy<=27) and qx==crack-1: shade=1.12
+                    if qy<5: shade*=.65+.06*qy
+                    if (qx,qy) in ((7,11),(8,11),(8,12),(24,23),(25,23),(24,24)):
+                        shade=1.16
+                else:
+                    # Broad planes first; shallow inset borders and joint shadows second.
+                    shade=.97 if 6<=qx<=19 else .73 if qx>=23 else .83
+                    if qy<6: shade*=.70
+                    if qy in (6,7) and 7<=qx<=24: shade*=.82
+                    if qx in (4,5) and 5<=qy<=27: shade=1.10
+                    if qx in (25,26) and 8<=qy<=25: shade=.55
+                    if qx==24 and 8<=qy<=25: shade=.99
+                    if qy==25 and 8<=qx<=24: shade=.58
+                    if qy==26 and 8<=qx<=22: shade=1.03
+                    crack=10+(qy-11)//3
+                    if 11<=qy<=21 and qx==crack: shade*=.64
+                    if 11<=qy<=21 and qx==crack-1: shade*=1.08
+                    if (qx,qy) in ((6,8),(7,8),(6,9),(21,23),(22,23),(21,24)):
+                        shade=1.13
+                    if idx in (2,3):
+                        # Bone keeps quieter markings than the remaining shell plates.
+                        shade=.5*shade+.5*(.94 if qx<20 else .72)
             if idx==15:
                 # The silver track and crossbars are painted into the ring's radial UV.
                 silver=px in (6,7,8,9) or (py in (3,11) and 3<=px<=12)
@@ -431,35 +467,48 @@ for s,label in [(1,'left'),(-1,'right')]:
 for s,label in [(1,'left'),(-1,'right')]:
     def pt(x,y,z=10): return (s*x,y,z)
     prefix='wing_'+label+'_'
-    # A continuous dark load-bearing ridge, without pale scaffold collars.
-    for part,points,radii in [
-        ('upper',[pt(9,-18,9),pt(18,-23,10),pt(27,-20,11)],[2.6,2.1,1.7]),
-        ('outer',[pt(27,-20,11),pt(34,-26,12),pt(41,-22,12)],[1.9,1.55,1.3]),
-        ('lower',[pt(41,-22,12),pt(52,-26,12),pt(61,-27,12)],[1.5,1,.25])]:
-        tube('Swept load ridge '+label+' '+part,prefix+part,points,radii,13)
-    # Broad branching silhouettes: each hook grows outwards from the wing root,
-    # opens a long negative-space notch, then returns to a sharp swept tip.
-    # Five unequal blades replace the previous parallel hanging rods and crossbarbs.
-    branches = [
-        ('upper',[(12,-19),(23,-29),(34,-43),(43,-53),(38,-39),(51,-48),
-                  (41,-32),(29,-24),(18,-16)],[(13,-19),(28,-30),(42,-43)]),
-        ('outer',[(25,-22),(38,-30),(53,-33),(68,-42),(61,-29),(50,-22),
-                  (62,-25),(69,-22),(53,-16),(39,-19),(29,-17)],
-                 [(27,-22),(44,-27),(61,-34)]),
-        ('lower',[(38,-23),(48,-22),(57,-18),(72,-21),(63,-11),(55,-9),
-                  (64,-8),(67,-4),(51,-5),(44,-14)],[(40,-22),(52,-15),(65,-15)]),
-        ('outer',[(26,-19),(34,-14),(41,-6),(61,1),(51,4),(43,1),
-                  (47,9),(41,6),(33,-3),(27,-11)],[(28,-18),(38,-5),(53,1)]),
-        ('upper',[(15,-18),(23,-15),(27,-6),(34,5),(44,13),(32,10),
-                  (26,4),(28,13),(22,9),(19,-1)],[(17,-17),(25,-4),(37,9)])
-    ]
-    for i,(part,outline,keel) in enumerate(branches):
-        z=12+i*.45
-        armor('Swept fork blade %s %d'%(label,i),prefix+part,
-              [(s*x,y) for x,y in outline],z-.85,z+.85,13)
-        # Restrained pale ridge reads as bone, without rebuilding a white ladder.
-        tube('Fork blade crest %s %d'%(label,i),prefix+part,
-             [pt(x,y,z-1) for x,y in keel],[.75,.55,.06],3,4)
+    # All primary vanes grow from one shoulder root. Sample only the silhouette
+    # bends; a shallow diamond section supplies a broad lit face and a dark edge.
+    def crescent(name,controls,width,depth,steps=7):
+        controls=[Vector((s*x,y,depth)) for x,y in controls]
+        verts,faces,uvs=[],[],[]
+        for k in range(steps+1):
+            t=k/steps
+            a,b,c,d=controls
+            center=(1-t)**3*a+3*(1-t)**2*t*b+3*(1-t)*t*t*c+t**3*d
+            tangent=3*(1-t)**2*(b-a)+6*(1-t)*t*(c-b)+3*t*t*(d-c)
+            side=Vector((-tangent.y*s,tangent.x*s,0)).normalized()
+            # Narrow shared roots, widening outer belly, long pointed return.
+            w=max(.008,width*(.06+.94*math.sin(math.pi*t**1.45)**.8)*(1-t)**.18)
+            thickness=.025+.975*math.sin(math.pi*t)**.7
+            # A three-vertex section preserves side thickness. The old raised
+            # front ridge is now painted, removing one surface strip per segment.
+            verts.extend([center-side*w*.7,center+side*w*1.3,
+                          center+Vector((0,0,.45*thickness))])
+            uvs.extend([(0,t),(1,t),(.48,t)])
+            if k:
+                for lane in range(3):
+                    j=(k-1)*3+lane
+                    faces.append((j,(k-1)*3+(lane+1)%3,k*3+(lane+1)%3,k*3+lane))
+        faces.extend([(2,1,0),tuple(range(steps*3,steps*3+3))])
+        obj=mesh(name+' '+label,prefix+'upper',verts,faces,8,uvs)
+        obj['deploy_scale']=.45
+        return obj
+    tube('Shared wing root '+label,prefix+'upper',
+         [pt(9,-18,9),pt(14,-19,12),pt(20,-21,12)],[2.3,2,1.3],13,4)
+    # Long scimitar vanes: upper sweep, middle sweep, low sweep and trailing hook.
+    # Unequal curves leave lens-shaped gaps instead of straight triangular slots.
+    crescent('High crescent primary',[(13,-19),(33,-43),(64,-23),(82,-51)],4.6,12,12)
+    crescent('Middle crescent primary',[(13,-18),(36,-19),(60,-31),(83,-23)],4.2,13.8,12)
+    crescent('Low crescent primary',[(13,-18),(39,-7),(62,14),(84,6)],4.2,15.4,12)
+    crescent('Trailing crescent primary',[(12,-17),(29,5),(45,5),(62,27)],3.2,16.2,10)
+    # Short recurved growths stay attached to a primary rather than fanning out
+    # as equal-length spikes. They share its parent so the fork cannot split.
+    crescent('Root upper hook',[(20,-25),(26,-30),(22,-36),(32,-43)],1.7,12.2,6)
+    crescent('Upper hooked spur',[(46,-34),(51,-38),(53,-41),(56,-47)],1.35,12.3,6)
+    crescent('Middle returning spur',[(43,-24),(51,-25),(57,-20),(65,-19)],1.4,14,6)
+    crescent('Low returning spur',[(38,-7),(43,-1),(49,2),(54,5)],1.25,15.6,6)
+    crescent('Trailing inner spur',[(26,-3),(31,4),(27,9),(37,16)],1.2,16.4,6)
     for i in range(5):
         x=13+i*3.4
         feather('Inner secondary %s %d'%(label,i),prefix+('upper' if i<3 else 'outer'),
@@ -527,6 +576,10 @@ for frame,name in [(1,'phase_one'),(41,'phase_two'),(81,'death_reveal')]:
         obj.keyframe_insert('location',frame=frame)
         obj.keyframe_insert('rotation_quaternion',frame=frame)
     for obj in meshes:
+        if 'deploy_scale' in obj:
+            scale=obj['deploy_scale'] if name=='phase_one' else 1
+            obj.scale=(scale,scale,scale)
+            obj.keyframe_insert('scale',frame=frame)
         if 'shed_delay' in obj:
             obj.hide_render=name!='phase_one'
             obj.hide_viewport=name!='phase_one'
@@ -572,8 +625,8 @@ for screen in bpy.data.screens:
 bpy.ops.wm.save_as_mainfile(filepath=str(ART/'first_vicissitude.blend'))
 
 if '--no-render' not in sys.argv:
-    views = [('hero',(65,-190,48),141),('front',(0,-210,10),141),
-             ('side',(210,0,10),110),('back',(0,210,10),141)]
+    views = [('hero',(65,-190,48),175),('front',(0,-210,10),175),
+             ('side',(210,0,10),110),('back',(0,210,10),175)]
     if '--quick' in sys.argv:
         views = views[:1]
     for phase,frame in [('phase_one',1),('phase_two',41)]:

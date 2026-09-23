@@ -1,6 +1,6 @@
 {
-  "mesh_parts": 221,
-  "triangles": 5244,
+  "mesh_parts": 215,
+  "triangles": 5552,
   "finite_vertices_and_unit_normals": true,
   "uvs_in_atlas": true,
   "chest_clear_rays": 12,
@@ -8,9 +8,9 @@
   "front_core_visible_fraction": 0.0,
   "surrounding_body_mass_present": true,
   "bone_srgb_sample": [
-    0.6941176652908325,
-    0.7098039388656616,
-    0.7529412508010864
+    0.7725490927696228,
+    0.7921569347381592,
+    0.8352941870689392
   ],
   "violet_srgb_sample": [
     0.3294117748737335,

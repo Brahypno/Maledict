@@ -1,8 +1,8 @@
 {
-  "objects": 221,
-  "triangles": 5244,
+  "objects": 215,
+  "triangles": 5552,
   "joints": 65,
-  "phase_two_triangles": 4644,
+  "phase_two_triangles": 4952,
   "source": "Blender mesh, same geometry exported to runtime and Blockbench",
   "texture_size": [
     256,

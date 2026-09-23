@@ -21,7 +21,7 @@ final class VicissitudeBlenderMesh {
     private static final ResourceLocation RESOURCE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "models/entity/first_vicissitude.mesh.json");
     private final List<MeshPart> parts = new ArrayList<>();
-    private record MeshPart(Joint joint, List<Triangle> triangles, float delay, Vertex center) {}
+    private record MeshPart(Joint joint, List<Triangle> triangles, float delay, float deployScale, Vertex center) {}
 
     private record Vertex(float x, float y, float z, float u, float v) {}
 
@@ -51,6 +51,7 @@ final class VicissitudeBlenderMesh {
                 for (Triangle t : target) { x+=t.a.x+t.b.x+t.c.x; y+=t.a.y+t.b.y+t.c.y; z+=t.a.z+t.b.z+t.c.z; }
                 float count=target.size()*3F;
                 parts.add(new MeshPart(joint, target, part.has("shed_delay") ? part.get("shed_delay").getAsFloat() : -1,
+                        part.has("deploy_scale") ? part.get("deploy_scale").getAsFloat() : 1,
                         new Vertex(x/count,y/count,z/count,0,0)));
             }
         }
@@ -84,6 +85,12 @@ final class VicissitudeBlenderMesh {
                 stack.scale(scale,scale,scale);
                 stack.translate(-part.center.x,-part.center.y,-part.center.z);
             } else model.poseStackTo(part.joint, stack);
+            if (part.deployScale < 1) {
+                float progress = Math.max(0, Math.min(1, (model.sheddingTicks()-8)/36F));
+                progress = progress*progress*(3-2*progress);
+                float scale = part.deployScale+(1-part.deployScale)*progress;
+                stack.scale(scale,scale,scale);
+            }
             var pose = stack.last();
             for (Triangle triangle : part.triangles) {
                 emit(triangle.a, triangle, pose, buffer, light, overlay, red, green, blue, alpha);

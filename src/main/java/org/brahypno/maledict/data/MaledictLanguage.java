@@ -40,9 +40,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + ELEGY_BOW_ENTRY + ".description", "停不下的思念");
             add("malum.gui.book.entry.page.headline." + ELEGY_BOW_ENTRY, "哀歌弓");
             add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".1",
-                "停不下的思念迫使我倾注在制 作上。于是，思念弓具有了满 蓄力自动发射的功能，我将其 称为哀歌之弓");
+                "我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。 我将我不止息的哀歌灌注到弓 中，使之具有了满蓄力自动发 射的能力");
             add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY, "图腾符文：续");
-            add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".description", "更单纯的脉动");
+            add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".description", "重复实验直至推翻");
             add("malum.gui.book.entry.page.headline." + TOTEMIC_RUNES_CONTINUED_ENTRY, "图腾符文：续");
             add("malum.gui.book.entry.page.text." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".1",
                 "在适当调整符文仪式的画法后 ，我又成功刻印了其他灵气仪 式在符板上。看来之前得出的 只有基本元素对应的仪式才能 起效是不完全正确的。原因是 这些脉动更加的单纯，因而效 果与完整的仪式有些区别");
