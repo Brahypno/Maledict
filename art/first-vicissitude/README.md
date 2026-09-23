@@ -1,12 +1,24 @@
 # first-vicissitude 美术交付
 
+后续优化先读 [持续工作约定](AGENTS.md)：分析参考结构、减面与精细贴图补偿同步实施、同条件前后对照，以视觉保留为目标。
+
 2026-09-13 按用户要求改用 Blender 重做。造型源为 `tools/build_blender.py` 和
 `first_vicissitude.blend`；游戏网格、Blockbench 网格和翼部受击包围盒由同一个 Blender 导出器输出。
 旧 `RigArtGenerator.java` 是早期方块预览工具，不再用于这版资产。
 
+**首批肩臂方向已获用户肯定，当前已扩展到躯干、完整骨翼和环。** 116 个网格采用逐表面 UV 与明暗稿，44 对左右部件复用；头部、羽片和部分附属残片仍为旧稿。环的装饰层已移入贴图，见 `docs/design/first-vicissitude/23_PAINTED_RINGS.md`。
+
 ## 文件
 
-- `first_vicissitude.blend`：215 个可编辑网格，5,552 个三角面，二阶段可见 4,952 面，65 个层级关节/锚点。最新身体明暗与落羽修订见设计文档 20；胸环沿用 18。
+最新见设计记录 28：两枚窄祭衣片重做为环绕下腹的宽残幅，破边用透明纹理；当前 185 网格 / 3,344 面，二阶段 3,044 面。七组滚动对照聚焦下身，旧轮次说明保留作历史记录。
+
+最新修订见设计记录 27：胸环刻纹、腹部骨片、祭衣残幅及非人晶体头壳；当前为 185 网格 / 3,332 三角面，二阶段 3,032 面。七组滚动对照的近景已切换到头部。下方旧轮次数量为历史记录。
+
+最新躯干/肩臂/拳头纹理来自 `tools/body_surfaces.py`，含胸环下方腹部细化，见设计记录 26。固定七组对照已换成相同的身体近景机位，before 为主翼完成版，after 为本轮完成版，未增加图组。
+
+最新主翼纹理由 `tools/wing_surfaces.py` 编排，见 [滚动前后对照](preview/blender/spur-comparison/index.html)：仅保留上一轮结果与本轮结果，共七组视角。主翼宽窄骨脊、暗槽与裂纹已重画，几何和 UV 不变；其他旧预览未同步更新。
+
+- `first_vicissitude.blend`：185 个可编辑网格，3,344 个三角面，二阶段可见 3,044 面，65 个层级关节/锚点。减面账目见设计文档 22–25；逐表面贴图见 21、23、25，胸环位置沿用 18。最新前后图见 `preview/blender/spur-comparison/index.html`，其余预览保留历史状态。
   贴图内嵌；时间轴第 1 / 41 / 81 帧分别为一阶段、二阶段、死亡露核检查姿态。
   使用 Empty 父子关节做刚性绑定，没有蒙皮依赖。Blender 坐标 = `(javaX, javaZ, -javaY)`，
   实体原点对应 Blender Z = -24；16 单位 = 1 格。
@@ -18,6 +30,12 @@
   胸部/头部细节、死亡露核和夜间灯光检查。**这些不是游戏内截图**。
 - `../../src/main/resources/assets/maledict/models/entity/first_vicissitude.mesh.json`：游戏实际加载的网格。
 - `../../src/main/resources/assets/maledict/textures/entity/first_vicissitude.png`：基础贴图（256×256）。
+- `tools/atlas16.py`：只生成样稿范围以外的旧占位，后续逐步替换。
+- `tools/surface_sample.py`：本轮局部像素图稿与表面展开，重建不会被旧占位规则覆盖。
+- `tools/ring_surfaces.py`：胸环、环座和背环的独立表面图稿；`preview/blender/ring_*.png` 为近图与转动姿态检查。
+- `preview/blender/atlas-layout.json`：全部纹理区域；样稿区域以 `surface:` 开头，按表面尺寸分配，不能再假定每块都是 16×16。
+- `preview/blender/surface_sample_{arm,arm_unlit,wing}.png`：本轮普通光照和无灯光近图；`surface_sample_uv.svg` 为实际多边形 UV 线稿，编号对应 `surface_sample_islands.json`。其余旧预览未随此次局部修改重渲染。
+- `preview/blender/surface_body_{front,back,unlit}.png` 与 `surface_phase_two.png`：第二批躯干正背面、无灯光和二阶段整体图；用检查脚本 `-- --sample-only` 统一生成这些新预览。
 - `../../src/main/resources/assets/maledict/textures/entity/first_vicissitude_emissive.png`：
   同 UV 的自发光层，只有头核、能量与部分环片被绘制。
 - `../../src/main/java/org/brahypno/maledict/rig/VicissitudeMeshGeometry.java`：导出的逐关节翼部包围盒。

@@ -1,0 +1,2551 @@
+{
+  "size": 256,
+  "prototype_cell_size": 16,
+  "allocated_pixels": 48576,
+  "regions": [
+    {
+      "name": "surface:flank:3:lane0",
+      "material": 3,
+      "x": 0,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:flank:3:lane1",
+      "material": 3,
+      "x": 6,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:flank:3:lane2",
+      "material": 3,
+      "x": 12,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:flank:3:lane3",
+      "material": 3,
+      "x": 18,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:flank:3:cap0",
+      "material": 3,
+      "x": 24,
+      "y": 112,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:flank:3:cap1",
+      "material": 3,
+      "x": 32,
+      "y": 112,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:pectoral:14:lane0",
+      "material": 14,
+      "x": 40,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:pectoral:14:lane1",
+      "material": 14,
+      "x": 46,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:pectoral:14:lane2",
+      "material": 14,
+      "x": 52,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:pectoral:14:lane3",
+      "material": 14,
+      "x": 58,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:pectoral:14:cap0",
+      "material": 14,
+      "x": 64,
+      "y": 112,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:pectoral:14:cap1",
+      "material": 14,
+      "x": 72,
+      "y": 112,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:root:3:lane0",
+      "material": 3,
+      "x": 80,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:root:3:lane1",
+      "material": 3,
+      "x": 86,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:root:3:lane2",
+      "material": 3,
+      "x": 92,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:root:3:lane3",
+      "material": 3,
+      "x": 98,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:root:3:cap0",
+      "material": 3,
+      "x": 104,
+      "y": 112,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:root:3:cap1",
+      "material": 3,
+      "x": 112,
+      "y": 112,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:scapula:0:front",
+      "material": 0,
+      "x": 120,
+      "y": 112,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:scapula:0:back",
+      "material": 0,
+      "x": 132,
+      "y": 112,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:scapula:0:top",
+      "material": 0,
+      "x": 144,
+      "y": 112,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:scapula:0:outer",
+      "material": 0,
+      "x": 156,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:scapula:0:bottom",
+      "material": 0,
+      "x": 162,
+      "y": 112,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:scapula:0:inner",
+      "material": 0,
+      "x": 174,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:flank:0:front",
+      "material": 0,
+      "x": 180,
+      "y": 112,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:flank:0:back",
+      "material": 0,
+      "x": 192,
+      "y": 112,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:flank:0:top",
+      "material": 0,
+      "x": 204,
+      "y": 112,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:flank:0:outer",
+      "material": 0,
+      "x": 216,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:flank:0:bottom",
+      "material": 0,
+      "x": 222,
+      "y": 112,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:flank:0:inner",
+      "material": 0,
+      "x": 234,
+      "y": 112,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:pectoral:13:front",
+      "material": 13,
+      "x": 240,
+      "y": 112,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:pectoral:13:back",
+      "material": 13,
+      "x": 144,
+      "y": 118,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:pectoral:13:top",
+      "material": 13,
+      "x": 162,
+      "y": 118,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:pectoral:13:outer",
+      "material": 13,
+      "x": 204,
+      "y": 118,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:pectoral:13:bottom",
+      "material": 13,
+      "x": 222,
+      "y": 118,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:pectoral:13:inner",
+      "material": 13,
+      "x": 210,
+      "y": 118,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:sternum:2:lane0",
+      "material": 2,
+      "x": 24,
+      "y": 120,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:sternum:2:lane1",
+      "material": 2,
+      "x": 30,
+      "y": 120,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:sternum:2:lane2",
+      "material": 2,
+      "x": 64,
+      "y": 120,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:sternum:2:lane3",
+      "material": 2,
+      "x": 70,
+      "y": 120,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:sternum:2:cap0",
+      "material": 2,
+      "x": 104,
+      "y": 120,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:sternum:2:cap1",
+      "material": 2,
+      "x": 112,
+      "y": 120,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:vertebra:3:lane0",
+      "material": 3,
+      "x": 162,
+      "y": 124,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:vertebra:3:lane1",
+      "material": 3,
+      "x": 168,
+      "y": 124,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:vertebra:3:lane2",
+      "material": 3,
+      "x": 222,
+      "y": 124,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:vertebra:3:lane3",
+      "material": 3,
+      "x": 228,
+      "y": 124,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:vertebra:3:cap0",
+      "material": 3,
+      "x": 0,
+      "y": 128,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:vertebra:3:cap1",
+      "material": 3,
+      "x": 8,
+      "y": 128,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:rib:14:lane0",
+      "material": 14,
+      "x": 16,
+      "y": 128,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:rib:14:lane1",
+      "material": 14,
+      "x": 36,
+      "y": 128,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:rib:14:lane2",
+      "material": 14,
+      "x": 42,
+      "y": 128,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:rib:14:lane3",
+      "material": 14,
+      "x": 48,
+      "y": 128,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:rib:14:cap0",
+      "material": 14,
+      "x": 54,
+      "y": 128,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:rib:14:cap1",
+      "material": 14,
+      "x": 76,
+      "y": 128,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:sternum:3:front",
+      "material": 3,
+      "x": 84,
+      "y": 128,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:sternum:3:back",
+      "material": 3,
+      "x": 96,
+      "y": 128,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:sternum:3:top",
+      "material": 3,
+      "x": 108,
+      "y": 128,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:sternum:3:outer",
+      "material": 3,
+      "x": 120,
+      "y": 128,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:sternum:3:bottom",
+      "material": 3,
+      "x": 126,
+      "y": 128,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:sternum:3:inner",
+      "material": 3,
+      "x": 138,
+      "y": 128,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:vertebra:0:front",
+      "material": 0,
+      "x": 174,
+      "y": 128,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:vertebra:0:back",
+      "material": 0,
+      "x": 186,
+      "y": 128,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:vertebra:0:top",
+      "material": 0,
+      "x": 234,
+      "y": 128,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:vertebra:0:outer",
+      "material": 0,
+      "x": 156,
+      "y": 128,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:vertebra:0:bottom",
+      "material": 0,
+      "x": 108,
+      "y": 134,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:vertebra:0:inner",
+      "material": 0,
+      "x": 198,
+      "y": 128,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:ring_socket:3:front",
+      "material": 3,
+      "x": 204,
+      "y": 140,
+      "width": 40,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:ring_socket:3:outer",
+      "material": 3,
+      "x": 0,
+      "y": 144,
+      "width": 40,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:ring_socket:3:back",
+      "material": 3,
+      "x": 40,
+      "y": 144,
+      "width": 40,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:ring_socket:3:inner",
+      "material": 3,
+      "x": 80,
+      "y": 144,
+      "width": 40,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:ring_socket:3:cap0",
+      "material": 3,
+      "x": 246,
+      "y": 128,
+      "width": 8,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:ring_socket:3:cap1",
+      "material": 3,
+      "x": 246,
+      "y": 132,
+      "width": 8,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:ring_chest:0:front",
+      "material": 0,
+      "x": 120,
+      "y": 144,
+      "width": 40,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:ring_chest:0:outer",
+      "material": 0,
+      "x": 160,
+      "y": 144,
+      "width": 40,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:ring_chest:0:back",
+      "material": 0,
+      "x": 0,
+      "y": 148,
+      "width": 40,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:ring_chest:0:inner",
+      "material": 0,
+      "x": 80,
+      "y": 148,
+      "width": 40,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:ring_chest:0:cap0",
+      "material": 0,
+      "x": 126,
+      "y": 134,
+      "width": 8,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:ring_chest:0:cap1",
+      "material": 0,
+      "x": 144,
+      "y": 134,
+      "width": 8,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "5:Nested star crystal core",
+      "material": 5,
+      "x": 0,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "1:Fractured crystal shell 0",
+      "material": 1,
+      "x": 16,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "14:Crystal edge clasp 0",
+      "material": 14,
+      "x": 32,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "0:Fractured crystal shell 1",
+      "material": 0,
+      "x": 48,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "14:Crystal edge clasp 1",
+      "material": 14,
+      "x": 64,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "1:Fractured crystal shell 2",
+      "material": 1,
+      "x": 80,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "3:Fractured crystal shell 3",
+      "material": 3,
+      "x": 96,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "0:Fractured crystal shell 4",
+      "material": 0,
+      "x": 112,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "1:Fractured crystal shell 5",
+      "material": 1,
+      "x": 128,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "0:Fractured crystal shell 6",
+      "material": 0,
+      "x": 144,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "1:Fractured crystal shell 7",
+      "material": 1,
+      "x": 160,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "3:Broken crystal enclosure paired",
+      "material": 3,
+      "x": 176,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "2:Upper star ray",
+      "material": 2,
+      "x": 192,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "1:Offset star splinter",
+      "material": 1,
+      "x": 208,
+      "y": 0,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "surface:ring_halo:0:front",
+      "material": 0,
+      "x": 160,
+      "y": 148,
+      "width": 64,
+      "height": 12,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:ring_halo:0:outer",
+      "material": 0,
+      "x": 40,
+      "y": 152,
+      "width": 64,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:ring_halo:0:back",
+      "material": 0,
+      "x": 0,
+      "y": 158,
+      "width": 64,
+      "height": 12,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:ring_halo:0:inner",
+      "material": 0,
+      "x": 64,
+      "y": 158,
+      "width": 64,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:ring_halo:0:cap0",
+      "material": 0,
+      "x": 204,
+      "y": 134,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:ring_halo:0:cap1",
+      "material": 0,
+      "x": 234,
+      "y": 134,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:upper:3:lane0",
+      "material": 3,
+      "x": 246,
+      "y": 136,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:upper:3:lane1",
+      "material": 3,
+      "x": 224,
+      "y": 148,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:upper:3:lane2",
+      "material": 3,
+      "x": 230,
+      "y": 148,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:upper:3:lane3",
+      "material": 3,
+      "x": 236,
+      "y": 148,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:upper:3:lane4",
+      "material": 3,
+      "x": 128,
+      "y": 152,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane4"
+    },
+    {
+      "name": "surface:upper:3:lane5",
+      "material": 3,
+      "x": 134,
+      "y": 152,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane5"
+    },
+    {
+      "name": "surface:upper:3:cap0",
+      "material": 3,
+      "x": 0,
+      "y": 136,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:upper:3:cap1",
+      "material": 3,
+      "x": 8,
+      "y": 136,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:shoulder:14:lane0",
+      "material": 14,
+      "x": 140,
+      "y": 152,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:shoulder:14:lane1",
+      "material": 14,
+      "x": 146,
+      "y": 152,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:shoulder:14:lane2",
+      "material": 14,
+      "x": 152,
+      "y": 152,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:shoulder:14:lane3",
+      "material": 14,
+      "x": 242,
+      "y": 152,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:shoulder:14:lane4",
+      "material": 14,
+      "x": 248,
+      "y": 152,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane4"
+    },
+    {
+      "name": "surface:shoulder:14:lane5",
+      "material": 14,
+      "x": 158,
+      "y": 160,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane5"
+    },
+    {
+      "name": "surface:shoulder:14:cap0",
+      "material": 14,
+      "x": 22,
+      "y": 136,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:shoulder:14:cap1",
+      "material": 14,
+      "x": 54,
+      "y": 136,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:shell:0:front",
+      "material": 0,
+      "x": 164,
+      "y": 160,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:shell:0:back",
+      "material": 0,
+      "x": 176,
+      "y": 160,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:shell:0:top",
+      "material": 0,
+      "x": 62,
+      "y": 136,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:shell:0:outer",
+      "material": 0,
+      "x": 188,
+      "y": 160,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:shell:0:bottom",
+      "material": 0,
+      "x": 126,
+      "y": 138,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:shell:0:inner",
+      "material": 0,
+      "x": 194,
+      "y": 160,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:upper:14:lane0",
+      "material": 14,
+      "x": 200,
+      "y": 160,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:upper:14:lane1",
+      "material": 14,
+      "x": 206,
+      "y": 160,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:upper:14:lane2",
+      "material": 14,
+      "x": 212,
+      "y": 160,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:upper:14:lane3",
+      "material": 14,
+      "x": 218,
+      "y": 160,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:upper:14:lane4",
+      "material": 14,
+      "x": 64,
+      "y": 164,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane4"
+    },
+    {
+      "name": "surface:upper:14:lane5",
+      "material": 14,
+      "x": 70,
+      "y": 164,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane5"
+    },
+    {
+      "name": "surface:upper:14:cap0",
+      "material": 14,
+      "x": 74,
+      "y": 136,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:upper:14:cap1",
+      "material": 14,
+      "x": 76,
+      "y": 164,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:joint:3:lane0",
+      "material": 3,
+      "x": 84,
+      "y": 164,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:joint:3:lane1",
+      "material": 3,
+      "x": 90,
+      "y": 164,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:joint:3:lane2",
+      "material": 3,
+      "x": 96,
+      "y": 164,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:joint:3:lane3",
+      "material": 3,
+      "x": 102,
+      "y": 164,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:joint:3:lane4",
+      "material": 3,
+      "x": 108,
+      "y": 164,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane4"
+    },
+    {
+      "name": "surface:joint:3:lane5",
+      "material": 3,
+      "x": 114,
+      "y": 164,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane5"
+    },
+    {
+      "name": "surface:joint:3:cap0",
+      "material": 3,
+      "x": 120,
+      "y": 164,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:joint:3:cap1",
+      "material": 3,
+      "x": 224,
+      "y": 164,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:joint:13:front",
+      "material": 13,
+      "x": 128,
+      "y": 168,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:joint:13:back",
+      "material": 13,
+      "x": 140,
+      "y": 168,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:joint:13:top",
+      "material": 13,
+      "x": 144,
+      "y": 138,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:joint:13:bottom",
+      "material": 13,
+      "x": 104,
+      "y": 152,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:joint:13:inner",
+      "material": 13,
+      "x": 232,
+      "y": 164,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:joint:13:outer",
+      "material": 13,
+      "x": 152,
+      "y": 168,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:forearm:14:lane0",
+      "material": 14,
+      "x": 238,
+      "y": 168,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:forearm:14:lane1",
+      "material": 14,
+      "x": 244,
+      "y": 168,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:forearm:14:lane2",
+      "material": 14,
+      "x": 250,
+      "y": 168,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:forearm:14:lane3",
+      "material": 14,
+      "x": 0,
+      "y": 170,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:forearm:14:lane4",
+      "material": 14,
+      "x": 6,
+      "y": 170,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane4"
+    },
+    {
+      "name": "surface:forearm:14:lane5",
+      "material": 14,
+      "x": 12,
+      "y": 170,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane5"
+    },
+    {
+      "name": "surface:forearm:14:cap0",
+      "material": 14,
+      "x": 18,
+      "y": 170,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:forearm:14:cap1",
+      "material": 14,
+      "x": 26,
+      "y": 170,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:forearm:3:lane0",
+      "material": 3,
+      "x": 34,
+      "y": 170,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:forearm:3:lane1",
+      "material": 3,
+      "x": 40,
+      "y": 170,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:forearm:3:lane2",
+      "material": 3,
+      "x": 46,
+      "y": 170,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:forearm:3:lane3",
+      "material": 3,
+      "x": 52,
+      "y": 170,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:forearm:3:lane4",
+      "material": 3,
+      "x": 58,
+      "y": 170,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane4"
+    },
+    {
+      "name": "surface:forearm:3:lane5",
+      "material": 3,
+      "x": 76,
+      "y": 172,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane5"
+    },
+    {
+      "name": "surface:forearm:3:cap0",
+      "material": 3,
+      "x": 120,
+      "y": 172,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:forearm:3:cap1",
+      "material": 3,
+      "x": 224,
+      "y": 172,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:joint:3:front",
+      "material": 3,
+      "x": 158,
+      "y": 176,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:joint:3:back",
+      "material": 3,
+      "x": 170,
+      "y": 176,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:joint:3:top",
+      "material": 3,
+      "x": 116,
+      "y": 152,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:joint:3:bottom",
+      "material": 3,
+      "x": 182,
+      "y": 176,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:joint:3:inner",
+      "material": 3,
+      "x": 194,
+      "y": 176,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:joint:3:outer",
+      "material": 3,
+      "x": 200,
+      "y": 176,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:joint:0:front",
+      "material": 0,
+      "x": 206,
+      "y": 176,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:joint:0:back",
+      "material": 0,
+      "x": 18,
+      "y": 178,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:joint:0:top",
+      "material": 0,
+      "x": 64,
+      "y": 180,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:joint:0:bottom",
+      "material": 0,
+      "x": 82,
+      "y": 180,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:joint:0:inner",
+      "material": 0,
+      "x": 218,
+      "y": 176,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:joint:0:outer",
+      "material": 0,
+      "x": 94,
+      "y": 180,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:palm:13:front",
+      "material": 13,
+      "x": 100,
+      "y": 180,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:palm:13:back",
+      "material": 13,
+      "x": 112,
+      "y": 180,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:palm:13:top",
+      "material": 13,
+      "x": 224,
+      "y": 180,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:palm:13:bottom",
+      "material": 13,
+      "x": 182,
+      "y": 182,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:palm:13:inner",
+      "material": 13,
+      "x": 124,
+      "y": 184,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:palm:13:outer",
+      "material": 13,
+      "x": 130,
+      "y": 184,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:finger:14:front",
+      "material": 14,
+      "x": 136,
+      "y": 184,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:finger:14:back",
+      "material": 14,
+      "x": 236,
+      "y": 184,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:finger:14:top",
+      "material": 14,
+      "x": 0,
+      "y": 186,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:finger:14:bottom",
+      "material": 14,
+      "x": 30,
+      "y": 186,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:finger:14:inner",
+      "material": 14,
+      "x": 148,
+      "y": 184,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:finger:14:outer",
+      "material": 14,
+      "x": 248,
+      "y": 184,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:root:13:lane0",
+      "material": 13,
+      "x": 12,
+      "y": 186,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane0"
+    },
+    {
+      "name": "surface:root:13:lane1",
+      "material": 13,
+      "x": 42,
+      "y": 186,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane1"
+    },
+    {
+      "name": "surface:root:13:lane2",
+      "material": 13,
+      "x": 48,
+      "y": 186,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane2"
+    },
+    {
+      "name": "surface:root:13:lane3",
+      "material": 13,
+      "x": 54,
+      "y": 186,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "lane3"
+    },
+    {
+      "name": "surface:root:13:cap0",
+      "material": 13,
+      "x": 60,
+      "y": 186,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:root:13:cap1",
+      "material": 13,
+      "x": 68,
+      "y": 186,
+      "width": 8,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:wing:8:front",
+      "material": 8,
+      "x": 154,
+      "y": 192,
+      "width": 80,
+      "height": 12,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:wing:8:back",
+      "material": 8,
+      "x": 60,
+      "y": 200,
+      "width": 80,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:wing:8:inner",
+      "material": 8,
+      "x": 140,
+      "y": 204,
+      "width": 80,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:wing:8:cap0",
+      "material": 8,
+      "x": 252,
+      "y": 112,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:wing:8:cap1",
+      "material": 8,
+      "x": 252,
+      "y": 116,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:wing_middle:8:front",
+      "material": 8,
+      "x": 0,
+      "y": 206,
+      "width": 80,
+      "height": 12,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:wing_middle:8:back",
+      "material": 8,
+      "x": 80,
+      "y": 210,
+      "width": 80,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:wing_middle:8:inner",
+      "material": 8,
+      "x": 160,
+      "y": 210,
+      "width": 80,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:wing_middle:8:cap0",
+      "material": 8,
+      "x": 36,
+      "y": 120,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:wing_middle:8:cap1",
+      "material": 8,
+      "x": 76,
+      "y": 120,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:wing_low:8:front",
+      "material": 8,
+      "x": 80,
+      "y": 216,
+      "width": 88,
+      "height": 12,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:wing_low:8:back",
+      "material": 8,
+      "x": 168,
+      "y": 216,
+      "width": 88,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:wing_low:8:inner",
+      "material": 8,
+      "x": 168,
+      "y": 222,
+      "width": 88,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:wing_low:8:cap0",
+      "material": 8,
+      "x": 252,
+      "y": 120,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:wing_low:8:cap1",
+      "material": 8,
+      "x": 36,
+      "y": 124,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:wing_trailing:8:front",
+      "material": 8,
+      "x": 0,
+      "y": 218,
+      "width": 64,
+      "height": 10,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:wing_trailing:8:back",
+      "material": 8,
+      "x": 0,
+      "y": 228,
+      "width": 64,
+      "height": 5,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:wing_trailing:8:inner",
+      "material": 8,
+      "x": 64,
+      "y": 228,
+      "width": 64,
+      "height": 5,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:wing_trailing:8:cap0",
+      "material": 8,
+      "x": 76,
+      "y": 124,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:wing_trailing:8:cap1",
+      "material": 8,
+      "x": 252,
+      "y": 124,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:wing_hook:8:cap0",
+      "material": 8,
+      "x": 216,
+      "y": 128,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:wing_hook:8:cap1",
+      "material": 8,
+      "x": 216,
+      "y": 132,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:wing_hook:8:front",
+      "material": 8,
+      "x": 128,
+      "y": 228,
+      "width": 28,
+      "height": 8,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:wing_hook:8:back",
+      "material": 8,
+      "x": 60,
+      "y": 194,
+      "width": 28,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:wing_hook:8:inner",
+      "material": 8,
+      "x": 88,
+      "y": 196,
+      "width": 28,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:wing_spur:8:cap0",
+      "material": 8,
+      "x": 134,
+      "y": 134,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap0"
+    },
+    {
+      "name": "surface:wing_spur:8:cap1",
+      "material": 8,
+      "x": 152,
+      "y": 134,
+      "width": 4,
+      "height": 4,
+      "source": "authored_surface_sample",
+      "surface": "cap1"
+    },
+    {
+      "name": "surface:wing_spur:8:front",
+      "material": 8,
+      "x": 18,
+      "y": 194,
+      "width": 24,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:wing_spur:8:back",
+      "material": 8,
+      "x": 18,
+      "y": 200,
+      "width": 24,
+      "height": 3,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:wing_spur:8:inner",
+      "material": 8,
+      "x": 0,
+      "y": 203,
+      "width": 24,
+      "height": 3,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "10:Inner secondary paired 0",
+      "material": 10,
+      "x": 224,
+      "y": 0,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "9:Inner secondary paired 1",
+      "material": 9,
+      "x": 240,
+      "y": 0,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "10:Inner secondary paired 2",
+      "material": 10,
+      "x": 0,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "9:Inner secondary paired 3",
+      "material": 9,
+      "x": 16,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "10:Inner secondary paired 4",
+      "material": 10,
+      "x": 32,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "9:Fanned primary paired 0",
+      "material": 9,
+      "x": 48,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "12:Front covert paired 0",
+      "material": 12,
+      "x": 64,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "10:Dorsal covert paired 0",
+      "material": 10,
+      "x": 80,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "9:Fanned primary paired 1",
+      "material": 9,
+      "x": 96,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "12:Front covert paired 1",
+      "material": 12,
+      "x": 112,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "9:Fanned primary paired 2",
+      "material": 9,
+      "x": 128,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "12:Front covert paired 2",
+      "material": 12,
+      "x": 144,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "10:Dorsal covert paired 2",
+      "material": 10,
+      "x": 160,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "9:Fanned primary paired 3",
+      "material": 9,
+      "x": 176,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "10:Front covert paired 3",
+      "material": 10,
+      "x": 192,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "9:Fanned primary paired 4",
+      "material": 9,
+      "x": 208,
+      "y": 16,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "10:Front covert paired 4",
+      "material": 10,
+      "x": 224,
+      "y": 32,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "10:Dorsal covert paired 4",
+      "material": 10,
+      "x": 240,
+      "y": 32,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "9:Fanned primary paired 5",
+      "material": 9,
+      "x": 0,
+      "y": 48,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "10:Front covert paired 5",
+      "material": 10,
+      "x": 16,
+      "y": 48,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "9:Fanned primary paired 6",
+      "material": 9,
+      "x": 32,
+      "y": 48,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "10:Front covert paired 6",
+      "material": 10,
+      "x": 48,
+      "y": 48,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "10:Dorsal covert paired 6",
+      "material": 10,
+      "x": 64,
+      "y": 48,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "9:Fanned primary paired 7",
+      "material": 9,
+      "x": 80,
+      "y": 48,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "10:Front covert paired 7",
+      "material": 10,
+      "x": 96,
+      "y": 48,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "11:Fanned primary paired 2",
+      "material": 11,
+      "x": 112,
+      "y": 48,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "11:Fanned primary paired 5",
+      "material": 11,
+      "x": 128,
+      "y": 48,
+      "width": 16,
+      "height": 32
+    },
+    {
+      "name": "surface:vertebra:13:front",
+      "material": 13,
+      "x": 240,
+      "y": 200,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:vertebra:13:back",
+      "material": 13,
+      "x": 156,
+      "y": 228,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:vertebra:13:top",
+      "material": 13,
+      "x": 82,
+      "y": 186,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:vertebra:13:outer",
+      "material": 13,
+      "x": 168,
+      "y": 228,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:vertebra:13:inner",
+      "material": 13,
+      "x": 174,
+      "y": 228,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:scapula:13:front",
+      "material": 13,
+      "x": 180,
+      "y": 228,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:scapula:13:back",
+      "material": 13,
+      "x": 192,
+      "y": 228,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:scapula:13:top",
+      "material": 13,
+      "x": 224,
+      "y": 186,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:scapula:13:outer",
+      "material": 13,
+      "x": 204,
+      "y": 228,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "surface:scapula:13:inner",
+      "material": 13,
+      "x": 210,
+      "y": 228,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:rib:14:front",
+      "material": 14,
+      "x": 216,
+      "y": 228,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "front"
+    },
+    {
+      "name": "surface:rib:14:back",
+      "material": 14,
+      "x": 228,
+      "y": 228,
+      "width": 12,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "back"
+    },
+    {
+      "name": "surface:rib:14:top",
+      "material": 14,
+      "x": 0,
+      "y": 192,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "top"
+    },
+    {
+      "name": "surface:rib:14:inner",
+      "material": 14,
+      "x": 240,
+      "y": 228,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "inner"
+    },
+    {
+      "name": "surface:rib:14:bottom",
+      "material": 14,
+      "x": 220,
+      "y": 204,
+      "width": 12,
+      "height": 6,
+      "source": "authored_surface_sample",
+      "surface": "bottom"
+    },
+    {
+      "name": "surface:rib:14:outer",
+      "material": 14,
+      "x": 246,
+      "y": 228,
+      "width": 6,
+      "height": 16,
+      "source": "authored_surface_sample",
+      "surface": "outer"
+    },
+    {
+      "name": "1:Floating pelvic relic paired",
+      "material": 1,
+      "x": 144,
+      "y": 48,
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "7:Vestment pennant paired",
+      "material": 7,
+      "x": 160,
+      "y": 48,
+      "width": 16,
+      "height": 32
+    }
+  ]
+}

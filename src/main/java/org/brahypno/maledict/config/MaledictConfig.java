@@ -7,6 +7,7 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec CLIENT_SPEC;
     public static final ForgeConfigSpec.DoubleValue SCREENSHAKE_INTENSITY;
     public static final ForgeConfigSpec.DoubleValue VICISSITUDE_ENGAGEMENT_RANGE;
+    public static final ForgeConfigSpec.DoubleValue VICISSITUDE_DAMAGE_RANGE;
     public static final ForgeConfigSpec.IntValue VICISSITUDE_ADAPTATION_LEVEL;
     public static final ForgeConfigSpec.BooleanValue SUMMONING_RITE;
     public static final ForgeConfigSpec.ConfigValue<String> SUMMONING_RITE_ENTITY;
@@ -57,6 +58,14 @@ public final class MaledictConfig {
                         "before the approach-without-firing behaviour it is built around can happen.",
                         "Lower it to make the boss less willing to cross the arena towards you.")
                 .defineInRange("engagementRange", 96.0D, 4.0D, 256.0D);
+        VICISSITUDE_DAMAGE_RANGE = builder
+                .comment("How far, in blocks, the First Vicissitude takes damage at full strength.",
+                        "Beyond it damage falls off linearly and reaches zero at 1.5 times this",
+                        "value, so 48 means full damage to 48 blocks and nothing to hit it with",
+                        "past 72. Damage with no living attacker - environment, commands, falls -",
+                        "ignores this. Keep it above the 7 block distance the boss likes to hold,",
+                        "otherwise its own spacing would blunt every melee hit it takes.")
+                .defineInRange("damageRange", 48.0D, 4.0D, 128.0D);
         VICISSITUDE_ADAPTATION_LEVEL = builder
                 .comment("Which adaptation this boss is - the number of damage messages it can",
                         "record at once. 2 is the authored 'adaptation two'. The boss records the",

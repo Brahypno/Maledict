@@ -49,7 +49,11 @@ public final class VicissitudeRig {
     private static final float WING_DRAG_CAP = 30.0F;
 
     /**
-     * Coarse hit segments; multipliers follow the design specification.
+     * Coarse hit segments. The number is the part's <b>cap weight</b>: its share of the standard
+     * single hit limit, so 1.0 is the body and the authored plain case. The weight is deliberately
+     * not a damage multiplier - a part that is easier to hurt is allowed to take more per hit,
+     * rather than every hit on it landing harder. Applying both would count the same advantage
+     * twice and flatten the difference again.
      */
     public enum Segment {
         BODY(1.0F),
@@ -59,14 +63,14 @@ public final class VicissitudeRig {
         WING_RIGHT_ROOT(0.75F),
         WING_RIGHT_OUTER(0.5F);
 
-        private final float multiplier;
+        private final float capWeight;
 
-        Segment(float multiplier) {
-            this.multiplier = multiplier;
+        Segment(float capWeight) {
+            this.capWeight = capWeight;
         }
 
-        public float multiplier() {
-            return multiplier;
+        public float capWeight() {
+            return capWeight;
         }
 
         public boolean isWing() {
@@ -939,14 +943,14 @@ public final class VicissitudeRig {
     }
 
     /**
-     * Range attacks take the highest multiplier they overlap; single hits take the nearest.
+     * Range attacks take the highest cap weight they overlap; single hits take the nearest.
      */
-    public static Segment highestMultiplierSegment(List<SegmentVolume> volumes, Box area) {
+    public static Segment highestCapWeightSegment(List<SegmentVolume> volumes, Box area) {
         Segment best = Segment.BODY;
-        float bestMultiplier = -1.0F;
+        float bestWeight = -1.0F;
         for (SegmentVolume volume : volumes) {
-            if (volume.box().intersects(area) && volume.segment().multiplier() > bestMultiplier){
-                bestMultiplier = volume.segment().multiplier();
+            if (volume.box().intersects(area) && volume.segment().capWeight() > bestWeight){
+                bestWeight = volume.segment().capWeight();
                 best = volume.segment();
             }
         }
@@ -971,10 +975,10 @@ public final class VicissitudeRig {
     }
 
     /**
-     * Highest multiplier among the given body sample points (used by area damage).
+     * Highest cap weight among the given body sample points (used by area damage).
      */
-    public static float multiplierAt(List<SegmentVolume> volumes, Box area) {
-        return highestMultiplierSegment(volumes, area).multiplier();
+    public static float capWeightAt(List<SegmentVolume> volumes, Box area) {
+        return highestCapWeightSegment(volumes, area).capWeight();
     }
 
     private static float clamp(float value) {

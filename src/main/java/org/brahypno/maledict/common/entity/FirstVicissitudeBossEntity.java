@@ -20,7 +20,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
 import net.minecraft.world.BossEvent;
@@ -28,16 +27,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.OwnableEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.*;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
@@ -54,13 +45,12 @@ import net.minecraftforge.event.ForgeEventFactory;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.curio.VicissitudeCurioLedger;
-import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.common.curio.VicissitudeCurioReturns;
 import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
+import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.network.VicissitudeEffectPacket;
-import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.rig.VicissitudeRig;
 import org.brahypno.maledict.rig.VicissitudeRigData;
@@ -69,21 +59,7 @@ import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.helpers.SoundHelper;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * The first Vicissitude encounter.
@@ -124,7 +100,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public static final double DASH_DISTANCE = 10.0D;
     public static final double NO_FIRE_RANGE = 64.0D;
     /** Quick reference for the chat announcement. */
-    /** Phase one set piece line, shown once per player life when the fight starts. */
+    /**
+     * Phase one set piece line, shown once per player life when the fight starts.
+     */
     public static final String PHASE_ONE_MESSAGE_KEY = VicissitudeLightOrbEntity.ATTACK_MESSAGE_KEY;
     public static final String PHASE_TWO_MESSAGE_KEY =
             "message.maledict.first_vicissitude.phase_two";
@@ -149,7 +127,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> DATA_WEAPON_STATE =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
-    /** Weapon tier of the current difficulty; the client draws from this, never from the hand. */
+    /**
+     * Weapon tier of the current difficulty; the client draws from this, never from the hand.
+     */
     private static final EntityDataAccessor<Byte> DATA_WEAPON_TIER =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> DATA_ACTION_SEQUENCE =
@@ -199,13 +179,19 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private static final int UNSTICK_SUCCESS_COOLDOWN = 100;
     private static final int UNSTICK_MAX_CANDIDATES = 64;
     private static final int[] UNSTICK_RADII = {4, 8, 12, 16};
-    /** Stable id for the difficulty health modifier, so it can be rewritten without stacking. */
+    /**
+     * Stable id for the difficulty health modifier, so it can be rewritten without stacking.
+     */
     private static final UUID MAX_HEALTH_MODIFIER_ID =
             UUID.fromString("2c4b1d5a-9f34-4b1c-9a37-6d1f4c0a51e2");
-    /** Base id for the baked weapon modifiers; each one gets the next least significant value. */
+    /**
+     * Base id for the baked weapon modifiers; each one gets the next least significant value.
+     */
     private static final UUID WEAPON_ATTRIBUTE_ID =
             UUID.fromString("8a17c3d2-5e64-4d0b-9c31-7b2f5a0e6d44");
-    /** How often the hand is checked against the weapon the encounter expects. */
+    /**
+     * How often the hand is checked against the weapon the encounter expects.
+     */
     private static final int WEAPON_GUARD_INTERVAL = 20;
 
     private final ServerBossEvent bossEvent = new ServerBossEvent(
@@ -230,7 +216,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private VicissitudeRig.Action action = VicissitudeRig.Action.NONE;
     private boolean actionLeft;
     private boolean actionReleased;
-    @Nullable private LivingEntity committedTarget;
+    @Nullable
+    private LivingEntity committedTarget;
     private Vec3 committedAim = Vec3.ZERO;
     private float committedYaw;
     private float committedPitch;
@@ -241,6 +228,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private int phaseOneTicks;
     private int phaseOneDurationTicks;
     private boolean phaseOneDurationLocked;
+    /** 刷怪蛋用：下一 tick 把一阶段数满，直接开始二阶段，见 {@link #setSpawnPhase}。 */
+    private boolean forcedPhaseTwo;
     private int baseSlotIndex;
     private int targetCursor;
     private int curioReturnCursor;
@@ -253,9 +242,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private int dashCooldown;
     private int throwCooldown;
     private int rangedCooldown;
-    /** 适应效果：记过的伤害消息吃自然指数递减，见 {@link DamageAdaptation}。 */
+    /**
+     * 适应效果：记最近挨过的几条伤害消息，滑出窗口即重新全额，见 {@link DamageAdaptation}。
+     */
     private final DamageAdaptation damageAdaptation = new DamageAdaptation();
-    /** 一阶段名单已经空了多久，见 {@link #EMPTY_ENCOUNTER_RESET_TICKS}。 */
+    /**
+     * 一阶段名单已经空了多久，见 {@link #EMPTY_ENCOUNTER_RESET_TICKS}。
+     */
     private int emptyEncounterTicks;
     private int meleeAlternator;
     private int currentBaseSlot;
@@ -279,20 +272,27 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private ItemStack stashedWeapon = ItemStack.EMPTY;
     private int pendingWeaponTier = -1;
     private BossDifficulty bossDifficulty = BossDifficulty.SIMPLE;
-    /** Set once the vitality ledger has captured the pool; a mode change may not alter it after. */
+    /**
+     * Set once the vitality ledger has captured the pool; a mode change may not alter it after.
+     */
     private boolean difficultyLocked;
-    /** Client side render stack, rebuilt only when the synced tier changes. */
+    /**
+     * Client side render stack, rebuilt only when the synced tier changes.
+     */
     private ItemStack displayWeapon = ItemStack.EMPTY;
     private int displayWeaponTier = -1;
-    /** Weapon modifiers currently baked into the entity's attribute map. */
+    /**
+     * Weapon modifiers currently baked into the entity's attribute map.
+     */
     private final List<AppliedAttribute> appliedWeaponAttributes = new ArrayList<>();
 
-    public FirstVicissitudeBossEntity(EntityType<? extends FirstVicissitudeBossEntity> type,
-                                      Level level) {
+    public FirstVicissitudeBossEntity(
+            EntityType<? extends FirstVicissitudeBossEntity> type,
+            Level level) {
         super(type, level);
         moveControl = new FlyingMoveControl(this, 20, true);
         setNoGravity(true);
-        xpReward = 100;
+        xpReward = 1000;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -318,14 +318,14 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     private void applyDifficultyAttributes() {
         AttributeInstance attribute = getAttribute(Attributes.MAX_HEALTH);
-        if (attribute == null) {
+        if (attribute == null){
             return;
         }
         attribute.removeModifier(MAX_HEALTH_MODIFIER_ID);
         double delta = bossDifficulty.maxHealth() - VicissitudeBossEntity.BASE_MAX_HEALTH;
-        if (delta != 0.0D) {
+        if (delta != 0.0D){
             attribute.addPermanentModifier(new AttributeModifier(MAX_HEALTH_MODIFIER_ID,
-                    "Vicissitude difficulty health", delta, AttributeModifier.Operation.ADDITION));
+                                                                 "Vicissitude difficulty health", delta, AttributeModifier.Operation.ADDITION));
         }
     }
 
@@ -349,7 +349,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private void applyWeaponAttributes() {
         for (AppliedAttribute applied : appliedWeaponAttributes) {
             AttributeInstance instance = getAttribute(applied.attribute());
-            if (instance != null) {
+            if (instance != null){
                 instance.removeModifier(applied.id());
             }
         }
@@ -359,7 +359,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 .getAttributeModifiers(EquipmentSlot.MAINHAND).entries()) {
             UUID id = weaponModifierId(slot++);
             AttributeInstance instance = getAttribute(entry.getKey());
-            if (instance == null) {
+            if (instance == null){
                 // The entity simply does not carry that attribute (modded ones such as Lodestone's
                 // magic damage are player only); there is nothing to bake in.
                 continue;
@@ -367,16 +367,18 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             instance.removeModifier(id);
             AttributeModifier source = entry.getValue();
             instance.addPermanentModifier(new AttributeModifier(id,
-                    "Vicissitude weapon " + entry.getKey().getDescriptionId(), source.getAmount(),
-                    source.getOperation()));
+                                                                "Vicissitude weapon " + entry.getKey().getDescriptionId(), source.getAmount(),
+                                                                source.getOperation()));
             appliedWeaponAttributes.add(new AppliedAttribute(entry.getKey(), id));
         }
     }
 
-    /** Stable id per loadout slot, so a re-apply always clears the modifier it wrote before. */
+    /**
+     * Stable id per loadout slot, so a re-apply always clears the modifier it wrote before.
+     */
     private static UUID weaponModifierId(int slot) {
         return new UUID(WEAPON_ATTRIBUTE_ID.getMostSignificantBits(),
-                WEAPON_ATTRIBUTE_ID.getLeastSignificantBits() + slot);
+                        WEAPON_ATTRIBUTE_ID.getLeastSignificantBits() + slot);
     }
 
     /**
@@ -386,14 +388,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     private void suppressHeldItemAttributes() {
         ItemStack held = getMainHandItem();
-        if (held.isEmpty()) {
+        if (held.isEmpty()){
             return;
         }
         getAttributes().removeAttributeModifiers(
                 held.getAttributeModifiers(EquipmentSlot.MAINHAND));
     }
 
-    /** One baked weapon modifier, remembered so it can be replaced instead of stacking. */
+    /**
+     * One baked weapon modifier, remembered so it can be replaced instead of stacking.
+     */
     private record AppliedAttribute(Attribute attribute, UUID id) {
     }
 
@@ -448,6 +452,42 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         entityData.set(DATA_STAGE, (byte) value.ordinal());
     }
 
+    /**
+     * 刷怪蛋要求从哪一阶段开始。
+     */
+    public enum BossSpawnPhase {
+        /** 与祭坛请出来的那只一样：先站着当像，等第一刀再进一阶段。 */
+        DORMANT,
+        /** 一阶段立刻开始，挨第一刀就结仇、开打。 */
+        PHASE_ONE,
+        /** 直接落到二阶段：一阶段时长归零立刻转场，走完整的 60 tick 转场后开始。 */
+        PHASE_TWO;
+    }
+
+    /**
+     * 刷怪蛋的落点：定难度，并且按 {@link BossSpawnPhase} 把这只安排到当前阶段。
+     *
+     * <p>必须在加入世界之前调用（刷怪蛋就是在 {@code finalizeSpawn} 里调它的），因为血量池是
+     * 在 {@link #onAddedToWorld()} 里被账本捕获的，难度一旦定下就不能再改。
+     *
+     * <p>二阶段不是直接把 {@code stage} 写成 PHASE_TWO：一阶段的收尾、转场里的换武器与姿态、
+     * 名单移交全都在 {@link #beginTransition()} / {@link #completeTransition()} 里，跳过去会漏掉
+     * 这些。所以这里只把一阶段时长归零，让正常的阶段推进自己走完那段路。
+     */
+    public void setSpawnPhase(BossDifficulty difficulty, BossSpawnPhase phase) {
+        setBossDifficulty(difficulty);
+        if (phase == null || phase == BossSpawnPhase.DORMANT) {
+            return;
+        }
+        setStage(VicissitudeBossStage.PHASE_ONE);
+        phaseOneTicks = 0;
+        if (phase == BossSpawnPhase.PHASE_TWO) {
+            forcedPhaseTwo = true;
+            return;
+        }
+        lockPhaseOneDuration();
+    }
+
     public VicissitudeRig.Action getRenderAction() {
         return VicissitudeRig.Action.byId(entityData.get(DATA_ACTION));
     }
@@ -461,10 +501,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     public float getPhaseTwoBlend() {
-        if (isPhaseTwoVisual()) {
+        if (isPhaseTwoVisual()){
             return 1.0F;
         }
-        if (getStage() == VicissitudeBossStage.TRANSITION) {
+        if (getStage() == VicissitudeBossStage.TRANSITION){
             return Mth.clamp(entityData.get(DATA_TRANSITION_TICKS) / (float) TRANSITION_TICKS, 0.0F, 1.0F);
         }
         return 0.0F;
@@ -479,7 +519,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     public float getDeathTicks() {
-        if (getHealth() > 0.0F || deathTime <= 0) {
+        if (getHealth() > 0.0F || deathTime <= 0){
             return -1.0F;
         }
         return deathTime;
@@ -489,10 +529,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return entityData.get(DATA_CORE_GLOW);
     }
 
-    /** Action clock in ticks; -1 when no action is running. */
+    /**
+     * Action clock in ticks; -1 when no action is running.
+     */
     public float getActionTicks(float partialTick) {
         VicissitudeRig.Action current = getRenderAction();
-        if (current == VicissitudeRig.Action.NONE) {
+        if (current == VicissitudeRig.Action.NONE){
             return -1.0F;
         }
         long start = entityData.get(DATA_ACTION_START);
@@ -503,7 +545,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return entityData.get(DATA_ACTION_SEQUENCE);
     }
 
-    /** True while the encounter is still the phase one pressure state. */
+    /**
+     * True while the encounter is still the phase one pressure state.
+     */
     public boolean isPhaseOneStage() {
         VicissitudeBossStage current = getStage();
         return current == VicissitudeBossStage.DORMANT || current == VicissitudeBossStage.PHASE_ONE;
@@ -530,7 +574,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     public ItemStack getDisplayWeapon() {
         int tier = entityData.get(DATA_WEAPON_TIER);
-        if (tier != displayWeaponTier || displayWeapon.isEmpty()) {
+        if (tier != displayWeaponTier || displayWeapon.isEmpty()){
             displayWeaponTier = tier;
             displayWeapon = createWeaponForDifficulty(BossDifficulty.byId(tier));
         }
@@ -550,7 +594,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return (int) (level().getGameTime() - entityData.get(DATA_ACTION_START));
     }
 
-    /** Starts a new action; the release frame is executed exactly once by the action tick. */
+    /**
+     * Starts a new action; the release frame is executed exactly once by the action tick.
+     */
     private void startAction(VicissitudeRig.Action next, boolean left) {
         action = next;
         actionLeft = left;
@@ -588,23 +634,27 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Override
     public void onAddedToWorld() {
-        if (!level().isClientSide) {
+        if (!level().isClientSide){
             // The base class captures the health pool into the vitality ledger from here on, so
             // the difficulty modifier has to be in place before that call.
             applyDifficultyAttributes();
             difficultyLocked = true;
-            if (entityData.get(DATA_WEAPON_STATE) == 1) {
+            if (entityData.get(DATA_WEAPON_STATE) == 1){
                 // A save loaded with the weapon already in hand never runs the equip step again,
                 // so the weapon's attribute loadout is rebuilt here.
                 applyWeaponAttributes();
             }
         }
         super.onAddedToWorld();
-        if (!level().isClientSide && Double.isNaN(idleHoverY)) {
+        if (!level().isClientSide && Double.isNaN(idleHoverY)){
             idleHoverY = Math.min(level().getMaxBuildHeight() - getBbHeight() - 1.0D,
-                    getY() + HOVER_HEIGHT);
-            if (phaseOneDurationTicks <= 0) {
+                                  getY() + HOVER_HEIGHT);
+            if (phaseOneDurationTicks <= 0){
                 phaseOneDurationTicks = bossDifficulty.phaseOneDurationTicks();
+            }
+            if (forcedPhaseTwo && !phaseOneDurationLocked){
+                phaseOneDurationTicks = 0;
+                phaseOneDurationLocked = true;
             }
             stuckReferenceX = getX();
             stuckReferenceY = getY();
@@ -616,20 +666,20 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public void tick() {
         setNoGravity(true);
         super.tick();
-        if (level().isClientSide) {
+        if (level().isClientSide){
             return;
         }
         syncDerivedState();
         bossEvent.setName(getDisplayName());
         bossEvent.setProgress(Mth.clamp(getHealth() / getMaxHealth(), 0.0F, 1.0F));
-        if (getHealth() <= 0.0F) {
+        if (getHealth() <= 0.0F){
             return;
         }
         tickFacing();
-        if (tickCount % 10 == 0) {
+        if (tickCount % 10 == 0){
             forgetDeadParticipants();
         }
-        if (tickCount % WEAPON_GUARD_INTERVAL == 0) {
+        if (tickCount % WEAPON_GUARD_INTERVAL == 0){
             tickWeaponGuard(true);
         }
         tickWeaponGuard(false);
@@ -642,7 +692,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         tickUnstick();
     }
 
-    /** Aim point plus eye height the body should be oriented towards this tick. */
+    /**
+     * Aim point plus eye height the body should be oriented towards this tick.
+     */
     private record FacingAim(Vec3 point, double eyeY) {
     }
 
@@ -654,11 +706,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     @Nullable
     private FacingAim blendedFacingAim() {
-        if (!(level() instanceof ServerLevel serverLevel)) {
+        if (!(level() instanceof ServerLevel serverLevel)){
             return null;
         }
         Set<UUID> roster = isPhaseTwo() ? phaseTwoParticipants : phaseOneTargets;
-        if (roster.isEmpty()) {
+        if (roster.isEmpty()){
             return null;
         }
         double range = engagementRange();
@@ -668,12 +720,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         for (UUID identity : roster) {
             LivingEntity member = resolveParticipant(serverLevel, identity);
             if (member == null || !member.isAlive() || member.level() != level()
-                || isIgnoredPlayer(member)) {
+                || isIgnoredPlayer(member)){
                 continue;
             }
             Vec3 offset = member.position().subtract(position()).multiply(1.0D, 0.0D, 1.0D);
             double distance = offset.length();
-            if (distance < 0.05D || distance > range) {
+            if (distance < 0.05D || distance > range){
                 continue;
             }
             double weight = 1.0D / (1.0D + distance * 0.15D);
@@ -681,7 +733,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             eyeSum += member.getEyeY() * weight;
             weightSum += weight;
         }
-        if (weightSum <= 0.0D || direction.lengthSqr() < 1.0E-4D) {
+        if (weightSum <= 0.0D || direction.lengthSqr() < 1.0E-4D){
             return null;
         }
         return new FacingAim(position().add(direction.normalize().scale(4.0D)), eyeSum / weightSum);
@@ -690,18 +742,21 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Nullable
     private LivingEntity resolveParticipant(ServerLevel serverLevel, UUID identity) {
         ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(identity);
-        if (player != null) {
+        if (player != null){
             return player;
         }
         Entity entity = serverLevel.getEntity(identity);
         return entity instanceof LivingEntity living ? living : null;
     }
 
-    /** Configurable aggro radius; the boss never starts or keeps a fight beyond it. */
+    /**
+     * Configurable aggro radius; the boss never starts or keeps a fight beyond it.
+     */
     private static double engagementRange() {
         try {
             return MaledictConfig.VICISSITUDE_ENGAGEMENT_RANGE.get();
-        } catch (IllegalStateException notLoaded) {
+        }
+        catch (IllegalStateException notLoaded) {
             return 12.0D;
         }
     }
@@ -709,6 +764,21 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private double engagementRangeSqr() {
         double range = engagementRange();
         return range * range;
+    }
+
+    /**
+     * 全额伤害的距离；往外线性衰减，到 {@code 1.5 ×} 这里就没有伤害了。
+     *
+     * <p>与 {@link #engagementRange()} 各管一头：那个决定"还跟不跟你打"，这个决定"打得到多疼"。
+     * 取不到配置（构造期、客户端）时给作者默认值，和 {@code engagementRange} 一样的写法。
+     */
+    private static double damageRange() {
+        try {
+            return MaledictConfig.VICISSITUDE_DAMAGE_RANGE.get();
+        }
+        catch (IllegalStateException notLoaded) {
+            return 48.0D;
+        }
     }
 
     /**
@@ -722,41 +792,42 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      * （{@code VicissitudeCurioReturns}），不依赖这份名单，所以这里可以放心清干净。
      */
     private void forgetDeadParticipants() {
-        if (!(level() instanceof ServerLevel serverLevel)) {
+        if (!(level() instanceof ServerLevel serverLevel)){
             return;
         }
         boolean forgive = level().getGameRules().getBoolean(GameRules.RULE_FORGIVE_DEAD_PLAYERS);
         var playerList = serverLevel.getServer().getPlayerList();
         for (UUID identity : new ArrayList<>(phaseOneTargets)) {
             if (updateParticipant(playerList.getPlayer(identity), identity, forgive,
-                    targetPlayerDeaths, serverLevel)) {
+                                  targetPlayerDeaths, serverLevel)){
                 phaseOneTargets.remove(identity);
                 announcedPlayerDeaths.remove(identity);
             }
         }
         for (UUID identity : new ArrayList<>(phaseTwoParticipants)) {
             if (updateParticipant(playerList.getPlayer(identity), identity, forgive,
-                    phaseTwoPlayerDeaths, serverLevel)) {
+                                  phaseTwoPlayerDeaths, serverLevel)){
                 phaseTwoParticipants.remove(identity);
             }
         }
     }
 
-    private boolean updateParticipant(@Nullable ServerPlayer player, UUID identity, boolean forgive,
-                                      Map<UUID, Integer> deathRecords, ServerLevel serverLevel) {
-        if (player == null) {
+    private boolean updateParticipant(
+            @Nullable ServerPlayer player, UUID identity, boolean forgive,
+            Map<UUID, Integer> deathRecords, ServerLevel serverLevel) {
+        if (player == null){
             // 不是在线玩家：解不开、别的维度、死了都算不在场。
             return dropAbsentParticipant(identity, serverLevel, deathRecords);
         }
-        if (player.level() != level()) {
+        if (player.level() != level()){
             // Leaving the dimension always ends the engagement.
             deathRecords.remove(identity);
             clearTargetIf(identity);
             return true;
         }
         Integer recorded = deathRecords.get(identity);
-        if (recorded != null && recorded != getDeathCount(player)) {
-            if (forgive) {
+        if (recorded != null && recorded != getDeathCount(player)){
+            if (forgive){
                 deathRecords.remove(identity);
                 clearTargetIf(identity);
                 return true;
@@ -765,7 +836,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             deathRecords.put(identity, getDeathCount(player));
             return false;
         }
-        if (!player.isAlive()) {
+        if (!player.isAlive()){
             // A dead entity is never an active target, with or without forgiveness.
             clearTargetIf(identity);
         }
@@ -778,10 +849,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      * <p>这里不区分"区块没加载"与"已经不存在"——两者都不在场，留着只会变成悬空 UUID，
      * 还会让 {@link #hasPossibleOpponent()} 误以为还有对手。
      */
-    private boolean dropAbsentParticipant(UUID identity, ServerLevel serverLevel,
-                                          Map<UUID, Integer> deathRecords) {
+    private boolean dropAbsentParticipant(
+            UUID identity, ServerLevel serverLevel,
+            Map<UUID, Integer> deathRecords) {
         Entity entity = serverLevel.getEntity(identity);
-        if (entity instanceof LivingEntity living && living.isAlive() && living.level() == level()) {
+        if (entity instanceof LivingEntity living && living.isAlive() && living.level() == level()){
             return false;
         }
         deathRecords.remove(identity);
@@ -791,15 +863,19 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private void clearTargetIf(UUID identity) {
         LivingEntity target = getTarget();
-        if (target != null && identity.equals(target.getUUID())) {
+        if (target != null && identity.equals(target.getUUID())){
             setTarget(null);
         }
     }
 
     private static final float YAW_RATE_TRACKING = 20.0F;
-    /** Early windup catches the intended target before the direction locks. */
+    /**
+     * Early windup catches the intended target before the direction locks.
+     */
     private static final float YAW_RATE_WINDUP = 30.0F;
-    /** A target far off axis gets a speed boost, so nobody can orbit faster than the body turns. */
+    /**
+     * A target far off axis gets a speed boost, so nobody can orbit faster than the body turns.
+     */
     private static final float YAW_CATCH_UP_ARC = 90.0F;
     private static final float YAW_CATCH_UP_BOOST = 1.8F;
 
@@ -811,10 +887,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     private void tickFacing() {
         // Summoned but not yet provoked: an idol has no reason to follow anyone around.
-        if (stage == VicissitudeBossStage.DORMANT || getHealth() <= 0.0F) {
+        if (stage == VicissitudeBossStage.DORMANT || getHealth() <= 0.0F){
             return;
         }
-        if (action != VicissitudeRig.Action.NONE && actionTicks() >= action.aimLockTick()) {
+        if (action != VicissitudeRig.Action.NONE && actionTicks() >= action.aimLockTick()){
             // Restore after vanilla movement/body controls, which also run during super.tick().
             setYRot(committedYaw);
             setYHeadRot(committedYaw);
@@ -823,18 +899,18 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         FacingAim facing = action != VicissitudeRig.Action.NONE && committedTarget != null
-                ? new FacingAim(aimPoint(committedTarget), committedTarget.getEyeY())
-                : blendedFacingAim();
-        if (facing == null) {
+                           ? new FacingAim(aimPoint(committedTarget), committedTarget.getEyeY())
+                           : blendedFacingAim();
+        if (facing == null){
             return;
         }
         Vec3 aim = facing.point();
-        if (action != VicissitudeRig.Action.NONE) {
+        if (action != VicissitudeRig.Action.NONE){
             committedAim = aim;
         }
         double aimEyeY = facing.eyeY();
         float rate = YAW_RATE_TRACKING;
-        if (action != VicissitudeRig.Action.NONE) {
+        if (action != VicissitudeRig.Action.NONE){
             rate = YAW_RATE_WINDUP;
         }
         float wanted = yawTo(aim);
@@ -854,7 +930,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
 
     private void syncDerivedState() {
-        if (hurtTicks > 0) {
+        if (hurtTicks > 0){
             hurtTicks--;
         }
         entityData.set(DATA_HURT_TICKS, hurtTicks);
@@ -863,11 +939,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private float computeCoreGlow() {
-        if (getHealth() <= 0.0F) {
+        if (getHealth() <= 0.0F){
             float fade = Mth.clamp((deathTime - 60.0F) / 19.0F, 0.0F, 1.0F);
             return Math.max(0.0F, 1.0F - fade);
         }
-        if (stage == VicissitudeBossStage.TRANSITION) {
+        if (stage == VicissitudeBossStage.TRANSITION){
             return 0.7F + 0.3F * Mth.sin(transitionTicks * 0.6F);
         }
         return isPhaseTwo() ? 0.85F : 0.55F;
@@ -889,14 +965,22 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private void tickStage() {
         switch (stage) {
             case DORMANT, PHASE_ONE -> {
-                if (!isPhaseOneStarted()) {
+                if (forcedPhaseTwo){
+                    // 刷怪蛋要的是直接开始二阶段：借用一阶段自己那套收尾流程——先把一阶段
+                    // 时长归零，让它数满即转场，再走正常的 60 tick 转场，所以换成二阶段的
+                    // 过程（换武器、名单移交、公告）与打满一阶段时完全同一条路。
+                    phaseOneDurationTicks = 0;
+                    phaseOneDurationLocked = true;
+                    forcedPhaseTwo = false;
+                }
+                if (!isPhaseOneStarted()){
                     break;
                 }
-                if (tickEmptyEncounter()) {
+                if (tickEmptyEncounter()){
                     break;
                 }
                 phaseOneTicks++;
-                if (phaseOneTicks >= phaseOneDurationTicks) {
+                if (phaseOneTicks >= phaseOneDurationTicks){
                     beginTransition();
                 }
             }
@@ -904,14 +988,14 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 transitionTicks++;
                 entityData.set(DATA_TRANSITION_TICKS, transitionTicks);
                 tickTransitionEffects();
-                if (transitionTicks >= TRANSITION_TICKS) {
+                if (transitionTicks >= TRANSITION_TICKS){
                     completeTransition();
                 }
             }
             case PHASE_TWO -> {
                 destroyBlockingEntities();
                 if ((horizontalCollision || verticalCollision)
-                    && tickCount % BLOCK_BREAK_INTERVAL == 0) {
+                    && tickCount % BLOCK_BREAK_INTERVAL == 0){
                     destroyBlockingBlocks();
                 }
             }
@@ -932,11 +1016,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      * @return 这一 tick 是否已经放回未参战（调用方不再推进阶段计时）
      */
     private boolean tickEmptyEncounter() {
-        if (hasPossibleOpponent()) {
+        if (hasPossibleOpponent()){
             emptyEncounterTicks = 0;
             return false;
         }
-        if (++emptyEncounterTicks < EMPTY_ENCOUNTER_RESET_TICKS) {
+        if (++emptyEncounterTicks < EMPTY_ENCOUNTER_RESET_TICKS){
             return false;
         }
         emptyEncounterTicks = 0;
@@ -956,19 +1040,21 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return true;
     }
 
-    /** 场上还有没有活着的、可以被当成对手的参战者，见 {@link #tickEmptyEncounter()}。 */
+    /**
+     * 场上还有没有活着的、可以被当成对手的参战者，见 {@link #tickEmptyEncounter()}。
+     */
     private boolean hasPossibleOpponent() {
-        if (phaseOneTargets.isEmpty()) {
+        if (phaseOneTargets.isEmpty()){
             return false;
         }
-        if (!(level() instanceof ServerLevel serverLevel)) {
+        if (!(level() instanceof ServerLevel serverLevel)){
             // 客户端不会走到这里（tickStage 只在服务端推进）；拿不到世界时按"还有对手"处理。
             return true;
         }
         for (UUID identity : phaseOneTargets) {
             Entity entity = serverLevel.getEntity(identity);
             if (entity instanceof LivingEntity living && living.isAlive()
-                && living.level() == level() && !isIgnoredPlayer(living)) {
+                && living.level() == level() && !isIgnoredPlayer(living)){
                 return true;
             }
         }
@@ -978,16 +1064,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private void tickTransitionEffects() {
         // 0-14 hover and stop, 15-29 fold wings and offset the ring/shell, 30-44 press the
         // feathers down, 45 equip, 45-59 blend into the phase two pose.
-        if (transitionTicks == 1) {
+        if (transitionTicks == 1){
             setDeltaMovement(Vec3.ZERO);
             getNavigation().stop();
             sendEvent(VicissitudeEffectPacket.EVENT_TRANSITION_FLASH, position());
         }
-        if (transitionTicks == 30) {
-            SoundHelper.playSound(this, (SoundEvent) SoundRegistry.SOUL_SHATTER.get(), 1.2F,
-                    RandomHelper.randomBetween(level().getRandom(), 0.7F, 0.9F));
+        if (transitionTicks == 30){
+            SoundHelper.playSound(this, SoundRegistry.SOUL_SHATTER.get(), 1.2F,
+                                  RandomHelper.randomBetween(level().getRandom(), 0.7F, 0.9F));
         }
-        if (transitionTicks == 45) {
+        if (transitionTicks == 45){
             equipPhaseTwoWeapon();
         }
     }
@@ -1009,7 +1095,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      * can never keep pressing health through old orbs.
      */
     private void clearPhaseOneProjectiles() {
-        if (!(level() instanceof ServerLevel serverLevel)) {
+        if (!(level() instanceof ServerLevel serverLevel)){
             return;
         }
         AABB area = getBoundingBox().inflate(128.0D);
@@ -1027,26 +1113,26 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         setStage(VicissitudeBossStage.PHASE_TWO);
         phaseTwoReached = true;
         entityData.set(DATA_PHASE_TWO_REACHED, true);
-        if (!(level() instanceof ServerLevel serverLevel)) {
+        if (!(level() instanceof ServerLevel serverLevel)){
             return;
         }
         Set<ServerPlayer> recipients = new LinkedHashSet<>(bossEvent.getPlayers());
         phaseTwoParticipants.clear();
         for (UUID identity : phaseOneTargets) {
             LivingEntity member = resolveParticipant(serverLevel, identity);
-            if (member == null || member.level() != level() || !member.isAlive()) {
+            if (member == null || member.level() != level() || !member.isAlive()){
                 // 死掉或已经不在这个维度的不带走；离线的玩家留给账本处理返还。
                 continue;
             }
-            if (member instanceof ServerPlayer player) {
+            if (member instanceof ServerPlayer player){
                 recipients.add(player);
                 // 名单里可能有中途切进创造/旁观的玩家：他们不带走，也不没收饰品。
-                if (isIgnoredPlayer(player)) {
+                if (isIgnoredPlayer(player)){
                     continue;
                 }
                 phaseTwoParticipants.add(identity);
                 phaseTwoPlayerDeaths.put(identity, getDeathCount(player));
-                if (bossDifficulty.confiscatesCurios()) {
+                if (bossDifficulty.confiscatesCurios()){
                     confiscateEquippedCurios(player);
                 }
                 continue;
@@ -1059,25 +1145,25 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void tickAction() {
-        if (action == VicissitudeRig.Action.NONE) {
+        if (action == VicissitudeRig.Action.NONE){
             return;
         }
         int ticks = actionTicks();
         if (action != VicissitudeRig.Action.SCYTHE_RECOVER && (committedTarget == null
-                || !committedTarget.isAlive() || committedTarget.level() != level()
-                || isIgnoredPlayer(committedTarget))) {
+                                                               || !committedTarget.isAlive() || committedTarget.level() != level()
+                                                               || isIgnoredPlayer(committedTarget))){
             endAction();
             return;
         }
-        if (ticks >= action.duration()) {
+        if (ticks >= action.duration()){
             finishAction();
             return;
         }
-        if (!actionReleased && ticks >= action.releaseTick()) {
+        if (!actionReleased && ticks >= action.releaseTick()){
             actionReleased = true;
             releaseAction();
         }
-        if (action == VicissitudeRig.Action.DASH) {
+        if (action == VicissitudeRig.Action.DASH){
             tickDash(ticks);
         }
     }
@@ -1085,7 +1171,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private void finishAction() {
         VicissitudeRig.Action finished = action;
         endAction();
-        if (finished == VicissitudeRig.Action.SCYTHE_RECOVER) {
+        if (finished == VicissitudeRig.Action.SCYTHE_RECOVER){
             pendingWeaponTier = -1;
         }
     }
@@ -1105,20 +1191,20 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void tickPhaseOneCombat() {
-        if (action != VicissitudeRig.Action.NONE) {
+        if (action != VicissitudeRig.Action.NONE){
             return;
         }
-        if (phaseOneTicks < PHASE_ONE_WARMUP_TICKS) {
+        if (phaseOneTicks < PHASE_ONE_WARMUP_TICKS){
             return;
         }
-        if ((phaseOneTicks - PHASE_ONE_WARMUP_TICKS) % BASE_ATTACK_INTERVAL_TICKS != 0) {
+        if ((phaseOneTicks - PHASE_ONE_WARMUP_TICKS) % BASE_ATTACK_INTERVAL_TICKS != 0){
             return;
         }
         LivingEntity target = currentPhaseOneTarget();
-        if (target == null) {
+        if (target == null){
             return;
         }
-        if (distanceTo(target) > NO_FIRE_RANGE) {
+        if (distanceTo(target) > NO_FIRE_RANGE){
             // Same rule as phase two: close the gap first. Phase one bolts only live long enough
             // for about 36 blocks, so firing from across the arena would only spawn duds.
             return;
@@ -1126,35 +1212,37 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         currentBaseSlot = baseSlotIndex++;
         // Every other slot may be a special skill. Alternating instead of always preferring a
         // special keeps the wing fan the main source of pressure, as 07 requires.
-        if (currentBaseSlot % 2 == 0 && tryRangedSpecialSkill(target)) {
+        if (currentBaseSlot % 2 == 0 && tryRangedSpecialSkill(target)){
             return;
         }
         fanCount++;
         startAction(VicissitudeRig.Action.WING_RANGED, (currentBaseSlot / 2) % 2 == 0);
     }
 
-    /** Barrage, chest mark and halo verdict rotate; reusable in phase two as ranged options. */
+    /**
+     * Barrage, chest mark and halo verdict rotate; reusable in phase two as ranged options.
+     */
     private boolean tryRangedSpecialSkill(LivingEntity target) {
         for (int attempt = 0; attempt < 3; attempt++) {
             int choice = specialRotator % 3;
             specialRotator++;
             switch (choice) {
                 case 0 -> {
-                    if (barrageCooldown <= 0) {
+                    if (barrageCooldown <= 0){
                         barrageCooldown = WING_BARRAGE_COOLDOWN;
                         startAction(VicissitudeRig.Action.WING_BARRAGE, true);
                         return true;
                     }
                 }
                 case 1 -> {
-                    if (chestCooldown <= 0 && findGroundPoint(target) != null) {
+                    if (chestCooldown <= 0 && findGroundPoint(target) != null){
                         chestCooldown = CHEST_CAST_COOLDOWN;
                         startAction(VicissitudeRig.Action.CAST_FROM_CHEST, false);
                         return true;
                     }
                 }
                 default -> {
-                    if (haloCooldown <= 0 && findGroundPoint(target) != null) {
+                    if (haloCooldown <= 0 && findGroundPoint(target) != null){
                         haloCooldown = HALO_CAST_COOLDOWN;
                         startAction(VicissitudeRig.Action.CAST_FROM_HALO, false);
                         return true;
@@ -1166,76 +1254,76 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void tickPhaseTwoCombat() {
-        if (action != VicissitudeRig.Action.NONE) {
+        if (action != VicissitudeRig.Action.NONE){
             return;
         }
-        if (scytheRecoveryPending) {
+        if (scytheRecoveryPending){
             scytheRecoveryPending = false;
             startAction(VicissitudeRig.Action.SCYTHE_RECOVER, false);
             return;
         }
         LivingEntity target = getTarget();
         if (target == null || !target.isAlive() || target.level() != level()
-            || isIgnoredPlayer(target)) {
+            || isIgnoredPlayer(target)){
             target = selectBalancedPhaseTwoTarget();
         }
-        if (target == null) {
+        if (target == null){
             return;
         }
         double distance = distanceTo(target);
-        if (distance > NO_FIRE_RANGE) {
+        if (distance > NO_FIRE_RANGE){
             return;
         }
-        if (distance > THROW_MAX_RANGE) {
-            if (tryRangedSpecialSkill(target)) {
+        if (distance > THROW_MAX_RANGE){
+            if (tryRangedSpecialSkill(target)){
                 return;
             }
-            if (rangedCooldown <= 0) {
+            if (rangedCooldown <= 0){
                 rangedCooldown = RANGED_FALLBACK_COOLDOWN;
                 startAction(VicissitudeRig.Action.RANGED_FALLBACK, baseSlotIndex++ % 2 == 0);
             }
             return;
         }
-        if (distance >= THROW_MIN_RANGE) {
+        if (distance >= THROW_MIN_RANGE){
             if (throwCooldown <= 0 && hasWeaponInHand() && scytheToken == null
-                && hasLineOfSight(target)) {
+                && hasLineOfSight(target)){
                 throwCooldown = THROW_COOLDOWN;
                 startAction(VicissitudeRig.Action.SCYTHE_THROW, false);
                 return;
             }
             if (dashCooldown <= 0 && hasWeaponInHand() && scytheToken == null
-                    && distance >= DASH_MIN_RANGE && distance <= DASH_MAX_RANGE
-                    && hasLineOfSight(target)) {
+                && distance >= DASH_MIN_RANGE && distance <= DASH_MAX_RANGE
+                && hasLineOfSight(target)){
                 dashCooldown = DASH_COOLDOWN;
                 startAction(VicissitudeRig.Action.DASH, false);
                 return;
             }
             // Give a ready pursuit its turn before the ranged rotation consumes the opening.
-            if (tryRangedSpecialSkill(target)) {
+            if (tryRangedSpecialSkill(target)){
                 return;
             }
-            if (rangedCooldown <= 0) {
+            if (rangedCooldown <= 0){
                 rangedCooldown = RANGED_FALLBACK_COOLDOWN;
                 startAction(VicissitudeRig.Action.RANGED_FALLBACK, baseSlotIndex++ % 2 == 0);
             }
             return;
         }
-        if (distance <= MELEE_REACH + getBbWidth() * 0.5D) {
+        if (distance <= MELEE_REACH + getBbWidth() * 0.5D){
             commandMelee(target);
         }
     }
 
     private void commandMelee(LivingEntity target) {
-        if (scytheToken != null) {
+        if (scytheToken != null){
             return;
         }
-        if (heavyCooldown <= 0) {
+        if (heavyCooldown <= 0){
             heavyCooldown = HEAVY_ATTACK_COOLDOWN;
             startAction(VicissitudeRig.Action.HEAVY_ATTACK, false);
             return;
         }
-        if ((meleeAlternator + 1) % 3 == 0) {
-            if (verticalSlashCooldown > 0) {
+        if ((meleeAlternator + 1) % 3 == 0){
+            if (verticalSlashCooldown > 0){
                 return;
             }
             verticalSlashCooldown = VERTICAL_SLASH_COOLDOWN;
@@ -1243,7 +1331,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             startAction(VicissitudeRig.Action.SLASH_VERTICAL, false);
             return;
         }
-        if (slashCooldown > 0) {
+        if (slashCooldown > 0){
             return;
         }
         slashCooldown = SLASH_COOLDOWN;
@@ -1253,7 +1341,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private double distanceTo(LivingEntity target) {
         return Math.sqrt(distanceToSqr(target.getX(), target.getY() + target.getBbHeight() * 0.5D,
-                target.getZ()));
+                                       target.getZ()));
     }
 
     // ------------------------------------------------------------------ release events
@@ -1278,7 +1366,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void fireFan(@Nullable LivingEntity target) {
-        if (target == null || !(level() instanceof ServerLevel serverLevel)) {
+        if (target == null || !(level() instanceof ServerLevel serverLevel)){
             return;
         }
         boolean left = actionLeft;
@@ -1288,7 +1376,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             float offset = -24.0F + index * 12.0F;
             Vec3 origin = wingOrigin(left, index);
             Vec3 direction = aimedDirection(origin, aim, offset);
-            if (index == 2 && homingSlot) {
+            if (index == 2 && homingSlot){
                 spawnHomingOrb(serverLevel, target, origin);
                 continue;
             }
@@ -1300,7 +1388,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private void fireBarrageWave(@Nullable LivingEntity target, int wave) {
         if (target == null || !target.isAlive() || target.level() != level()
-                || isIgnoredPlayer(target) || !(level() instanceof ServerLevel serverLevel)) {
+            || isIgnoredPlayer(target) || !(level() instanceof ServerLevel serverLevel)){
             // No live target: the wave is dropped instead of being fired into empty air.
             barrageWaveTick = 0L;
             lastBarrageWave = 0;
@@ -1315,16 +1403,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             for (int side = 0; side < 2; side++) {
                 Vec3 origin = wingOrigin(side == 0, index);
                 spawnBolt(serverLevel, origin,
-                        aimedDirection(origin, aim, side == 0 ? offset : -offset).scale(0.45D),
-                        true, 0.0F, 80);
+                          aimedDirection(origin, aim, side == 0 ? offset : -offset).scale(0.45D),
+                          true, 0.0F, 80);
             }
         }
         playSwingSound(wave % 2 == 0);
         sendEvent(VicissitudeEffectPacket.EVENT_RELEASE, position().add(0.0D, 2.0D, 0.0D));
-        if (wave < 2) {
+        if (wave < 2){
             lastBarrageWave = wave + 1;
             barrageWaveTick = level().getGameTime() + 8;
-        } else {
+        }else {
             barrageWaveTick = 0L;
         }
     }
@@ -1333,16 +1421,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private long barrageWaveTick;
 
     private void tickBarrageWaves() {
-        if (action != VicissitudeRig.Action.WING_BARRAGE || barrageWaveTick == 0L) {
+        if (action != VicissitudeRig.Action.WING_BARRAGE || barrageWaveTick == 0L){
             return;
         }
-        if (level().getGameTime() >= barrageWaveTick && lastBarrageWave <= 2) {
+        if (level().getGameTime() >= barrageWaveTick && lastBarrageWave <= 2){
             fireBarrageWave(committedTarget, lastBarrageWave);
         }
     }
 
     private void fireFallbackVolley(@Nullable LivingEntity target) {
-        if (target == null || !(level() instanceof ServerLevel serverLevel)) {
+        if (target == null || !(level() instanceof ServerLevel serverLevel)){
             return;
         }
         float damage = attackDamage() * 0.75F;
@@ -1350,7 +1438,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         for (int index = -1; index <= 1; index++) {
             Vec3 origin = wingOrigin(index >= 0, Math.abs(index));
             spawnBolt(serverLevel, origin,
-                    aimedDirection(origin, aim, index * 10.0F).scale(0.65D), false, damage, 120);
+                      aimedDirection(origin, aim, index * 10.0F).scale(0.65D), false, damage, 120);
         }
         playSwingSound(true);
         sendEvent(VicissitudeEffectPacket.EVENT_RELEASE, position().add(0.0D, 2.0D, 0.0D));
@@ -1360,21 +1448,22 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      * {@code pressInPhaseOne} is the authored phase one behaviour; in phase two the same volley
      * becomes ordinary damage, which is what lets the wing/chest/halo skills be reused there.
      */
-    private void spawnBolt(ServerLevel serverLevel, Vec3 origin, Vec3 motion, boolean pressInPhaseOne,
-                           float damage, int life) {
+    private void spawnBolt(
+            ServerLevel serverLevel, Vec3 origin, Vec3 motion, boolean pressInPhaseOne,
+            float damage, int life) {
         boolean press = pressInPhaseOne && isPhaseOneStage();
         float actualDamage = press ? 0.0F : (damage > 0.0F ? damage : attackDamage() * 0.75F);
-        if (countBolts(serverLevel, false) >= MAX_NON_HOMING_BOLTS) {
+        if (countBolts(serverLevel, false) >= MAX_NON_HOMING_BOLTS){
             // The cap is a hard skip: bolts are never queued for later.
             return;
         }
         VicissitudeSpiritBoltEntity bolt = new VicissitudeSpiritBoltEntity(serverLevel, this,
-                origin, motion, press, actualDamage, life);
+                                                                           origin, motion, press, actualDamage, life);
         serverLevel.addFreshEntity(bolt);
     }
 
     private void spawnHomingOrb(ServerLevel serverLevel, LivingEntity target, Vec3 origin) {
-        if (countBolts(serverLevel, true) >= MAX_HOMING_ORBS) {
+        if (countBolts(serverLevel, true) >= MAX_HOMING_ORBS){
             return;
         }
         VicissitudeLightOrbEntity orb = new VicissitudeLightOrbEntity(serverLevel, this, target, origin);
@@ -1383,12 +1472,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private int countBolts(ServerLevel serverLevel, boolean homing) {
         AABB area = getBoundingBox().inflate(96.0D);
-        if (homing) {
+        if (homing){
             return serverLevel.getEntitiesOfClass(VicissitudeLightOrbEntity.class, area,
-                    orb -> orb.isOwnedBy(this)).size();
+                                                  orb -> orb.isOwnedBy(this)).size();
         }
         return serverLevel.getEntitiesOfClass(VicissitudeSpiritBoltEntity.class, area,
-                bolt -> bolt.getOwner() == this).size();
+                                              bolt -> bolt.getOwner() == this).size();
     }
 
     private void resolveChestMark() {
@@ -1397,15 +1486,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         float damage = attackDamage();
         for (LivingEntity victim : groundTargets(center, radius, 2.0D)) {
             // Judgement is the drawn circle, not the square that was used to find candidates.
-            if (victim.distanceToSqr(center.x, victim.getY(), center.z) > radius * radius) {
+            if (victim.distanceToSqr(center.x, victim.getY(), center.z) > radius * radius){
                 continue;
             }
             hurtBySkill(victim, damage, true);
         }
-        if (level() instanceof ServerLevel serverLevel) {
+        if (level() instanceof ServerLevel serverLevel){
             serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL,
-                    center.x, center.y + 0.2D, center.z, 12, radius * 0.5D, 0.1D, radius * 0.5D,
-                    0.02D);
+                                      center.x, center.y + 0.2D, center.z, 12, radius * 0.5D, 0.1D, radius * 0.5D,
+                                      0.02D);
         }
         sendEvent(VicissitudeEffectPacket.EVENT_RELEASE, center);
     }
@@ -1419,13 +1508,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         float damage = attackDamage();
         for (LivingEntity victim : groundTargets(center, outer, 2.0D)) {
             double distance = Math.sqrt(victim.distanceToSqr(center.x, victim.getY(), center.z));
-            if (distance < inner || distance > outer) {
+            if (distance < inner || distance > outer){
                 // Centre and everything outside the ring are safe, matching the drawn geometry.
                 continue;
             }
             float angle = (float) Math.toDegrees(Math.atan2(victim.getZ() - center.z,
-                    victim.getX() - center.x));
-            if (Math.abs(Mth.wrapDegrees(angle - gapCenter)) < gapWidth * 0.5F) {
+                                                            victim.getX() - center.x));
+            if (Math.abs(Mth.wrapDegrees(angle - gapCenter)) < gapWidth * 0.5F){
                 continue;
             }
             hurtBySkill(victim, damage, true);
@@ -1435,10 +1524,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private List<LivingEntity> groundTargets(Vec3 center, double radius, double height) {
         AABB area = new AABB(center.x - radius, center.y - 0.5D, center.z - radius,
-                center.x + radius, center.y + height, center.z + radius);
+                             center.x + radius, center.y + height, center.z + radius);
         List<LivingEntity> targets = new ArrayList<>();
         for (Entity entity : level().getEntities(this, area)) {
-            if (entity instanceof LivingEntity living && isValidCombatParticipant(living)) {
+            if (entity instanceof LivingEntity living && isValidCombatParticipant(living)){
                 targets.add(living);
             }
         }
@@ -1450,27 +1539,27 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         float damage = attackDamage() * multiplier;
         boolean hitAny = false;
         for (Entity entity : level().getEntities(this,
-                getBoundingBox().inflate(reach, 2.0D, reach))) {
-            if (!(entity instanceof LivingEntity living) || !isValidCombatParticipant(living)) {
+                                                 getBoundingBox().inflate(reach, 2.0D, reach))) {
+            if (!(entity instanceof LivingEntity living) || !isValidCombatParticipant(living)){
                 continue;
             }
             Vec3 offset = living.position().subtract(position()).multiply(1.0D, 0.0D, 1.0D);
-            if (offset.length() > reach + living.getBbWidth() * 0.5D || offset.lengthSqr() < 1.0E-4D) {
+            if (offset.length() > reach + living.getBbWidth() * 0.5D || offset.lengthSqr() < 1.0E-4D){
                 continue;
             }
             double angle = Math.toDegrees(Math.acos(Mth.clamp(
                     offset.normalize().dot(look), -1.0D, 1.0D)));
-            if (angle > arcDegrees * 0.5D || !hasLineOfSight(living)) {
+            if (angle > arcDegrees * 0.5D || !hasLineOfSight(living)){
                 continue;
             }
             hitAny |= hurtBySkill(living, damage, false);
         }
         spawnSlashEffect(heavy);
-        if (hitAny) {
+        if (hitAny){
             swing(InteractionHand.MAIN_HAND, true);
-            if (heavy) {
+            if (heavy){
                 sendEvent(VicissitudeEffectPacket.EVENT_HEAVY_IMPACT,
-                        position().add(look.scale(2.0D)).add(0.0D, getBbHeight() * 0.4D, 0.0D));
+                          position().add(look.scale(2.0D)).add(0.0D, getBbHeight() * 0.4D, 0.0D));
             }
         }
     }
@@ -1480,15 +1569,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         Vec3 right = new Vec3(-look.z, 0.0D, look.x);
         float damage = attackDamage() * 1.25F;
         for (Entity entity : level().getEntities(this, getBoundingBox().inflate(MELEE_REACH, 2.0D,
-                MELEE_REACH))) {
-            if (!(entity instanceof LivingEntity living) || !isValidCombatParticipant(living)) {
+                                                                                MELEE_REACH))) {
+            if (!(entity instanceof LivingEntity living) || !isValidCombatParticipant(living)){
                 continue;
             }
             Vec3 offset = living.position().subtract(position());
             double forward = offset.x * look.x + offset.z * look.z;
             double lateral = Math.abs(offset.x * right.x + offset.z * right.z);
             if (forward < 0.0D || forward > MELEE_REACH || lateral > 1.5D
-                    || !hasLineOfSight(living)) {
+                || !hasLineOfSight(living)){
                 continue;
             }
             hurtBySkill(living, damage, false);
@@ -1498,12 +1587,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private boolean hurtBySkill(LivingEntity victim, float damage, boolean area) {
         UUID identity = victim.getUUID();
-        if (!roundDamagedTargets.add(identity)) {
+        if (!roundDamagedTargets.add(identity)){
             // One damage instance per round and target: a fan or wave never double dips.
             return false;
         }
         return hurtParticipant(victim,
-                DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this), damage);
+                               DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this), damage);
     }
 
     /**
@@ -1518,12 +1607,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      * a player is hit normally.
      */
     public boolean hurtParticipant(LivingEntity victim, DamageSource source, float damage) {
-        if (damage <= 0.0F || victim.level().isClientSide) {
+        if (damage <= 0.0F || victim.level().isClientSide){
             return false;
         }
         // Every skill hit lands: an attack is one authored instance, not a stream of ticks.
         victim.invulnerableTime = 0;
-        if (!(victim instanceof Player)) {
+        if (!(victim instanceof Player)){
             return victim.hurt(source, damage);
         }
         DamagePress press = isPhaseOne() ? DamagePress.LIGHT : bossDifficulty.damagePress();
@@ -1536,46 +1625,46 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         ParticleHelper.SlashParticleEffectBuilder particles = ParticleHelper
                 .createSlashingEffect(ParticleEffectTypeRegistry.SCYTHE_SLASH)
                 .setSpiritType(SpiritTypeRegistry.UMBRAL_SPIRIT);
-        if (vertical) {
+        if (vertical){
             particles.setVerticalSlashAngle();
-        } else {
+        }else {
             particles.setSlashAngle(getYRot());
         }
         particles.setMirrored(actionLeft);
         Vec3 direction = getLookAngle().multiply(1.0D, 0.0D, 1.0D);
         particles.spawnSlashingParticle(level(), position().add(0.0D, getBbHeight() * 0.6D, 0.0D),
-                direction);
+                                        direction);
     }
 
     // ------------------------------------------------------------------ dash
 
     private void tickDash(int ticks) {
-        if (ticks < action.releaseTick()) {
+        if (ticks < action.releaseTick()){
             return;
         }
-        if (!dashDirectionLocked) {
+        if (!dashDirectionLocked){
             dashDirectionLocked = true;
             dashHitTargets.clear();
             dashTicks = 0;
             Vec3 look = getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
             dashDirection = look.lengthSqr() < 1.0E-4D ? Vec3.ZERO : look;
         }
-        if (dashTicks >= 12 || dashDirection == Vec3.ZERO) {
+        if (dashTicks >= 12 || dashDirection == Vec3.ZERO){
             setDeltaMovement(getDeltaMovement().scale(0.4D));
             return;
         }
         dashTicks++;
         Vec3 step = dashDirection.scale(DASH_DISTANCE / 12.0D);
         if (level().clip(new net.minecraft.world.level.ClipContext(position(),
-                position().add(step), net.minecraft.world.level.ClipContext.Block.COLLIDER,
-                net.minecraft.world.level.ClipContext.Fluid.NONE, this))
-                .getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
+                                                                   position().add(step), net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                                                                   net.minecraft.world.level.ClipContext.Fluid.NONE, this))
+                   .getType() != net.minecraft.world.phys.HitResult.Type.MISS){
             // A solid obstacle stops the charge; the boss never teleports through walls.
             setDeltaMovement(Vec3.ZERO);
             dashTicks = 12;
             return;
         }
-        if (!level().noCollision(this, getBoundingBox().expandTowards(step))) {
+        if (!level().noCollision(this, getBoundingBox().expandTowards(step))){
             dashTicks = 12;
             setDeltaMovement(Vec3.ZERO);
             return;
@@ -1584,10 +1673,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         setPos(getX() + step.x, getY() + step.y, getZ() + step.z);
         AABB sweep = getBoundingBox().inflate(0.6D);
         for (Entity entity : level().getEntities(this, sweep)) {
-            if (!(entity instanceof LivingEntity living) || !isValidCombatParticipant(living)) {
+            if (!(entity instanceof LivingEntity living) || !isValidCombatParticipant(living)){
                 continue;
             }
-            if (dashHitTargets.add(living.getUUID())) {
+            if (dashHitTargets.add(living.getUUID())){
                 hurtBySkill(living, attackDamage(), false);
             }
         }
@@ -1600,18 +1689,18 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void throwScythe(@Nullable LivingEntity target) {
-        if (!(level() instanceof ServerLevel serverLevel) || scytheToken != null) {
+        if (!(level() instanceof ServerLevel serverLevel) || scytheToken != null){
             return;
         }
         ItemStack weapon = getMainHandItem();
-        if (weapon.isEmpty()) {
+        if (weapon.isEmpty()){
             // A disarm must not skip the throw either: fall back to the code owned copy.
             weapon = createWeaponForDifficulty(bossDifficulty);
         }
         Vec3 direction = committedAim.subtract(handAnchorWorldPosition()).normalize();
         VicissitudeScytheProjectileEntity scythe = new VicissitudeScytheProjectileEntity(
                 serverLevel, this, handAnchorWorldPosition(), direction, weapon, attackDamage());
-        if (!serverLevel.addFreshEntity(scythe)) {
+        if (!serverLevel.addFreshEntity(scythe)){
             // Only a successful spawn may empty the hand.
             return;
         }
@@ -1619,38 +1708,40 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         scytheToken = scythe.getUUID();
         setWeaponState(2);
-        SoundHelper.playSound(this, (SoundEvent) SoundRegistry.SCYTHE_THROW.get(), 1.1F,
-                RandomHelper.randomBetween(level().getRandom(), 0.8F, 1.0F));
+        SoundHelper.playSound(this, SoundRegistry.SCYTHE_THROW.get(), 1.1F,
+                              RandomHelper.randomBetween(level().getRandom(), 0.8F, 1.0F));
     }
 
-    /** Called by the projectile when it is caught or gives up. */
+    /**
+     * Called by the projectile when it is caught or gives up.
+     */
     public void onScytheReturned(VicissitudeScytheProjectileEntity projectile, boolean caught) {
-        if (scytheToken == null || !scytheToken.equals(projectile.getUUID())) {
+        if (scytheToken == null || !scytheToken.equals(projectile.getUUID())){
             return;
         }
         scytheToken = null;
         ItemStack stack = stashedWeapon.isEmpty() ? projectile.getItem() : stashedWeapon;
         stashedWeapon = ItemStack.EMPTY;
-        if (!stack.isEmpty()) {
+        if (!stack.isEmpty()){
             setItemSlot(EquipmentSlot.MAINHAND, stack.copy());
         }
         setWeaponState(1);
         // A catch must not erase a ground tell or truncate a volley already in progress.
         scytheRecoveryPending = true;
-        if (caught) {
-            SoundHelper.playSound(this, (SoundEvent) SoundRegistry.SCYTHE_CATCH.get(), 1.0F,
-                    RandomHelper.randomBetween(level().getRandom(), 0.9F, 1.1F));
+        if (caught){
+            SoundHelper.playSound(this, SoundRegistry.SCYTHE_CATCH.get(), 1.0F,
+                                  RandomHelper.randomBetween(level().getRandom(), 0.9F, 1.1F));
             sendEvent(VicissitudeEffectPacket.EVENT_SCYTHE_CATCH, handAnchorWorldPosition());
         }
         applyDeferredWeaponTier();
     }
 
     private void cancelFlyingScythe() {
-        if (scytheToken == null || !(level() instanceof ServerLevel serverLevel)) {
+        if (scytheToken == null || !(level() instanceof ServerLevel serverLevel)){
             return;
         }
         Entity entity = serverLevel.getEntity(scytheToken);
-        if (entity != null) {
+        if (entity != null){
             entity.discard();
         }
         scytheToken = null;
@@ -1695,12 +1786,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
         super.dropCustomDeathLoot(source, looting, recentlyHit);
-        if (!recentlyHit) {
+        if (!recentlyHit){
             return;
         }
         ItemEntity drop = spawnAtLocation(
                 AgeOfEnlightenmentItem.create(bossDifficulty.enlightenmentLevel()));
-        if (drop != null) {
+        if (drop != null){
             drop.setExtendedLifetime();
         }
     }
@@ -1709,12 +1800,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     protected void onFinalDeath(DamageSource source) {
         cancelFlyingScythe();
         // Everything still held goes to the world ledger; nothing is deleted or dropped here.
-        if (level() instanceof ServerLevel serverLevel) {
+        if (level() instanceof ServerLevel serverLevel){
             for (Map.Entry<UUID, Deque<VicissitudeCurioLedger.Entry>> entry : confiscated.entrySet()) {
                 VicissitudeCurioReturns.retain(serverLevel, entry.getKey(),
-                        new ArrayList<>(entry.getValue()));
+                                               new ArrayList<>(entry.getValue()));
                 ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(entry.getKey());
-                if (player != null) {
+                if (player != null){
                     VicissitudeCurioReturns.deliverAll(player);
                 }
             }
@@ -1730,16 +1821,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Override
     protected void onDeathTick(int ticks) {
-        if (!level().isClientSide) {
+        if (!level().isClientSide){
             setStage(VicissitudeBossStage.DYING);
-            if (ticks == 36) {
+            if (ticks == 36){
                 // 36-59: wing roots fail, the one death shake.
                 sendEvent(VicissitudeEffectPacket.EVENT_DEATH_CORE, position());
             }
-            if (ticks == 60) {
+            if (ticks == 60){
                 // 60-79: the core goes out quietly.
                 sendEvent(VicissitudeEffectPacket.EVENT_DEATH_EXTINGUISH,
-                        anchorWorldPosition(VicissitudeRigData.Joint.HEAD_EFFECT_ANCHOR, 0.0F));
+                          anchorWorldPosition(VicissitudeRigData.Joint.HEAD_EFFECT_ANCHOR, 0.0F));
             }
         }
     }
@@ -1748,7 +1839,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private void confiscateEquippedCurios(ServerPlayer player) {
         List<VicissitudeCurioLedger.Entry> taken = VicissitudeCurioReturns.confiscate(player);
-        if (taken.isEmpty()) {
+        if (taken.isEmpty()){
             confiscated.remove(player.getUUID());
             return;
         }
@@ -1758,16 +1849,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     protected void onDamageAccepted(DamageSource source, float amount) {
         hurtTicks = 6;
-        if (isPhaseTwo() && bossDifficulty.confiscatesCurios()) {
+        if (isPhaseTwo() && bossDifficulty.confiscatesCurios()){
             returnOneCurio(resolveAttackingPlayer(source));
         }
     }
 
     private void returnOneCurio(@Nullable ServerPlayer preferredPlayer) {
-        if (preferredPlayer != null && returnOneCurioTo(preferredPlayer)) {
+        if (preferredPlayer != null && returnOneCurioTo(preferredPlayer)){
             return;
         }
-        if (!(level() instanceof ServerLevel serverLevel) || phaseTwoParticipants.isEmpty()) {
+        if (!(level() instanceof ServerLevel serverLevel) || phaseTwoParticipants.isEmpty()){
             return;
         }
         List<UUID> players = new ArrayList<>(phaseTwoParticipants);
@@ -1775,83 +1866,136 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         for (int offset = 0; offset < players.size(); offset++) {
             int index = (start + offset) % players.size();
             ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(players.get(index));
-            if (player != null && returnOneCurioTo(player)) {
+            if (player != null && returnOneCurioTo(player)){
                 curioReturnCursor = index + 1;
                 return;
             }
         }
     }
 
-    /** Removes a stack only after delivery succeeded, otherwise it stays in the ledger. */
+    /**
+     * Removes a stack only after delivery succeeded, otherwise it stays in the ledger.
+     */
     private boolean returnOneCurioTo(ServerPlayer player) {
         Deque<VicissitudeCurioLedger.Entry> held = confiscated.get(player.getUUID());
-        if (held == null || held.isEmpty()) {
+        if (held == null || held.isEmpty()){
             return false;
         }
         // Hand the stack to the ledger first, then try to deliver it: ownership moves exactly
         // once, so nothing can be returned twice or dropped between the two holders.
         VicissitudeCurioLedger.Entry entry = held.removeFirst();
         VicissitudeCurioReturns.retain(player.serverLevel(), player.getUUID(), List.of(entry));
-        if (!VicissitudeCurioReturns.deliverAll(player)) {
+        if (!VicissitudeCurioReturns.deliverAll(player)){
             // Whatever could not be delivered stays in the ledger; the rest of the hold moves too.
             VicissitudeCurioReturns.retain(player.serverLevel(), player.getUUID(),
-                    new ArrayList<>(held));
+                                           new ArrayList<>(held));
             held.clear();
             confiscated.remove(player.getUUID());
             return true;
         }
-        if (held.isEmpty()) {
+        if (held.isEmpty()){
             confiscated.remove(player.getUUID());
         }
         return true;
     }
 
-    // ------------------------------------------------------------------ part multipliers
+    // ------------------------------------------------------------------ part caps and damage rules
 
     /**
      * 非玩家来源的伤害固定减半：这个 Boss 只认真打它的人，其余来源（别的生物、环境爆炸、
-     * 别人的宠物）吃 50% 减免。部位倍率先算，再乘这一档，所以背刺之类仍然照常生效。
+     * 别人的宠物）吃 50% 减免。它和落点无关，落点管的是上限，见
+     * {@link #incomingHitWeight(DamageSource)}。
      */
     private static final float NON_PLAYER_DAMAGE_MULTIPLIER = 0.5F;
 
     /**
      * 适应效果：这里的返回值再乘一档「伤害消息」的适应倍率。
      *
-     * <p>记账写在 {@link DamageAdaptation} 里：挨过的消息第 n 次命中吃 e⁻⁽ⁿ⁻¹⁾，没挨过的全额
-     * 并占一格；能记几种由 {@code firstVicissitude.adaptationLevel}（「适应几」）决定，默认 2。
-     * 放在最后一档乘，是因为它压的是「这一击最后落到真生命上的量」——部位倍率、
-     * 非玩家减半与适应都是各自独立的缩减，谁先谁后不影响乘积。
+     * <p>记账写在 {@link DamageAdaptation} 里：它只记住<b>最近挨过的那几条消息</b>，容量就是
+     * {@code firstVicissitude.adaptationLevel}（「适应几」，默认 2）。消息不在窗口里＝已经忘了，
+     * 照常全额并被记回窗口；还在窗口里才吃 e⁻⁽ⁿ⁻¹⁾ 递减。滑出窗口就重新按全额算，不会
+     * 一路衰减下去。放在最后一档乘，是因为它压的是「这一击最后落到真生命上的量」——
+     * 非玩家减半、适应与距离衰减都是各自独立的缩减，谁先谁后不影响乘积。
      *
-     * <p>适应<b>没有时限</b>：账目按次数累计，整场遭遇战里一直有效，只有回到未参战才清。
-     * 它与本实体自己的无敌帧也无关——{@code VicissitudeVitality} 的 {@code nextHit} 那套
-     * 线性缩放是每次有效命中重算 20 tick 的独立一层，适应既不读它也不改它。
+     * <p>适应<b>没有时限</b>，但窗口会自己滚动：整场遭遇战里一直有效，只有回到未参战才清空。
+     * 它与那两道门也无关——原版的全局无敌帧和 {@link VicissitudeVitality#gateClosed} 都只决定
+     * "这一刀算不算数"，适应既不读它们也不改它们；反过来，被任何一道挡下的攻击根本走不到这里，
+     * 所以它们也不进窗口。
      *
      * <p>只认伤害消息、不认实体：同一种消息（玩家近战都是 {@code player}）无论谁来打都吃
      * 同一份递减。一阶段、转场与无来源的环境伤害都在 {@code hurt} 里被 {@link #isDamageImmune}
      * 挡掉，走不到这里——所以真正记账的只有二阶段那些会扣血的打击。
+     *
+     * <p>最后再乘一档距离衰减，见 {@link #distanceDamageScale(DamageSource)}：它排在适应之后，
+     * 与前面几档各自独立，所以谁先谁后都不改乘积。
+     *
+     * <p>这里<b>不</b>乘部位权重：落点决定的是一次命中的上限有多高，见
+     * {@link #incomingHitWeight(DamageSource)}，两件事分开，同一个部位优势才不会被算两遍。
      */
     @Override
     protected float modifyIncomingDamage(DamageSource source, float amount) {
-        List<VicissitudeRig.SegmentVolume> volumes = segmentVolumes();
-        Vec3 hit = source.getSourcePosition();
-        VicissitudeRig.Segment segment;
-        if (hit != null) {
-            segment = VicissitudeRig.nearestSegment(volumes, hit.x, hit.y, hit.z);
-        } else {
-            LivingEntity attacker = resolveLivingAttacker(source);
-            segment = attacker == null
-                      ? VicissitudeRig.Segment.BODY
-                      : VicissitudeRig.nearestSegment(volumes, attacker.getX(),
-                              attacker.getEyeY(), attacker.getZ());
-        }
-        float scaled = amount * segment.multiplier();
-        if (!isPlayerDamage(source)) {
+        float scaled = amount;
+        if (!isPlayerDamage(source)){
             scaled *= NON_PLAYER_DAMAGE_MULTIPLIER;
         }
-        return scaled * damageAdaptation.adapt(source.getMsgId(), adaptationLevel());
+        return scaled * damageAdaptation.adapt(source.getMsgId(), adaptationLevel())
+               * distanceDamageScale(source);
     }
 
-    /** 这个 Boss 是「适应几」：{@code firstVicissitude.adaptationLevel}，默认 2（适应二）。 */
+    /**
+     * 这一击落在哪个部位，拿它的 {@code capWeight} 当单次上限的缩放。
+     *
+     * <p>取法沿用部位判定的老规矩：有命中点就取最近的体块，没有（近战、间接伤害）就用攻击者
+     * 所在的位置去比。射线那类没有位置的来源最终落到身体，和以前倍率取不到时的行为一致。
+     */
+    @Override
+    protected float incomingHitWeight(DamageSource source) {
+        return nearestHitSegment(source).capWeight();
+    }
+
+    private VicissitudeRig.Segment nearestHitSegment(DamageSource source) {
+        List<VicissitudeRig.SegmentVolume> volumes = segmentVolumes();
+        Vec3 hit = source.getSourcePosition();
+        if (hit != null){
+            return VicissitudeRig.nearestSegment(volumes, hit.x, hit.y, hit.z);
+        }
+        LivingEntity attacker = resolveLivingAttacker(source);
+        return attacker == null
+               ? VicissitudeRig.Segment.BODY
+               : VicissitudeRig.nearestSegment(volumes, attacker.getX(),
+                                               attacker.getEyeY(), attacker.getZ());
+    }
+
+    /**
+     * 距离衰减：作者距离内全额，往外线性降到零，超过 {@code 1.5 ×} 作者距离就什么都打不进来。
+     *
+     * <p>形状照抄 {@code IABoss_monster#hurt} 的那一段，因为要的就是同一个手感：贴脸是全额，
+     * 拉远是纯粹变钝，不是"过一条线突然全免"。没有实体来源的伤害（环境、指令、跌落）
+     * 不参与——它们本来就没有"距离"这个量。
+     *
+     * <p>默认 48 格，刚好落在 64 格不开火距离之内：站在那圈外打进来的伤害已经只剩百分之几，
+     * 不必再靠 {@code engagementRange} 那种"直接退场"来处理远程消耗，两者分工不再重叠。
+     */
+    private float distanceDamageScale(DamageSource source) {
+        LivingEntity attacker = resolveLivingAttacker(source);
+        if (attacker == null){
+            return 1.0F;
+        }
+        double inner = damageRange();
+        double outer = inner * 1.5D;
+        double distance = Math.sqrt(distanceToSqr(attacker));
+        if (distance <= inner){
+            return 1.0F;
+        }
+        if (distance >= outer){
+            return 0.0F;
+        }
+        return (float) ((outer - distance) / (outer - inner));
+    }
+
+    /**
+     * 这个 Boss 是「适应几」：{@code firstVicissitude.adaptationLevel}，默认 2（适应二）。
+     */
     private static int adaptationLevel() {
         return Math.max(0, MaledictConfig.VICISSITUDE_ADAPTATION_LEVEL.get());
     }
@@ -1875,35 +2019,38 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private void refreshPose() {
         float death = getHealth() > 0.0F ? -1.0F : deathTime;
         VicissitudeRig.compute(serverPose, isPhaseTwoVisual(), getPhaseTwoBlend(), action,
-                actionTicks(), actionLeft, hurtTicks, level().getGameTime(), wingFold, death);
+                               actionTicks(), actionLeft, hurtTicks, level().getGameTime(), wingFold, death);
         applyHeadLook(serverPose, action, death, yHeadRot - yBodyRot, getXRot());
     }
 
-    private static void applyHeadLook(VicissitudeRig.Pose pose, VicissitudeRig.Action action,
-                                      float death, float yaw, float pitch) {
-        if (action == VicissitudeRig.Action.NONE && death < 0.0F) {
+    private static void applyHeadLook(
+            VicissitudeRig.Pose pose, VicissitudeRig.Action action,
+            float death, float yaw, float pitch) {
+        if (action == VicissitudeRig.Action.NONE && death < 0.0F){
             pose.addRotation(VicissitudeRigData.Joint.HEAD_ROOT,
-                    pitch * 0.6F, Mth.wrapDegrees(yaw) * 0.5F, 0.0F);
+                             pitch * 0.6F, Mth.wrapDegrees(yaw) * 0.5F, 0.0F);
             VicissitudeRig.solve(pose);
         }
     }
 
-    /** Shared render sample for the mesh and effects; callers must not mutate this scratch pose. */
+    /**
+     * Shared render sample for the mesh and effects; callers must not mutate this scratch pose.
+     */
     public VicissitudeRig.Pose poseForRender(float partialTick) {
         float death = getHealth() > 0.0F ? -1.0F : deathTime + partialTick;
         float ticks = Math.max(0.0F, getActionTicks(partialTick));
         VicissitudeRig.compute(renderPose, isPhaseTwoVisual(),
-                getPhaseTwoBlend(), getRenderAction(), ticks, isActionLeft(), getHurtTicks(),
-                level().getGameTime() + partialTick, getWingFold(), death);
+                               getPhaseTwoBlend(), getRenderAction(), ticks, isActionLeft(), getHurtTicks(),
+                               level().getGameTime() + partialTick, getWingFold(), death);
         applyHeadLook(renderPose, getRenderAction(), death,
-                Mth.rotLerp(partialTick, yHeadRotO, yHeadRot)
-                        - Mth.rotLerp(partialTick, yBodyRotO, yBodyRot),
-                Mth.lerp(partialTick, xRotO, getXRot()));
+                      Mth.rotLerp(partialTick, yHeadRotO, yHeadRot)
+                      - Mth.rotLerp(partialTick, yBodyRotO, yBodyRot),
+                      Mth.lerp(partialTick, xRotO, getXRot()));
         return renderPose;
     }
 
     public Vec3 anchorWorldPosition(VicissitudeRigData.Joint joint, float partialTick) {
-        if (!level().isClientSide) {
+        if (!level().isClientSide){
             refreshPose();
         }
         VicissitudeRig.Pose pose = level().isClientSide ? poseForRender(partialTick) : serverPose;
@@ -1912,7 +2059,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         double z = level().isClientSide ? Mth.lerp(partialTick, zOld, getZ()) : getZ();
         float yaw = level().isClientSide ? Mth.rotLerp(partialTick, yBodyRotO, yBodyRot) : getYRot();
         VicissitudeRig.V3 world = VicissitudeRig.worldPoint(pose, joint, 0.0F, 0.0F, 0.0F,
-                x, y, z, yaw);
+                                                            x, y, z, yaw);
         return new Vec3(world.x(), world.y(), world.z());
     }
 
@@ -1924,15 +2071,17 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         // Releases run before the end-of-tick pose refresh.
         refreshPose();
         VicissitudeRigData.Joint joint = left
-                ? VicissitudeRigData.Joint.WING_LEFT_ATTACK_ANCHOR
-                : VicissitudeRigData.Joint.WING_RIGHT_ATTACK_ANCHOR;
+                                         ? VicissitudeRigData.Joint.WING_LEFT_ATTACK_ANCHOR
+                                         : VicissitudeRigData.Joint.WING_RIGHT_ATTACK_ANCHOR;
         VicissitudeRig.V3 world = VicissitudeRig.worldPoint(serverPose, joint,
-                (left ? 1.0F : -1.0F) * index * 2.0F, 0.0F, 0.0F,
-                getX(), getY(), getZ(), getYRot());
+                                                            (left ? 1.0F : -1.0F) * index * 2.0F, 0.0F, 0.0F,
+                                                            getX(), getY(), getZ(), getYRot());
         return new Vec3(world.x(), world.y(), world.z());
     }
 
-    /** Where the fan converges: the target's torso, not the empty air above it. */
+    /**
+     * Where the fan converges: the target's torso, not the empty air above it.
+     */
     private static Vec3 aimPoint(LivingEntity target) {
         return target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
     }
@@ -1944,7 +2093,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     private static Vec3 aimedDirection(Vec3 origin, Vec3 aim, float offsetDegrees) {
         Vec3 direction = aim.subtract(origin);
-        if (direction.lengthSqr() < 1.0E-4D) {
+        if (direction.lengthSqr() < 1.0E-4D){
             return new Vec3(0.0D, 0.0D, 1.0D);
         }
         return direction.normalize().yRot((float) Math.toRadians(offsetDegrees));
@@ -1972,39 +2121,39 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void playSwingSound(boolean left) {
-        SoundHelper.playSound(this, (SoundEvent) SoundRegistry.SCYTHE_SWEEP.get(), 0.9F,
-                RandomHelper.randomBetween(level().getRandom(), 0.9F, 1.2F));
+        SoundHelper.playSound(this, SoundRegistry.SCYTHE_SWEEP.get(), 0.9F,
+                              RandomHelper.randomBetween(level().getRandom(), 0.9F, 1.2F));
     }
 
     // ------------------------------------------------------------------ wing collision and unstick
 
     private void tickWingCollision() {
-        if (!(level() instanceof ServerLevel)) {
+        if (!(level() instanceof ServerLevel)){
             return;
         }
         List<VicissitudeRig.SegmentVolume> volumes = segmentVolumes();
         boolean blocked = false;
         for (VicissitudeRig.SegmentVolume volume : volumes) {
-            if (!volume.segment().isWing()) {
+            if (!volume.segment().isWing()){
                 continue;
             }
             AABB box = toAabb(volume.box()).expandTowards(getDeltaMovement());
-            if (level().getBlockCollisions(this, box).iterator().hasNext()) {
+            if (level().getBlockCollisions(this, box).iterator().hasNext()){
                 blocked = true;
                 break;
             }
         }
         wingsBlockedLastTick = blocked;
-        if (blocked) {
+        if (blocked){
             // Stop the blocked motion, fold the wings, then keep trying to path around.
             wingFold = Mth.clamp(wingFold + 0.12F, 0.0F, 1.0F);
             setDeltaMovement(getDeltaMovement().scale(0.35D));
-        } else {
+        }else {
             wingFold = Mth.clamp(wingFold - 0.06F, 0.0F, 1.0F);
         }
         AABB sweep = getBoundingBox().inflate(6.0D);
         for (Player player : level().getEntitiesOfClass(Player.class, sweep,
-                candidate -> candidate.isAlive() && !candidate.isSpectator())) {
+                                                        candidate -> candidate.isAlive() && !candidate.isSpectator())) {
             pushOutOfWings(player, volumes);
         }
     }
@@ -2016,21 +2165,21 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private void pushOutOfWings(Player player, List<VicissitudeRig.SegmentVolume> volumes) {
         AABB playerBox = player.getBoundingBox();
         for (VicissitudeRig.SegmentVolume volume : volumes) {
-            if (!volume.segment().isWing()) {
+            if (!volume.segment().isWing()){
                 continue;
             }
             AABB wing = toAabb(volume.box());
-            if (!wing.intersects(playerBox)) {
+            if (!wing.intersects(playerBox)){
                 continue;
             }
             Vec3 away = player.position().subtract(position()).multiply(1.0D, 0.0D, 1.0D);
-            if (away.lengthSqr() < 1.0E-4D) {
+            if (away.lengthSqr() < 1.0E-4D){
                 away = new Vec3(1.0D, 0.0D, 0.0D);
             }
             away = away.normalize();
             // A short velocity nudge only: no teleport and no forced resync, so brushing a wing
             // never reads as being bounced away from the boss.
-            if (!level().noCollision(player, player.getBoundingBox().move(away.scale(0.05D)))) {
+            if (!level().noCollision(player, player.getBoundingBox().move(away.scale(0.05D)))){
                 // The player is wedged against a wall: yield with the wing instead of crushing.
                 wingFold = Mth.clamp(wingFold + 0.1F, 0.0F, 1.0F);
                 continue;
@@ -2040,13 +2189,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void tickUnstick() {
-        if (!(level() instanceof ServerLevel serverLevel)) {
+        if (!(level() instanceof ServerLevel serverLevel)){
             return;
         }
         double travelled = Math.sqrt(sqr(getX() - stuckReferenceX) + sqr(getY() - stuckReferenceY)
                                      + sqr(getZ() - stuckReferenceZ));
         stuckTicks++;
-        if (travelled >= STUCK_MIN_TRAVEL) {
+        if (travelled >= STUCK_MIN_TRAVEL){
             stuckReferenceX = getX();
             stuckReferenceY = getY();
             stuckReferenceZ = getZ();
@@ -2056,22 +2205,22 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         boolean targetPresent = getTarget() != null;
         boolean exempt = !targetPresent || action == VicissitudeRig.Action.SCYTHE_RECOVER
                          || stage == VicissitudeBossStage.TRANSITION || getHealth() <= 0.0F;
-        if (exempt || stuckTicks < STUCK_WINDOW_TICKS || unstickCooldown > 0) {
+        if (exempt || stuckTicks < STUCK_WINDOW_TICKS || unstickCooldown > 0){
             return;
         }
         boolean obstructed = wingsBlockedLastTick
                              || !level().noCollision(this, getBoundingBox().inflate(0.1D));
-        if (!obstructed) {
+        if (!obstructed){
             stuckReferenceX = getX();
             stuckReferenceY = getY();
             stuckReferenceZ = getZ();
             stuckTicks = 0;
             return;
         }
-        if (tryUnstickTeleport(serverLevel)) {
+        if (tryUnstickTeleport(serverLevel)){
             stuckTicks = 0;
             unstickCooldown = UNSTICK_SUCCESS_COOLDOWN;
-        } else {
+        }else {
             // No valid space yet: stay put and retry after another window.
             stuckTicks = 0;
         }
@@ -2088,15 +2237,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                         double y = getY() + dy;
                         double z = getZ() + dz;
                         if (y < level().getMinBuildHeight() + 1
-                            || y > level().getMaxBuildHeight() - getBbHeight() - 1) {
+                            || y > level().getMaxBuildHeight() - getBbHeight() - 1){
                             continue;
                         }
                         BlockPos pos = BlockPos.containing(x, y, z);
-                        if (!level().hasChunkAt(pos) || !level().isLoaded(pos)) {
+                        if (!level().hasChunkAt(pos) || !level().isLoaded(pos)){
                             // Never force load chunks while searching.
                             continue;
                         }
-                        if (isSpaceUsable(serverLevel, x, y, z)) {
+                        if (isSpaceUsable(serverLevel, x, y, z)){
                             unstickTeleport(x, y, z);
                             return true;
                         }
@@ -2112,44 +2261,47 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         setPos(x, y, z);
         boolean usable;
         try {
-            if (!level().noCollision(this, getBoundingBox().deflate(0.05D))) {
+            if (!level().noCollision(this, getBoundingBox().deflate(0.05D))){
                 usable = false;
-            } else if (level().containsAnyLiquid(getBoundingBox())) {
+            }else if (level().containsAnyLiquid(getBoundingBox())){
                 usable = false;
-            } else {
+            }else {
                 usable = true;
                 for (VicissitudeRig.SegmentVolume volume : segmentVolumes()) {
                     AABB box = toAabb(volume.box());
-                    if (level().getBlockCollisions(this, box).iterator().hasNext()) {
+                    if (level().getBlockCollisions(this, box).iterator().hasNext()){
                         usable = false;
                         break;
                     }
-                    if (!level().getEntitiesOfClass(Player.class, box).isEmpty()) {
+                    if (!level().getEntitiesOfClass(Player.class, box).isEmpty()){
                         usable = false;
                         break;
                     }
                 }
             }
-        } finally {
+        }
+        finally {
             setPos(old.x, old.y, old.z);
         }
         return usable;
     }
 
-    /** Emergency escape only: a finite search around the boss, never a chase teleport. */
+    /**
+     * Emergency escape only: a finite search around the boss, never a chase teleport.
+     */
     private void unstickTeleport(double x, double y, double z) {
         Vec3 before = position();
         setPos(x, y, z);
         setDeltaMovement(Vec3.ZERO);
         getNavigation().stop();
         // Interrupt the current attack into recovery: nothing already released is replayed.
-        if (action != VicissitudeRig.Action.NONE && action != VicissitudeRig.Action.SCYTHE_RECOVER) {
+        if (action != VicissitudeRig.Action.NONE && action != VicissitudeRig.Action.SCYTHE_RECOVER){
             endAction();
             startAction(VicissitudeRig.Action.SCYTHE_RECOVER, false);
         }
-        if (scytheToken != null && level() instanceof ServerLevel serverLevel) {
+        if (scytheToken != null && level() instanceof ServerLevel serverLevel){
             Entity entity = serverLevel.getEntity(scytheToken);
-            if (entity instanceof VicissitudeScytheProjectileEntity scythe) {
+            if (entity instanceof VicissitudeScytheProjectileEntity scythe){
                 scythe.recall();
             }
         }
@@ -2157,9 +2309,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         stuckReferenceY = y;
         stuckReferenceZ = z;
         sendEvent(VicissitudeEffectPacket.EVENT_UNSTICK, position());
-        if (level() instanceof ServerLevel serverLevel) {
+        if (level() instanceof ServerLevel serverLevel){
             serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME,
-                    before.x, before.y + 1.0D, before.z, 12, 0.6D, 0.8D, 0.6D, 0.02D);
+                                      before.x, before.y + 1.0D, before.z, 12, 0.6D, 0.8D, 0.6D, 0.02D);
         }
     }
 
@@ -2178,18 +2330,20 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         BlockPos origin = target.blockPosition();
         for (int drop = 0; drop <= 8; drop++) {
             BlockPos candidate = origin.below(drop);
-            if (!level().getBlockState(candidate).getCollisionShape(level(), candidate).isEmpty()) {
+            if (!level().getBlockState(candidate).getCollisionShape(level(), candidate).isEmpty()){
                 return new Vec3(candidate.getX() + 0.5D, candidate.getY() + 1.0D,
-                        candidate.getZ() + 0.5D);
+                                candidate.getZ() + 0.5D);
             }
         }
         return null;
     }
 
-    /** The ground marker center is locked ten ticks into the windup and never slides after. */
+    /**
+     * The ground marker center is locked ten ticks into the windup and never slides after.
+     */
     private void lockGroundMarker(double inner, double outer, float gapCenter, float gapWidth) {
         Vec3 center = groundMarkerTarget;
-        if (center == null) {
+        if (center == null){
             return;
         }
         entityData.set(DATA_GROUND_X, (float) center.x);
@@ -2218,7 +2372,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     public Vec3 getGroundMarkerCenter() {
         return new Vec3(entityData.get(DATA_GROUND_X), entityData.get(DATA_GROUND_Y),
-                entityData.get(DATA_GROUND_Z));
+                        entityData.get(DATA_GROUND_Z));
     }
 
     public double getGroundMarkerInnerRadius() {
@@ -2239,7 +2393,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     public float getGroundMarkerProgress(float partialTick) {
         int duration = entityData.get(DATA_GROUND_DURATION);
-        if (duration <= 0) {
+        if (duration <= 0){
             return 1.0F;
         }
         long elapsed = level().getGameTime() - entityData.get(DATA_GROUND_START);
@@ -2247,25 +2401,25 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void tickGroundMarkerWindup() {
-        if (action == VicissitudeRig.Action.CAST_FROM_CHEST) {
+        if (action == VicissitudeRig.Action.CAST_FROM_CHEST){
             int ticks = actionTicks();
-            if (ticks == 1) {
+            if (ticks == 1){
                 LivingEntity target = getTarget();
                 groundMarkerTarget = target == null ? null : findGroundPoint(target);
-                if (groundMarkerTarget == null) {
+                if (groundMarkerTarget == null){
                     return;
                 }
             }
-            if (ticks == 10) {
+            if (ticks == 10){
                 lockGroundMarker(0.0D, 2.0D, 0.0F, 0.0F);
             }
-        } else if (action == VicissitudeRig.Action.CAST_FROM_HALO) {
+        }else if (action == VicissitudeRig.Action.CAST_FROM_HALO){
             int ticks = actionTicks();
-            if (ticks == 1) {
+            if (ticks == 1){
                 LivingEntity target = getTarget();
                 groundMarkerTarget = target == null ? null : findGroundPoint(target);
             }
-            if (ticks == 10) {
+            if (ticks == 10){
                 // The 60 degree safe gap is chosen once and stays visible.
                 float gap = level().getRandom().nextFloat() * 360.0F;
                 lockGroundMarker(3.0D, 6.0D, gap, 60.0F);
@@ -2277,22 +2431,30 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     public boolean isValidCombatParticipant(Entity entity) {
         if (!(entity instanceof LivingEntity living) || living == this || !living.isAlive()
-            || living.level() != level()) {
+            || living.level() != level()){
             return false;
         }
-        if (isIgnoredPlayer(living)) {
+        if (isIgnoredPlayer(living)){
             return false;
         }
-        if (isPhaseTwo()) {
+        if (isPhaseTwo()){
             return phaseTwoParticipants.contains(living.getUUID());
         }
         return phaseOneTargets.contains(living.getUUID());
     }
 
+    /**
+     * 每档一个基准上限比例，乘最大生命就是身体（权重 1.0）那一刀最多推掉多少血。
+     *
+     * <p>它就是"标准无倍率"的那一条：头的上限是它的 1.25 倍、翼外是 0.5 倍，全部由
+     * {@code VicissitudeRig.Segment#capWeight()} 决定（见
+     * {@link VicissitudeBossEntity#getVitalityDamageLimit(float)}）。四档各自写自己的数，
+     * 不从难度或生命推导。
+     */
     @Override
     protected float getVitalityDamageLimit() {
         float ratio = switch (bossDifficulty) {
-            case SIMPLE -> 0.20F;
+            case SIMPLE -> 0.10F;
             case DIFFICULT -> 0.05F;
             case COMPLETE, EXTREME -> 0.01F;
         };
@@ -2302,7 +2464,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     protected boolean isDamageImmune(DamageSource source) {
         // Transition and the authored death sequence are damage free.
-        if (stage == VicissitudeBossStage.TRANSITION || getHealth() <= 0.0F) {
+        if (stage == VicissitudeBossStage.TRANSITION || getHealth() <= 0.0F){
             return true;
         }
         return isPhaseOne() || source.getEntity() == null;
@@ -2332,30 +2494,30 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     protected void onIncomingAttack(DamageSource source, float amount) {
         LivingEntity attacker = resolveLivingAttacker(source);
-        if (isPhaseTwo()) {
+        if (isPhaseTwo()){
             LivingEntity owner = ownerOf(attacker);
             registerPhaseTwoParticipant(attacker);
             registerPhaseTwoParticipant(owner);
             return;
         }
         if (attacker == null || attacker == this || !attacker.isAlive()
-            || isIgnoredPlayer(attacker)) {
+            || isIgnoredPlayer(attacker)){
             return;
         }
         LivingEntity owner = ownerOf(attacker);
         registerPhaseOneParticipant(attacker);
         registerPhaseOneParticipant(owner);
-        if (stage == VicissitudeBossStage.DORMANT) {
+        if (stage == VicissitudeBossStage.DORMANT){
             lockPhaseOneDuration();
             setStage(VicissitudeBossStage.PHASE_ONE);
             phaseOneTicks = 0;
             ServerPlayer starter = attacker instanceof ServerPlayer player ? player
-                                  : owner instanceof ServerPlayer ownerPlayer ? ownerPlayer : null;
-            if (starter != null) {
+                                                                           : owner instanceof ServerPlayer ownerPlayer ? ownerPlayer : null;
+            if (starter != null){
                 announceFirstAttack(starter);
             }
         }
-        if (!isValidPhaseOneTarget(getTarget())) {
+        if (!isValidPhaseOneTarget(getTarget())){
             setTarget(preferredTarget(attacker, owner));
         }
     }
@@ -2369,11 +2531,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Nullable
     private LivingEntity ownerOf(@Nullable LivingEntity attacker) {
         if (!(attacker instanceof OwnableEntity ownable)
-            || !(level() instanceof ServerLevel serverLevel)) {
+            || !(level() instanceof ServerLevel serverLevel)){
             return null;
         }
         UUID ownerId = ownable.getOwnerUUID();
-        if (ownerId == null) {
+        if (ownerId == null){
             return null;
         }
         LivingEntity owner = resolveParticipant(serverLevel, ownerId);
@@ -2388,18 +2550,20 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     private void registerPhaseOneParticipant(@Nullable LivingEntity participant) {
         if (participant == null || participant == this || !participant.isAlive()
-            || participant.level() != level() || isIgnoredPlayer(participant)) {
+            || participant.level() != level() || isIgnoredPlayer(participant)){
             return;
         }
         phaseOneTargets.add(participant.getUUID());
-        if (participant instanceof ServerPlayer player) {
+        if (participant instanceof ServerPlayer player){
             targetPlayerDeaths.put(player.getUUID(), getDeathCount(player));
         }
     }
 
-    /** 宠物、召唤物出手时账要算在主人头上：能选主人就选主人。 */
+    /**
+     * 宠物、召唤物出手时账要算在主人头上：能选主人就选主人。
+     */
     private LivingEntity preferredTarget(LivingEntity attacker, @Nullable LivingEntity owner) {
-        return owner != null && isValidPhaseOneTarget(owner) ? owner : attacker;
+        return isValidPhaseOneTarget(owner) ? owner : attacker;
     }
 
     /**
@@ -2410,17 +2574,17 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     private void registerPhaseTwoParticipant(@Nullable LivingEntity participant) {
         if (participant == null || participant == this || !participant.isAlive()
-            || participant.level() != level() || isIgnoredPlayer(participant)) {
+            || participant.level() != level() || isIgnoredPlayer(participant)){
             return;
         }
         UUID identity = participant.getUUID();
         phaseTwoParticipants.add(identity);
-        if (participant instanceof ServerPlayer player) {
+        if (participant instanceof ServerPlayer player){
             phaseTwoPlayerDeaths.putIfAbsent(identity, getDeathCount(player));
         }
         LivingEntity target = getTarget();
         if (target == null || !target.isAlive() || target.level() != level()
-            || isIgnoredPlayer(target)) {
+            || isIgnoredPlayer(target)){
             setTarget(participant);
         }
     }
@@ -2436,17 +2600,19 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 .withBold(true));
     }
 
-    /** The phase one set piece line, once per player life. */
+    /**
+     * The phase one set piece line, once per player life.
+     */
     private void announceFirstAttack(ServerPlayer player) {
         int deathCount = getDeathCount(player);
-        if (announcedPlayerDeaths.getOrDefault(player.getUUID(), -1) != deathCount) {
+        if (announcedPlayerDeaths.getOrDefault(player.getUUID(), -1) != deathCount){
             player.displayClientMessage(announcement(PHASE_ONE_MESSAGE_KEY), true);
             announcedPlayerDeaths.put(player.getUUID(), deathCount);
         }
     }
 
     private void lockPhaseOneDuration() {
-        if (!phaseOneDurationLocked) {
+        if (!phaseOneDurationLocked){
             phaseOneDurationTicks = bossDifficulty.phaseOneDurationTicks();
             phaseOneDurationLocked = true;
         }
@@ -2465,13 +2631,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void sendEvent(int eventId, Vec3 position) {
-        if (!(level() instanceof ServerLevel serverLevel)) {
+        if (!(level() instanceof ServerLevel serverLevel)){
             return;
         }
         VicissitudeEffectPacket packet = new VicissitudeEffectPacket(getId(), eventId,
-                actionSequence, position);
+                                                                     actionSequence, position);
         for (ServerPlayer player : serverLevel.players()) {
-            if (player.distanceToSqr(position) < 96.0D * 96.0D) {
+            if (player.distanceToSqr(position) < 96.0D * 96.0D){
                 MaledictNetwork.sendEffect(player, packet);
             }
         }
@@ -2487,7 +2653,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Nullable
     private LivingEntity selectNextPhaseOneTarget(boolean advance) {
-        if (!(level() instanceof ServerLevel serverLevel) || phaseOneTargets.isEmpty()) {
+        if (!(level() instanceof ServerLevel serverLevel) || phaseOneTargets.isEmpty()){
             setTarget(null);
             return null;
         }
@@ -2499,13 +2665,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             int index = (start + offset) % size;
             UUID identity = targets.get(index);
             Entity candidate = serverLevel.getEntity(identity);
-            if (candidate instanceof LivingEntity living && isValidPhaseOneTarget(living)) {
+            if (candidate instanceof LivingEntity living && isValidPhaseOneTarget(living)){
                 targetCursor = advance ? index + 1 : index;
                 setTarget(living);
                 removeInvalidTargets(invalid);
                 return living;
             }
-            if (candidate != null && shouldRemovePhaseOneTarget(identity, candidate)) {
+            if (candidate != null && shouldRemovePhaseOneTarget(identity, candidate)){
                 invalid.add(identity);
             }
         }
@@ -2525,9 +2691,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         List<UUID> others = new ArrayList<>();
         var playerList = serverLevel.getServer().getPlayerList();
         for (UUID identity : phaseOneTargets) {
-            if (playerList.getPlayer(identity) != null) {
+            if (playerList.getPlayer(identity) != null){
                 players.add(identity);
-            } else {
+            }else {
                 others.add(identity);
             }
         }
@@ -2537,12 +2703,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Nullable
     private LivingEntity selectBalancedPhaseTwoTarget() {
-        if (!(level() instanceof ServerLevel serverLevel)) {
+        if (!(level() instanceof ServerLevel serverLevel)){
             return null;
         }
         // 玩家优先，其次才是宠物/召唤物/别的生物：中途加入的玩家不会被一只高血量的宠物挡住。
         LivingEntity selected = healthiestPhaseTwoTarget(serverLevel, true);
-        if (selected == null) {
+        if (selected == null){
             selected = healthiestPhaseTwoTarget(serverLevel, false);
         }
         setTarget(selected);
@@ -2552,24 +2718,24 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Nullable
     private LivingEntity healthiestPhaseTwoTarget(ServerLevel serverLevel, boolean playersOnly) {
         return phaseTwoParticipants.stream()
-                .map(identity -> resolveParticipant(serverLevel, identity))
-                .filter(member -> member != null && member.level() == level()
-                                  && member.isAlive() && !isIgnoredPlayer(member)
-                                  && distanceToSqr(member) <= engagementRangeSqr())
-                .filter(member -> !playersOnly || member instanceof ServerPlayer)
-                .max(Comparator.comparingDouble(LivingEntity::getHealth))
-                .orElse(null);
+                                   .map(identity -> resolveParticipant(serverLevel, identity))
+                                   .filter(member -> member != null && member.level() == level()
+                                                     && member.isAlive() && !isIgnoredPlayer(member)
+                                                     && distanceToSqr(member) <= engagementRangeSqr())
+                                   .filter(member -> !playersOnly || member instanceof ServerPlayer)
+                                   .max(Comparator.comparingDouble(LivingEntity::getHealth))
+                                   .orElse(null);
     }
 
     private boolean isValidPhaseOneTarget(@Nullable LivingEntity target) {
-        if (target == null || target == this || !target.isAlive() || target.level() != level()) {
+        if (target == null || target == this || !target.isAlive() || target.level() != level()){
             return false;
         }
-        if (distanceToSqr(target) > engagementRangeSqr()) {
+        if (distanceToSqr(target) > engagementRangeSqr()){
             // Out of engagement range: the boss holds position instead of crossing the arena.
             return false;
         }
-        if (target instanceof ServerPlayer player) {
+        if (target instanceof ServerPlayer player){
             Integer registeredDeathCount = targetPlayerDeaths.get(player.getUUID());
             return !isIgnoredPlayer(player)
                    && (registeredDeathCount == null || registeredDeathCount == getDeathCount(player));
@@ -2589,7 +2755,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private boolean shouldRemovePhaseOneTarget(UUID identity, Entity candidate) {
-        if (!(candidate instanceof ServerPlayer player)) {
+        if (!(candidate instanceof ServerPlayer player)){
             return !(candidate instanceof LivingEntity living)
                    || !living.isAlive() || living.level() != level();
         }
@@ -2606,12 +2772,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void updatePhaseOneMovement(@Nullable LivingEntity target) {
-        if (target == null) {
+        if (target == null){
             double wantedY = Double.isNaN(idleHoverY) ? getY() + HOVER_HEIGHT : idleHoverY;
             steerToward(new Vec3(getX(), wantedY, getZ()), MAX_FLIGHT_SPEED);
             return;
         }
-        if (action != VicissitudeRig.Action.NONE) {
+        if (action != VicissitudeRig.Action.NONE){
             // Hold the station through the windup and the release: casting has to read as
             // aiming at the target, not as drifting past it.
             setDeltaMovement(getDeltaMovement().scale(0.5D));
@@ -2619,7 +2785,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         Vec3 away = position().subtract(target.position()).multiply(1.0D, 0.0D, 1.0D);
-        if (away.lengthSqr() < 0.01D) {
+        if (away.lengthSqr() < 0.01D){
             double angle = phaseOneTicks * ORBIT_STEP;
             away = new Vec3(Math.cos(angle), 0.0D, Math.sin(angle));
         }
@@ -2630,37 +2796,37 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 target.getY(),
                 target.getZ() + Math.sin(wantedAngle) * PREFERRED_DISTANCE);
         double wantedY = Mth.clamp(target.getEyeY() + HOVER_HEIGHT,
-                level().getMinBuildHeight() + 1.0D,
-                level().getMaxBuildHeight() - getBbHeight() - 1.0D);
+                                   level().getMinBuildHeight() + 1.0D,
+                                   level().getMaxBuildHeight() - getBbHeight() - 1.0D);
         steerToward(new Vec3(wanted.x, wantedY, wanted.z), MAX_FLIGHT_SPEED);
     }
 
     private void updatePhaseTwoMovement(@Nullable LivingEntity target) {
-        if (target == null) {
+        if (target == null){
             setDeltaMovement(getDeltaMovement().scale(0.7D));
             hasImpulse = true;
             return;
         }
         if (action == VicissitudeRig.Action.DASH && dashDirectionLocked
-            && actionTicks() >= action.releaseTick()) {
+            && actionTicks() >= action.releaseTick()){
             return;
         }
-        if (action != VicissitudeRig.Action.NONE) {
+        if (action != VicissitudeRig.Action.NONE){
             // Plant the floating body through the tell and recovery; the rig supplies recoil.
             setDeltaMovement(getDeltaMovement().scale(0.5D));
             hasImpulse = true;
             return;
         }
         Vec3 away = position().subtract(target.position()).multiply(1.0D, 0.0D, 1.0D);
-        if (away.lengthSqr() < 0.01D) {
+        if (away.lengthSqr() < 0.01D){
             double angle = tickCount * ORBIT_STEP;
             away = new Vec3(Math.cos(angle), 0.0D, Math.sin(angle));
-        } else {
+        }else {
             away = away.normalize();
         }
         double wantedY = Mth.clamp(target.getY() + PHASE_TWO_HOVER_HEIGHT,
-                level().getMinBuildHeight() + 1.0D,
-                level().getMaxBuildHeight() - getBbHeight() - 1.0D);
+                                   level().getMinBuildHeight() + 1.0D,
+                                   level().getMaxBuildHeight() - getBbHeight() - 1.0D);
         double holdingDistance = scytheToken == null ? PHASE_TWO_DISTANCE : 8.0D;
         double orbit = scytheToken == null ? 0.0D : (actionSequence % 2 == 0 ? 1.5D : -1.5D);
         Vec3 destination = new Vec3(
@@ -2672,15 +2838,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private void steerToward(Vec3 destination, double maximumSpeed) {
         Vec3 offset = destination.subtract(position());
-        if (offset.lengthSqr() < 0.01D) {
+        if (offset.lengthSqr() < 0.01D){
             setDeltaMovement(getDeltaMovement().scale(0.7D));
             return;
         }
         double desiredSpeed = Math.min(maximumSpeed, offset.length() * 0.12D);
         Vec3 desiredMotion = offset.normalize().scale(desiredSpeed);
         Vec3 motion = getDeltaMovement().scale(1.0D - FLIGHT_STEERING)
-                .add(desiredMotion.scale(FLIGHT_STEERING));
-        if (motion.lengthSqr() > maximumSpeed * maximumSpeed) {
+                                        .add(desiredMotion.scale(FLIGHT_STEERING));
+        if (motion.lengthSqr() > maximumSpeed * maximumSpeed){
             motion = motion.normalize().scale(maximumSpeed);
         }
         setDeltaMovement(motion);
@@ -2694,7 +2860,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 entity -> entity.isAlive() && entity.isAttackable()
                           && !(entity instanceof Player)
                           && entity != getTarget());
-        if (obstacles.isEmpty()) {
+        if (obstacles.isEmpty()){
             return;
         }
         float damage = Math.max(10.0F, attackDamage());
@@ -2702,13 +2868,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         for (Entity obstacle : obstacles) {
             attacked |= obstacle.hurt(damageSources().mobAttack(this), damage);
         }
-        if (attacked) {
+        if (attacked){
             swing(InteractionHand.MAIN_HAND, true);
         }
     }
 
     private void destroyBlockingBlocks() {
-        if (!ForgeEventFactory.getMobGriefingEvent(level(), this)) {
+        if (!ForgeEventFactory.getMobGriefingEvent(level(), this)){
             return;
         }
         BlockPos center = blockPosition();
@@ -2720,13 +2886,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                     BlockState state = level().getBlockState(position);
                     if (!state.isAir()
                         && state.canEntityDestroy(level(), position, this)
-                        && ForgeEventFactory.onEntityDestroyBlock(this, position, state)) {
+                        && ForgeEventFactory.onEntityDestroyBlock(this, position, state)){
                         destroyed = level().destroyBlock(position, true, this) || destroyed;
                     }
                 }
             }
         }
-        if (destroyed) {
+        if (destroyed){
             level().levelEvent(null, 1022, center, 0);
         }
     }
@@ -2752,22 +2918,22 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      *                  restored immediately
      */
     private void tickWeaponGuard(boolean fullCheck) {
-        if (scytheToken != null || entityData.get(DATA_WEAPON_STATE) != 1) {
+        if (scytheToken != null || entityData.get(DATA_WEAPON_STATE) != 1){
             return;
         }
         ItemStack held = getMainHandItem();
         if (!held.isEmpty() && (!fullCheck || held.is(createWeaponForDifficulty(bossDifficulty)
-                .getItem()))) {
+                                                              .getItem()))){
             return;
         }
         equipPhaseTwoWeapon();
     }
 
     private ItemStack createWeaponForDifficulty(BossDifficulty difficulty) {
-        if (difficulty == BossDifficulty.SIMPLE) {
+        if (difficulty == BossDifficulty.SIMPLE){
             return new ItemStack(ItemRegistry.SOUL_STAINED_STEEL_SCYTHE.get());
         }
-        if (difficulty == BossDifficulty.DIFFICULT) {
+        if (difficulty == BossDifficulty.DIFFICULT){
             return new ItemStack(ItemRegistry.EDGE_OF_DELIVERANCE.get());
         }
         ItemStack weapon = new ItemStack(MaledictItems.INCURSUS_BLADE.get());
@@ -2786,15 +2952,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public void setBossDifficulty(BossDifficulty difficulty) {
         bossDifficulty = difficulty == null ? BossDifficulty.SIMPLE : difficulty;
         setWeaponTier(bossDifficulty);
-        if (!difficultyLocked && !level().isClientSide) {
+        if (!difficultyLocked && !level().isClientSide){
             // Before the fight starts the pool simply follows the mode; afterwards it is frozen.
             applyDifficultyAttributes();
         }
-        if (!phaseOneDurationLocked) {
+        if (!phaseOneDurationLocked){
             phaseOneDurationTicks = bossDifficulty.phaseOneDurationTicks();
         }
-        if (isPhaseTwo() && !level().isClientSide) {
-            if (scytheToken != null) {
+        if (isPhaseTwo() && !level().isClientSide){
+            if (scytheToken != null){
                 // A weapon change while the scythe flies waits for this recovery.
                 pendingWeaponTier = bossDifficulty.ordinal();
                 return;
@@ -2804,7 +2970,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void applyDeferredWeaponTier() {
-        if (pendingWeaponTier >= 0) {
+        if (pendingWeaponTier >= 0){
             pendingWeaponTier = -1;
             equipPhaseTwoWeapon();
         }
@@ -2829,13 +2995,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         tag.putInt("BarrageCooldown", barrageCooldown);
         tag.putInt("ChestCooldown", chestCooldown);
         tag.putInt("HaloCooldown", haloCooldown);
-        if (!Double.isNaN(idleHoverY)) {
+        if (!Double.isNaN(idleHoverY)){
             tag.putDouble("PhaseOneHoverY", idleHoverY);
         }
-        if (scytheToken != null) {
+        if (scytheToken != null){
             tag.putUUID("ScytheToken", scytheToken);
         }
-        if (!stashedWeapon.isEmpty()) {
+        if (!stashedWeapon.isEmpty()){
             tag.put("StashedWeapon", stashedWeapon.save(new CompoundTag()));
         }
         tag.put("PhaseOneTargets", saveUuidSet(phaseOneTargets));
@@ -2856,23 +3022,23 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                                  : tag.getString("PhaseTwoMode");
         bossDifficulty = BossDifficulty.fromName(savedDifficulty);
         entityData.set(DATA_WEAPON_TIER, (byte) bossDifficulty.ordinal());
-        if (hasStage) {
+        if (hasStage){
             stage = VicissitudeBossStage.byId(tag.getByte("VicissitudeStage"));
-        } else {
+        }else {
             // Legacy saves only know the boolean flags.
             stage = tag.getBoolean("PhaseTwoStarted") ? VicissitudeBossStage.PHASE_TWO
-                    : tag.getBoolean("PhaseOneStarted") ? VicissitudeBossStage.PHASE_ONE
-                    : VicissitudeBossStage.DORMANT;
+                                                      : tag.getBoolean("PhaseOneStarted") ? VicissitudeBossStage.PHASE_ONE
+                                                                                          : VicissitudeBossStage.DORMANT;
         }
         phaseOneDurationLocked = tag.getBoolean("PhaseOneDurationLocked");
         phaseTwoReached = stage == VicissitudeBossStage.PHASE_TWO || tag.getBoolean("PhaseTwoReached");
         entityData.set(DATA_PHASE_TWO_REACHED, phaseTwoReached);
         int savedDuration = tag.getInt("PhaseOneDuration");
         int savedTicks = Mth.clamp(tag.getInt("PhaseOneTicks"), 0, 6000);
-        if (savedDuration > 0) {
+        if (savedDuration > 0){
             phaseOneDurationTicks = savedDuration;
             phaseOneTicks = Mth.clamp(savedTicks, 0, savedDuration);
-        } else {
+        }else {
             phaseOneDurationTicks = bossDifficulty.phaseOneDurationTicks();
             // Legacy progress was measured against the old five minute timer; keep the ratio.
             float completed = Mth.clamp(savedTicks / 6000.0F, 0.0F, 1.0F);
@@ -2886,10 +3052,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         barrageCooldown = Math.max(0, tag.getInt("BarrageCooldown"));
         chestCooldown = Math.max(0, tag.getInt("ChestCooldown"));
         haloCooldown = Math.max(0, tag.getInt("HaloCooldown"));
-        if (tag.contains("PhaseOneHoverY", Tag.TAG_DOUBLE)) {
+        if (tag.contains("PhaseOneHoverY", Tag.TAG_DOUBLE)){
             idleHoverY = tag.getDouble("PhaseOneHoverY");
         }
-        if (tag.hasUUID("ScytheToken")) {
+        if (tag.hasUUID("ScytheToken")){
             scytheToken = tag.getUUID("ScytheToken");
         }
         stashedWeapon = ItemStack.of(tag.getCompound("StashedWeapon"));
@@ -2903,7 +3069,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         entityData.set(DATA_STAGE, (byte) stage.ordinal());
         entityData.set(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
         action = VicissitudeRig.Action.NONE;
-        if (stage == VicissitudeBossStage.PHASE_TWO) {
+        if (stage == VicissitudeBossStage.PHASE_TWO){
             setWeaponState(hasWeaponInHand() ? 1 : scytheToken != null ? 2 : 0);
         }
     }
@@ -2938,35 +3104,39 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         values.clear();
         for (Tag entry : entries) {
             CompoundTag value = (CompoundTag) entry;
-            if (value.hasUUID("Player")) {
+            if (value.hasUUID("Player")){
                 values.put(value.getUUID("Player"), value.getInt("Deaths"));
             }
         }
     }
 
     /**
-     * 适应账目：一条记录一个伤害消息与已经挨过的次数，列表顺序就是记下的先后。
+     * 适应窗口：一条记录一个伤害消息，<b>列表顺序就是最新在前的顺序</b>。
      *
      * <p>跟着实体一起存档，是因为这份账属于「这一场遭遇战」：区块卸载再回来、或者存档重载，
      * 适应过的消息不该被洗白。真正清账只有一条路——回到未参战（见 {@link #tickEmptyEncounter}）。
      */
     private ListTag saveAdaptation() {
         ListTag entries = new ListTag();
-        for (Map.Entry<String, Integer> entry : damageAdaptation.snapshot().entrySet()) {
+        for (String message : damageAdaptation.snapshot()) {
             CompoundTag value = new CompoundTag();
-            value.putString("Message", entry.getKey());
-            value.putInt("Hits", entry.getValue());
+            value.putString("Message", message);
             entries.add(value);
         }
         return entries;
     }
 
-    /** 读回适应账目；坏行（缺消息、次数非正）由 {@link DamageAdaptation#restore} 丢掉。 */
+    /**
+     * 读回适应窗口，顺序即"最新在前"；空消息由 {@link DamageAdaptation#restore} 丢掉。
+     *
+     * <p>旧存档里的 {@code Hits} 字段不再读取：新规则不保留跨窗口的计数，一条消息滑出去
+     * 就等于没挨过。
+     */
     private void loadAdaptation(ListTag entries) {
-        Map<String, Integer> saved = new LinkedHashMap<>();
+        List<String> saved = new ArrayList<>();
         for (Tag entry : entries) {
-            if (entry instanceof CompoundTag value) {
-                saved.put(value.getString("Message"), value.getInt("Hits"));
+            if (entry instanceof CompoundTag value){
+                saved.add(value.getString("Message"));
             }
         }
         damageAdaptation.restore(saved);
@@ -2995,19 +3165,19 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         confiscated.clear();
         for (Tag playerTag : players) {
             CompoundTag player = (CompoundTag) playerTag;
-            if (!player.hasUUID("Player")) {
+            if (!player.hasUUID("Player")){
                 continue;
             }
             Deque<VicissitudeCurioLedger.Entry> items = new ArrayDeque<>();
             for (Tag itemTag : player.getList("Items", Tag.TAG_COMPOUND)) {
                 CompoundTag item = (CompoundTag) itemTag;
                 ItemStack stack = ItemStack.of(item.getCompound("Stack"));
-                if (!stack.isEmpty()) {
+                if (!stack.isEmpty()){
                     items.addLast(new VicissitudeCurioLedger.Entry(
                             item.getString("Slot"), item.getInt("Index"), stack));
                 }
             }
-            if (!items.isEmpty()) {
+            if (!items.isEmpty()){
                 confiscated.put(player.getUUID("Player"), items);
             }
         }
@@ -3018,7 +3188,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Nullable
     private LivingEntity resolveLivingAttacker(DamageSource source) {
         Entity attacker = source.getEntity();
-        if (!(attacker instanceof LivingEntity)) {
+        if (!(attacker instanceof LivingEntity)){
             attacker = source.getDirectEntity();
         }
         return attacker instanceof LivingEntity living ? living : null;
@@ -3034,7 +3204,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return player.getStats().getValue(Stats.CUSTOM.get(Stats.DEATHS));
     }
 
-    /** Difficulty table: phase one gets shorter as the difficulty rises. */
+    /**
+     * Difficulty table: phase one gets shorter as the difficulty rises.
+     */
     public enum BossDifficulty {
         /**
          * {@code maxHealth} is the pool the vitality ledger captures when the entity joins the
@@ -3063,8 +3235,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         private final ResourceLocation lootTable;
         private final int enlightenmentLevel;
 
-        BossDifficulty(int phaseOneDurationTicks, double maxHealth, DamagePress damagePress,
-                       String lootTablePath, int enlightenmentLevel) {
+        BossDifficulty(
+                int phaseOneDurationTicks, double maxHealth, DamagePress damagePress,
+                String lootTablePath, int enlightenmentLevel) {
             this.phaseOneDurationTicks = phaseOneDurationTicks;
             this.maxHealth = maxHealth;
             this.damagePress = damagePress;
@@ -3115,7 +3288,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return name().toLowerCase(Locale.ROOT);
         }
 
-        /** Synced weapon tiers travel as a byte; anything unexpected falls back to SIMPLE. */
+        /**
+         * Synced weapon tiers travel as a byte; anything unexpected falls back to SIMPLE.
+         */
         private static BossDifficulty byId(int id) {
             BossDifficulty[] values = values();
             return id >= 0 && id < values.length ? values[id] : SIMPLE;
@@ -3124,19 +3299,24 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         private static BossDifficulty fromName(String name) {
             try {
                 return valueOf(name.toUpperCase(Locale.ROOT));
-            } catch (IllegalArgumentException ignored) {
+            }
+            catch (IllegalArgumentException ignored) {
                 return SIMPLE;
             }
         }
     }
 
-    /** How hard the boss presses its damage through a player's defences. */
+    /**
+     * How hard the boss presses its damage through a player's defences.
+     */
     public enum DamagePress {
         LIGHT,
         MEDIUM
     }
 
-    /** Single combat goal; phase selection happens inside so goals never fight each other. */
+    /**
+     * Single combat goal; phase selection happens inside so goals never fight each other.
+     */
     private static final class CombatGoal extends Goal {
         private final FirstVicissitudeBossEntity boss;
         private int targetRefreshCooldown;
@@ -3172,13 +3352,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                     boss.updatePhaseOneMovement(target);
                 }
                 case PHASE_TWO -> {
-                    if (boss.action == VicissitudeRig.Action.NONE && targetRefreshCooldown-- <= 0) {
+                    if (boss.action == VicissitudeRig.Action.NONE && targetRefreshCooldown-- <= 0){
                         boss.selectBalancedPhaseTwoTarget();
                         targetRefreshCooldown = 10;
                     }
                     LivingEntity target = boss.getTarget();
                     if (boss.action == VicissitudeRig.Action.NONE
-                            && (target == null || !target.isAlive() || target.level() != boss.level())) {
+                        && (target == null || !target.isAlive() || target.level() != boss.level())){
                         target = boss.selectBalancedPhaseTwoTarget();
                     }
                     boss.tickPhaseTwoCombat();

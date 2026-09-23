@@ -1,0 +1,15 @@
+{
+  "runtime": {
+    "triangles": 3344,
+    "groups": {
+      "body_head_tail": 1008,
+      "arms": 832,
+      "feathers": 300,
+      "halo": 176,
+      "chest_rings": 380,
+      "bone_wings": 648
+    },
+    "parts": 185,
+    "phase_two": 3044
+  }
+}

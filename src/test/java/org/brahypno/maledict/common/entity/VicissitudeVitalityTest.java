@@ -53,8 +53,8 @@ public final class VicissitudeVitalityTest {
     @Test
     void ordinaryWoundsDoNotResetTheSequence() {
         VicissitudeVitality state = VicissitudeVitality.initial(1000.0F)
-                .killAttempt(10, 100).afterDamage(10.0F, 11, 20);
-        assertTrue(state.current() == 990.0F && state.nextHit() == 31, "Damage must preserve its cooldown");
+                .killAttempt(10, 100).afterDamage(10.0F);
+        assertTrue(state.current() == 990.0F, "Damage must come off the pool");
         state = state.killAttempt(20, 100).withCurrent(995.0F).killAttempt(30, 100);
         assertTrue(state.current() == 0.0F, "Damage/healing within the window must not erase bypass attempts");
     }
@@ -65,7 +65,7 @@ public final class VicissitudeVitalityTest {
         UUID woundedId = UUID.randomUUID();
         UUID deadId = UUID.randomUUID();
         VicissitudeVitality wounded = VicissitudeVitality.initial(1400.0F)
-                .afterDamage(14.0F, 10, 20).killAttempt(11, 100).killAttempt(12, 100);
+                .afterDamage(14.0F).killAttempt(11, 100).killAttempt(12, 100);
         VicissitudeVitality corpse = VicissitudeVitality.initial(1000.0F)
                 .killAttempt(1, 100).killAttempt(2, 100).killAttempt(3, 100);
         VicissitudeVitalityLedger ledger = new VicissitudeVitalityLedger();
@@ -86,7 +86,8 @@ public final class VicissitudeVitalityTest {
     @Test
     void entityNbtCannotRewriteTheLedgerOrBoundCapability() {
         UUID identity = UUID.randomUUID();
-        VicissitudeVitality authority = VicissitudeVitality.initial(1000.0F).afterDamage(10.0F, 1, 20);
+        VicissitudeVitality authority = VicissitudeVitality.initial(1000.0F)
+                .afterDamage(10.0F);
         VicissitudeVitalityLedger ledger = new VicissitudeVitalityLedger();
         ledger.commit(identity, authority);
         VicissitudeVitalityCapability.Mirror capability = new VicissitudeVitalityCapability.Mirror();

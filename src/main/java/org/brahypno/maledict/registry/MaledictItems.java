@@ -10,6 +10,8 @@ import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
+import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossSpawnPhase;
 import org.brahypno.maledict.common.item.*;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 import team.lodestar.lodestone.systems.multiblock.MultiBlockItem;
@@ -68,9 +70,9 @@ public final class MaledictItems {
      * <p>The rune hands those out itself instead of going through a mob effect, see {@link PackRuneItem}.
      */
     public static final RegistryObject<Item> RUNE_OF_THE_PACK = ITEMS.register("rune_of_the_pack",
-                                                                              () -> new PackRuneItem(new Item.Properties().stacksTo(1),
-                                                                                                     SpiritTypeRegistry.WICKED_SPIRIT,
-                                                                                                     "maledict.pack_boon"));
+                                                                               () -> new PackRuneItem(new Item.Properties().stacksTo(1),
+                                                                                                      SpiritTypeRegistry.WICKED_SPIRIT,
+                                                                                                      "maledict.pack_boon"));
 
     /**
      * Curio rune (rune slot) cut from a soulwood tablet, sacred spirit this time: the nourishing
@@ -94,13 +96,29 @@ public final class MaledictItems {
                                                        SpiritTypeRegistry.ELDRITCH_SPIRIT,
                                                        LodestoneAttributeRegistry.MAGIC_RESISTANCE,
                                                        "Curio Magic Resistance",
-                                                       0.8D,
+                                                       1.0D,
                                                        AttributeModifier.Operation.MULTIPLY_TOTAL));
 
     public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.MNEMONIC_OBELISK.get(), new Item.Properties(), MnemonicObeliskBlockEntity.STRUCTURE));
     public static final RegistryObject<Item> SOULWOOD_OBELISK = ITEMS.register("soulwood_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.SOULWOOD_OBELISK.get(), new Item.Properties(), SoulwoodObeliskBlockEntity.STRUCTURE));
+
+    /**
+     * 无常的刷怪蛋（简单档）：一颗直接开始一阶段，一颗直接落到二阶段。
+     *
+     * <p>调试用：配平阶段数值时不用每次都走完前一阶段。换难度请用祭坛，蛋只做简单档。
+     */
+    public static final RegistryObject<Item> FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG =
+            ITEMS.register("first_vicissitude_phase_one_spawn_egg", () ->
+                    new VicissitudeSpawnEggItem(MaledictEntities.FIRST_VICISSITUDE,
+                                                BossDifficulty.SIMPLE, BossSpawnPhase.PHASE_ONE,
+                                                0x1B1A24, 0xE6EDF5, new Item.Properties()));
+    public static final RegistryObject<Item> FIRST_VICISSITUDE_PHASE_TWO_SPAWN_EGG =
+            ITEMS.register("first_vicissitude_phase_two_spawn_egg", () ->
+                    new VicissitudeSpawnEggItem(MaledictEntities.FIRST_VICISSITUDE,
+                                                BossDifficulty.SIMPLE, BossSpawnPhase.PHASE_TWO,
+                                                0x1B1A24, 0x8A5CF6, new Item.Properties()));
 
     public static final RegistryObject<Item> SACRED_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.SACRED);
     public static final RegistryObject<Item> WICKED_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.WICKED);

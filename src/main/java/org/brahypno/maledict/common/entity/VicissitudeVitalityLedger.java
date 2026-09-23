@@ -11,8 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * World-scoped authority, stored in data/maledict_vicissitude.dat in the overworld.
- * Entity.load (including ForgeCaps) cannot deserialize this independent file.
+ * World-scoped authority, stored in data/maledict_vicissitude.dat in the overworld. * Entity.load (including ForgeCaps) cannot deserialize this independent file.
  * Updates mark the data dirty; Minecraft writes it during world saves, not per hit.
  * Dead UUID records are retained so loading an older entity copy cannot revive them.
  */
@@ -60,7 +59,7 @@ final class VicissitudeVitalityLedger extends SavedData {
         CompoundTag tag = new CompoundTag();
         tag.putFloat("Current", value.current());
         tag.putFloat("Maximum", value.maximum());
-        tag.putLong("NextHit", value.nextHit());
+        tag.putLong("GateOpensAt", value.gateOpensAt());
         tag.putInt("KillAttempts", value.killAttempts());
         tag.putLong("LastKillTick", value.lastKillTick());
         return tag;
@@ -68,7 +67,8 @@ final class VicissitudeVitalityLedger extends SavedData {
 
     static VicissitudeVitality decode(CompoundTag tag) {
         return new VicissitudeVitality(tag.getFloat("Current"), tag.getFloat("Maximum"),
-                tag.getLong("NextHit"), tag.getInt("KillAttempts"),
+                tag.contains("GateOpensAt", Tag.TAG_LONG) ? tag.getLong("GateOpensAt") : Long.MIN_VALUE,
+                tag.getInt("KillAttempts"),
                 tag.contains("LastKillTick", Tag.TAG_LONG) ? tag.getLong("LastKillTick") : Long.MIN_VALUE);
     }
 }

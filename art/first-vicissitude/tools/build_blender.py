@@ -59,113 +59,15 @@ PALETTE = [
     ('Inscribed violet halo', '59436C', 0),
 ]
 
-def atlas(emissive=False):
-    name = 'first_vicissitude' + ('_emissive' if emissive else '')
-    img = bpy.data.images.new(name, width=256, height=256, alpha=True)
-    pixels = [0.0] * (256*256*4)
-    for y in range(256):
-        for x in range(256):
-            idx = (y//64)*4+x//64
-            idx = min(idx,len(PALETTE)-1)
-            _, color, glow = PALETTE[idx]
-            # Deliberate four-pixel clusters, stepped wear and a broad central shaft.
-            # Avoid subpixel grain/striations that read as smooth plastic at game distance.
-            px,py = (x%64)//4,(y%64)//4
-            u,v = px/15,py/15
-            shade = .86 + (.06 if (px*3+py*5)%11 < 3 else 0)
-            shade += .10 if px in (1,2,13,14) else 0
-            shade -= .12 if px in (6,7) else 0
-            if py in (4,10) and px in (3,4,10,11):
-                shade -= .10
-            if idx in (0,1,7):
-                # Broad painted tonal planes and an inset seam, legible at game distance.
-                shade *= .75 if .43<u<.48 else 1
-                shade += .12 if .06<u<.10 else 0
-            rgb = [int(color[k:k+2],16)/255 for k in (0,2,4)]
-            a = 1 if not emissive or glow else 0
-            if 9 <= idx <= 12:
-                # Original pixel feather: asymmetric rachis, diagonal barb groups, torn edge.
-                # Shape comes from a bent sheet; the cutout supplies small gaps, not volume.
-                fx,fy = x%64,y%64
-                u,v = (fx-3)/57,(fy-3)/57
-                shaft = .46 + .035*v
-                edge_distance = min(u,1-u)
-                barb = int((v + abs(u-shaft)*.32)*20)
-                shade = .73 + (.11 if u<shaft else 0) + (.07 if barb%3==0 else 0)
-                if abs(u-shaft)<.026:
-                    shade=1.12
-                elif abs(u-shaft)<.06:
-                    shade=.62
-                if edge_distance<.075:
-                    shade=.97
-                slit = barb in (4,9,14,18) and edge_distance < (.14 if idx==11 else .055)
-                broken = idx==11 and v>.67 and u>.68 and int(v*24)%5<3
-                a = 0 if emissive or slit or broken else 1
-            if idx in (2,3,8,13,14):
-                # Original two-pixel clusters: material depth lives in the atlas.
-                # UV direction follows the wing/limb, not world-space projection.
-                qx,qy=(x%64)//2,(y%64)//2
-                if idx==8:
-                    spine=13+(1 if 9<=qy<19 else 0)
-                    shade=.94 if qx<spine else .65
-                    if qx<4: shade=.58
-                    if qx in (4,5): shade=1.18
-                    if qx==6: shade=1.04
-                    if qx==spine: shade=1.22
-                    if qx==spine+1: shade=.43
-                    if qx>27: shade=.46
-                    # Broken pale mineral edge; deliberately not a continuous neon stripe.
-                    if qx in (4,5) and qy not in (5,6,17,18,26):
-                        rgb=[.61,.58,.67]
-                        shade=1 if qx==4 else .88
-                    # Two stepped fissures with a lit lip, and small worn chips.
-                    crack=20+(qy-8)//3 if 7<=qy<=17 else 9+(qy-22)//2
-                    if (7<=qy<=17 or 22<=qy<=27) and qx==crack: shade=.40
-                    if (7<=qy<=17 or 22<=qy<=27) and qx==crack-1: shade=1.12
-                    if qy<5: shade*=.65+.06*qy
-                    if (qx,qy) in ((7,11),(8,11),(8,12),(24,23),(25,23),(24,24)):
-                        shade=1.16
-                else:
-                    # Broad planes first; shallow inset borders and joint shadows second.
-                    shade=.97 if 6<=qx<=19 else .73 if qx>=23 else .83
-                    if qy<6: shade*=.70
-                    if qy in (6,7) and 7<=qx<=24: shade*=.82
-                    if qx in (4,5) and 5<=qy<=27: shade=1.10
-                    if qx in (25,26) and 8<=qy<=25: shade=.55
-                    if qx==24 and 8<=qy<=25: shade=.99
-                    if qy==25 and 8<=qx<=24: shade=.58
-                    if qy==26 and 8<=qx<=22: shade=1.03
-                    crack=10+(qy-11)//3
-                    if 11<=qy<=21 and qx==crack: shade*=.64
-                    if 11<=qy<=21 and qx==crack-1: shade*=1.08
-                    if (qx,qy) in ((6,8),(7,8),(6,9),(21,23),(22,23),(21,24)):
-                        shade=1.13
-                    if idx in (2,3):
-                        # Bone keeps quieter markings than the remaining shell plates.
-                        shade=.5*shade+.5*(.94 if qx<20 else .72)
-            if idx==15:
-                # The silver track and crossbars are painted into the ring's radial UV.
-                silver=px in (6,7,8,9) or (py in (3,11) and 3<=px<=12)
-                rgb=[int(c,16)/255 for c in (('AB','BC','CE') if silver else ('59','43','6C'))]
-                shade=1 if silver else .82
-                if px in (1,14): shade=1.10
-            for k in range(3):
-                # Byte-buffer sRGB images save these values directly to PNG. Do not linearize twice.
-                pixels[(y*256+x)*4+k] = min(1,rgb[k]*shade) * (glow if emissive else 1)
-            pixels[(y*256+x)*4+3] = a
-    img.pixels.foreach_set(pixels)
-    img.filepath_raw = str(TEX / (name+'.png'))
-    img.file_format = 'PNG'
-    img.save()
-    # Render the saved PNG, exactly the same sRGB asset the game loads.
-    path=img.filepath_raw
-    bpy.data.images.remove(img)
-    img=bpy.data.images.load(path,check_existing=False)
-    img.pack()
-    return img
-
-base = atlas()
-emission = atlas(True)
+sys.path.insert(0,str(Path(__file__).parent))
+sys.dont_write_bytecode = True
+from atlas16 import PartAtlas
+from surface_sample import SurfaceSample
+part_atlas = PartAtlas(PALETTE)
+part_atlas.used.update((x,y) for x in range(16) for y in range(7,16))
+surface_sample = SurfaceSample(part_atlas)
+base = bpy.data.images.new('first_vicissitude',width=256,height=256,alpha=True)
+emission = bpy.data.images.new('first_vicissitude_emissive',width=256,height=256,alpha=True)
 materials = []
 for index,(name,color,glow) in enumerate(PALETTE):
     mat = bpy.data.materials.new(name)
@@ -205,7 +107,7 @@ for data in RIG['joints']:
     pivots[name] = pivot
 
 meshes = []
-def mesh(name,joint,verts,faces,mat=0,uvs=None):
+def mesh(name,joint,verts,faces,mat=0,uvs=None,topology=None):
     data = bpy.data.meshes.new(name)
     data.from_pydata([bv(Vector(v)-pivots[joint]) for v in verts],[],faces)
     data.update()
@@ -220,6 +122,11 @@ def mesh(name,joint,verts,faces,mat=0,uvs=None):
     obj['runtime_joint'] = joint
     obj['material_index'] = mat
     data.materials.append(materials[mat])
+    if surface_sample.apply(obj,verts,uvs,topology):
+        meshes.append(obj)
+        return obj
+    region = part_atlas.allocate(name,mat)
+    obj['atlas_region'] = region['name']
     layer = data.uv_layers.new(name='AtlasUV')
     lo=[min(v[k] for v in verts) for k in range(3)]
     span=[max(v[k] for v in verts)-lo[k] for k in range(3)]
@@ -229,8 +136,8 @@ def mesh(name,joint,verts,faces,mat=0,uvs=None):
         for loop in poly.loop_indices:
             vi = data.loops[loop].vertex_index
             u,v = uvs[vi] if uvs else tuple((verts[vi][k]-lo[k])/max(span[k],.001) for k in axes)
-            layer.data[loop].uv = (((mat%4)*64+3+u*57)/256,
-                                        ((mat//4)*64+3+v*57)/256)
+            layer.data[loop].uv = ((region['x']+.5+u*(region['width']-1))/256,
+                                        (region['y']+.5+v*(region['height']-1))/256)
     meshes.append(obj)
     return obj
 
@@ -251,7 +158,7 @@ def tube(name,joint,points,radii,mat=2,sides=4):
                 faces.append(((i-1)*sides+k,(i-1)*sides+(k+1)%sides,
                               i*sides+(k+1)%sides,i*sides+k))
     faces.extend([tuple(reversed(range(sides))),tuple(range((len(pts)-1)*sides,len(pts)*sides))])
-    return mesh(name,joint,verts,faces,mat,uvs)
+    return mesh(name,joint,verts,faces,mat,uvs,('tube',sides,pts))
 
 def blade(name,joint,start,end,width,mat=0,curve=2,thick=.65,ragged=False):
     a,b = Vector(start),Vector(end)
@@ -275,20 +182,19 @@ def blade(name,joint,start,end,width,mat=0,curve=2,thick=.65,ragged=False):
     return mesh(name,joint,verts,faces,mat,uvs)
 
 def feather(name,joint,start,end,width,mat=9,bend=1.4):
-    """Twelve triangles: a shallow folded vane, not a tapered solid weapon blade."""
+    """Six triangles; preserve both silhouette edges, paint the shaft instead of folding it."""
     a,b=Vector(start),Vector(end)
     direction=(b-a).normalized()
     side=Vector((-direction.y,direction.x,0)).normalized()
     verts,uvs,faces=[],[],[]
     for i,(t,w) in enumerate([(0,.38),(.34,1),(.77,.82),(1,.09)]):
         center=a.lerp(b,t)+side*(bend*(1-abs(2*t-1)))
-        for lateral,depth,u in [(-width*w,0,0),(0,-.65*math.sin(math.pi*t),.47),(width*w,0,1)]:
+        for lateral,depth,u in [(-width*w,0,0),(width*w,0,1)]:
             verts.append(center+side*lateral+Vector((0,0,depth)))
             uvs.append((u,t))
         if i:
-            for lane in range(2):
-                k=(i-1)*3+lane
-                faces.append((k,k+1,k+4,k+3))
+            k=(i-1)*2
+            faces.append((k,k+1,k+3,k+2))
     obj=mesh(name,joint,verts,faces,mat,uvs)
     obj['shed_delay']=8+abs(a.x)*.28+(2 if 'Dorsal' in name else 0)
     return obj
@@ -312,7 +218,8 @@ def armor(name,joint,outline,front,back,mat=1):
     return mesh(name,joint,verts,faces,mat)
 
 def relic_arc(name,joint,center,rx,ry,start,end,width=1.3,mat=2,depth=.55):
-    # Beveled relic stock with flat front, sidewall and capped fractures.
+    # Rectangular relic stock: keep angular samples and exact inner/outer radii.
+    # The former pair of bevel strips added faces along every arc segment.
     c=Vector(center)
     verts,faces,uvs=[],[],[]
     steps=max(3,math.ceil(abs(end-start)/15))
@@ -322,14 +229,13 @@ def relic_arc(name,joint,center,rx,ry,start,end,width=1.3,mat=2,depth=.55):
         p=c+Vector((rx*math.cos(a),ry*math.sin(a),0))
         radial=Vector((math.cos(a),math.sin(a),0))
         w=width*(.84 if i in (0,steps) else 1)
-        for dr,dz,u in [(-w,-depth*.4,0),(-w*.72,-depth,.14),(w*.72,-depth,.86),
-                        (w,-depth*.4,1),(w,depth,1),(-w,depth,0)]:
+        for dr,dz,u in [(-w,-depth,0),(w,-depth,1),(w,depth,1),(-w,depth,0)]:
             verts.append(p+radial*dr+Vector((0,0,dz)))
             uvs.append((u,t))
         if i:
-            for k in range(6): faces.append(((i-1)*6+k,(i-1)*6+(k+1)%6,i*6+(k+1)%6,i*6+k))
-    faces.extend([tuple(reversed(range(6))),tuple(range(steps*6,steps*6+6))])
-    return mesh(name,joint,verts,faces,mat,uvs)
+            for k in range(4): faces.append(((i-1)*4+k,(i-1)*4+(k+1)%4,i*4+(k+1)%4,i*4+k))
+    faces.extend([tuple(reversed(range(4))),tuple(range(steps*4,steps*4+4))])
+    return mesh(name,joint,verts,faces,mat,uvs,('arc',))
 
 # The cavity and all moving arcs share the runtime hub, not three guessed centers.
 CX,CY=RIG['chest_hub']
@@ -339,12 +245,12 @@ for side,label in [(1,'left'),(-1,'right')]:
     j='chest_shell_'+label
     tube('Thoracic load arch '+label,j,
          [(side*5,-22,3),(side*9.5,-17,3),(side*10,-9,3),(side*7,-2,3)],
-         [2.3,2.8,2.4,1.6],3,6)
+         [2.3,2.8,2.4,1.6],3,4)
     tube('Clavicular bone arch '+label,'torso',
          [(side*.9,-23,0),(side*5,-23.5,-1),(side*10.5,-19.5,0)],
-         [1.4,2.5,2.1],14,6)
+         [1.4,2.5,2.1],14,4)
     tube('Scapular wing load bridge '+label,'body',
-         [(side*5,-22,4),(side*8,-21,7),(side*10,-18,9)],[2.8,3.4,2.8],3,6)
+         [(side*5,-22,4),(side*8,-21,7),(side*10,-18,9)],[2.8,3.4,2.8],3,4)
     armor('Broken dorsal scapula '+label,'chest_shell_back',
           [(side*x,y) for x,y in [(3,-23),(8,-22),(10,-17),(8,-13),(6,-15),(4,-14)]],5.3,8,0)
     # Irregular side remnants stay outside the circular socket, front and back.
@@ -368,24 +274,17 @@ armor('Lower ossuary bridge','torso',[(-6.5,-2.3),(-3,-2.7),(0,-1.8),(3,-2.7),(6
 # Fixed circular seat surrounds, rather than fills, the moving ring's swept envelope.
 for i,(a,b) in enumerate([(-177,-96),(-87,-3),(6,84),(95,171)]):
     relic_arc('Ossuary socket seat %d'%i,'torso',(CX,CY,-3.8),SOCKET_RADIUS,SOCKET_RADIUS,a,b,.65,3,.9)
-    relic_arc('Socket lip %d'%i,'torso',(CX,CY,-4.6),SOCKET_RADIUS,SOCKET_RADIUS,a+3,b-3,.27,14,.25)
 for i,(joint,a,b) in enumerate([('chest_ring_left',-83,22),('chest_ring_right',132,250),
                                ('chest_ring_bottom',43,108)]):
     center=(CX,CY,-6.0)
     relic_arc('Fate ring stock %d'%i,joint,center,RING_RADIUS,RING_RADIUS,a,b,.54,0,.62)
-    relic_arc('Fate ring inset %d'%i,joint,(CX,CY,-6.66),RING_RADIUS,RING_RADIUS,a+4,b-4,.26,4,.15)
-    for angle in (a+17,b-17):
-        r=math.radians(angle)
-        c=Vector((CX+RING_RADIUS*math.cos(r),CY+RING_RADIUS*math.sin(r),-6.85))
-        dr=Vector((math.cos(r),math.sin(r),0))
-        tube('Fate ring clasp %d %d'%(i,angle),joint,[c-dr*.46,c+dr*.46],[.13,.13],14,4)
 
 # Preserve the nested nonhuman crystal and shell joints used by the death reveal.
 head_center=Vector((0,-32,0))
 crystal_faces=[(0,2,4),(0,4,3),(0,3,5),(0,5,2),(1,4,2),(1,3,4),(1,5,3),(1,2,5)]
 mesh('Nested star crystal core','head_core',
      [(0,-36.2,0),(0,-28.2,0),(-3.1,-32,0),(3.1,-32,0),(0,-32,-3.1),(0,-32,3.1)],crystal_faces,5)
-shell_points=list(map(Vector,[(0,-40,0),(.4,-25.4,.2),(-6.4,-32.4,0),(6.6,-31.6,.3),(0,-32,-5.7),(0,-32,5.5)]))
+shell_points=list(map(Vector,[(-.8,-41,0),(.8,-25.4,.2),(-7.5,-33.6,0),(7.3,-31.2,.3),(0,-32,-5.7),(0,-32,5.5)]))
 for i,ids in enumerate(crystal_faces):
     points=[shell_points[k] for k in ids]
     center=sum(points,Vector())/3
@@ -410,13 +309,6 @@ for i,(start,end) in enumerate([(-162,-74),(-57,19),(42,105),(126,158)],1):
     before=len(meshes)
     joint='halo_fragment_'+str(i)
     relic_arc('Fate arc %d'%i,joint,(0,-28,9),14.1,15,start,end,1.2,0,.85)
-    relic_arc('Halo silver rail %d'%i,joint,(0,-28,8.05),14.1,15,start+3,end-3,.33,4,.2)
-    relic_arc('Halo inner recess %d'%i,joint,(0,-28,9),12.8,13.7,start+9,end-8,.18,13,.3)
-    for angle in range(start+14,end-7,23):
-        a=math.radians(angle)
-        c=Vector((14.1*math.cos(a),-28+15*math.sin(a),7.8))
-        dr=Vector((math.cos(a),math.sin(a),0))
-        tube('Halo transverse seal %d %d'%(i,angle),joint,[c-dr*.8,c+dr*.8],[.19,.19],14,4)
     rot=BASIS @ Euler((0,0,math.radians(-legacy[i-1]))).to_matrix() @ BASIS.transposed()
     for obj in meshes[before:]:
         for v in obj.data.vertices: v.co=rot @ v.co
@@ -486,12 +378,51 @@ for s,label in [(1,'left'),(-1,'right')]:
             verts.extend([center-side*w*.7,center+side*w*1.3,
                           center+Vector((0,0,.45*thickness))])
             uvs.extend([(0,t),(1,t),(.48,t)])
-            if k:
-                for lane in range(3):
+        # Simplify matched sections only when all three rails stay within .30
+        # model units of their original samples. Tips and root are never moved.
+        keep={0,steps}
+        def preserve(a,b):
+            worst,index=0,None
+            for i in range(a+1,b):
+                t=(i-a)/(b-a)
+                error=max((verts[i*3+j]-verts[a*3+j].lerp(verts[b*3+j],t)).length for j in range(3))
+                if error>worst: worst,index=error,i
+            if worst>.30:
+                keep.add(index)
+                preserve(a,index)
+                preserve(index,b)
+        preserve(0,steps)
+        indices=sorted(keep)
+        verts=[verts[i*3+j] for i in indices for j in range(3)]
+        uvs=[uvs[i*3+j] for i in indices for j in range(3)]
+        for k in range(1,len(indices)):
+            for lane in range(3):
+                j=(k-1)*3+lane
+                faces.append((j,(k-1)*3+(lane+1)%3,k*3+(lane+1)%3,k*3+lane))
+        faces.extend([(2,1,0),tuple(range(len(verts)-3,len(verts)))])
+        short=name in ('Root upper hook','Upper hooked spur','Middle returning spur',
+                       'Low returning spur','Trailing inner spur')
+        topology=None
+        if short:
+            # Solid first bay and its two caps carry the joint. The distal blade
+            # is a two-sided sheet under entityCutoutNoCull; its existing edge
+            # stations are unchanged. No duplicate coincident back-face geometry.
+            faces=[(2,1,0),(3,4,5)]
+            for k in range(1,len(indices)):
+                for lane in range(3 if k==1 else 1):
                     j=(k-1)*3+lane
                     faces.append((j,(k-1)*3+(lane+1)%3,k*3+(lane+1)%3,k*3+lane))
-        faces.extend([(2,1,0),tuple(range(steps*3,steps*3+3))])
-        obj=mesh(name+' '+label,prefix+'upper',verts,faces,8,uvs)
+            centers=[(verts[k]+verts[k+1]+verts[k+2])/3 for k in range(0,len(verts),3)]
+            distances=[0]
+            for a,b in zip(centers,centers[1:]): distances.append(distances[-1]+(b-a).length)
+            used=sorted({i for f in faces for i in f})
+            remap={old:new for new,old in enumerate(used)}
+            faces=[tuple(remap[i] for i in f) for f in faces]
+            uvs=[(uvs[i][0],distances[i//3]/distances[-1]) for i in used]
+            verts=[verts[i] for i in used]
+            topology=('spur_sheet',used)
+        obj=mesh(name+' '+label,prefix+'upper',verts,faces,8,uvs,topology)
+        if short: obj['thin_spur']=True
         obj['deploy_scale']=.45
         return obj
     tube('Shared wing root '+label,prefix+'upper',
@@ -550,7 +481,22 @@ for i in range(3):
                                      (width*.7,y+3)]],-.6,2.5,14)
 for s,label in [(1,'left'),(-1,'right')]:
     blade('Floating pelvic relic '+label,'lower_fragment_'+label,(s*5,1,2),(s*6,9,2),1.65,1,0,1)
-    blade('Vestment pennant '+label,'cloth_fragment_'+label,(s*7,5,3),(s*8,21-(2 if s<0 else 0),4),2.15,7,0,.35)
+    # Broad, open-sided vestment wraps from the lower abdomen to the back.
+    # Two transverse panels and three hanging bays; fraying belongs to alpha.
+    cloth=[]; cloth_uv=[]; cloth_faces=[]
+    stations=[(1,(1.8,7.8,4.8),(-4.7,0,5.8)),
+              (9,(2.2,9.0,5.5),(-4.0,1.0,7.0)),
+              (18,(2.8,10.5,6.5),(-2.0,3.0,9.0)),
+              (28 if s>0 else 25,(3.7,11.6,7.3),(0,5,11))]
+    for row,(y,xs,zs) in enumerate(stations):
+        for col in range(3):
+            cloth.append((s*xs[col],y,zs[col]))
+            cloth_uv.append((col/2,row/3))
+        if row:
+            for col in range(2):
+                a=(row-1)*3+col
+                cloth_faces.append((a,a+1,a+4,a+3))
+    mesh('Vestment pennant '+label,'cloth_fragment_'+label,cloth,cloth_faces,7,cloth_uv)
 
 def set_pose(name):
     for data in RIG['joints']:
@@ -563,6 +509,23 @@ def set_pose(name):
         joints[j].rotation_quaternion = (BASIS @ rot @ BASIS.transposed()).to_quaternion()
     bpy.context.view_layer.update()
 
+
+# Finish the atlas only after every part has allocated its own UV region.
+for original,pixels,name in [(base,part_atlas.base,'first_vicissitude'),
+                              (emission,part_atlas.emission,'first_vicissitude_emissive')]:
+    original.pixels.foreach_set(pixels)
+    path=str(TEX/(name+'.png'))
+    original.filepath_raw=path
+    original.file_format='PNG'
+    original.save()
+    packed=bpy.data.images.load(path,check_existing=False)
+    packed.pack()
+    for material in materials:
+        for node in material.node_tree.nodes:
+            if node.type=='TEX_IMAGE' and node.image==original: node.image=packed
+    bpy.data.images.remove(original)
+(PREVIEW/'atlas-layout.json').write_text(json.dumps(part_atlas.report(),indent=2))
+print('ATLAS_REPORT',len(part_atlas.regions),'regions',part_atlas.report()['allocated_pixels'],'pixels',flush=True)
 
 bpy.context.scene['runtime_rig'] = json.dumps(RIG)
 bpy.context.view_layer.update()

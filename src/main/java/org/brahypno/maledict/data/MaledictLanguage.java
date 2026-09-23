@@ -88,6 +88,8 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "启蒙之年");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "保管凭证");
             addItem(MaledictItems.MALIGNANT_PEWTER_TABLET, "恶念白镴符板");
+            addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG, "无常刷怪蛋（一阶段）");
+            addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_TWO_SPAWN_EGG, "无常刷怪蛋（二阶段）");
             addItem(MaledictItems.RUNE_OF_SATIATION, "饱食符文");
             addItem(MaledictItems.RUNE_OF_DECAY, "衰朽符文");
             addItem(MaledictItems.RUNE_OF_THE_PACK, "兽群符文");
@@ -268,6 +270,8 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "Age of Enlightenment");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "Custody Token");
             addItem(MaledictItems.MALIGNANT_PEWTER_TABLET, "Malignant Pewter Tablet");
+            addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG, "Vicissitude Spawn Egg (Phase One)");
+            addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_TWO_SPAWN_EGG, "Vicissitude Spawn Egg (Phase Two)");
             addItem(MaledictItems.RUNE_OF_SATIATION, "Rune of Satiation");
             addItem(MaledictItems.RUNE_OF_DECAY, "Rune of Decay");
             addItem(MaledictItems.RUNE_OF_THE_PACK, "Rune of the Pack");

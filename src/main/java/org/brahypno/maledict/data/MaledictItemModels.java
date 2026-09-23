@@ -81,6 +81,14 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .parent(new ModelFile.UncheckedModelFile(
                         ResourceLocation.fromNamespaceAndPath("malum", "item/runewood_obelisk")))
                 .texture("0", modLoc("block/runewood_obelisk"));
+
+        // 刷怪蛋用原版那张模板贴图，两种颜色由物品自己给。
+        registerSpawnEggModel("first_vicissitude_phase_one_spawn_egg");
+        registerSpawnEggModel("first_vicissitude_phase_two_spawn_egg");
+    }
+
+    private void registerSpawnEggModel(String name) {
+        getBuilder(name).parent(new ModelFile.UncheckedModelFile(mcLoc("item/template_spawn_egg")));
     }
 
     /**

@@ -1,0 +1,19 @@
+{
+  "changed_parts": [
+    {
+      "name": "Vestment pennant left",
+      "before": 6,
+      "after": 12,
+      "common_vertices": 0
+    },
+    {
+      "name": "Vestment pennant right",
+      "before": 6,
+      "after": 12,
+      "common_vertices": 0
+    }
+  ],
+  "unchanged_parts": 183,
+  "before_triangles": 3332,
+  "after_triangles": 3344
+}
