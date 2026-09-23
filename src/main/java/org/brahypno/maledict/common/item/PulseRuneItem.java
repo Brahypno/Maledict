@@ -14,12 +14,13 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * Maledict 的符文共用这一个类：符文木的「饱食符文」「衰朽符文」，灵魂木的「汰余符文」「熟成符文」。
+ * Maledict 里「挂效果」那一类符文共用这个类：符文木的「饱食符文」「衰朽符文」，灵魂木的「熟成符文」。
+ * 灵魂木的「兽群符文」不走这里——它自己出手（见 {@link PackRuneItem}）。
  *
  * <h2>符文本身不做任何事</h2>
  * 这一层只有一件事：戴上就给效果、摘下就让它自然过期。动手的全在效果那一边——生灵之祝的算术在
  * {@code BlessedRegeneration} 与 {@code FoodDataMixin} 里，熟成之赐在 {@code RipeningBonus} 与
- * {@code RipeningEvents} 里，衰朽与汰余则直接写在 {@code DecayEffect} / {@code ThinningEffect} 的 tick 里。
+ * {@code RipeningEvents} 里，衰朽则直接写在 {@code DecayEffect} 的 tick 里。
  * 这样切的好处是：符文这一侧出问题（被无常没收、被 {@code /effect clear}、跨维度）最多丢 2 秒，
  * 而效果自己既不知道也不关心是谁给它挂上的——命令、别的模组、将来的更高等级来源都一视同仁。
  *

@@ -61,16 +61,16 @@ public final class MaledictItems {
                                                                                                     MaledictMobEffects.DECAY, "maledict.decay"));
 
     /**
-     * Curio rune (rune slot) cut from a soulwood tablet: the Rite of Culling, weakened to a level I
-     * pulse that strikes the outermost of any hostile crowd once every two seconds.
+     * Curio rune (rune slot) cut from a soulwood tablet: the pulse of the Rite of Empowerment turned
+     * from the hostile crowd onto the wearer's own beasts. Every companion answering to the wearer
+     * within 16 blocks gains resistance, strength and speed.
      *
-     * <p>Named away from Malum's own {@code rune_of_culling} (Rune of Culling, its magic damage
-     * rune); two runes sharing a name would be unreadable side by side in JEI.
+     * <p>The rune hands those out itself instead of going through a mob effect, see {@link PackRuneItem}.
      */
-    public static final RegistryObject<Item> RUNE_OF_THINNING = ITEMS.register("rune_of_thinning",
-                                                                               () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
-                                                                                                       SpiritTypeRegistry.WICKED_SPIRIT,
-                                                                                                       MaledictMobEffects.THINNING, "maledict.thinning"));
+    public static final RegistryObject<Item> RUNE_OF_THE_PACK = ITEMS.register("rune_of_the_pack",
+                                                                              () -> new PackRuneItem(new Item.Properties().stacksTo(1),
+                                                                                                     SpiritTypeRegistry.WICKED_SPIRIT,
+                                                                                                     "maledict.pack_boon"));
 
     /**
      * Curio rune (rune slot) cut from a soulwood tablet, sacred spirit this time: the nourishing

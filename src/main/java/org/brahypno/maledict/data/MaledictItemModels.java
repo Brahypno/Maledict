@@ -57,9 +57,9 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", modLoc("item/runes/rune_of_decay"));
 
-        getBuilder("rune_of_thinning")
+        getBuilder("rune_of_the_pack")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
-                .texture("layer0", modLoc("item/runes/rune_of_thinning"));
+                .texture("layer0", modLoc("item/runes/rune_of_the_pack"));
 
         getBuilder("rune_of_ripening")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))

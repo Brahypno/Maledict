@@ -33,7 +33,7 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
                                output.accept(MaledictItems.RUNE_OF_SATIATION.get());
                                output.accept(MaledictItems.RUNE_OF_DECAY.get());
-                               output.accept(MaledictItems.RUNE_OF_THINNING.get());
+                               output.accept(MaledictItems.RUNE_OF_THE_PACK.get());
                                output.accept(MaledictItems.RUNE_OF_RIPENING.get());
                                output.accept(MaledictItems.RUNE_OF_STAGNANT_EVOLUTION.get());
                            })

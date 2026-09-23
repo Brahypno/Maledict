@@ -42,7 +42,7 @@ public final class MaledictCodexEntries {
     private static final String TOTEMIC_RUNES_CONTINUED_ENTRY = "maledict.totemic_runes_continued";
     private static final String RUNE_OF_SATIATION_ENTRY = "maledict.rune_of_satiation";
     private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";
-    private static final String RUNE_OF_THINNING_ENTRY = "maledict.rune_of_thinning";
+    private static final String RUNE_OF_THE_PACK_ENTRY = "maledict.rune_of_the_pack";
     private static final String RUNE_OF_RIPENING_ENTRY = "maledict.rune_of_ripening";
     private static final String VOID_RUNEWORKING_ENTRY = "void.maledict.runeworking";
 
@@ -52,12 +52,13 @@ public final class MaledictCodexEntries {
     /**
      * 四枚图腾符文在书上的落点：Malum 的符文条目占着 (-15..-12, 7..10) 那一片，
      * 空着的只有左边一列 (-15, 7..9) 和右边三格 (-12, 8..10)。
-     * 于是邪恶线那三枚竖着连在左边，神圣线的熟成符文落在右边的 (-12, 8)，与 Malum 的符文排成一行。
+     * 于是左边一列竖着摆三枚（衰朽、饱食、兽群），第四枚熟成符文落在右边的 (-12, 8)，
+     * 与 Malum 的符文排成一行。
      */
     private static final int RUNE_COLUMN_X = -15;
     private static final int RUNE_OF_DECAY_Y = 7;
     private static final int RUNE_OF_SATIATION_Y = 8;
-    private static final int RUNE_OF_THINNING_Y = 9;
+    private static final int RUNE_OF_THE_PACK_Y = 9;
     private static final int RUNE_OF_RIPENING_X = -12;
     private static final int RUNE_OF_RIPENING_Y = 8;
 
@@ -80,14 +81,14 @@ public final class MaledictCodexEntries {
                                                      RUNE_COLUMN_X, RUNE_OF_SATIATION_Y, BookWidgetStyle.SOULWOOD);
         PlacedBookEntry decayRune = addRuneEntry(RUNE_OF_DECAY_ENTRY, MaledictItems.RUNE_OF_DECAY,
                                                  RUNE_COLUMN_X, RUNE_OF_DECAY_Y, BookWidgetStyle.RUNEWOOD);
-        PlacedBookEntry thinningRune = addRuneEntry(RUNE_OF_THINNING_ENTRY, MaledictItems.RUNE_OF_THINNING,
-                                                    RUNE_COLUMN_X, RUNE_OF_THINNING_Y, BookWidgetStyle.SOULWOOD);
+        PlacedBookEntry packRune = addRuneEntry(RUNE_OF_THE_PACK_ENTRY, MaledictItems.RUNE_OF_THE_PACK,
+                                                RUNE_COLUMN_X, RUNE_OF_THE_PACK_Y, BookWidgetStyle.SOULWOOD);
         PlacedBookEntry ripeningRune = addRuneEntry(RUNE_OF_RIPENING_ENTRY, MaledictItems.RUNE_OF_RIPENING,
                                                     RUNE_OF_RIPENING_X, RUNE_OF_RIPENING_Y, BookWidgetStyle.SOULWOOD);
         addTotemicRunesContinuedEntry(List.of(
                 new EntryReference(MaledictItems.RUNE_OF_SATIATION, satiationRune),
                 new EntryReference(MaledictItems.RUNE_OF_DECAY, decayRune),
-                new EntryReference(MaledictItems.RUNE_OF_THINNING, thinningRune),
+                new EntryReference(MaledictItems.RUNE_OF_THE_PACK, packRune),
                 new EntryReference(MaledictItems.RUNE_OF_RIPENING, ripeningRune)));
     }
 
@@ -179,7 +180,7 @@ public final class MaledictCodexEntries {
      * 所以 Malum 那边条文还在，这条就跟着它一起出现，不用另开章节。
      *
      * <p>最后一页照抄 Malum 图腾符文条目的收尾：{@link EntrySelectorPage} 摆出符文图标，
-     * 点哪个进哪个条目看合成——现在摆的是我们刻出来的四枚：饱食、衰朽、汰余、熟成。
+     * 点哪个进哪个条目看合成——现在摆的是我们刻出来的四枚：饱食、衰朽、兽群、熟成。
      */
     private static void addTotemicRunesContinuedEntry(List<EntryReference> runes) {
         if (containsEntry(ArcanaProgressionScreen.ENTRIES, TOTEMIC_RUNES_CONTINUED_ENTRY)){

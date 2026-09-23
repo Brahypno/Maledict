@@ -117,10 +117,10 @@ public final class MaledictRecipes extends RecipeProvider {
                 .setSecondaryInput(SpiritTypeRegistry.WICKED_SPIRIT.spiritShard.get(), 32)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "runeworking/rune_of_decay"));
 
-        new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_THINNING.get(), 1)
+        new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_THE_PACK.get(), 1)
                 .setPrimaryInput(ItemRegistry.SOULWOOD_TABLET.get(), 1)
                 .setSecondaryInput(SpiritTypeRegistry.WICKED_SPIRIT.spiritShard.get(), 32)
-                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "runeworking/rune_of_thinning"));
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "runeworking/rune_of_the_pack"));
 
         // 神圣线的灵魂木那枚：同样 32 枚精魂，换神圣精魂、符板仍旧认极性。
         new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_RIPENING.get(), 1)

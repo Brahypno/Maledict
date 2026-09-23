@@ -1,7 +1,7 @@
 {
   "type": "malum:runeworking",
   "output": {
-    "item": "maledict:rune_of_thinning"
+    "item": "maledict:rune_of_the_pack"
   },
   "primaryInput": {
     "count": 1,

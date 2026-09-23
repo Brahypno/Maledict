@@ -67,7 +67,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
         tag(CURIOS_RUNE).add(MaledictItems.RUNE_OF_SATIATION.get(),
                              MaledictItems.RUNE_OF_DECAY.get(),
-                             MaledictItems.RUNE_OF_THINNING.get(),
+                             MaledictItems.RUNE_OF_THE_PACK.get(),
                              MaledictItems.RUNE_OF_RIPENING.get(),
                              MaledictItems.RUNE_OF_STAGNANT_EVOLUTION.get());
         // Generated empty on purpose: modpacks extend it through a data pack.

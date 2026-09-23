@@ -55,11 +55,17 @@ public final class MaledictMobEffects {
             MOB_EFFECTS.register("decay", DecayEffect::new);
 
     /**
-     * 汰余之令：灵魂木「汰余符文」维持的效果。等级 I 时，同种敌对生物挤到八只以上，
-     * 最外围的那只每两秒挨一记 1.5 颗心的重击——图腾「屠戮仪式」刻上符板后的那一半。
+     * 汰余之令：灵魂木那枚旧符文维持过的效果。等级 I 时，同种敌对生物挤到八只以上，
+     * 最外围的那只每两秒挨一记 1.5 颗心的重击。
+     *
+     * <p><b>目前没有物品发放它</b>——那枚符文已经改成「兽群符文」，这个效果按需求留着备用：
+     * 想再拿它做点什么（另一枚符文、一座图腾、某个 Boss 的招式）随时接得上。
      */
     public static final RegistryObject<MobEffect> THINNING =
             MOB_EFFECTS.register("thinning", ThinningEffect::new);
+
+    // 这里原本还有一个「兽群之赐」（pack_boon）：那枚符文改成自己出手了——PackRuneItem 每 40 tick
+    // 直接把抗性提升、力量与迅捷发给随从，不经过任何中间效果，所以对应的注册项与效果文案一并去掉。
 
     /** 熟成之赐的粉色：Malum 神圣精魂的主色 {@code #EE2C88}。 */
     private static final int RIPENING_COLOR = 0xEE2C88;

@@ -19,7 +19,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 汰余之令：灵魂木「汰余符文」给佩戴者的药水效果，也就是图腾「屠戮仪式」被刻进符板后的那一半。
+ * 汰余之令：灵魂木那枚旧符文（「汰余符文」）给佩戴者的药水效果，也就是图腾「屠戮仪式」被刻进符板后的那一半。
+ *
+ * <p><b>目前没有物品发放它。</b>那枚符文后来改名改效果做成了「兽群符文」
+ * （{@code maledict:rune_of_the_pack}，效果由 {@code PackRuneItem} 直接发给随从，不经过药水效果），
+ * 这个效果按需求原样留着：数值、判定、文案都没动，随时可以接回某枚符文、某座图腾或某个 Boss 的招式。
+ * 下面这段对照表仍然是它的设计依据，改回去或者改造它时照读即可。
  *
  * <p>名字不是「屠戮」：Malum 已经有一枚 {@code malum:rune_of_culling}（屠戮符文，走魔法伤害那条线），
  * 两个同名的符文摆在一起没法看。这里取「只汰去多余的部分」这个意思——它从来不是杀戮，
@@ -63,19 +68,29 @@ import java.util.Map;
  * <p>两个数都是旋钮：{@link #CROWD_LIMIT} 决定多挤才算过量，{@link #DAMAGE_PER_LEVEL} 决定一记多重。
  */
 public final class ThinningEffect extends MobEffect {
-    /** Malum 邪恶精魂的次色 {@code #4815FF}：与衰朽之息同一个家族，又分得开。 */
+    /**
+     * Malum 邪恶精魂的次色 {@code #4815FF}：与衰朽之息同一个家族，又分得开。
+     */
     public static final int COLOR = 0x4815FF;
 
-    /** 每级每次的伤害。等级乘数由这里自己乘；衰朽之息是 1.0（半颗心），这里 3.0（一颗半）。 */
+    /**
+     * 每级每次的伤害。等级乘数由这里自己乘；衰朽之息是 1.0（半颗心），这里 3.0（一颗半）。
+     */
     public static final float DAMAGE_PER_LEVEL = 3.0F;
 
-    /** 同种敌对生物挤到超过这个数才算「过量」。 */
+    /**
+     * 同种敌对生物挤到超过这个数才算「过量」。
+     */
     public static final int CROWD_LIMIT = 8;
 
-    /** 以佩戴者所在方块为中心的水平与垂直半径，{@code 2} 即 5×5×5，图腾是 4（9×9×9）。 */
+    /**
+     * 以佩戴者所在方块为中心的水平与垂直半径，{@code 2} 即 5×5×5，图腾是 4（9×9×9）。
+     */
     public static final int RADIUS = 2;
 
-    /** 出手间隔。与 {@code PulseRuneItem} 刷效果的节奏同为 40 tick，图腾也是这个数。 */
+    /**
+     * 出手间隔。与 {@code PulseRuneItem} 刷效果的节奏同为 40 tick，图腾也是这个数。
+     */
     public static final int INTERVAL_TICKS = 40;
 
     public ThinningEffect() {
@@ -93,14 +108,14 @@ public final class ThinningEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity wearer, int amplifier) {
-        if (wearer.level().isClientSide) {
+        if (wearer.level().isClientSide){
             return;
         }
 
         DamageSource source = DamageTypeHelper.create(wearer.level(), DamageTypeRegistry.VOODOO, wearer);
         Map<Class<? extends LivingEntity>, List<LivingEntity>> crowds = new LinkedHashMap<>();
         for (LivingEntity candidate : wearer.level().getEntitiesOfClass(LivingEntity.class, crowdArea(wearer))) {
-            if (!isSurplus(wearer, candidate)) {
+            if (!isSurplus(wearer, candidate)){
                 continue;
             }
             crowds.computeIfAbsent(candidate.getClass(), kind -> new ArrayList<>()).add(candidate);
@@ -108,12 +123,12 @@ public final class ThinningEffect extends MobEffect {
 
         float damage = DAMAGE_PER_LEVEL * (amplifier + 1);
         for (List<LivingEntity> crowd : crowds.values()) {
-            if (crowd.size() <= CROWD_LIMIT) {
+            if (crowd.size() <= CROWD_LIMIT){
                 continue;
             }
             LivingEntity victim = outermost(wearer, crowd);
             ParticleEffectTypeRegistry.MAJOR_HEXING_SMOKE.createEntityEffect(victim,
-                    new ColorEffectData(SpiritTypeRegistry.WICKED_SPIRIT.getPrimaryColor()));
+                                                                             new ColorEffectData(SpiritTypeRegistry.WICKED_SPIRIT.getPrimaryColor()));
             victim.hurt(source, damage);
             // 一次触发只打一只：这枚符文维持的是一条线，不是一场屠杀。
             return;
@@ -125,17 +140,19 @@ public final class ThinningEffect extends MobEffect {
     }
 
     private static boolean isSurplus(LivingEntity wearer, LivingEntity candidate) {
-        if (candidate == wearer || candidate instanceof Player) {
+        if (candidate == wearer || candidate instanceof Player){
             return false;
         }
         return candidate instanceof Enemy && candidate.isAlive() && !candidate.isInvulnerable();
     }
 
-    /** 一堆里离佩戴者最远的那只先挨：要汰的是外围多出来的，不是贴脸这只。 */
+    /**
+     * 一堆里离佩戴者最远的那只先挨：要汰的是外围多出来的，不是贴脸这只。
+     */
     private static LivingEntity outermost(LivingEntity wearer, List<LivingEntity> crowd) {
         LivingEntity outermost = crowd.get(0);
         for (LivingEntity candidate : crowd) {
-            if (candidate.distanceToSqr(wearer) > outermost.distanceToSqr(wearer)) {
+            if (candidate.distanceToSqr(wearer) > outermost.distanceToSqr(wearer)){
                 outermost = candidate;
             }
         }
