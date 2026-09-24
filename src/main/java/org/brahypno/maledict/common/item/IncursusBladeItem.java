@@ -13,6 +13,7 @@ import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import com.sammy.malum.registry.common.item.EnchantmentRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.damagesource.DamageSource;
@@ -34,6 +35,7 @@ import net.minecraft.world.item.Tier;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
+import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.combat.IncursusBladeEnchantments;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
@@ -59,6 +61,16 @@ public final class IncursusBladeItem extends MagicScytheItem {
     public static final String INFERNAL_POWER = "infernal_power";
     public static final String ELDRITCH_ABSORPTION = "eldritch_absorption";
     public static final String WICKED_CRITICAL_DAMAGE = "wicked_critical_damage";
+
+    /**
+     * 物品栏里眨眼用的模型覆盖谓词：{@code 1.0} 表示这一帧闭眼，模型整份换成闭眼的那张。
+     *
+     * <p>规律本身在 {@link IncursusBladeBlink}，谓词在 {@code MaledictItemProperties} 里注册，
+     * 模型在 {@code MaledictItemModels} 里生成——这个名字是三方共用的那一份，所以放在物品上，
+     * 和 {@code AgeOfEnlightenmentItem.ENLIGHTENED_PROPERTY} 同一个路子。
+     */
+    public static final ResourceLocation BLINK_PROPERTY =
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "blinking");
 
     private static final String[] STAT_KEYS = {
             ATTACK_DAMAGE, POWDER_SNOW_DAMAGE, MAGIC_DAMAGE, AERIAL_PROGRESS,

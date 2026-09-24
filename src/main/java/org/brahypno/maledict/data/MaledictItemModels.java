@@ -10,6 +10,7 @@ import net.minecraftforge.client.model.generators.loaders.SeparateTransformsMode
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.IncursusBladeItem;
 import org.brahypno.maledict.common.item.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
 
@@ -29,19 +30,7 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerBowModel("remembrance_bow");
         registerSeparateBowModel("elegy_bow");
 
-        ItemModelBuilder handheld = getBuilder("incursus_blade_handheld")
-                .parent(new ModelFile.UncheckedModelFile(
-                        ResourceLocation.fromNamespaceAndPath("malum", "item/handheld_large")))
-                .texture("layer0", modLoc("item/incursus_blade_huge"));
-        ItemModelBuilder gui = withExistingParent("incursus_blade_gui", "item/handheld")
-                .texture("layer0", modLoc("item/incursus_blade"));
-
-        getBuilder("incursus_blade")
-                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/handheld")))
-                .customLoader(SeparateTransformsModelBuilder::begin)
-                .base(handheld)
-                .perspective(ItemDisplayContext.GUI, gui)
-                .perspective(ItemDisplayContext.FIXED, gui);
+        registerIncursusBladeModels();
 
         registerAgeOfEnlightenmentModel();
 
@@ -85,6 +74,42 @@ public final class MaledictItemModels extends ItemModelProvider {
         // 刷怪蛋用原版那张模板贴图，两种颜色由物品自己给。
         registerSpawnEggModel("first_vicissitude_phase_one_spawn_egg");
         registerSpawnEggModel("first_vicissitude_phase_two_spawn_egg");
+    }
+
+    /**
+     * 神侵恶刃：手上用大贴图，物品栏里用 16x16 那张，并且会在物品栏里眨眼。
+     *
+     * <p>眨眼靠模型覆盖：谓词 {@code maledict:blinking}（{@code MaledictItemProperties} 注册，
+     * 名字来自 {@link IncursusBladeItem#BLINK_PROPERTY}）在闭眼的那几个 tick 置 1，整份模型
+     * 换成 {@code incursus_blade_blink}。那一份的 {@code base}（手上那张大贴图）与 {@code fixed}
+     * （展示框）跟常态一模一样，只有 {@code gui} 换成闭眼贴图——所以「眨眼」只在物品栏里看得见，
+     * 拿在手上和挂在展示框上都不受影响。
+     */
+    private void registerIncursusBladeModels() {
+        ItemModelBuilder handheld = getBuilder("incursus_blade_handheld")
+                .parent(new ModelFile.UncheckedModelFile(
+                        ResourceLocation.fromNamespaceAndPath("malum", "item/handheld_large")))
+                .texture("layer0", modLoc("item/incursus_blade_huge"));
+        ItemModelBuilder gui = withExistingParent("incursus_blade_gui", "item/handheld")
+                .texture("layer0", modLoc("item/incursus_blade"));
+        ItemModelBuilder blinkGui = withExistingParent("incursus_blade_gui_blink", "item/handheld")
+                .texture("layer0", modLoc("item/incursus_blade_blink"));
+
+        ItemModelBuilder blink = withExistingParent("incursus_blade_blink", mcLoc("item/handheld"));
+        blink.customLoader(SeparateTransformsModelBuilder::begin)
+                .base(handheld)
+                .perspective(ItemDisplayContext.GUI, blinkGui)
+                .perspective(ItemDisplayContext.FIXED, gui);
+
+        ItemModelBuilder blade = withExistingParent("incursus_blade", mcLoc("item/handheld"));
+        blade.customLoader(SeparateTransformsModelBuilder::begin)
+                .base(handheld)
+                .perspective(ItemDisplayContext.GUI, gui)
+                .perspective(ItemDisplayContext.FIXED, gui);
+        blade.override()
+                .predicate(IncursusBladeItem.BLINK_PROPERTY, 0.5F)
+                .model(blink)
+                .end();
     }
 
     private void registerSpawnEggModel(String name) {

@@ -7,14 +7,6 @@
     }
   },
   "loader": "forge:separate_transforms",
-  "overrides": [
-    {
-      "model": "maledict:item/incursus_blade_blink",
-      "predicate": {
-        "maledict:blinking": 0.5
-      }
-    }
-  ],
   "perspectives": {
     "fixed": {
       "parent": "minecraft:item/handheld",
@@ -25,7 +17,7 @@
     "gui": {
       "parent": "minecraft:item/handheld",
       "textures": {
-        "layer0": "maledict:item/incursus_blade"
+        "layer0": "maledict:item/incursus_blade_blink"
       }
     }
   }
