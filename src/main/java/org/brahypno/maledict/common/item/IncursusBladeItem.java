@@ -36,10 +36,10 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.combat.IncursusBladeAttack;
 import org.brahypno.maledict.common.combat.IncursusBladeEnchantments;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
-import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 import team.lodestar.lodestone.registry.common.tag.LodestoneDamageTypeTags;
 
@@ -210,14 +210,9 @@ public final class IncursusBladeItem extends MagicScytheItem {
         }
 
         if (event.getSource().is(DamageTypeRegistry.SCYTHE_MELEE)){
-            double damage = getStat(stack, POWDER_SNOW_DAMAGE);
-            if (damage > 0.0){
-                applyTieredDamage(
-                        stack,
-                        target,
-                        DamageTypeHelper.create(attacker.level(), DamageTypes.FREEZE, attacker),
-                        (float) damage);
-            }
+            // 这次近战命中确实触发了 LivingHurtEvent。IncursusBladeAttack 靠这个回调判断
+            // Lodestone 在 can_trigger_magic 里附加的魔法伤害有没有机会生效，没生效就由它补上。
+            IncursusBladeAttack.markMeleeHurtEvent(target, event.getSource());
         }
 
         addAbsorptionFromDamage(attacker, stack, event.getAmount());
@@ -300,18 +295,28 @@ public final class IncursusBladeItem extends MagicScytheItem {
         return true;
     }
 
-    public static void applyTieredDamage(
-            ItemStack stack,
-            Entity target,
-            DamageSource source,
-            float damage) {
+    /**
+     * 镰刀伤害的唯一出口：按档位（medium/final）结算一次伤害。
+     *
+     * <p>进来先清无敌帧——镰刀好几条通道是一口气打出去的，不清的话后几条会被前一条留下的
+     * 无敌帧吃掉；目标已经死亡或正在死亡时直接跳过，数值不是正数也一并挡掉。
+     */
+    public static void applyTieredDamage(ItemStack stack, Entity target, DamageSource source, float damage) {
+        if (damage <= 0.0f || !canTakeDamage(target))
+            return;
         if (hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL))
             DamageProbe.finalDamageMethod(target, source, damage);
         else if (hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL))
             DamageProbe.mediumDamageMethod(target, source, damage);
         else
             DamageProbe.lighterDamageMethod(target, source, damage);
+    }
 
+    /**
+     * 目标还挨得起镰刀的伤害：非生物照打，已经死亡或正在死亡的生物跳过。
+     */
+    private static boolean canTakeDamage(Entity target) {
+        return !(target instanceof LivingEntity livingTarget) || !livingTarget.isDeadOrDying();
     }
 
     public static void setStat(ItemStack stack, String key, double value) {

@@ -13,6 +13,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
+import org.brahypno.maledict.common.item.IncursusBladeItem;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.ItemHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
@@ -42,8 +43,7 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
             ItemStack heldItem = owner.getMainHandItem();
             ItemStack scythe = getItem();
             owner.setItemInHand(InteractionHand.MAIN_HAND, scythe);
-
-            target.invulnerableTime = 0;
+            
             boolean hit = DamageProbe.mediumDamageMethod(
                     target,
                     DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, owner),
@@ -54,20 +54,16 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
                 if (fireAspect > 0 && target instanceof LivingEntity livingTarget){
                     livingTarget.setSecondsOnFire(fireAspect * 4);
                 }
-                if (magicDamage > 0.0f && canTakeAdditionalDamage(target)){
-                    target.invulnerableTime = 0;
-                    DamageProbe.mediumDamageMethod(
-                            target,
-                            DamageTypeHelper.create(level(), DamageTypeRegistry.VOODOO, this, owner),
-                            magicDamage);
-                }
-                if (frozenDamage > 0.0f && canTakeAdditionalDamage(target)){
-                    target.invulnerableTime = 0;
-                    DamageProbe.mediumDamageMethod(
-                            target,
-                            DamageTypeHelper.create(level(), DamageTypes.FREEZE, this, owner),
-                            frozenDamage);
-                }
+                IncursusBladeItem.applyTieredDamage(
+                        scythe,
+                        target,
+                        DamageTypeHelper.create(level(), DamageTypeRegistry.VOODOO, this, owner),
+                        magicDamage);
+                IncursusBladeItem.applyTieredDamage(
+                        scythe,
+                        target,
+                        DamageTypeHelper.create(level(), DamageTypes.FREEZE, this, owner),
+                        frozenDamage);
                 enemiesHit++;
                 returnTimer += 2;
             }
@@ -87,9 +83,5 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
                 flyBack(owner);
             }
         }
-    }
-
-    private static boolean canTakeAdditionalDamage(Entity target) {
-        return !(target instanceof LivingEntity livingTarget) || !livingTarget.isDeadOrDying();
     }
 }

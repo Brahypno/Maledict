@@ -47,6 +47,21 @@ the third hit on; adaptation 3 holds all three and reduces from the second round
 (Incursus Blade) lands three messages per swing (`scythe_sweep` / `voodoo` / `freeze`), so under the default of 2 its
 damage is never adapted.
 
+### Incursus Blade's arcane channel (`can_trigger_magic_damage`)
+
+The blade's arcane infusion (`MAGIC_DAMAGE` attribute) deals no damage by itself. Lodestone's
+`LodestoneAttributeEventHandler#processAttributes` cashes it in **inside the victim's `LivingHurtEvent`**: if the
+source type is in `forge:can_trigger_magic_damage` (Malum puts `malum:scythe_melee` and `malum:scythe_sweep` there)
+it deals one extra `minecraft:magic` hit worth the attribute, with a null direct entity and the attacker as causing
+entity, right after setting `invulnerableTime = 0`. `forge:ignores_magic_attack_cooldown_scalar` is empty, so that
+bonus is never scaled by attack strength.
+
+Consequence: a melee hit that lands **without** firing `LivingHurtEvent` — the damage probe falling back to
+`setHealth`, i-frames, immunity, a cancelled attack event — silently loses that magic damage. `IncursusBladeAttack`
+probes for exactly that: `IncursusBladeItem#hurtEvent` reports back through `markMeleeHurtEvent` during the hit's
+own resolution, and a miss is compensated with the same magic damage. The aqueous (freeze) channel left
+`hurtEvent` for the same reason: it is dealt by `IncursusBladeAttack` now, not by whatever event happens to fire.
+
 ### Working agreement for mechanics with more than one reading
 
 When a mechanic can be read in more than one way (window/eviction order, "record then judge" vs "judge then record",

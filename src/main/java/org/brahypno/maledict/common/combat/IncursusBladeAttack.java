@@ -7,6 +7,8 @@ import com.sammy.malum.registry.common.SoundRegistry;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -25,12 +27,31 @@ import org.brahypno.maledict.common.item.IncursusBladeItem;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.helpers.SoundHelper;
+import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * 神侵恶刃的伤害计算与近战挥砍。
+ *
+ * <p>镰刀的三条伤害通道（攻击力、魔法、细雪）都从这里算，回旋投掷与升腾斩也复用
+ * {@link #damageChannels}；实际结算统一走 {@link IncursusBladeItem#applyTieredDamage}。
+ */
 public final class IncursusBladeAttack {
     private static final String LAST_ATTACK_TICK = "maledict:last_incursus_blade_attack_tick";
+    private static final int NO_PENDING_TARGET = -1;
+
+    /**
+     * 正在结算的那次近战命中打的是谁，以及它有没有真的走到
+     * {@link IncursusBladeItem#hurtEvent}。
+     *
+     * <p>伤害结算只在服务端主线程上跑，所以这两个字段不需要同步；窗口由
+     * {@link #applyScytheMeleeDamage} 成对地开与关，回调 {@link #markMeleeHurtEvent}
+     * 只在窗口期内生效。
+     */
+    private static int pendingMeleeTargetId = NO_PENDING_TARGET;
+    private static boolean pendingMeleeHurtEventSeen;
 
     public static void perform(ServerPlayer player) {
         ItemStack weapon = player.getMainHandItem();
@@ -61,18 +82,29 @@ public final class IncursusBladeAttack {
         playSlashEffect(player);
 
         float attackStrength = player.getAttackStrengthScale(0.5f);
+        DamageChannels channels = damageChannels(player, weapon);
         boolean attacked = false;
         for (Entity target : targets) {
-            float damage = calculateDamage(player, weapon, target, attackStrength, sweepingLevel);
+            float damage = calculateDamage(player, weapon, target, channels.attack(), attackStrength, sweepingLevel);
             if (damage > 0.0f){
-                IncursusBladeItem.applyTieredDamage(
-                        weapon,
-                        target,
-                        DamageTypeHelper.create(player.level(), DamageTypeRegistry.SCYTHE_MELEE, player),
-                        damage);
+                boolean reachedHurtEvent = applyScytheMeleeDamage(player, weapon, target, damage);
                 if (target instanceof LivingEntity livingTarget){
                     weapon.hurtEnemy(livingTarget, player);
                     IncursusBladeEffects.applySacredEffect(player, livingTarget, weapon);
+                    if (!reachedHurtEvent){
+                        IncursusBladeItem.applyTieredDamage(
+                                weapon,
+                                livingTarget,
+                                DamageTypeHelper.create(player.level(), DamageTypes.MAGIC, player),
+                                channels.magic());
+                    }
+                    // 细雪通道原本写在 hurtEvent 里，同样只有事件真的走到才会生效；
+                    // 现在跟主伤害一起结算，不再取决于事件链。
+                    IncursusBladeItem.applyTieredDamage(
+                            weapon,
+                            livingTarget,
+                            DamageTypeHelper.create(player.level(), DamageTypes.FREEZE, player),
+                            channels.frozen());
                 }
                 attacked = true;
             }
@@ -83,10 +115,72 @@ public final class IncursusBladeAttack {
         player.resetAttackStrengthTicker();
     }
 
+    /**
+     * 一把镰刀在一次攻击里的三条伤害通道。
+     *
+     * <p>攻击力与魔法伤害来自实体属性（镰刀自己只往属性里塞修正值），冻结伤害来自物品 NBT
+     * 的碧水等级。近战挥砍、回旋投掷与升腾斩都要这三项，所以统一在这里读。
+     */
+    public record DamageChannels(float attack, float magic, float frozen) {
+        /**
+         * 同一次攻击的倍率（强化投掷 1.5×、强化升腾斩 1.25× 之类）整体缩放。
+         */
+        public DamageChannels scaled(float factor) {
+            if (factor == 1.0f){
+                return this;
+            }
+            return new DamageChannels(attack * factor, magic * factor, frozen * factor);
+        }
+    }
+
+    public static DamageChannels damageChannels(LivingEntity attacker, ItemStack weapon) {
+        return new DamageChannels(
+                (float) attacker.getAttributeValue(Attributes.ATTACK_DAMAGE),
+                (float) attacker.getAttributeValue(LodestoneAttributeRegistry.MAGIC_DAMAGE.get()),
+                (float) IncursusBladeItem.getStat(weapon, IncursusBladeItem.POWDER_SNOW_DAMAGE));
+    }
+
+    /**
+     * 结算这次近战的主伤害，顺便探测它有没有走进 {@link IncursusBladeItem#hurtEvent}。
+     *
+     * <p>探测窗口就是这一次同步的伤害结算：只要 hurtEvent 带着同一个目标和
+     * {@code malum:scythe_melee} 回调过来，就说明 LivingHurtEvent 真的发生了。
+     * 反过来，如果伤害是探针用回退路径（无敌帧、免疫、setHealth 兜底……）塞进去的，
+     * 事件根本没发生，这里返回 false。
+     */
+    private static boolean applyScytheMeleeDamage(
+            ServerPlayer player, ItemStack weapon, Entity target, float damage) {
+        pendingMeleeTargetId = target.getId();
+        pendingMeleeHurtEventSeen = false;
+        try {
+            IncursusBladeItem.applyTieredDamage(
+                    weapon,
+                    target,
+                    DamageTypeHelper.create(player.level(), DamageTypeRegistry.SCYTHE_MELEE, player),
+                    damage);
+            return pendingMeleeHurtEventSeen;
+        }
+        finally {
+            pendingMeleeTargetId = NO_PENDING_TARGET;
+            pendingMeleeHurtEventSeen = false;
+        }
+    }
+
+    /**
+     * 由 {@link IncursusBladeItem#hurtEvent} 调用：这次近战伤害确实触发了 LivingHurtEvent。
+     *
+     * <p>只认「同一个目标 + scythe_melee」，所以 Lodestone 在事件里补打的那次
+     * {@code minecraft:magic} 伤害（它会再进一次 hurtEvent）不会把自己算成主伤害。
+     */
+    public static void markMeleeHurtEvent(LivingEntity target, DamageSource source) {
+        if (pendingMeleeTargetId == target.getId() && source.is(DamageTypeRegistry.SCYTHE_MELEE)){
+            pendingMeleeHurtEventSeen = true;
+        }
+    }
+
     private static float calculateDamage(
             ServerPlayer player, ItemStack weapon, Entity target,
-            float attackStrength, int sweepingLevel) {
-        float baseDamage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+            float baseDamage, float attackStrength, int sweepingLevel) {
         MobType mobType = target instanceof LivingEntity livingTarget
                           ? livingTarget.getMobType()
                           : MobType.UNDEFINED;
