@@ -1,6 +1,6 @@
 # 测试示例
 
-测试代码位于 `src/test/java`，目前有九个类：
+测试代码位于 `src/test/java`，目前有十个类：
 
 | 类 | 覆盖 |
 | --- | --- |
@@ -10,11 +10,15 @@
 | `common/curio/EnlightenmentLevelTest` | 启蒙之年护符 NBT 上的等级读取（纯数值） |
 | `common/effect/BlessedRegenerationTest` | 生命祝福的额外自然回血量（纯数值） |
 | `common/effect/RipeningBonusTest` | 熟成之赐的经验加成取整（纯数值） |
-| `rig/VicissitudeRigTest` | 无常骨架的释放曲线、姿态拷贝与锚点 |
+| `rig/VicissitudeRigTest` | 无常骨架的动作曲线、收尾连续性、刀刃可达范围与高度、手部间距 |
 | `rig/VicissitudeFeatherShedTest` | 转场落羽的错时曲线与二阶段碰撞组 |
 | `data/FirstVicissitudeSpiritDataTest` | 无常交给 Malum 的精魂表（手写资源，八种各 6 + 幽影 1） |
+| `common/item/IncursusBladeBlinkTest` | 无常之刃物品栏眨眼的纯换算规律 |
 
 每个 `@Test` 方法对应一个完整场景，使用 JUnit 5 的断言检查结果。
+`VicissitudeRigTest` 里那几条「动作最后一帧必须回到静息」「刀刃可达范围必须落在起手距离内」
+「手不能进入躯干」的断言，是 `docs/design/first-vicissitude/02_ANIMATION_AND_HITBOX.md`
+那份规格的可执行版本；改动作之前先看那一篇。
 
 ## 运行
 

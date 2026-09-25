@@ -92,7 +92,41 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public static final int EMPTY_ENCOUNTER_RESET_TICKS = 100;
     public static final int MAX_NON_HOMING_BOLTS = 48;
     public static final int MAX_HOMING_ORBS = 2;
+    /**
+     * How far the boss is willing to <b>start</b> a melee action from. The blade itself is defined
+     * by {@link VicissitudeRig#BLADE_LENGTH_MODEL_UNITS} and reaches wherever the pose puts it, so
+     * this number only decides when a swing is worth committing to; it is deliberately a little
+     * longer than the blade so a target that drifts during the windup is still inside the cut, and
+     * a target that backs off is a genuine whiff.
+     */
+    public static final double MELEE_COMMIT_RANGE = 5.75D;
+    /** Kept for the difficulty table and any external reader; the blade decides real reach now. */
     public static final double MELEE_REACH = 5.0D;
+    /**
+     * Distance at which the boss commits to a melee swing and starts descending onto the target.
+     *
+     * <p>Larger than {@link #MELEE_COMMIT_RANGE} so it can turn and lean into the crowd before the
+     * arm actually moves; it is the same measurement (centre to centre) so the two cannot disagree.
+     */
+    private static final double MELEE_APPROACH_DISTANCE = 7.0D;
+    /**
+     * How wide a swath the blade cuts, in blocks - the tolerance the melee test allows around the
+     * edge's centreline.
+     *
+     * <p>This is a <b>range</b>, like every other melee attack in the game, and it is meant to be
+     * forgiving. The blade segment gives the swing its direction, its length and its height, which
+     * is what fixes the two failures a typed-in radius used to cause - a blade that sweeps through a
+     * target without hurting it, and a hit that lands from a place the weapon never reached. What it
+     * should not do is demand that the target's centre lie on the line: a swing is a swath, not a
+     * laser, and no Minecraft melee resolves to the model's millimetre.
+     *
+     * <p>0.6 covers the whole engagement band measured by {@code tools/rig-probe} (the largest
+     * clearance anywhere from 1.5 to 4.5 blocks in front is 0.69, and that only at point-blank).
+     * Sized to the swing, not to the rig's small asymmetries: the scythe hangs in the right hand, so
+     * its edge naturally runs a little off the body's centre line, and closing that in the pose
+     * would be fighting the arm for no readable gain.
+     */
+    private static final double BLADE_HIT_RADIUS = 0.6D;
     public static final double THROW_MIN_RANGE = 6.0D;
     public static final double THROW_MAX_RANGE = 24.0D;
     public static final double DASH_MIN_RANGE = 8.0D;
@@ -216,6 +250,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private VicissitudeRig.Action action = VicissitudeRig.Action.NONE;
     private boolean actionLeft;
     private boolean actionReleased;
+    /**
+     * Whether the current melee swing has connected at least once, so the impact feedback fires on
+     * first contact instead of once per tick of the damage window.
+     */
+    private boolean actionHitLanded;
     @Nullable
     private LivingEntity committedTarget;
     private Vec3 committedAim = Vec3.ZERO;
@@ -601,6 +640,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         action = next;
         actionLeft = left;
         actionReleased = false;
+        actionHitLanded = false;
         committedTarget = getTarget();
         committedAim = committedTarget == null ? position().add(getLookAngle().scale(8))
                                                : aimPoint(committedTarget);
@@ -1156,6 +1196,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         if (ticks >= action.duration()){
+            if (action.isMelee() && !actionHitLanded){
+                onMeleeMissed();
+            }
             finishAction();
             return;
         }
@@ -1163,6 +1206,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             actionReleased = true;
             releaseAction();
         }
+        tickBladeHits();
         if (action == VicissitudeRig.Action.DASH){
             tickDash(ticks);
         }
@@ -1308,7 +1352,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             }
             return;
         }
-        if (distance <= MELEE_REACH + getBbWidth() * 0.5D){
+        if (distance <= MELEE_COMMIT_RANGE){
             commandMelee(target);
         }
     }
@@ -1353,9 +1397,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             case WING_BARRAGE -> fireBarrageWave(target, 0);
             case CAST_FROM_CHEST -> resolveChestMark();
             case CAST_FROM_HALO -> resolveHaloVerdict();
-            case SLASH_HORIZONTAL -> resolveMelee(100.0F, MELEE_REACH, 1.0F, false);
-            case SLASH_VERTICAL -> resolveVerticalSlash();
-            case HEAVY_ATTACK -> resolveMelee(120.0F, MELEE_REACH, 1.75F, true);
+            case SLASH_HORIZONTAL, SLASH_VERTICAL, HEAVY_ATTACK -> {
+                // Melee deals no damage here: it is resolved while the blade is live, see
+                // tickBladeHits().
+            }
             case SCYTHE_THROW -> throwScythe(target);
             case RANGED_FALLBACK -> fireFallbackVolley(target);
             case DASH -> {
@@ -1534,55 +1579,139 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return targets;
     }
 
-    private void resolveMelee(float arcDegrees, double reach, float multiplier, boolean heavy) {
-        Vec3 look = getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
-        float damage = attackDamage() * multiplier;
-        boolean hitAny = false;
-        for (Entity entity : level().getEntities(this,
-                                                 getBoundingBox().inflate(reach, 2.0D, reach))) {
-            if (!(entity instanceof LivingEntity living) || !isValidCombatParticipant(living)){
-                continue;
-            }
-            Vec3 offset = living.position().subtract(position()).multiply(1.0D, 0.0D, 1.0D);
-            if (offset.length() > reach + living.getBbWidth() * 0.5D || offset.lengthSqr() < 1.0E-4D){
-                continue;
-            }
-            double angle = Math.toDegrees(Math.acos(Mth.clamp(
-                    offset.normalize().dot(look), -1.0D, 1.0D)));
-            if (angle > arcDegrees * 0.5D || !hasLineOfSight(living)){
-                continue;
-            }
-            hitAny |= hurtBySkill(living, damage, false);
+    /**
+     * Melee damage, resolved from the blade the player can actually see.
+     *
+     * <p>Every tick inside the action's hit window the current pose is sampled, the scythe's edge
+     * is turned into a world-space segment ({@link VicissitudeRig#bladeSegment}) and every combat
+     * participant within the segment's inflated bounds is tested against that segment. A hit is a
+     * hit because the weapon crossed the target, not because the target stood inside a radius: the
+     * old version compared the victim's <em>centre</em> against a typed-in reach and a yaw arc,
+     * which both reached targets the weapon never touched and missed targets it visually cut
+     * through.
+     *
+     * <p>The window is a window for the same reason. Resolving once on the release tick meant a
+     * target could be passed through on the way in or on the follow-through and take nothing; the
+     * blade sweeps across several ticks and so does the damage.
+     */
+    private void tickBladeHits() {
+        int[] window = action.hitWindow();
+        if (window == null){
+            return;
         }
-        spawnSlashEffect(heavy);
-        if (hitAny){
-            swing(InteractionHand.MAIN_HAND, true);
-            if (heavy){
-                sendEvent(VicissitudeEffectPacket.EVENT_HEAVY_IMPACT,
-                          position().add(look.scale(2.0D)).add(0.0D, getBbHeight() * 0.4D, 0.0D));
+        int ticks = actionTicks();
+        if (ticks < window[0] || ticks > window[1]){
+            return;
+        }
+        refreshPose();
+        VicissitudeRig.BladeSegment blade =
+                VicissitudeRig.bladeSegment(serverPose, action, ticks);
+        if (blade == null){
+            return;
+        }
+        double reach = blade.length() + BLADE_HIT_RADIUS;
+        float damage = attackDamage() * meleeMultiplier();
+        boolean trace = MELEE_TRACE;
+        if (trace){
+            System.out.println("[melee] " + action + " tick " + ticks
+                                       + " boss=" + fmt(getX()) + "," + fmt(getY()) + "," + fmt(getZ())
+                                       + " yaw=" + fmt(getYRot())
+                                       + " grip=" + fmt(blade.grip().x()) + "," + fmt(blade.grip().y())
+                                       + "," + fmt(blade.grip().z())
+                                       + " tip=" + fmt(blade.tip().x()) + "," + fmt(blade.tip().y())
+                                       + "," + fmt(blade.tip().z()));
+        }
+        for (Entity entity : level().getEntities(this,
+                                                 getBoundingBox().inflate(reach, reach, reach))) {
+            if (!(entity instanceof LivingEntity living)){
+                continue;
+            }
+            if (!isValidCombatParticipant(living)){
+                if (trace){
+                    System.out.println("[melee]   DROP " + living.getName().getString()
+                                               + " not a participant (phase=" + stage
+                                               + " roster=" + combatRosterSize() + ")");
+                }
+                continue;
+            }
+            // Capsule test against the victim's volume, not against its centre point. Asking about
+            // the centre is only fair when the victim is a ball; for a body it under-reports by up
+            // to half its diagonal, which is most of a tall mob's torso.
+            double gap = VicissitudeRig.distanceToBladeBox(
+                    VicissitudeRig.Box.of(living.getBoundingBox().minX,
+                                          living.getBoundingBox().minY,
+                                          living.getBoundingBox().minZ,
+                                          living.getBoundingBox().maxX,
+                                          living.getBoundingBox().maxY,
+                                          living.getBoundingBox().maxZ),
+                    blade, getX(), getY(), getZ(), getYRot());
+            boolean sight = hasLineOfSight(living);
+            if (trace){
+                System.out.println("[melee]   " + living.getName().getString()
+                                           + " gapBox=" + fmt(gap)
+                                           + " limit=" + fmt(BLADE_HIT_RADIUS)
+                                           + " sight=" + sight
+                                           + (gap <= BLADE_HIT_RADIUS && sight ? "  -> HIT"
+                                                                               : "  -> miss"));
+            }
+            if (gap > BLADE_HIT_RADIUS || !sight){
+                continue;
+            }
+            hurtBySkill(living, damage, false);
+            if (!actionHitLanded){
+                // First contact of this swing carries the impact feedback; the rest of the window
+                // keeps cutting without replaying it.
+                actionHitLanded = true;
+                onMeleeConnected();
             }
         }
     }
 
-    private void resolveVerticalSlash() {
-        Vec3 look = getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
-        Vec3 right = new Vec3(-look.z, 0.0D, look.x);
-        float damage = attackDamage() * 1.25F;
-        for (Entity entity : level().getEntities(this, getBoundingBox().inflate(MELEE_REACH, 2.0D,
-                                                                                MELEE_REACH))) {
-            if (!(entity instanceof LivingEntity living) || !isValidCombatParticipant(living)){
-                continue;
-            }
-            Vec3 offset = living.position().subtract(position());
-            double forward = offset.x * look.x + offset.z * look.z;
-            double lateral = Math.abs(offset.x * right.x + offset.z * right.z);
-            if (forward < 0.0D || forward > MELEE_REACH || lateral > 1.5D
-                || !hasLineOfSight(living)){
-                continue;
-            }
-            hurtBySkill(living, damage, false);
+    /**
+     * Diagnostic switch for the melee test: {@code -Dmaledict.meleeTrace=true}.
+     *
+     * <p>Off by default. It exists because the numbers that decide a hit - the boss's altitude, the
+     * blade segment in world space, the gap to the victim - cannot be read off the static rig probe,
+     * which has no entity, no target and no movement in it.
+     */
+    private static final boolean MELEE_TRACE =
+            Boolean.getBoolean("maledict.meleeTrace");
+
+    private static String fmt(double value) {
+        return String.format(java.util.Locale.ROOT, "%.2f", value);
+    }
+
+    private int combatRosterSize() {
+        return isPhaseTwo() ? phaseTwoParticipants.size() : phaseOneTargets.size();
+    }
+
+    private float meleeMultiplier() {
+        return switch (action) {
+            case SLASH_HORIZONTAL -> 1.0F;
+            case SLASH_VERTICAL -> 1.25F;
+            case HEAVY_ATTACK -> 1.75F;
+            default -> 1.0F;
+        };
+    }
+
+    private void onMeleeConnected() {
+        boolean heavy = action == VicissitudeRig.Action.HEAVY_ATTACK;
+        swing(InteractionHand.MAIN_HAND, true);
+        spawnSlashEffect(heavy);
+        if (heavy){
+            Vec3 look = getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
+            sendEvent(VicissitudeEffectPacket.EVENT_HEAVY_IMPACT,
+                      position().add(look.scale(2.0D)).add(0.0D, getBbHeight() * 0.4D, 0.0D));
         }
-        spawnSlashEffect(true);
+    }
+
+    /**
+     * Whiff feedback: the arc still draws, so a missed swing reads as a missed swing instead of
+     * as a broken attack.
+     */
+    private void onMeleeMissed() {
+        spawnSlashEffect(action == VicissitudeRig.Action.HEAVY_ATTACK
+                         || action == VicissitudeRig.Action.SLASH_VERTICAL);
     }
 
     private boolean hurtBySkill(LivingEntity victim, float damage, boolean area) {
@@ -2771,6 +2900,77 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
+    /**
+     * Whether the current action is a melee swing that the boss should dive onto the target for.
+     */
+    private boolean isDivingMelee() {
+        return action.isMelee() && committedTarget != null && committedTarget.isAlive();
+    }
+
+    /**
+     * Whether the boss should already be descending onto its target, before the swing starts.
+     *
+     * <p>Without this the boss parked at its cruise altitude, committed to a swing it could not
+     * land, and then did it again: the blade hangs off a shoulder high above the entity origin, so
+     * at the phase-two cruise altitude the edge swept 2.0 to 3.7 blocks up - over a standing
+     * target's 1.8 - and nothing ever connected. The approach starts outside the commit range so
+     * the descent is finished by the time the arm moves, and it uses the same centre-to-centre
+     * distance as {@code tickPhaseTwoCombat}, so the two can never disagree about range.
+     */
+    private boolean isApproachingMelee(@Nullable LivingEntity target) {
+        if (action != VicissitudeRig.Action.NONE || target == null
+            || !target.isAlive() || target.level() != level()){
+            return false;
+        }
+        return distanceTo(target) <= MELEE_APPROACH_DISTANCE;
+    }
+
+    /**
+     * Where the boss wants to stand this tick during a melee approach or swing.
+     *
+     * <p>It comes straight down the line it is facing instead of holding a station off to the side:
+     * a swing sweeps forward, so the body has to be on the target's side of that line, not orbiting
+     * around it.
+     *
+     * <p>The stand-off is what puts the target inside the arc rather than under or behind it, so it
+     * is measured against the swing's own forward reach ({@code Action#bladeForwardReach()}) and not
+     * against a single engagement distance: holding at the wrong radius leaves the blade falling
+     * short in front of the target or sweeping down past it.
+     */
+    private Vec3 meleeStancePosition(LivingEntity target, double wantedY,
+                                     @Nullable VicissitudeRig.Action forAction) {
+        VicissitudeRig.Action swing = forAction != null && forAction.isMelee()
+                                      ? forAction : VicissitudeRig.Action.SLASH_VERTICAL;
+        double yaw = Math.toRadians(getYRot());
+        double standOff = Math.max(0.0D, distanceTo(target) - swing.bladeForwardReach());
+        return new Vec3(getX() - Math.sin(yaw) * standOff,
+                        Mth.clamp(wantedY,
+                                  level().getMinBuildHeight() + 1.0D,
+                                  level().getMaxBuildHeight() - getBbHeight() - 1.0D),
+                        getZ() + Math.cos(yaw) * standOff);
+    }
+
+    /**
+     * Feet altitude that puts this swing's edge through the target's torso.
+     *
+     * <p>The three melee swings do not sweep at the same height - the horizontal cut crosses a
+     * standing target lower than the chops do - so each one gets its own altitude from
+     * {@link VicissitudeRig.Action#bladeHeightAboveFeet()}. With no action running the boss aims
+     * for the vertical cut's altitude, so the descent it makes while closing is already in the
+     * right place for whichever swing it picks.
+     *
+     * <p>Measured from the target rather than from a fixed absolute altitude, so it works on a
+     * player standing on the ground and on one standing on a tower alike.
+     */
+    private double meleeDiveY(LivingEntity target, @Nullable VicissitudeRig.Action forAction) {
+        VicissitudeRig.Action swing = forAction != null && forAction.isMelee()
+                                      ? forAction : VicissitudeRig.Action.SLASH_VERTICAL;
+        double targetCentre = target.getY() + target.getBbHeight() * 0.5D;
+        return Mth.clamp(targetCentre - swing.bladeHeightAboveFeet(),
+                         level().getMinBuildHeight() + 1.0D,
+                         level().getMaxBuildHeight() - getBbHeight() - 1.0D);
+    }
+
     private void updatePhaseOneMovement(@Nullable LivingEntity target) {
         if (target == null){
             double wantedY = Double.isNaN(idleHoverY) ? getY() + HOVER_HEIGHT : idleHoverY;
@@ -2778,10 +2978,20 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         if (action != VicissitudeRig.Action.NONE){
+            if (isDivingMelee()){
+                // Close the last of the distance and drop onto the target; a swing that starts out
+                // of reach has to be able to arrive, not just to be aimed.
+                steerToward(meleeStancePosition(target, meleeDiveY(target, action), action), MAX_FLIGHT_SPEED);
+                return;
+            }
             // Hold the station through the windup and the release: casting has to read as
             // aiming at the target, not as drifting past it.
             setDeltaMovement(getDeltaMovement().scale(0.5D));
             hasImpulse = true;
+            return;
+        }
+        if (isApproachingMelee(target)){
+            steerToward(meleeStancePosition(target, meleeDiveY(target, null), null), MAX_FLIGHT_SPEED);
             return;
         }
         Vec3 away = position().subtract(target.position()).multiply(1.0D, 0.0D, 1.0D);
@@ -2812,9 +3022,21 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         if (action != VicissitudeRig.Action.NONE){
+            if (isDivingMelee()){
+                // The dive is the attack: keep flying the body onto the target through the windup
+                // and the cut, so the blade reaches somebody who was out of range when it started.
+                steerToward(meleeStancePosition(target, meleeDiveY(target, action), action),
+                            PHASE_TWO_MAX_FLIGHT_SPEED);
+                return;
+            }
             // Plant the floating body through the tell and recovery; the rig supplies recoil.
             setDeltaMovement(getDeltaMovement().scale(0.5D));
             hasImpulse = true;
+            return;
+        }
+        if (isApproachingMelee(target)){
+            steerToward(meleeStancePosition(target, meleeDiveY(target, null), null),
+                        PHASE_TWO_MAX_FLIGHT_SPEED);
             return;
         }
         Vec3 away = position().subtract(target.position()).multiply(1.0D, 0.0D, 1.0D);
