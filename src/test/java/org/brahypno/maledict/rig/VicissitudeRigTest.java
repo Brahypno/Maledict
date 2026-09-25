@@ -10,18 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class VicissitudeRigTest {
-    /**
-     * Mirrors the entity's {@code MELEE_REACH}; duplicated rather than imported so
-     * this test stays free of Minecraft types.
-     */
+    /** Mirrors the entity's {@code MELEE_REACH}; duplicated to keep this test free of Minecraft types. */
     private static final double DESIGN_MELEE_REACH = 5.0D;
-    /**
-     * Mirrors the entity's {@code MELEE_COMMIT_RANGE}.
-     */
     private static final double COMMIT_RANGE = 5.75D;
-    /**
-     * A standing target's torso centre above its own feet: half of a player's 1.8 block hitbox.
-     */
+    /** A standing target's torso centre above its own feet: half of a player's 1.8 block hitbox. */
     private static final double STANDING_TARGET_CENTRE_Y = 0.9D;
 
     @Test
@@ -70,12 +62,7 @@ class VicissitudeRigTest {
         assertAnchorsEqual(expected, copy);
     }
 
-    /**
-     * The whole point of the reworked curves: the windup channel has to be back at zero on the
-     * last tick the renderer draws. It used to latch at 1 until the action ended, so every pose
-     * coefficient the windup contributed was still applied on the final frame and the next frame
-     * dropped all of them at once - the arms jumped most of the windup amplitude in one tick.
-     */
+    /** The windup channel has to be back at zero on the last tick the renderer draws. */
     @Test
     void windupReleasesCompletelyBeforeTheActionEnds() {
         for (Action action : Action.values()) {
@@ -100,10 +87,7 @@ class VicissitudeRigTest {
         }
     }
 
-    /**
-     * The strike curves peak before they hold, so the held value must be the maximum of the two
-     * or the impact frame is not the extreme of the swing.
-     */
+    /** The held value must be the maximum of hold and peak, or the impact frame is not the extreme. */
     @Test
     void strikeCurvePeaksOnTheImpactFrame() {
         for (Action action : Action.values()) {
@@ -120,11 +104,7 @@ class VicissitudeRigTest {
         }
     }
 
-    /**
-     * Every melee action deals damage across a window of ticks, the window lies inside the action,
-     * and it contains the impact frame the pose peaks on. A window that missed the peak would mean
-     * damage resolved on a pose the curve does not call extended.
-     */
+    /** Every melee hit window lies inside its action and contains the impact frame the pose peaks on. */
     @Test
     void meleeHitWindowsBracketTheImpactFrame() {
         for (Action action : Action.values()) {
@@ -141,11 +121,7 @@ class VicissitudeRigTest {
         }
     }
 
-    /**
-     * Melee reach is whatever the blade does, so the test measures the blade rather than restating
-     * a constant: the edge has to stay inside the range the entity is willing to commit a swing
-     * from, and it has to actually reach out in front rather than hanging beside the body.
-     */
+    /** Measured from the blade itself: the edge reaches out in front, and no further than the commit range. */
     @Test
     void bladeEdgeReachesWhatTheCommitRangePromises() {
         for (Action action : Action.values()) {
@@ -168,19 +144,7 @@ class VicissitudeRigTest {
         }
     }
 
-    /**
-     * A melee swing must be able to reach a target standing on the same floor as the boss.
-     *
-     * <p>This is the measurement behind {@code MELEE_DIVE_ABOVE_TARGET}. The blade hangs off a
-     * shoulder far above the entity origin, so if the pose keeps the edge above a standing target's
-     * hitbox the boss can hover in range forever and never land a hit - which is exactly what
-     * happened: at the phase-two cruise altitude the edge swept 2.0 to 3.7 blocks up while a
-     * standing player ends at 1.8, so every swing passed over their head.
-     *
-     * <p>The assertion is deliberately on the <b>lowest</b> edge point across the hit window and
-     * against a target's torso centre, not against a tuned altitude constant: it says the pose
-     * itself reaches down into a body standing on the boss's own floor.
-     */
+    /** Measured on the lowest edge point across the hit window, against a standing target's torso centre. */
     @Test
     void aMeleeSwingCanReachATargetStandingOnTheSameFloor() {
         for (Action action : Action.values()) {
@@ -192,19 +156,13 @@ class VicissitudeRigTest {
                 VicissitudeRig.BladeSegment blade = blade(action, tick);
                 lowest = Math.min(lowest, Math.min(blade.grip().y(), blade.tip().y()));
             }
-            // A standing target's torso centre is half its height above its feet. The edge has to
-            // come in under that line for the capsule radius to have anything to close.
             assertTrue(lowest <= STANDING_TARGET_CENTRE_Y,
                        action + " keeps its lowest edge point at y " + lowest
                        + ", above a standing target's centre at " + STANDING_TARGET_CENTRE_Y);
         }
     }
 
-    /**
-     * The fist used to pass within a tenth of a block of the crystal head on the way back from a
-     * heavy attack, which is the clipping that was visible in game. The recovery guard is what
-     * keeps it clear; this pins the clearance so the guard cannot be tuned away silently.
-     */
+    /** 每个动作的每一 tick，两只手都离头部与胸壳至少 0.75 格。 */
     @Test
     void theSwingingHandNeverEntersTheBody() {
         for (Action action : Action.values()) {
@@ -241,8 +199,7 @@ class VicissitudeRigTest {
             sample(last, action, action.duration() - 1);
             for (Joint joint : Joint.values()) {
                 if (joint == Joint.HALO_ROOT || joint.name().startsWith("HALO_FRAGMENT")) {
-                    // The halo turns on the world clock, not on the action clock, so its fragments
-                    // are somewhere different on every frame. That is continuous motion, not a step.
+                    // The halo turns on the world clock, so its fragments differ every frame: motion, not a step.
                     continue;
                 }
                 double gap = distance(origin(last, joint), origin(rest, joint));
@@ -252,11 +209,7 @@ class VicissitudeRigTest {
         }
     }
 
-    /**
-     * Distance to the blade is clamped to the segment, not to the infinite line through it: a
-     * point beyond the tip is as far away as the tip itself, which is what makes the melee test a
-     * capsule test rather than a ray test.
-     */
+    /** Distance to the blade is clamped to the segment, which is what makes the melee test a capsule test. */
     @Test
     void bladeDistanceClampsToTheSegmentEnds() {
         VicissitudeRig.BladeSegment blade = new VicissitudeRig.BladeSegment(
@@ -287,9 +240,8 @@ class VicissitudeRigTest {
     }
 
     private static void sample(VicissitudeRig.Pose pose, Action action, float tick) {
-        // Constant idle clock: the idle layer is clock driven and continuous, so varying it with
-        // the sample tick would mix two different animations into every measurement. Holding it
-        // still measures the action's own contribution, which is what these assertions are about.
+        // Constant idle clock: the idle layer is clock driven, so a varying clock would mix two
+        // animations into every measurement; these assertions are about the action's contribution.
         VicissitudeRig.compute(pose, true, 1, action, tick, false, 0, 1000, 0, -1);
     }
 

@@ -13,15 +13,13 @@ import java.util.function.Supplier;
 
 /**
  * 属性符文：戴上给佩戴者挂一条属性修饰符，摘下由 Curios 收回。
- * Maledict 目前只有「演进凝滞符文」一枚（{@code maledict:rune_of_stagnant_evolution}）。
- *
  * <p>魔法抗性在 Lodestone 里是除数（{@code amount / max(resistance, 0.01)}），基础值 1：
  * 修饰符只是把抗性往上加，实际减伤是 {@code 1 - 1 / 抗性}，两个数不是一回事。
  */
 public final class AttributeRuneItem extends AbstractRuneCurioItem {
     private final Supplier<Attribute> attribute;
 
-    /** 修饰符的名字，只有 {@code /attribute} 与调试界面看得见，不翻译。 */
+    /** 只有 {@code /attribute} 与调试界面看得见，不翻译。 */
     private final String modifierName;
 
     private final double amount;

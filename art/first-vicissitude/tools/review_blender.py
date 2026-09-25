@@ -54,7 +54,6 @@ for i in range(32):
     a=math.tau*i/32
     hit,*_=scene.ray_cast(depsgraph,Vector((hub[0]+3.9*math.cos(a),-100,-hub[1]+3.9*math.sin(a))),Vector((0,1,0)))
     assert not hit, 'Circular chest opening is obstructed away from its centerline'
-# Check exported ring geometry against its actual runtime rotation hub, not just its pivots.
 rig=json.loads(scene['runtime_rig'])
 pivots={j['name']:j['pivot'] for j in rig['joints']}
 ring_radii=[]
@@ -121,7 +120,6 @@ for region in regions.values():
     feather_alpha.append(sum(v==0 for v in values))
 bpy.data.images.remove(atlas)
 
-# Sample the core's actual projected extent, rather than merely inspecting a pretty render.
 core = [o for o in meshes.values() if o['runtime_joint']=='head_core']
 points = [o.matrix_world@v.co for o in core for v in o.data.vertices]
 min_x,max_x = min(p.x for p in points),max(p.x for p in points)
@@ -168,8 +166,7 @@ def view(name,pos,target,scale,frame=1,ring_turn=0):
                 local=Vector((hub[0],hub[1],0))-Vector(pivots['torso'])
                 center=Vector((local.x,local.z,-local.y))
                 obj.matrix_basis=Matrix.Translation(center) @ rotation @ Matrix.Translation(-center) @ original
-                # The segment pivots are offset from the shared hub. Verify that
-                # the preview rotates actual geometry concentrically, like runtime.
+                # Segment pivots are offset from the shared hub; rotation must stay concentric.
                 for child in obj.children:
                     if child.type!='MESH': continue
                     for vertex in child.data.vertices:
@@ -183,8 +180,7 @@ def view(name,pos,target,scale,frame=1,ring_turn=0):
     camera.rotation_euler=(Vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
     camera.data.ortho_scale=scale
     scene.render.filepath=str(OUT/(name+'.png'))
-    # Render to an unwatched temporary path before replacing the visible preview.
-    # Direct overwrites can fail while a Windows image preview reads the PNG.
+    # Render to a temporary path first: overwriting a PNG open in a Windows preview can fail.
     bpy.ops.render.render(write_still=False)
     temporary=ROOT/'build/rig-tool'/('review-'+uuid.uuid4().hex+'.png')
     bpy.data.images['Render Result'].save_render(str(temporary),scene=scene)
@@ -245,7 +241,6 @@ if '--sample-only' in sys.argv:
     scene.view_settings.view_transform='Standard'
     view('surface_sample_arm_unlit',hand_center+Vector((25,-100,16)),hand_center+Vector((0,0,5)),38)
     view('surface_body_unlit',(30,-130,30),(0,0,14),58)
-    # Named rectangles and real polygon outlines, directly from saved loop UVs.
     from html import escape
     svg=['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 576">',
          '<rect width="1024" height="576" fill="#17151e"/>']

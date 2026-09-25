@@ -20,19 +20,16 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
- * An attacking variant of Malum's pneuma void: it winds up, homes through terrain,
- * and applies the Vicissitude phase-one attack when it reaches its marked target.
+ * An attacking variant of Malum's pneuma void: winds up, homes through terrain, applies the
+ * phase-one attack on arrival.
  *
- * <p>{@link FloatingEntity}'s {@code owner} is this orb's <em>victim</em>, not the entity that
- * fired it: the constructor calls {@code setOwner(target)} because Malum's {@code owner} is what
- * {@code getDestination()} homes towards. The caster is tracked separately in
- * {@link #casterUUID}, which is what {@link #isOwnedBy(Entity)} answers.
+ * <p>Malum's {@code owner} is this orb's victim, not its caster; the caster lives in
+ * {@link #casterUUID}.
  */
 public final class VicissitudeLightOrbEntity extends FloatingEntity {
     public static final String ATTACK_MESSAGE_KEY = "message.maledict.first_vicissitude.attack";
     private static final String CASTER_TAG = "OrbCaster";
 
-    /** The entity that fired this orb, kept apart from Malum's {@code owner} (see the class doc). */
     private UUID casterUUID;
     private Entity caster;
 
@@ -107,10 +104,7 @@ public final class VicissitudeLightOrbEntity extends FloatingEntity {
         this.caster = caster;
     }
 
-    /**
-     * The caster reference is rebuilt from {@link #casterUUID} instead of being saved directly, so
-     * an orb loaded from disk can never reference a stale entity.
-     */
+    /** Rebuilt on demand from {@link #casterUUID}, so an orb loaded from disk cannot hold a stale entity. */
     @Nullable
     private Entity caster() {
         if (caster == null && casterUUID != null && level() instanceof ServerLevel serverLevel) {

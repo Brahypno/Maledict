@@ -66,8 +66,6 @@ def clip(points,a,normal,inside):
     return result
 
 def enclosed(points,cells):
-    # Subtract each prism from the candidate triangles. Unlike a vertex-only
-    # test, this detects exposed patches crossing a concave plate's notch.
     fragments=[]
     for tri in tessellate_polygon([points]):
         fragments.append([points[v] if isinstance(v,int) else v for v in tri])
@@ -87,8 +85,7 @@ def enclosed(points,cells):
     return False
 
 if __name__=='__main__':
-    # Analytic controls: fully buried triangle, outside triangle and a triangle
-    # crossing the volume despite having its center inside.
+    # Analytic controls: buried, outside, and crossing despite a center inside.
     cube=[(Vector((s if k==0 else 0,s if k==1 else 0,s if k==2 else 0)),
            Vector((s if k==0 else 0,s if k==1 else 0,s if k==2 else 0)))
           for k in range(3) for s in (-1,1)]

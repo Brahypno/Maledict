@@ -28,15 +28,10 @@ public final class MaledictItemTags extends ItemTagsProvider {
     private static final TagKey<Item> L2_NO_SEAL =
             ItemTags.create(ResourceLocation.fromNamespaceAndPath("l2hostility", "no_seal"));
 
-    /**
-     * Curios 的护符槽；
-     */
     private static final TagKey<Item> CURIOS_CHARM =
             ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "charm"));
 
-    /**
-     * Curios 的符文槽；Malum 自己的符文也都在这张表里，同名 tag 会合并，不会被我们顶掉。
-     */
+    /** Curios 的符文槽；同名 tag 与 Malum 自带的合并，不会被我们顶掉。 */
     private static final TagKey<Item> CURIOS_RUNE =
             ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "rune"));
 
@@ -71,7 +66,6 @@ public final class MaledictItemTags extends ItemTagsProvider {
                              MaledictItems.RUNE_OF_RIPENING.get(),
                              MaledictItems.RUNE_OF_STAGNANT_EVOLUTION.get(),
                              MaledictItems.RUNE_OF_ROTTEN_BONE.get());
-        // Generated empty on purpose: modpacks extend it through a data pack.
         tag(MaledictTags.VICISSITUDE_CONFISCATION_IMMUNE)
                 .addOptional(ResourceLocation.fromNamespaceAndPath("sophisticatedbackpacks", "backpack"));
     }

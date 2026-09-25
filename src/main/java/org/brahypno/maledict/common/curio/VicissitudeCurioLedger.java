@@ -18,10 +18,8 @@ import javax.annotation.Nullable;
 /**
  * World level record of confiscated Curios that still have to return to their owner.
  *
- * <p>Ownership is single: a stack is either held by a live boss for gradual returns or owned by
- * this ledger, never both, and it is only removed once delivery has actually succeeded. That is
- * what makes "full inventory" safe: the record simply stays here and is retried on login,
- * respawn, slot changes and the low frequency online queue.
+ * <p>A stack is either held by a live boss or owned by this ledger, never both, and it only
+ * leaves the record once delivery has actually succeeded.
  */
 public final class VicissitudeCurioLedger extends SavedData {
     public static final String FILE_ID = "maledict_vicissitude_curios";
@@ -115,7 +113,6 @@ public final class VicissitudeCurioLedger extends SavedData {
         return new ArrayList<>(pending.keySet());
     }
 
-    /** Replaces the stored balance with what is still undeliverable. */
     public void replace(UUID owner, List<Entry> remaining) {
         if (remaining.isEmpty()) {
             pending.remove(owner);

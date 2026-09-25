@@ -11,9 +11,8 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * World-scoped authority, stored in data/maledict_vicissitude.dat in the overworld. * Entity.load (including ForgeCaps) cannot deserialize this independent file.
- * Updates mark the data dirty; Minecraft writes it during world saves, not per hit.
- * Dead UUID records are retained so loading an older entity copy cannot revive them.
+ * World-scoped authority stored in data/maledict_vicissitude.dat in the overworld; entity load
+ * (and ForgeCaps) cannot deserialize it. Dead UUID records are retained on purpose.
  */
 final class VicissitudeVitalityLedger extends SavedData {
     private static final String FILE_NAME = "maledict_vicissitude";

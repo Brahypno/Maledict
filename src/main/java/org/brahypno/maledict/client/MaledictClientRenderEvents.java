@@ -16,12 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Client side driver for the boss' ground warnings.
- *
- * <p>The candidate list is refreshed once per client tick and the rune particles are spawned from
- * the same pass, so the warning cost never scales with the frame rate. The warnings themselves are
- * pure world space particles: they no longer need a render layer of their own, and they stay
- * visible even when the boss is outside the frustum.
+ * Boss 地面预警的客户端驱动：候选表每客户端 tick 刷新一次，预警粒子在同一趟里发出，开销不随帧率增长；
+ * 粒子是世界空间的，Boss 出了视锥也仍然可见。
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE,
         value = Dist.CLIENT)

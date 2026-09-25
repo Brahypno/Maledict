@@ -19,13 +19,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Consumes the boss' one shot network events exactly once per client. Late joiners never
- * replay past events, and duplicates from repeated packets are ignored by key.
+ * Boss 的一次性网络事件在每个客户端只消费一次：按 key 去重，重复包忽略，后进服的玩家不会补播旧事件。
  */
 @OnlyIn(Dist.CLIENT)
 public final class FirstVicissitudeClientEvents {
     private static final int DEDUPE_MEMORY = 128;
-    /** Shake is at full strength within this many blocks and gone past the maximum. */
+    /** 这个距离内震感满格，超过 {@link #SHAKE_MAX_DISTANCE} 就完全没有。 */
     private static final float SHAKE_FULL_STRENGTH_DISTANCE = 8.0F;
     private static final float SHAKE_MAX_DISTANCE = 24.0F;
     private static final Set<Long> SEEN = new HashSet<>();
@@ -62,7 +61,6 @@ public final class FirstVicissitudeClientEvents {
                 shake(position, 16, 0.25F);
             }
             case VicissitudeEffectPacket.EVENT_DEATH_CORE -> {
-                // Wing roots lose power: the only death shake in the specification.
                 FirstVicissitudeEffects.spawnGatherFlash(level, position, 16);
                 shake(position, 12, 0.18F);
             }
@@ -70,8 +68,6 @@ public final class FirstVicissitudeClientEvents {
                     FirstVicissitudeEffects.spawnGatherFlash(level, position, 10);
             case VicissitudeEffectPacket.EVENT_HEAVY_IMPACT -> {
                 FirstVicissitudeEffects.spawnReleaseBurst(level, position, true);
-                // The one shake the player is meant to feel rather than read: longer and roughly
-                // twice the peak of the original 8 tick / 0.15 base.
                 shake(position, 12, 0.30F);
             }
 
@@ -84,11 +80,7 @@ public final class FirstVicissitudeClientEvents {
         }
     }
 
-    /**
-     * Positioned, short attack/decay shake scaled by the client side intensity setting.
-     * Full strength inside {@link #SHAKE_FULL_STRENGTH_DISTANCE} blocks and gone past
-     * {@link #SHAKE_MAX_DISTANCE}, matching the integration specification.
-     */
+    /** 带位置的短促攻击/衰减震屏，强度乘客户端设置；满格距离内满强度，超过最大距离归零。 */
     public static void shake(Vec3 position, int duration, float intensity) {
         float scale = (float) (double) MaledictConfig.SCREENSHAKE_INTENSITY.get();
         if (scale <= 0.0F) {

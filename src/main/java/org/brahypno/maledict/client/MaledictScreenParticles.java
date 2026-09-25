@@ -33,7 +33,6 @@ public final class MaledictScreenParticles {
             ParticleEmitterHandler.registerItemParticleEmitter(
                     VOID_PARTICLES,
                     MaledictItems.INCURSUS_BLADE.get());
-            // 启蒙之年自己也带黑光：戴上它的人会发现护符在格子里冒虚空噪点。
             ParticleEmitterHandler.registerItemParticleEmitter(
                     VOID_PARTICLES,
                     MaledictItems.AGE_OF_ENLIGHTENMENT.get());

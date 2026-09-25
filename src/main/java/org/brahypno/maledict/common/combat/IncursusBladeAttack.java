@@ -34,21 +34,14 @@ import java.util.List;
 
 /**
  * 神侵恶刃的伤害计算与近战挥砍。
- *
- * <p>镰刀的三条伤害通道（攻击力、魔法、细雪）都从这里算，回旋投掷与升腾斩也复用
- * {@link #damageChannels}；实际结算统一走 {@link IncursusBladeItem#applyTieredDamage}。
  */
 public final class IncursusBladeAttack {
     private static final String LAST_ATTACK_TICK = "maledict:last_incursus_blade_attack_tick";
     private static final int NO_PENDING_TARGET = -1;
 
     /**
-     * 正在结算的那次近战命中打的是谁，以及它有没有真的走到
-     * {@link IncursusBladeItem#hurtEvent}。
-     *
-     * <p>伤害结算只在服务端主线程上跑，所以这两个字段不需要同步；窗口由
-     * {@link #applyScytheMeleeDamage} 成对地开与关，回调 {@link #markMeleeHurtEvent}
-     * 只在窗口期内生效。
+     * 正在结算的那次近战命中打的是谁、有没有走到 {@link IncursusBladeItem#hurtEvent}；只在服务端
+     * 主线程用，不需要同步，窗口由 {@link #applyScytheMeleeDamage} 成对开关。
      */
     private static int pendingMeleeTargetId = NO_PENDING_TARGET;
     private static boolean pendingMeleeHurtEventSeen;
@@ -98,8 +91,7 @@ public final class IncursusBladeAttack {
                                 DamageTypeHelper.create(player.level(), DamageTypes.MAGIC, player),
                                 channels.magic());
                     }
-                    // 细雪通道原本写在 hurtEvent 里，同样只有事件真的走到才会生效；
-                    // 现在跟主伤害一起结算，不再取决于事件链。
+                    // 细雪通道跟主伤害一起结算，不取决于事件链。
                     IncursusBladeItem.applyTieredDamage(
                             weapon,
                             livingTarget,
@@ -116,15 +108,9 @@ public final class IncursusBladeAttack {
     }
 
     /**
-     * 一把镰刀在一次攻击里的三条伤害通道。
-     *
-     * <p>攻击力与魔法伤害来自实体属性（镰刀自己只往属性里塞修正值），冻结伤害来自物品 NBT
-     * 的碧水等级。近战挥砍、回旋投掷与升腾斩都要这三项，所以统一在这里读。
+     * 一次攻击的三条伤害通道：攻击力与魔法伤害来自实体属性，冻结来自物品 NBT 的碧水等级。
      */
     public record DamageChannels(float attack, float magic, float frozen) {
-        /**
-         * 同一次攻击的倍率（强化投掷 1.5×、强化升腾斩 1.25× 之类）整体缩放。
-         */
         public DamageChannels scaled(float factor) {
             if (factor == 1.0f){
                 return this;
@@ -141,12 +127,8 @@ public final class IncursusBladeAttack {
     }
 
     /**
-     * 结算这次近战的主伤害，顺便探测它有没有走进 {@link IncursusBladeItem#hurtEvent}。
-     *
-     * <p>探测窗口就是这一次同步的伤害结算：只要 hurtEvent 带着同一个目标和
-     * {@code malum:scythe_melee} 回调过来，就说明 LivingHurtEvent 真的发生了。
-     * 反过来，如果伤害是探针用回退路径（无敌帧、免疫、setHealth 兜底……）塞进去的，
-     * 事件根本没发生，这里返回 false。
+     * 结算近战主伤害并探测它有没有走进 {@link IncursusBladeItem#hurtEvent}；探针走回退路径
+     * （无敌帧、免疫、setHealth 兜底）时事件没发生，返回 false。
      */
     private static boolean applyScytheMeleeDamage(
             ServerPlayer player, ItemStack weapon, Entity target, float damage) {
@@ -167,10 +149,8 @@ public final class IncursusBladeAttack {
     }
 
     /**
-     * 由 {@link IncursusBladeItem#hurtEvent} 调用：这次近战伤害确实触发了 LivingHurtEvent。
-     *
-     * <p>只认「同一个目标 + scythe_melee」，所以 Lodestone 在事件里补打的那次
-     * {@code minecraft:magic} 伤害（它会再进一次 hurtEvent）不会把自己算成主伤害。
+     * 由 {@link IncursusBladeItem#hurtEvent} 调用。只认「同一个目标 + scythe_melee」，
+     * Lodestone 补打的 {@code minecraft:magic} 伤害不会把自己算成主伤害。
      */
     public static void markMeleeHurtEvent(LivingEntity target, DamageSource source) {
         if (pendingMeleeTargetId == target.getId() && source.is(DamageTypeRegistry.SCYTHE_MELEE)){
@@ -208,7 +188,6 @@ public final class IncursusBladeAttack {
     }
 
     private static void playSlashEffect(ServerPlayer player) {
-        // TODO: Replace this temporary Tyrving slash sound with the Incursus Blade sound.
         SoundHelper.playSound(
                 player,
                 SoundRegistry.TYRVING_SLASH.get(),

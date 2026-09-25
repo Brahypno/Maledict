@@ -39,7 +39,6 @@ def bv(v): return BASIS @ Vector(v)
 def jv(v): return BASIS.transposed() @ Vector(v)
 def mix(a,b,t): return Vector(a).lerp(Vector(b),t)
 
-# Structural materials and original feather cutouts share the 256px atlas.
 PALETTE = [
     ('Obsidian ritual shell', '272032', 0),
     ('Bruised violet ceramic', '624974', 0),
@@ -164,7 +163,6 @@ def blade(name,joint,start,end,width,mat=0,curve=2,thick=.65,ragged=False):
     a,b = Vector(start),Vector(end)
     direction = (b-a).normalized()
     side = Vector((-direction.y,direction.x,0)).normalized()
-    # A twelve-triangle tapered plate. Feather shafts and wear live in the atlas.
     levels = [0,1]
     widths = [1,.18]
     verts,faces,uvs = [],[],[]
@@ -210,7 +208,6 @@ def block(name,joint,center,size,mat=1):
                                 (2,3,7,6),(0,2,6,4),(1,5,7,3)],mat)
 
 def armor(name,joint,outline,front,back,mat=1):
-    # Silhouette and thickness only; broad painted shading replaces bevel geometry.
     n=len(outline)
     verts=[(x,y,z) for z in (front,back) for x,y in outline]
     faces=[tuple(range(n)),tuple(range(n,2*n))]
@@ -218,8 +215,6 @@ def armor(name,joint,outline,front,back,mat=1):
     return mesh(name,joint,verts,faces,mat)
 
 def relic_arc(name,joint,center,rx,ry,start,end,width=1.3,mat=2,depth=.55):
-    # Rectangular relic stock: keep angular samples and exact inner/outer radii.
-    # The former pair of bevel strips added faces along every arc segment.
     c=Vector(center)
     verts,faces,uvs=[],[],[]
     steps=max(3,math.ceil(abs(end-start)/15))
@@ -253,7 +248,6 @@ for side,label in [(1,'left'),(-1,'right')]:
          [(side*5,-22,4),(side*8,-21,7),(side*10,-18,9)],[2.8,3.4,2.8],3,4)
     armor('Broken dorsal scapula '+label,'chest_shell_back',
           [(side*x,y) for x,y in [(3,-23),(8,-22),(10,-17),(8,-13),(6,-15),(4,-14)]],5.3,8,0)
-    # Irregular side remnants stay outside the circular socket, front and back.
     armor('Thoracic remnant '+label,j,
           [(side*x,y) for x,y in [(7,-16.5),(10,-15),(10.5,-9),(8.6,-3),(6.8,-3.5),(7.4,-8)]],-3.5,5.5,0)
     armor('Pectoral remnant '+label,'torso',
@@ -271,7 +265,6 @@ for side,label in [(1,'left'),(-1,'right')]:
 armor('Upper sternal keel','torso',[(-1,-23),(1,-23),(1.2,-17),(0,-15.8),(-1.2,-17)],-4.2,3,3)
 armor('Lower ossuary bridge','torso',[(-6.5,-2.3),(-3,-2.7),(0,-1.8),(3,-2.7),(6.5,-2.3),
                                      (5,1.5),(0,3),(-5,1.5)],-3.6,5,0)
-# Fixed circular seat surrounds, rather than fills, the moving ring's swept envelope.
 for i,(a,b) in enumerate([(-177,-96),(-87,-3),(6,84),(95,171)]):
     relic_arc('Ossuary socket seat %d'%i,'torso',(CX,CY,-3.8),SOCKET_RADIUS,SOCKET_RADIUS,a,b,.65,3,.9)
 for i,(joint,a,b) in enumerate([('chest_ring_left',-83,22),('chest_ring_right',132,250),
@@ -344,8 +337,6 @@ for s,label in [(1,'left'),(-1,'right')]:
     block('Inset wrist bridge '+label,hand,p+Vector((0,22.3,0)),(3.3,2.5,3.4),0)
     block('Closed gauntlet palm '+label,hand,p+Vector((0,23.7,.65)),(4.8,3.8,3.5),13)
     for finger,x in enumerate((-1.55,0,1.55)):
-        # Broad knuckles project from the palm; curled tips return underneath it.
-        # Shallow gaps stop at the shared palm, keeping a closed fist silhouette.
         block('Closed finger knuckle %s %d'%(label,finger),hand,
               p+Vector((s*x,23.95,-1.9)),(1.43,3.0,1.65),14)
         block('Curled fingertip %s %d'%(label,finger),hand,
@@ -354,13 +345,9 @@ for s,label in [(1,'left'),(-1,'right')]:
           [(p.x+s*x,p.y+y) for x,y in [(-2.1,22.7),(-3.15,23.1),(-3.25,24.9),(-2.1,25.5),(-1.6,24.4)]],
           -1.6,1.7,14)
 
-# Articulated ossuary frame with overlapping feather fans.
-# Major bones stay solid; thin vanes carry original cutout pixels and follow existing joints.
 for s,label in [(1,'left'),(-1,'right')]:
     def pt(x,y,z=10): return (s*x,y,z)
     prefix='wing_'+label+'_'
-    # All primary vanes grow from one shoulder root. Sample only the silhouette
-    # bends; a shallow diamond section supplies a broad lit face and a dark edge.
     def crescent(name,controls,width,depth,steps=7):
         controls=[Vector((s*x,y,depth)) for x,y in controls]
         verts,faces,uvs=[],[],[]
@@ -370,16 +357,12 @@ for s,label in [(1,'left'),(-1,'right')]:
             center=(1-t)**3*a+3*(1-t)**2*t*b+3*(1-t)*t*t*c+t**3*d
             tangent=3*(1-t)**2*(b-a)+6*(1-t)*t*(c-b)+3*t*t*(d-c)
             side=Vector((-tangent.y*s,tangent.x*s,0)).normalized()
-            # Narrow shared roots, widening outer belly, long pointed return.
             w=max(.008,width*(.06+.94*math.sin(math.pi*t**1.45)**.8)*(1-t)**.18)
             thickness=.025+.975*math.sin(math.pi*t)**.7
-            # A three-vertex section preserves side thickness. The old raised
-            # front ridge is now painted, removing one surface strip per segment.
             verts.extend([center-side*w*.7,center+side*w*1.3,
                           center+Vector((0,0,.45*thickness))])
             uvs.extend([(0,t),(1,t),(.48,t)])
-        # Simplify matched sections only when all three rails stay within .30
-        # model units of their original samples. Tips and root are never moved.
+        # Collapse a section only if all three rails stay within .30 model units; tips and root never move.
         keep={0,steps}
         def preserve(a,b):
             worst,index=0,None
@@ -404,9 +387,7 @@ for s,label in [(1,'left'),(-1,'right')]:
                        'Low returning spur','Trailing inner spur')
         topology=None
         if short:
-            # Solid first bay and its two caps carry the joint. The distal blade
-            # is a two-sided sheet under entityCutoutNoCull; its existing edge
-            # stations are unchanged. No duplicate coincident back-face geometry.
+            # Solid first bay carries the joint; the distal blade is one two-sided sheet under entityCutoutNoCull.
             faces=[(2,1,0),(3,4,5)]
             for k in range(1,len(indices)):
                 for lane in range(3 if k==1 else 1):
@@ -427,14 +408,11 @@ for s,label in [(1,'left'),(-1,'right')]:
         return obj
     tube('Shared wing root '+label,prefix+'upper',
          [pt(9,-18,9),pt(14,-19,12),pt(20,-21,12)],[2.3,2,1.3],13,4)
-    # Long scimitar vanes: upper sweep, middle sweep, low sweep and trailing hook.
-    # Unequal curves leave lens-shaped gaps instead of straight triangular slots.
     crescent('High crescent primary',[(13,-19),(33,-43),(64,-23),(82,-51)],4.6,12,12)
     crescent('Middle crescent primary',[(13,-18),(36,-19),(60,-31),(83,-23)],4.2,13.8,12)
     crescent('Low crescent primary',[(13,-18),(39,-7),(62,14),(84,6)],4.2,15.4,12)
     crescent('Trailing crescent primary',[(12,-17),(29,5),(45,5),(62,27)],3.2,16.2,10)
-    # Short recurved growths stay attached to a primary rather than fanning out
-    # as equal-length spikes. They share its parent so the fork cannot split.
+    # Hooks share their primary's parent joint so the fork cannot split.
     crescent('Root upper hook',[(20,-25),(26,-30),(22,-36),(32,-43)],1.7,12.2,6)
     crescent('Upper hooked spur',[(46,-34),(51,-38),(53,-41),(56,-47)],1.35,12.3,6)
     crescent('Middle returning spur',[(43,-24),(51,-25),(57,-20),(65,-19)],1.4,14,6)
@@ -456,7 +434,6 @@ for s,label in [(1,'left'),(-1,'right')]:
             b=a.lerp(b,.76)
         feather('Fanned primary %s %d'%(label,i),joint,a,b,4.7,
                 11 if damaged else 9,s*(1.2 if i<5 else -.5))
-        # Front and back coverts overlap primary roots; broad patches prevent picket-fence gaps.
         feather('Front covert %s %d'%(label,i),joint,a+Vector((-s*.7,-1,-2.0)),
                 a.lerp(b,.61)+Vector((-s*.7,1,-2.2)),3.65,
                 12 if i<3 else 10,s*.5)
@@ -481,8 +458,6 @@ for i in range(3):
                                      (width*.7,y+3)]],-.6,2.5,14)
 for s,label in [(1,'left'),(-1,'right')]:
     blade('Floating pelvic relic '+label,'lower_fragment_'+label,(s*5,1,2),(s*6,9,2),1.65,1,0,1)
-    # Broad, open-sided vestment wraps from the lower abdomen to the back.
-    # Two transverse panels and three hanging bays; fraying belongs to alpha.
     cloth=[]; cloth_uv=[]; cloth_faces=[]
     stations=[(1,(1.8,7.8,4.8),(-4.7,0,5.8)),
               (9,(2.2,9.0,5.5),(-4.0,1.0,7.0)),

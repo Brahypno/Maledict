@@ -46,22 +46,13 @@ public final class MaledictCodexEntries {
     private static final String RUNE_OF_RIPENING_ENTRY = "maledict.rune_of_ripening";
     private static final String VOID_RUNEWORKING_ENTRY = "void.maledict.runeworking";
 
-    /**
-     * 白镴符板上刻出来的两枚符文：与图腾符文那四条一样，各自是一个条目，
-     * 由符板那条末尾的图标页指过来（点图标进各自的条目看合成）。
-     */
     private static final String RUNE_OF_STAGNANT_EVOLUTION_ENTRY = "void.maledict.rune_of_stagnant_evolution";
     private static final String RUNE_OF_ROTTEN_BONE_ENTRY = "void.maledict.rune_of_rotten_bone";
 
     private static final int TOTEMIC_RUNES_CONTINUED_X = 4;
     private static final int TOTEMIC_RUNES_CONTINUED_Y = 15;
 
-    /**
-     * 四枚图腾符文在书上的落点：Malum 的符文条目占着 (-15..-12, 7..10) 那一片，
-     * 空着的只有左边一列 (-15, 7..9) 和右边三格 (-12, 8..10)。
-     * 于是左边一列竖着摆三枚（衰朽、饱食、兽群），第四枚熟成符文落在右边的 (-12, 8)，
-     * 与 Malum 的符文排成一行。
-     */
+    /** 避开 Malum 符文条目占着的 (-15..-12, 7..10)：三枚竖排在左列 (-15, 7..9)，熟成落在 (-12, 8)。 */
     private static final int RUNE_COLUMN_X = -15;
     private static final int RUNE_OF_DECAY_Y = 7;
     private static final int RUNE_OF_SATIATION_Y = 8;
@@ -69,9 +60,6 @@ public final class MaledictCodexEntries {
     private static final int RUNE_OF_RIPENING_X = -12;
     private static final int RUNE_OF_RIPENING_Y = 8;
 
-    /**
-     * 「虚空符文工艺：拾遗」的落点：(6, 10)，神侵恶刃条目 (6, 11) 的正下方。
-     */
     private static final int VOID_RUNEWORKING_X = 6;
     private static final int VOID_RUNEWORKING_Y = 10;
 
@@ -99,15 +87,6 @@ public final class MaledictCodexEntries {
                 new EntryReference(MaledictItems.RUNE_OF_RIPENING, ripeningRune)));
     }
 
-    /**
-     * 虚空线的符文工艺：正文一页，接符板的精魂灌注配方，末尾一页摆出这块符板刻得出的两枚符文
-     * ——演进凝滞符文、朽骨符文，点图标进各自的条目。排法与「图腾符文：续」一致
-     * （那边也是 {@code HeadlineTextItemPage} 接 {@code EntrySelectorPage}）。
-     *
-     * <p><b>两枚符文不落节点。</b>虚空卷里符文条目只从图标页进：Malum 自家那八枚虚空符文
-     * （异端、献祭赋能那一批）同样只 {@code BookEntry.build(id)} 不摆位置，这条路走的是它们的排法。
-     * 摆成节点的话，同一枚符文会在书里出现两趟——图标页上一趟、图上又一趟。
-     */
     private static void addVoidRuneworkingEntry() {
         EntryReference stagnantEvolution = voidRuneEntry(
                 RUNE_OF_STAGNANT_EVOLUTION_ENTRY, MaledictItems.RUNE_OF_STAGNANT_EVOLUTION);
@@ -133,11 +112,6 @@ public final class MaledictCodexEntries {
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
     }
 
-    /**
-     * The four Vicissitude Rites share one entry: the recipe is the price and the tier, from three
-     * arcane spirits all the way to two eldritch under three arcane. The rite types live in Malum's
-     * table, so the entry is skipped rather than faked if that table is not ready.
-     */
     private static void addVicissitudeRiteEntry() {
         VicissitudeRiteType simple = SummoningRite.rite(BossDifficulty.SIMPLE);
         VicissitudeRiteType difficult = SummoningRite.rite(BossDifficulty.DIFFICULT);
@@ -163,15 +137,6 @@ public final class MaledictCodexEntries {
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
     }
 
-    /**
-     * 一枚图腾符文自己的条目：正文一页，符文工艺配方一页——与 Malum 每枚符文条目的排法一致
-     * （那边也是 {@code HeadlineTextPage} 接 {@code RuneworkingPage.fromOutput}）。
-     *
-     * <p>它们要先建出来，因为「图腾符文：续」的图标页要指过来：{@link EntryReference} 收的是真的
-     * {@link BookEntry}，不是标识符字符串，所以这里把建好的条目交出去，而不是两边各 build 一份。
-     *
-     * <p>框架颜色跟着符板走：符文木的符文用 {@code RUNEWOOD}，灵魂木的用 {@code SOULWOOD}。
-     */
     private static PlacedBookEntry addRuneEntry(
             String identifier, RegistryObject<Item> rune, int x, int y,
             BookWidgetStyle style) {
@@ -190,30 +155,12 @@ public final class MaledictCodexEntries {
         return entry;
     }
 
-    /**
-     * 一枚虚空线符文的条目：正文一页接符文工艺配方一页，与图腾符文那几条同排法，
-     * 但<b>不摆位置</b>——虚空卷里符文只从 {@link #addVoidRuneworkingEntry} 的图标页进，
-     * 与 Malum 那八枚虚空符文一致（它们也是只 build 不落点）。
-     *
-     * <p>返回的是 {@link EntryReference}：图标页收的就是这个（物品 + 条目），
-     * 所以这里直接把引用交出去，而不是两边各 build 一份。
-     */
     private static EntryReference voidRuneEntry(String identifier, RegistryObject<Item> rune) {
         return new EntryReference(rune, BookEntry.build(identifier)
                 .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
                 .addPage(RuneworkingPage.fromOutput(rune.get())));
     }
 
-    /**
-     * 「图腾符文：续」：Malum 的图腾符文条目讲的是四种基础元素的仪式能刻上符板，
-     * 这一条接着讲后来发现别的灵气仪式也刻得上去——只是脉动更单纯，效果与完整仪式有别。
-     *
-     * <p>它落在图腾符文的正对面（见 {@link #TOTEMIC_RUNES_CONTINUED_X}），读的是同一本书，
-     * 所以 Malum 那边条文还在，这条就跟着它一起出现，不用另开章节。
-     *
-     * <p>最后一页照抄 Malum 图腾符文条目的收尾：{@link EntrySelectorPage} 摆出符文图标，
-     * 点哪个进哪个条目看合成——现在摆的是我们刻出来的四枚：饱食、衰朽、兽群、熟成。
-     */
     private static void addTotemicRunesContinuedEntry(List<EntryReference> runes) {
         if (containsEntry(ArcanaProgressionScreen.ENTRIES, TOTEMIC_RUNES_CONTINUED_ENTRY)){
             return;
@@ -302,9 +249,7 @@ public final class MaledictCodexEntries {
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.INCURSUS_BLADE)
                 .setStyle(BookWidgetStyle.SOULWOOD));
-        // An item headline page starts its body at y+75 instead of y+25 and only fits about ten
-        // wrapped lines, so this entry's copy is split over four pages the way Malum splits
-        // Malignant Pewter's.
+        // HeadlineTextItemPage 的正文从 y+75 起排、只放得下约十行，故这段文案拆成四页（同 Malum 的 Malignant Pewter）。
         builder.addPage(new HeadlineTextItemPage(
                 INCURSUS_BLADE_ENTRY,
                 INCURSUS_BLADE_ENTRY + ".1",
@@ -322,12 +267,6 @@ public final class MaledictCodexEntries {
         return findEntry(entries, identifier) != null;
     }
 
-    /**
-     * 表里已有的同名条目；没有就是 {@code null}。
-     *
-     * <p>泛型跟着表走：图标页要引用真的条目，而 {@code ArcanaProgressionScreen.ENTRIES} 装的是
-     * {@link PlacedBookEntry}，签名写成 {@code BookEntry} 的话拿回来还得再强转一次。
-     */
     private static <T extends BookEntry> T findEntry(Iterable<T> entries, String identifier) {
         for (T entry : entries) {
             if (identifier.equals(entry.identifier)){

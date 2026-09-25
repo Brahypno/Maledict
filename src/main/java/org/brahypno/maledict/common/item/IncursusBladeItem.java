@@ -62,13 +62,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
     public static final String ELDRITCH_ABSORPTION = "eldritch_absorption";
     public static final String WICKED_CRITICAL_DAMAGE = "wicked_critical_damage";
 
-    /**
-     * 物品栏里眨眼用的模型覆盖谓词：{@code 1.0} 表示这一帧闭眼，模型整份换成闭眼的那张。
-     *
-     * <p>规律本身在 {@link IncursusBladeBlink}，谓词在 {@code MaledictItemProperties} 里注册，
-     * 模型在 {@code MaledictItemModels} 里生成——这个名字是三方共用的那一份，所以放在物品上，
-     * 和 {@code AgeOfEnlightenmentItem.ENLIGHTENED_PROPERTY} 同一个路子。
-     */
+    /** 物品栏里眨眼用的模型覆盖谓词：{@code 1.0} 表示这一帧闭眼。 */
     public static final ResourceLocation BLINK_PROPERTY =
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "blinking");
 
@@ -183,17 +177,10 @@ public final class IncursusBladeItem extends MagicScytheItem {
             return;
         }
 
-        // 倍率按「属性存不存在」来取，而不是取一个可能为 0 的值。
-        //
-        // getAttributeValue() 在属性没注册到该实体时返回 0，而 0 在这两个位置上都是灾难：
-        //   熟练度当乘数用 → 伤害直接归零；
-        //   抗性当除数用 → Math.max(0.01, 0) 会让伤害暴涨 100 倍。
-        // getAttribute() 返回 null 才真正表示「这个实体没有这条属性」，于是缺了就跳过该倍率：
-        // 熟练度缺失 = ×1（原样通过），抗性缺失 = 不减免。这与 Lodestone 自己
-        // LodestoneAttributeEventHandler 的写法一致——它同样是先取 AttributeInstance 再判空。
+        // getAttributeValue() 在属性没注册到该实体时返回 0，而熟练度当乘数、抗性当除数，0 都是灾难；
+        // 所以这里取 getAttribute() 判空：null 才表示「这个实体没有这条属性」，缺了就跳过该倍率。
 
         if (magicDamage){
-            // 镰刀熟练度以 1 为中性，取不到时按 1 处理，见 scytheProficiencyOrNeutral。
             event.setAmount(event.getAmount() * (float) scytheProficiencyOrNeutral(
                     attacker.getAttributeValue(AttributeRegistry.SCYTHE_PROFICIENCY.get())));
         }
@@ -210,22 +197,14 @@ public final class IncursusBladeItem extends MagicScytheItem {
         }
 
         if (event.getSource().is(DamageTypeRegistry.SCYTHE_MELEE)){
-            // 这次近战命中确实触发了 LivingHurtEvent。IncursusBladeAttack 靠这个回调判断
-            // Lodestone 在 can_trigger_magic 里附加的魔法伤害有没有机会生效，没生效就由它补上。
+            // 这次近战命中确实触发了 LivingHurtEvent；IncursusBladeAttack 靠它判断要不要补魔法伤害。
             IncursusBladeAttack.markMeleeHurtEvent(target, event.getSource());
         }
 
         addAbsorptionFromDamage(attacker, stack, event.getAmount());
     }
 
-    /**
-     * 镰刀熟练度的中性兜底。
-     *
-     * <p>与魔法熟练度/魔法抗性不同：那两个直接用 {@code getAttribute()} 判空即可，因为
-     * Lodestone 的属性在实体没注册时会返回 null；而镰刀熟练度这里走的是
-     * {@code getAttributeValue}，取不到时给的是 0，它又当乘数用，0 会让伤害归零，
-     * 所以缺省一律当中性 1（也就是「无加成，原样通过」）。
-     */
+    /** 镰刀熟练度缺省时当中性 1：它走 {@code getAttributeValue}，取不到给的是 0，而它当乘数用。 */
     private static double scytheProficiencyOrNeutral(double value) {
         return value > 0.0 ? value : 1.0;
     }
@@ -295,12 +274,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
         return true;
     }
 
-    /**
-     * 镰刀伤害的唯一出口：按档位（medium/final）结算一次伤害。
-     *
-     * <p>进来先清无敌帧——镰刀好几条通道是一口气打出去的，不清的话后几条会被前一条留下的
-     * 无敌帧吃掉；目标已经死亡或正在死亡时直接跳过，数值不是正数也一并挡掉。
-     */
+    /** 镰刀伤害的唯一出口：按档位结算，探针进来先清无敌帧，否则同一次挥砍的后几条通道会被吃掉。 */
     public static void applyTieredDamage(ItemStack stack, Entity target, DamageSource source, float damage) {
         if (damage <= 0.0f || !canTakeDamage(target))
             return;
@@ -312,9 +286,6 @@ public final class IncursusBladeItem extends MagicScytheItem {
             DamageProbe.lighterDamageMethod(target, source, damage);
     }
 
-    /**
-     * 目标还挨得起镰刀的伤害：非生物照打，已经死亡或正在死亡的生物跳过。
-     */
     private static boolean canTakeDamage(Entity target) {
         return !(target instanceof LivingEntity livingTarget) || !livingTarget.isDeadOrDying();
     }

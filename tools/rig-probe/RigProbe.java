@@ -119,11 +119,7 @@ public final class RigProbe {
                     worstTick);
         }
 
-        // Simulate the melee test against a real victim volume, using the very stand-off the entity
-        // computes: the boss stands at (target distance - the swing's forward reach) so the edge
-        // crosses the victim rather than falling short in front of it or sweeping past it. The rig
-        // probe has no entity, so the boss is placed by hand - this is the only way to see, offline,
-        // whether the swing lands before running the game.
+        // No entity here: place the boss at the entity's own stand-off (distance - bladeForwardReach).
         System.out.println();
         System.out.println("=== simulated melee: boss stands at (distance - bladeForwardReach) ===");
         System.out.println("victim 1.8 tall, 0.6 wide, standing at the given distance straight ahead");
@@ -141,7 +137,6 @@ public final class RigProbe {
             }
             double reach = action.bladeForwardReach();
             double bossY = victimCentre - action.bladeHeightAboveFeet();
-            // The tightest geometry: inside the commit range, so the stand-off is what decides.
             double distance = reach;
             double standoff = Math.max(0.0D, distance - reach);
             double victimZ = distance;
@@ -182,10 +177,7 @@ public final class RigProbe {
                     world.tip().x(), world.tip().y(), world.tip().z(), victimCentre);
         }
 
-        // Where does the victim have to be relative to the boss for the blade to cross its volume?
-        // This band is what the approach has to sit on: closer and the blade sweeps down in front of
-        // the victim or past it, further and it falls short behind the tip. Clearances are printed in
-        // hundredths of a block; the melee test's tolerance is BLADE_HIT_RADIUS = 0.75.
+        // Clearances print in 1/100 block; the melee test's tolerance is BLADE_HIT_RADIUS = 0.75.
         System.out.println();
         System.out.println("=== victim offset ahead of the boss -> gap to its volume ===");
         System.out.println("gap in 1/100 block: gapPoint / gapBox, box limit 75");
@@ -259,10 +251,7 @@ public final class RigProbe {
         return VicissitudeRig.toEntityLocal(VicissitudeRig.transform(pose, joint, 0, 0, 0));
     }
 
-    /**
-     * Lifts an entity-local blade segment to world space for a boss standing at {@code bossY} with
-     * no yaw. The entity-local numbers are already blocks, so this is a plain offset.
-     */
+    /** Lifts an entity-local blade segment to world space for a boss at {@code bossY} with no yaw. */
     private static VicissitudeRig.BladeSegment lift(VicissitudeRig.BladeSegment local,
                                                     double bossY) {
         return new VicissitudeRig.BladeSegment(

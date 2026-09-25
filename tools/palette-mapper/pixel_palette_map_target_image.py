@@ -155,7 +155,6 @@ def recolor_pixel_by_pixel(
     replaced = 0
     unchanged = 0
 
-    # Strict processing: read and write exactly one coordinate at a time.
     for y in range(source_image.height):
         for x in range(source_image.width):
             source_pixel: RGBA = source_image.getpixel((x, y))

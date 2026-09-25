@@ -6,106 +6,50 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Pose evaluation and forward kinematics for the First Vicissitude skeleton.
- *
- * <p>The client model and the server-side attack geometry both consume this class, so the
- * rendered wing tips and authoritative release points share the same pose equations. Everything here
- * is expressed in the authoring space documented on {@link VicissitudeRigData}; convert to
- * entity-local blocks with {@link #toEntityLocal} and to world space with
- * {@link #toWorld(double, double, double, float)}.
+ * Pose evaluation and forward kinematics for the First Vicissitude skeleton, in model units; the
+ * client model and the server-side attack geometry consume the same pose equations.
  */
 public final class VicissitudeRig {
     public static final int JOINT_COUNT = Joint.values().length;
     private static final float DEG_TO_RAD = (float) (Math.PI / 180.0);
-    /**
-     * Idle spin of the broken halo, in degrees per tick.
-     */
+    /** Idle spin of the broken halo, in degrees per tick. */
     public static final float HALO_SPIN_PER_TICK = 0.6F;
-    /**
-     * The chest ring answers the halo at the same speed in the opposite direction.
-     */
     public static final float CHEST_RING_SPIN_PER_TICK = -0.6F;
-    /**
-     * Hub of the broken chest ring, relative to the torso pivot (model units). The ring lies in
-     * the chest plane, so only X and Y define the axis; the depth comes from the mesh itself.
-     */
+    /** Hub of the broken chest ring, relative to the torso pivot (model units). */
     public static final float CHEST_RING_HUB_X = 0.0F;
     public static final float CHEST_RING_HUB_Y = 1.0F;
-    /**
-     * The three surviving arcs of the chest ring.
-     */
     public static final Joint[] CHEST_RING_ARCS = {
             Joint.CHEST_RING_LEFT, Joint.CHEST_RING_RIGHT, Joint.CHEST_RING_BOTTOM};
-    /**
-     * Ticks the off hand, the wings and the lower body trail the weapon by.
-     */
+    /** Ticks the off hand, the wings and the lower body trail the weapon by. */
     private static final float FOLLOW_LAG = 4.0F;
-    /**
-     * Follow-through shape of every attack. After {@link #STRIKE_HOLD_TICKS} ticks of impact hold
-     * the swing drifts onto {@link #STRIKE_DRIFT} of its extended amplitude, holds that through the
-     * middle of the follow-through, then settles the last {@link #STRIKE_SETTLE_TICKS} ticks back
-     * to the neutral pose.
-     */
     private static final float STRIKE_HOLD_TICKS = 2.0F;
     private static final int STRIKE_SETTLE_TICKS = 6;
+    /** Fraction of the extended amplitude the follow-through drifts onto. */
     private static final float STRIKE_DRIFT = 0.72F;
-    /**
-     * How long after the impact frame the weapon arm's recovery guard stays off. The blade is
-     * material for a few ticks past the hit - that is the window the damage sweep covers - so the
-     * guard must not shave the reach of the cut it is protecting. Measured from the release tick.
-     */
+    /** Ticks after the release tick that the weapon arm's recovery guard stays off. */
     private static final float GUARD_DELAY_TICKS = 5.0F;
-    /**
-     * Ticks the melee arm drop takes to fade in at the start of a swing and back out at the end.
-     * Short enough that the drop is already in place by the windup, long enough that neither the
-     * first nor the last rendered tick shows a step.
-     */
+    /** Ticks the melee arm drop takes to fade in at the start of a swing and back out at the end. */
     private static final float LOWERING_RAMP_TICKS = 3.0F;
-    /**
-     * Windup acceleration and recovery deceleration. Above one on the windup holds the pose back
-     * early and rushes the last ticks before the hit; above one on the recovery keeps the pose
-     * late and drops it quickly at the very end.
-     */
+    /** Power exponents; above one holds the pose back early and drops it quickly at the end. */
     private static final float WINDUP_BIAS = 1.15F;
     private static final float WIND_RECOVERY_BIAS = 2.0F;
-    /**
-     * How long the dash takes to ease out of its charge posture at the end, in ticks, and how long
-     * its brake ramp is. The brake has to finish before the settle begins, so the lunge and the
-     * brake are both already flat when the taper takes over - otherwise tapering one against the
-     * other would produce a step instead of removing one.
-     */
+    /** Dash ease-out and brake ramp lengths, in ticks. */
     private static final float DASH_SETTLE_TICKS = 10.0F;
     private static final float DASH_BRAKE_TICKS = 8.0F;
     /**
-     * Model units from the combat grip to the scythe's cutting tip.
-     *
-     * <p>This is the melee reach. It is sized so the tip arrives at
-     * {@code FirstVicissitudeBossEntity.MELEE_REACH} blocks from the body centre on the impact
-     * frame of every melee action: the arm puts the fist a little under two blocks forward, so the
-     * edge has to be the rest. The item renderer draws the weapon at {@code 1.6x}, which is where
-     * the number comes from, and {@code VicissitudeRigTest} measures the result rather than
-     * trusting it.
+     * Model units from the combat grip to the scythe's cutting tip; this is the melee reach, drawn
+     * at {@code 1.6x} by the item renderer.
      */
     public static final float BLADE_LENGTH_MODEL_UNITS = 44.0F;
-    /**
-     * The combat grip sits a little down the handle from the hand anchor, which is what puts the
-     * blade in front of the fist instead of through it.
-     */
+    /** Model units the combat grip sits down the handle from the hand anchor. */
     public static final float BLADE_GRIP_OFFSET_MODEL_UNITS = 5.0F;
-    /**
-     * How much of a body turn the wing pair is allowed to lag behind, and the absolute ceiling in
-     * degrees. Small on purpose: the strike curve crosses the whole turn in a couple of ticks, so
-     * anything larger reads as the wings flapping on their own.
-     */
+    /** Fraction of a body turn the wing pair may lag by, and the ceiling on that lag in degrees. */
     private static final float WING_DRAG_FRACTION = 0.6F;
     private static final float WING_DRAG_CAP = 30.0F;
 
     /**
-     * Coarse hit segments. The number is the part's <b>cap weight</b>: its share of the standard
-     * single hit limit, so 1.0 is the body and the authored plain case. The weight is deliberately
-     * not a damage multiplier - a part that is easier to hurt is allowed to take more per hit,
-     * rather than every hit on it landing harder. Applying both would count the same advantage
-     * twice and flatten the difference again.
+     * Coarse hit segments; the number is the part's <b>cap weight</b>, its share of the standard
+     * single hit limit (1.0 = body), and deliberately not a damage multiplier.
      */
     public enum Segment {
         BODY(1.0F),
@@ -130,18 +74,14 @@ public final class VicissitudeRig {
         }
     }
 
-    /**
-     * A point in authoring space (model units).
-     */
+    /** A point in authoring space (model units). */
     public record V3(float x, float y, float z) {
         public V3 add(V3 other) {
             return new V3(x + other.x, y + other.y, z + other.z);
         }
     }
 
-    /**
-     * An axis aligned box in entity-local blocks.
-     */
+    /** An axis aligned box in entity-local blocks. */
     public record Box(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
         public boolean intersects(Box other) {
             return minX < other.maxX && maxX > other.minX
@@ -182,9 +122,7 @@ public final class VicissitudeRig {
         }
     }
 
-    /**
-     * Mutable per-frame pose; reuse one instance per entity.
-     */
+    /** Mutable per-frame pose; reuse one instance per entity. */
     public static final class Pose {
         private boolean bareWings;
         private final float[] rotX = new float[JOINT_COUNT];
@@ -260,9 +198,6 @@ public final class VicissitudeRig {
             offZ[index] += z;
         }
 
-        /**
-         * Copies every channel and solved matrix of another pose.
-         */
         public void copyFrom(Pose other) {
             bareWings = other.bareWings;
             System.arraycopy(other.rotX, 0, rotX, 0, JOINT_COUNT);
@@ -274,10 +209,6 @@ public final class VicissitudeRig {
             System.arraycopy(other.matrices, 0, matrices, 0, matrices.length);
         }
 
-        /**
-         * Moves this pose a fraction of the way towards the target pose. Blending authored poses
-         * is what keeps action changes continuous instead of snapping between keyframes.
-         */
         public void interpolate(Pose target, float delta) {
             bareWings = target.bareWings;
             float amount = Math.max(0.0F, Math.min(1.0F, delta));
@@ -299,15 +230,7 @@ public final class VicissitudeRig {
         return new Pose();
     }
 
-    /**
-     * Builds the full pose for one frame. All inputs are already interpolated by the caller.
-     *
-     * @param phaseTwoBlend 0 for the phase-one silhouette, 1 for the phase-two silhouette
-     * @param hurtTicks     remaining ticks of the hurt reaction, 0 when unhurt
-     * @param idleTicks     continuous animation clock (world game time based)
-     * @param wingFold      0 = wings fully spread, 1 = wings folded against the body
-     * @param deathTicks    ticks since death started, negative while alive
-     */
+    /** Builds the full pose for one frame; all inputs are already interpolated by the caller. */
     public static void compute(
             Pose pose, boolean phaseTwo, float phaseTwoBlend, Action action,
             float actionTicks, boolean actionLeft, float hurtTicks,
@@ -323,9 +246,6 @@ public final class VicissitudeRig {
         solve(pose);
     }
 
-    /**
-     * Stage silhouettes: high idol versus forward-leaning executor.
-     */
     private static void applyStage(Pose pose, float blend) {
         float torsoLean = lerp(0.0F, 15.0F, blend);
         float headDown = lerp(8.0F, 15.0F, blend);
@@ -340,27 +260,21 @@ public final class VicissitudeRig {
         pose.addRotation(Joint.ARM_RIGHT, -shoulderForward, 0.0F, armSpread);
         pose.addRotation(Joint.WING_LEFT_ROOT, 0.0F, 0.0F, -wingRaise);
         pose.addRotation(Joint.WING_RIGHT_ROOT, 0.0F, 0.0F, wingRaise);
-        // The lower body trails further behind once the boss leans into the fight.
         pose.addRotation(Joint.LOWER_ROOT, lerp(0.0F, 10.0F, blend), 0.0F, 0.0F);
         pose.addRotation(Joint.SPINE_TAIL_1, lerp(2.0F, 8.0F, blend), 0.0F, 0.0F);
         pose.addRotation(Joint.SPINE_TAIL_2, lerp(2.0F, 8.0F, blend), 0.0F, 0.0F);
         pose.addRotation(Joint.SPINE_TAIL_3, lerp(2.0F, 8.0F, blend), 0.0F, 0.0F);
-        // Bind rotations for the four broken halo arcs; the gaps between them stay open.
         pose.setRotation(Joint.HALO_FRAGMENT_1, 0.0F, 0.0F, -30.0F);
         pose.setRotation(Joint.HALO_FRAGMENT_2, 0.0F, 0.0F, 99.0F);
         pose.setRotation(Joint.HALO_FRAGMENT_3, 0.0F, 0.0F, 163.0F);
         pose.setRotation(Joint.HALO_FRAGMENT_4, 0.0F, 0.0F, -108.0F);
     }
 
-    /**
-     * Floating idle: body bob, feather micro motion, counter-rotating rings and delayed spine sway.
-     */
     private static void applyIdle(Pose pose, float ticks, float phaseTwoBlend) {
         float bob = (float) Math.sin(ticks * (Math.PI * 2.0D / 80.0D));
         pose.addOffset(Joint.BODY, 0.0F, -1.28F * bob, 0.0F);
         pose.addRotation(Joint.BODY, bob * 1.5F, bob, 0.0F);
-        // The halo lies in model XY. Spin about its normal (Z), not vertical Y; the chest ring
-        // turns the other way so the two broken rings read as one linked mechanism.
+        // The halo lies in model XY: spin about its normal (Z), not vertical Y.
         pose.addRotation(Joint.HALO_ROOT, 0.0F, 0.0F, ticks * HALO_SPIN_PER_TICK);
         spinChestRing(pose, ticks * CHEST_RING_SPIN_PER_TICK);
         for (int i = 1; i <= 4; i++) {
@@ -378,9 +292,6 @@ public final class VicissitudeRig {
         }
         pose.addRotation(Joint.HALO_FRAGMENT_1, 0.0F, 2.0F * bob, 0.0F);
         pose.addRotation(Joint.HALO_FRAGMENT_3, 0.0F, -2.0F * bob, 0.0F);
-        // Arms drift on their own slow clock and out of phase with each other, so the silhouette
-        // keeps moving while the boss hovers and waits. Phase two drops the left arm lower: the
-        // design asks for an independent left hand once the executor silhouette takes over.
         float drift = (float) Math.sin(ticks * (float) (Math.PI * 2.0D / 120.0D));
         float counter = (float) Math.sin(ticks * (float) (Math.PI * 2.0D / 120.0D) + 1.9F);
         pose.addRotation(Joint.ARM_LEFT, drift * 2.6F, 0.0F,
@@ -388,8 +299,6 @@ public final class VicissitudeRig {
         pose.addRotation(Joint.FOREARM_LEFT, drift * 2.2F + 3.0F * phaseTwoBlend, 0.0F, 0.0F);
         pose.addRotation(Joint.ARM_RIGHT, counter * 2.2F, 0.0F, counter * 1.8F);
         pose.addRotation(Joint.FOREARM_RIGHT, counter * 1.6F, 0.0F, 0.0F);
-        // The wing roots breathe on a slower clock than the body bob, and slightly unevenly:
-        // a pair of wings that moves as one rigid plate is the fastest way to look like a prop.
         float breathe = (float) Math.sin(ticks * (float) (Math.PI * 2.0D / 160.0D));
         float uneven = (float) Math.sin(ticks * (float) (Math.PI * 2.0D / 160.0D) + 0.8F);
         pose.addRotation(Joint.WING_LEFT_ROOT, breathe * 2.4F, breathe * 3.2F, -breathe * 4.5F);
@@ -401,11 +310,8 @@ public final class VicissitudeRig {
     }
 
     /**
-     * Spins the whole broken chest ring around its hub.
-     *
-     * <p>The three arcs are separate joints whose pivots sit on the ring itself, so a per joint
-     * rotation would only spin each arc in place. Moving every pivot along the circle the arcs
-     * travel turns the fragments into one rigid ring again, which is how the halo already moves.
+     * Spins the whole broken chest ring: the arcs' pivots sit on the ring itself, so it only turns
+     * if every pivot moves along the circle.
      */
     private static void spinChestRing(Pose pose, float degrees) {
         float radians = degrees * DEG_TO_RAD;
@@ -414,16 +320,11 @@ public final class VicissitudeRig {
         for (Joint arc : CHEST_RING_ARCS) {
             float dx = arc.localX() - CHEST_RING_HUB_X;
             float dy = arc.localY() - CHEST_RING_HUB_Y;
-            // The hub only defines the axis: a spin in the model XY plane never moves the arcs
-            // away from the chest, so Z is left exactly where it was authored.
             pose.addOffset(arc, cos * dx - sin * dy - dx, sin * dx + cos * dy - dy, 0.0F);
             pose.addRotation(arc, 0.0F, 0.0F, degrees);
         }
     }
 
-    /**
-     * Attack poses. Timings match the combat specification tables.
-     */
     private static void applyAction(Pose pose, Action action, float t, boolean left) {
         if (action == null || action == Action.NONE || t < 0.0F){
             return;
@@ -432,25 +333,17 @@ public final class VicissitudeRig {
         ActionSample lead = sampleAction(action, t, 0.0F);
         float swing = lead.swing();
         float wind = lead.wind();
-        // Trailing samples of the same curves. The weapon leads and everything else follows a
-        // few ticks later, which is what turns one rigid arm swing into a whole body motion. See
-        // ActionSample for how the followers rejoin the leading clock after the hit.
         float swingLag = lead.swingLag();
         float windLag = lead.windLag();
         float trail = lead.trail();
-        // Recovery window used by the arm guard: flat zero until the cut stops being material,
-        // then a smooth rise and fall that is exactly zero on the last tick the action renders.
-        // The renderer only ever draws ticks 0..duration-1, so the window has to close on
-        // duration-1 rather than on duration, or the guard would be left part-engaged at the very
-        // frame the pose hands over to the next action.
+        // The renderer only draws ticks 0..duration-1, so the guard window has to close on
+        // duration-1 rather than on duration.
         float recovery = 0.0F;
         float recoveryStart = action.releaseTick() + GUARD_DELAY_TICKS;
         float recoveryEnd = total - 1.0F;
         if (t > recoveryStart && recoveryEnd > recoveryStart) {
             recovery = (float) Math.sin(Math.PI * (t - recoveryStart) / (recoveryEnd - recoveryStart));
         }
-        // The melee arm drop is a pulse as well: full through the windup and the cut, gone by the
-        // last rendered tick, so a swing that reaches a standing target still hands over at rest.
         float loweringFade = t < 0.0F ? 0.0F
                              : clamp(Math.min(power(t / Math.max(1.0F, LOWERING_RAMP_TICKS), 1.0F),
                                               (recoveryEnd - t) / Math.max(1.0F, LOWERING_RAMP_TICKS)));
@@ -458,12 +351,10 @@ public final class VicissitudeRig {
             case WING_RANGED -> {
                 Joint root = left ? Joint.WING_LEFT_ROOT : Joint.WING_RIGHT_ROOT;
                 Joint tip = left ? Joint.WING_LEFT_TIP : Joint.WING_RIGHT_TIP;
-                // Positive yaw sweeps the left wing forward; the right wing mirrors it.
                 float sweep = left ? 1.0F : -1.0F;
                 pose.addRotation(root, 0.0F, sweep * (-18.0F * wind + 26.0F * swing), 0.0F);
                 pose.addRotation(tip, 0.0F, sweep * 15.0F * wind, 0.0F);
                 pose.addRotation(Joint.TORSO, 0.0F, sweep * 9.0F * swing, 0.0F);
-                // Both hands brace in front of the chest; the far wing folds back to clear the shot.
                 pose.addRotation(Joint.ARM_LEFT, -10.0F * wind + 14.0F * swingLag, 0.0F,
                                  10.0F * wind + 6.0F * swing);
                 pose.addRotation(Joint.ARM_RIGHT, -10.0F * wind + 14.0F * swingLag, 0.0F,
@@ -490,7 +381,6 @@ public final class VicissitudeRig {
                 pose.addRotation(Joint.WING_LEFT_OUTER, 0.0F, 10.0F * pulse, 0.0F);
                 pose.addRotation(Joint.WING_RIGHT_OUTER, 0.0F, -10.0F * pulse, 0.0F);
                 pose.addRotation(Joint.TORSO, -4.0F * load * settle, 0.0F, 0.0F);
-                // The arms pump once per volley instead of hanging while the wings do the work.
                 pose.addRotation(Joint.ARM_LEFT, 12.0F * load * settle - 18.0F * pulse, 0.0F,
                                  14.0F * load * settle + 10.0F * pulse);
                 pose.addRotation(Joint.ARM_RIGHT, 12.0F * load * settle - 18.0F * pulse, 0.0F,
@@ -509,7 +399,6 @@ public final class VicissitudeRig {
                 pose.addRotation(Joint.CHEST_SHELL_LEFT, 0.0F, 0.0F, -12.0F * swing);
                 pose.addRotation(Joint.CHEST_SHELL_RIGHT, 0.0F, 0.0F, 12.0F * swing);
                 pose.addRotation(Joint.HEAD_ROOT, -8.0F * wind, 0.0F, 0.0F);
-                // Both hands cup the hollow chest while it charges, then throw wide on the release.
                 pose.addRotation(Joint.ARM_LEFT, 46.0F * wind - 66.0F * swingLag, 0.0F,
                                  22.0F * wind - 30.0F * swing);
                 pose.addRotation(Joint.ARM_RIGHT, 46.0F * wind - 66.0F * swingLag, 0.0F,
@@ -529,7 +418,6 @@ public final class VicissitudeRig {
                 pose.addRotation(Joint.HALO_FRAGMENT_3, 0.0F, 0.0F, -26.0F * swing);
                 pose.addRotation(Joint.HALO_FRAGMENT_4, 0.0F, 0.0F, 16.0F * swing);
                 pose.addRotation(Joint.BODY, 0.0F, 12.0F * swing, 0.0F);
-                // The right hand reaches up into the ring; the left arm holds the balance low and wide.
                 pose.addRotation(Joint.ARM_RIGHT, 96.0F * wind - 128.0F * swingLag, 0.0F,
                                  14.0F * wind - 8.0F * swing);
                 pose.addRotation(Joint.FOREARM_RIGHT, 26.0F * wind - 34.0F * swingLag, 0.0F, 0.0F);
@@ -539,14 +427,11 @@ public final class VicissitudeRig {
                 dragWingsYaw(pose, 12.0F * (swing - swingLag));
             }
             case SLASH_HORIZONTAL -> {
-                // Windup turns the body to its right, the release sweeps through to the left.
                 float bodyYaw = 30.0F * wind - 62.0F * swing;
                 pose.addRotation(Joint.BODY, 0.0F, bodyYaw, 0.0F);
                 pose.addRotation(Joint.TORSO, 0.0F, 16.0F * wind - 36.0F * swing, 0.0F);
                 pose.addRotation(Joint.ARM_RIGHT, 44.0F * wind - 104.0F * swing, 0.0F, 26.0F * wind);
                 pose.addRotation(Joint.FOREARM_RIGHT, 52.0F * wind - 78.0F * swing, 0.0F, 0.0F);
-                // The free arm is the counterweight: it lifts against the windup and whips out
-                // the other way while the blade crosses, four ticks behind the weapon.
                 pose.addRotation(Joint.ARM_LEFT, 34.0F * windLag - 52.0F * swingLag, 0.0F,
                                  -20.0F * wind + 30.0F * swing);
                 pose.addRotation(Joint.FOREARM_LEFT, 20.0F * windLag - 30.0F * swingLag, 0.0F, 0.0F);
@@ -586,7 +471,6 @@ public final class VicissitudeRig {
                 pose.addRotation(Joint.HEAD_ROOT, -14.0F * wind + 26.0F * swing, 0.0F, 0.0F);
                 pose.addRotation(Joint.WING_LEFT_ROOT, 0.0F, 0.0F, -24.0F * wind + 36.0F * swing);
                 pose.addRotation(Joint.WING_RIGHT_ROOT, 0.0F, 0.0F, 24.0F * wind - 36.0F * swing);
-                // The whole body commits: the off arm drives back, the tail drags, the wings snap.
                 pose.addRotation(Joint.ARM_LEFT, 44.0F * windLag - 78.0F * swingLag, 0.0F,
                                  -26.0F * wind - 12.0F * swing);
                 pose.addRotation(Joint.FOREARM_LEFT, 30.0F * windLag - 44.0F * swingLag, 0.0F, 0.0F);
@@ -601,13 +485,6 @@ public final class VicissitudeRig {
                 guardWeaponArm(pose, recovery);
             }
             case DASH -> {
-                // The charge owns its own ramp, so it needs a settle of its own at the end, and the
-                // brake has to taper together with the lunge: zeroing only the brake would release
-                // the lunge and snap the body forward.
-                //
-                // The brake saturates before the action ends and the whole charge posture then eases
-                // out over the last few ticks, which is what brings the off arm home with everything
-                // else instead of drifting away from it right up to the final frame.
                 float taper = power(clamp((total - 1.0F - t) / DASH_SETTLE_TICKS), 1.0F);
                 float lunge = clamp((t - 20.0F) / 12.0F) * taper;
                 float brake = clamp((t - 32.0F) / DASH_BRAKE_TICKS) * taper;
@@ -617,7 +494,6 @@ public final class VicissitudeRig {
                 pose.addRotation(Joint.WING_LEFT_ROOT, 0.0F, -20.0F * wind + 30.0F * push, 14.0F * wind);
                 pose.addRotation(Joint.WING_RIGHT_ROOT, 0.0F, 20.0F * wind - 30.0F * push, -14.0F * wind);
                 pose.addRotation(Joint.ARM_RIGHT, 20.0F * wind - 35.0F * push, 0.0F, 0.0F);
-                // The off arm reaches back through the charge and swings forward when it brakes.
                 pose.addRotation(Joint.ARM_LEFT, 46.0F * wind - 74.0F * push - 24.0F * brake, 0.0F,
                                  -10.0F * wind);
                 pose.addRotation(Joint.FOREARM_LEFT, 24.0F * wind - 30.0F * push, 0.0F, 0.0F);
@@ -669,48 +545,21 @@ public final class VicissitudeRig {
     }
 
     /**
-     * Recovery guard for the weapon arm.
-     *
-     * <p>The big swings are authored with X rotation alone, which carries the hand in a circle
-     * <em>through</em> the space the head occupies: on the way back from a heavy attack the fist
-     * used to pass within a tenth of a block of the crystal head and visibly cut through it. The
-     * guard folds the residual post-impact motion of the arm down and outboard instead, so the hand
-     * comes back around the body rather than over the shoulder. It only acts while the strike curve
-     * is decaying, so the swing itself keeps its full amplitude.
-     *
-     * @param recovery a 0-to-1 window over the follow-through: it opens only after
-     *                 {@link #GUARD_DELAY_TICKS} past the impact and is back to 0 on the action's
-     *                 last tick, so the guard neither shortens the cut nor leaves a step behind it
+     * Folds the residual post-impact motion of the weapon arm down and outboard, so the hand comes
+     * back around the body instead of through the head; only acts while the strike curve decays.
      */
     private static void guardWeaponArm(Pose pose, float recovery) {
         float slack = clamp(recovery);
-        // The two halves have to sit on different joints, because a joint applies Rz outside Rx:
-        // an X rotation added next to a large Z rotation would twist the arm around its own axis
-        // instead of pitching it, which is exactly how the first attempt at this guard sent the
-        // hand further up into the head. So the arm takes the outboard swing and the elbow - whose
-        // own frame has already been swung out - takes the downward pitch.
+        // A joint applies Rz outside Rx, so the two halves must sit on different joints: an X
+        // rotation next to a large Z twist would roll the arm about its own axis, not pitch it.
         pose.addRotation(Joint.ARM_RIGHT, 0.0F, 0.0F, 30.0F * slack);
         pose.addRotation(Joint.FOREARM_RIGHT, 58.0F * slack, 0.0F, 0.0F);
     }
 
     /**
      * Lowers the weapon arm so a melee swing actually crosses a target standing on the boss's own
-     * floor.
-     *
-     * <p>The blade hangs off a shoulder high above the entity origin, so a swing left alone can
-     * sweep well over a standing target - whose hitbox ends at 1.8 blocks - and the boss could
-     * hover in range indefinitely without ever connecting. How much the swing has to come down is
-     * <b>not the same for every attack</b>: the horizontal cut is authored as a chest-height sweep
-     * around y 2.2 and needs the most, while the vertical and heavy cuts already chop down to about
-     * y 0.7 and need none. Pulling all three down by the same amount would fix one and rob the
-     * others of their reach.
-     *
-     * @param lowering how far to bring the arm down, in degrees, from
-     *                 {@link Action#bladeLoweringDegrees()}
-     * @param fade     0 at the impact frame, 1 through the swing, back to 0 on the last rendered
-     *                 tick. The lowering is a <b>pulse</b>, not a constant offset: added flat it
-     *                 would leave the arm displaced on the final frame, and the hand would snap
-     *                 half a block when the action handed over to the next one
+     * floor; how far differs per attack, and only the chest-high horizontal cut needs much. Fade is
+     * a pulse and must be back to 0 on the last rendered tick.
      */
     public static void lowerWeaponArmForMelee(Pose pose, float lowering, float fade) {
         float amount = lowering * clamp(fade);
@@ -723,17 +572,8 @@ public final class VicissitudeRig {
     }
 
     /**
-     * Wing drag for the whole span, following a body yaw: the pair lags behind by a fraction of
-     * the turn the torso just made, so the wings read as mass instead of being welded to the
-     * spine.
-     *
-     * <p>The argument is the body's own turn in degrees. The strike curve crosses most of that
-     * turn in two or three ticks, so this only ever takes {@link #WING_DRAG_FRACTION} of it and
-     * caps the result: a wing that swings further than the torso it hangs from looks broken, not
-     * heavy.
-     *
-     * <p>Both wings take the same sign: this is the pair lagging behind a rotation, not a
-     * symmetric fold, so mirroring the sign would cancel the effect out.
+     * Wing drag following a body yaw: the pair lags by a capped fraction of the turn. Both wings
+     * take the same sign - this is a pair lagging, not a symmetric fold.
      */
     private static void dragWingsYaw(Pose pose, float bodyTurn) {
         float drag = clampDrag(bodyTurn * WING_DRAG_FRACTION);
@@ -745,9 +585,6 @@ public final class VicissitudeRig {
         pose.addRotation(Joint.WING_RIGHT_FEATHERS, 0.0F, drag * 0.4F, 0.0F);
     }
 
-    /**
-     * Wing drag for a forward lean: the pair lifts against the pitch and settles after it.
-     */
     private static void dragWingsPitch(Pose pose, float bodyLean) {
         float drag = clampDrag(bodyLean * WING_DRAG_FRACTION);
         pose.addRotation(Joint.WING_LEFT_ROOT, drag, 0.0F, 0.0F);
@@ -762,9 +599,6 @@ public final class VicissitudeRig {
         return Math.max(-WING_DRAG_CAP, Math.min(WING_DRAG_CAP, degrees));
     }
 
-    /**
-     * Collision driven fold: the wings collapse towards the body when space is tight.
-     */
     private static void applyFold(Pose pose, float fold) {
         if (fold <= 0.0F){
             return;
@@ -780,9 +614,7 @@ public final class VicissitudeRig {
         pose.addRotation(Joint.ARM_RIGHT, 0.0F, 0.0F, 10.0F * amount);
     }
 
-    /**
-     * Six ticks of small divergence; shells and feathers lag behind the core.
-     */
+    /** Six-tick hurt reaction; shells and feathers lag behind the core. */
     private static void applyHurt(Pose pose, float hurtTicks) {
         if (hurtTicks <= 0.0F){
             return;
@@ -801,9 +633,7 @@ public final class VicissitudeRig {
         }
     }
 
-    /**
-     * Eighty tick death: ring stops, shell opens, wings fail, core goes out.
-     */
+    /** Eighty-tick death; the shell, wing and core ramps are absolute ticks from death. */
     private static void applyDeath(Pose pose, float ticks) {
         if (ticks < 0.0F){
             return;
@@ -855,8 +685,7 @@ public final class VicissitudeRig {
         for (Joint joint : Joint.values()) {
             int index = joint.index() * 16;
             identity(pose.matrices, index);
-            // The helpers post-multiply, so rotations come first and the pivot translation
-            // last: a joint's own rotation must never move its own pivot.
+            // The helpers post-multiply: a joint's own rotation must never move its own pivot.
             rotateX(pose.matrices, index, pose.rotX(joint));
             rotateY(pose.matrices, index, pose.rotY(joint));
             rotateZ(pose.matrices, index, pose.rotZ(joint));
@@ -879,21 +708,17 @@ public final class VicissitudeRig {
         target[offset + 15] = 1.0F;
     }
 
-    // Column-major 4x4 matrices: element (row r, column c) lives at index c * 4 + r, so the
-    // translation sits in indices 12..14 and transform() applies M * p exactly like OpenGL.
+    // Column-major 4x4 matrices: element (r, c) lives at c * 4 + r, so translation sits in 12..14
+    // and transform() applies M * p exactly like OpenGL.
 
-    /**
-     * M = T * M.
-     */
+    /** M = T * M. */
     private static void translate(float[] matrix, int offset, float x, float y, float z) {
         matrix[offset + 12] += x;
         matrix[offset + 13] += y;
         matrix[offset + 14] += z;
     }
 
-    /**
-     * M = Rx * M.
-     */
+    /** M = Rx * M. */
     private static void rotateX(float[] matrix, int offset, float degrees) {
         if (degrees == 0.0F){
             return;
@@ -909,9 +734,7 @@ public final class VicissitudeRig {
         }
     }
 
-    /**
-     * M = Ry * M.
-     */
+    /** M = Ry * M. */
     private static void rotateY(float[] matrix, int offset, float degrees) {
         if (degrees == 0.0F){
             return;
@@ -927,9 +750,7 @@ public final class VicissitudeRig {
         }
     }
 
-    /**
-     * M = Rz * M.
-     */
+    /** M = Rz * M. */
     private static void rotateZ(float[] matrix, int offset, float degrees) {
         if (degrees == 0.0F){
             return;
@@ -945,9 +766,7 @@ public final class VicissitudeRig {
         }
     }
 
-    /**
-     * target = left * right, where all three are column-major 4x4 blocks.
-     */
+    /** target = left * right, where all three are column-major 4x4 blocks. */
     private static void multiply(float[] matrix, int targetOffset, int leftOffset, int rightOffset) {
         float[] result = new float[16];
         for (int column = 0; column < 4; column++) {
@@ -962,9 +781,7 @@ public final class VicissitudeRig {
         System.arraycopy(result, 0, matrix, targetOffset, 16);
     }
 
-    /**
-     * Transforms a point expressed in the joint's own frame into authoring space.
-     */
+    /** Transforms a point expressed in the joint's own frame into authoring space. */
     public static V3 transform(Pose pose, Joint joint, float x, float y, float z) {
         int offset = joint.index() * 16;
         float[] m = pose.matrices;
@@ -978,18 +795,14 @@ public final class VicissitudeRig {
         return transform(pose, joint, 0.0F, 0.0F, 0.0F);
     }
 
-    /**
-     * Authoring space to entity-local blocks (x left, y up, z forward).
-     */
+    /** Authoring space to entity-local blocks (x left, y up, z forward). */
     public static V3 toEntityLocal(V3 modelPoint) {
         return new V3(modelPoint.x / VicissitudeRigData.UNITS_PER_BLOCK,
                       (VicissitudeRigData.MODEL_ORIGIN_Y - modelPoint.y) / VicissitudeRigData.UNITS_PER_BLOCK,
                       -modelPoint.z / VicissitudeRigData.UNITS_PER_BLOCK);
     }
 
-    /**
-     * Entity-local blocks to world space for the supplied entity position and yaw.
-     */
+    /** Entity-local blocks to world space for the supplied entity position and yaw (degrees). */
     public static V3 toWorld(double entityX, double entityY, double entityZ, float yawDegrees, V3 local) {
         float yaw = yawDegrees * DEG_TO_RAD;
         float cos = (float) Math.cos(yaw);
@@ -1008,15 +821,10 @@ public final class VicissitudeRig {
     }
 
     /**
-     * The scythe's cutting edge as a segment: grip to tip, in entity-local blocks.
-     *
-     * <p>This is the shared source of truth for melee reach. The entity resolves its damage volume
-     * from {@link #bladeSegment(Pose, Action, float)} instead of from a typed-in radius, so the
-     * volume <em>is</em> the blade the player can see, swept across the action's hit window. Adding
-     * an attack, or retiming one, cannot desynchronise the two.
+     * The scythe's cutting edge as a segment, grip to tip, in entity-local blocks; the entity
+     * resolves its damage volume from this rather than from a typed-in radius.
      */
     public record BladeSegment(V3 grip, V3 tip) {
-        /** Straight-line length in blocks. */
         public double length() {
             double dx = tip.x() - grip.x();
             double dy = tip.y() - grip.y();
@@ -1025,29 +833,16 @@ public final class VicissitudeRig {
         }
     }
 
-    /**
-     * Blade geometry for one action, resolved against the pose at {@code ticks}.
-     *
-     * <p>Returns {@code null} for actions that have no blade in hand: the wing volleys, the two
-     * casts, the dash and the recovery clip. Callers use that to tell "this action deals no melee
-     * damage" apart from "the blade happens to be degenerate", so an empty window can never be
-     * reached by accident.
-     */
+    /** Blade geometry at {@code ticks}, or {@code null} for actions with no blade in hand. */
     public static BladeSegment bladeSegment(Pose pose, Action action, float ticks) {
         if (pose == null || action == null || !action.isMelee()) {
             return null;
         }
-        // The blade stands roughly along the fist at rest, is swung flat through a horizontal cut
-        // and ends up hanging under the hand at the bottom of a slam. Letting the signed swing
-        // velocity pitch it gives the blade its own trail through the cut without a second
-        // timeline to keep in step with the arm.
         float angularVelocity = sampleAction(action, ticks + 1.0F, 0.0F).swing()
                                 - sampleAction(action, ticks - 1.0F, 0.0F).swing();
         float pitch = action.bladeTrailDegrees() * clamp(angularVelocity * 1.6F);
         float forward = BLADE_LENGTH_MODEL_UNITS * (float) Math.sin(Math.toRadians(pitch));
         float alongGrip = BLADE_LENGTH_MODEL_UNITS * (float) Math.cos(Math.toRadians(pitch));
-        // The grip sits a little down the handle, which is what puts the blade in front of the
-        // fist instead of through it.
         V3 grip = transform(pose, Joint.SCYTHE_HAND_ANCHOR, 0.0F,
                             BLADE_GRIP_OFFSET_MODEL_UNITS, forward * 0.15F);
         V3 tip = transform(pose, Joint.SCYTHE_HAND_ANCHOR, 0.0F,
@@ -1055,10 +850,7 @@ public final class VicissitudeRig {
         return new BladeSegment(toEntityLocal(grip), toEntityLocal(tip));
     }
 
-    /**
-     * World-space distance from a point to a blade segment; {@code 0} when the point is on it.
-     * The melee test inflates by the victim's half width, which turns this into a capsule test.
-     */
+    /** World-space distance from a point to the blade; the melee test inflates it into a capsule. */
     public static double distanceToBlade(double x, double y, double z,
                                          BladeSegment blade,
                                          double entityX, double entityY, double entityZ,
@@ -1081,16 +873,8 @@ public final class VicissitudeRig {
     }
 
     /**
-     * World-space distance from a blade segment to a victim's axis-aligned bounding box.
-     *
-     * <p>{@link #distanceToBlade} measures to a <em>point</em>, which is only a fair question when
-     * the victim is a ball. A hit decision based on it can miss a tall victim whose torso centre
-     * passes beside the blade while its body is right in the way. This measures to the volume
-     * instead, by taking the segment's closest approach to the box centre, clamping that point into
-     * the box and measuring what is left - the standard segment/AABB distance.
-     *
-     * <p>It is a diagnostic and a fallback, not the melee test itself: the melee test deliberately
-     * asks about the centre so that a swing which only clips a shoulder cannot count as a body hit.
+     * World-space distance from the blade to an AABB - a diagnostic and a fallback, not the melee
+     * test, which measures to the victim's centre so that clipping a shoulder cannot count as a hit.
      */
     public static double distanceToBladeBox(Box box, BladeSegment blade,
                                             double entityX, double entityY, double entityZ,
@@ -1118,9 +902,8 @@ public final class VicissitudeRig {
     }
 
     /**
-     * Coarse, pose-following hit and blocking volumes: body, head and three wing segments per
-     * side. The chest cavity has no box of its own, and range effects use the highest multiplier
-     * they overlap without stacking.
+     * Coarse, pose-following hit volumes: body, head and one box per wing mesh group; range effects
+     * take the highest cap weight they overlap, without stacking.
      */
     public static List<SegmentVolume> segmentVolumes(
             Pose pose, double entityX, double entityY,
@@ -1160,9 +943,6 @@ public final class VicissitudeRig {
         return volumes;
     }
 
-    /**
-     * Hit record for one segment.
-     */
     public record SegmentVolume(Segment segment, Box box) {
     }
 
@@ -1220,9 +1000,6 @@ public final class VicissitudeRig {
         return best;
     }
 
-    /**
-     * Highest cap weight among the given body sample points (used by area damage).
-     */
     public static float capWeightAt(List<SegmentVolume> volumes, Box area) {
         return highestCapWeightSegment(volumes, area).capWeight();
     }
@@ -1245,29 +1022,21 @@ public final class VicissitudeRig {
     }
 
     /**
-     * Stateless action channels; follow delays are measured in ticks, never rendered frames.
-     *
-     * <p>{@code wind}/{@code swing} drive the weapon arm and the body it is attached to.
-     * {@code windLag}/{@code swingLag} drive everything that trails the weapon - the off hand, the
-     * wings, the lower body - and equal the leading pair delayed by {@link #FOLLOW_LAG} ticks
-     * during the windup. Past the hit they are switched onto the leading clock, so the trailing
-     * parts share the recovery instead of still being mid-swing when the action ends.
+     * Stateless action channels; delays are measured in ticks. {@code wind}/{@code swing} lead;
+     * {@code windLag}/{@code swingLag} are the same curves delayed by {@link #FOLLOW_LAG} ticks
+     * during the windup and switched onto the leading clock past the hit.
      */
     public record ActionSample(float wind, float swing, float windLag, float swingLag) {
         public ActionSample(float wind, float swing) {
             this(wind, swing, wind, swing);
         }
 
-        /** Difference between the weapon and its followers; drives wing and tail drag. */
         public float trail() {
             return swing - swingLag;
         }
     }
 
-    /**
-     * Power ease with an exact endpoint. {@code bias} below one front-loads the movement, above
-     * one holds it back; {@link #smooth} is the symmetric middle.
-     */
+    /** Power ease with an exact endpoint; {@code bias} above one holds the movement back. */
     private static float power(float value, float bias) {
         return (float) Math.pow(clamp(value), bias);
     }
@@ -1278,11 +1047,6 @@ public final class VicissitudeRig {
         }
         float total = Math.max(1.0F, action.duration());
         float t = Math.max(0.0F, ticks - delay);
-        // Trailing samples of the same curves: the weapon leads and everything else follows a few
-        // ticks later, which is what turns one rigid arm swing into a whole body motion. The lag
-        // applies to the windup only. Once the hit has passed, the followers are switched back onto
-        // the lead clock, so the whole body arrives at the neutral pose together on the last tick
-        // instead of four ticks short of it.
         float laggedTicks = Math.max(0.0F, t - FOLLOW_LAG);
         float followClock = t > action.releaseTick() ? t : laggedTicks;
         float decayEnd = total - 1.0F;
@@ -1293,22 +1057,8 @@ public final class VicissitudeRig {
     }
 
     /**
-     * Windup channel: rises from 0 to exactly 1 on the release frame, then <b>falls back to 0</b>
-     * across the follow-through.
-     *
-     * <p>The decay is the whole point. A channel that latched at 1 until the action ended left
-     * every pose coefficient that the windup contributes still fully applied on the last tick, so
-     * the frame after the action snapped all of them back to zero at once: the arms jumped roughly
-     * the entire windup amplitude in a single tick. Releasing the windup over the follow-through
-     * turns that step into the recovery half of the swing. Only {@link #strike} has to keep its
-     * value past the hit; this channel is free to return.
-     */
-    /**
-     * {@code decayEnd} is the last tick the renderer actually draws, which is {@code duration - 1}:
-     * the entity ends the action at {@code duration}, so no frame is ever sampled there. Every
-     * settling channel therefore has to reach zero one tick early. {@link #bell} gets this for free
-     * by construction, which is why the trailing parts of the pose already arrived at rest cleanly
-     * while the windup-driven ones did not.
+     * Windup channel: 0 -> 1 on the release frame, then back to 0 at {@code decayEnd}, the last
+     * tick the renderer draws ({@code duration - 1}); every settling channel must reach zero there.
      */
     private static float wind(float t, float hit, float decayEnd) {
         if (t <= hit){
@@ -1317,9 +1067,7 @@ public final class VicissitudeRig {
         return 1.0F - power((t - hit) / Math.max(1.0F, decayEnd - hit), WIND_RECOVERY_BIAS);
     }
 
-    /**
-     * 0 -> 1 at {@code hit} -> 0 at {@code total}.
-     */
+    /** 0 -> 1 at {@code hit} -> 0 at {@code total}. */
     private static float bell(float t, float hit, float total) {
         if (t <= hit){
             return smooth(hit <= 0.0F ? 1.0F : t / hit);
@@ -1329,15 +1077,9 @@ public final class VicissitudeRig {
     }
 
     /**
-     * Strike channel used by every attack: the windup eases up to <b>exactly 1.0</b> on the
-     * release frame, holds the impact for {@link #STRIKE_HOLD_TICKS} ticks, then decomposes into
-     * the follow-through and settles to 0 on the action's last tick.
-     *
-     * <p>The peak is pinned to the release frame on purpose: that is the tick the damage volume is
-     * resolved on, so the pose the hit test sees is the one this curve calls fully extended, by
-     * construction rather than by hand tuning. The hold is what gives a swing weight; the settle
-     * over the last {@link #STRIKE_SETTLE_TICKS} ticks is what lets the following action start
-     * from rest instead of inheriting a step.
+     * Strike channel used by every attack: exactly 1.0 on the release frame - the tick the damage
+     * volume is resolved on - held for {@link #STRIKE_HOLD_TICKS} ticks, then settled to 0 on the
+     * action's last tick.
      */
     private static float strike(float t, float hit, float total) {
         if (t <= hit){
@@ -1356,12 +1098,8 @@ public final class VicissitudeRig {
     }
 
     /**
-     * Combat actions with their authored timings (ticks).
-     *
-     * <p>{@code releaseTick} is the <b>impact frame</b>: the tick the strike curve peaks on, the
-     * tick the damage volume is resolved on, and the tick the blade must actually reach the target
-     * on. The asset pipeline and {@code RigPoseExporter} read the same number, so the pose an
-     * animator exports for review is the pose the hit test uses.
+     * Combat actions with their authored timings in ticks. {@code releaseTick} is the impact frame:
+     * the strike curve peaks there and the damage volume is resolved there.
      */
     public enum Action {
         NONE(0, 0, false, 1, 0),
@@ -1369,9 +1107,7 @@ public final class VicissitudeRig {
         WING_BARRAGE(56, 20, true, 1, 0),
         CAST_FROM_CHEST(50, 30, true, 1, 0),
         CAST_FROM_HALO(60, 40, true, 1, 0),
-        // Melee hit windows are authored around the impact frame: open a tick early so a target
-        // the blade meets on the way in still connects, close a few ticks late so the
-        // follow-through cuts. See hitWindow().
+        // Melee hit window bounds relative to the release tick; see hitWindow().
         SLASH_HORIZONTAL(20, 8, false, -1, 3),
         SLASH_VERTICAL(30, 14, false, 0, 4),
         HEAVY_ATTACK(50, 24, false, 0, 4),
@@ -1403,7 +1139,6 @@ public final class VicissitudeRig {
             return releaseTick;
         }
 
-        /** The last part of the tell commits to a direction, leaving time to sidestep. */
         public int aimLockTick() {
             return switch (this) {
                 case SLASH_HORIZONTAL -> 4;
@@ -1426,11 +1161,7 @@ public final class VicissitudeRig {
             return this == SLASH_HORIZONTAL || this == SLASH_VERTICAL || this == HEAVY_ATTACK;
         }
 
-        /**
-         * Blade pitch at full swing, in degrees in the hand anchor's frame. A cut sweeps the edge
-         * flat and roughly perpendicular to the arm; a chop or a slam drives it down through the
-         * target instead.
-         */
+        /** Blade pitch at full swing, in degrees in the hand anchor's frame. */
         public float bladeTrailDegrees() {
             return switch (this) {
                 case SLASH_HORIZONTAL -> 62.0F;
@@ -1440,26 +1171,15 @@ public final class VicissitudeRig {
             };
         }
 
-        /**
-         * How far the weapon arm has to come down for this swing to cross a target standing on the
-         * boss's own floor, in degrees.
-         *
-         * <p>Only the horizontal cut needs it. It is authored as a chest-height sweep and its edge
-         * travels around y 2.2 above the feet, which is above a standing target's head; the vertical
-         * and heavy cuts already chop down to about y 0.7 and lowering them would only cost reach.
-         * See {@code aMeleeSwingCanReachATargetStandingOnTheSameFloor}.
-         */
+        /** Degrees the weapon arm comes down for this swing; only the chest-high horizontal cut needs it. */
         public float bladeLoweringDegrees() {
             return this == SLASH_HORIZONTAL ? 34.0F : 0.0F;
         }
 
         /**
          * Height above the boss's feet at which this swing's edge crosses the target, once
-         * {@link #bladeLoweringDegrees()} has been applied. Measured by the rig probe; the entity
-         * stands the boss at {@code target y + torso centre - this} so the edge lands on the chest.
-         *
-         * <p>It differs per action because the three swings sweep at different heights, and the one
-         * that is lowest decides how low the boss has to go.
+         * {@link #bladeLoweringDegrees()} is applied; the entity stands the boss at
+         * {@code target y + torso centre - this}.
          */
         public float bladeHeightAboveFeet() {
             return switch (this) {
@@ -1471,13 +1191,8 @@ public final class VicissitudeRig {
         }
 
         /**
-         * How far in front of the boss's own centre this swing's edge reaches, in blocks - the
-         * distance the attack has to be delivered from.
-         *
-         * <p>Read off the impact frame by the rig probe. It is <b>not</b> the boss's engagement
-         * distance: standing further out than this and the blade falls short, standing closer and
-         * the boss plants itself on top of the target so the edge sweeps down in front of it or
-         * past it. Both mistakes read in game as "it attacks but never connects".
+         * Blocks in front of the boss's centre this swing's edge reaches - the distance the attack
+         * has to be delivered from, but not the boss's engagement distance.
          */
         public float bladeForwardReach() {
             return switch (this) {
@@ -1490,12 +1205,7 @@ public final class VicissitudeRig {
 
         /**
          * First and last tick of the damage window, inclusive, or {@code null} for an action whose
-         * blade never intersects anything.
-         *
-         * <p>The window opens one tick early and closes three ticks after the impact so the weapon
-         * connects when it passes through a target on its way in or out, not only on the one frame
-         * the curve happens to peak on. {@link #releaseTick()} must lie inside it; that is asserted
-         * by {@code VicissitudeRigTest}.
+         * blade never intersects anything; {@link #releaseTick()} always lies inside it.
          */
         public int[] hitWindow() {
             return hitWindow;

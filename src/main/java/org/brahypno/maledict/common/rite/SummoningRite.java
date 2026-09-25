@@ -30,10 +30,6 @@ import java.util.List;
 
 /**
  * Registers the encounter's four rites in Malum's rite table and performs what they create.
- *
- * <p>The table is plain static state rather than a registry, and rites are matched by their spirit
- * list, so adding them is a single append per rite with no patching and no risk of shadowing an
- * existing rite.
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class SummoningRite {
@@ -44,13 +40,9 @@ public final class SummoningRite {
     private static final int[] SUMMON_HEIGHTS = {3, 4, 6, 2, 8};
 
     /**
-     * One recipe per difficulty, cheapest first. Poles are read bottom first, so a recipe is
-     * written as "eldritch spirits at the bottom, then arcane spirits above them".
-     *
-     * <p>Only the eight pole spirits may be used. Malum's {@code MalumLogBLock#createTotemPole}
-     * returns false outright when the shard is {@code SpiritTypeRegistry.UMBRAL_SPIRIT}, so an
-     * umbral recipe would be a rite nobody could ever build; {@link #poleSpirit} enforces that
-     * instead of leaving a silently dead recipe behind.
+     * One recipe per difficulty, cheapest first; poles are read bottom first, so a recipe is written
+     * as "eldritch spirits at the bottom, then arcane spirits above". Only the eight pole spirits may
+     * be used: {@code MalumLogBLock#createTotemPole} returns false outright for {@code UMBRAL_SPIRIT}.
      */
     private enum Recipe {
         SIMPLE("vicissitude_rite", BossDifficulty.SIMPLE, 3, 0),
@@ -73,13 +65,10 @@ public final class SummoningRite {
 
     @SubscribeEvent
     public static void onCommonSetup(FMLCommonSetupEvent event) {
-        // Rite types are plain static state, so this only has to run after Malum's own class
-        // initialisation, which touching the table guarantees. The rites themselves are built
-        // here rather than in static fields so nothing touches Malum before its own setup.
+        // Rite types are plain static state, so this only has to run after Malum's own class init.
         event.enqueueWork(SummoningRite::install);
     }
 
-    /** Appends the encounter's rites to Malum's table, once each. */
     public static void install() {
         for (Recipe recipe : Recipe.values()) {
             if (SpiritRiteRegistry.getRite(recipe.identifier) != null) {
@@ -134,10 +123,7 @@ public final class SummoningRite {
         return null;
     }
 
-    /**
-     * Creates the configured entity above the totem, in the same tick the rite resolves, so the
-     * encounter's own set piece announcement still happens the first time a player hits it.
-     */
+    /** Creates the configured entity above the totem, in the same tick the rite resolves. */
     static void summon(TotemBaseBlockEntity totem, ServerLevel level, BossDifficulty difficulty) {
         if (!MaledictConfig.SUMMONING_RITE.get()) {
             return;
@@ -163,9 +149,8 @@ public final class SummoningRite {
         }
         float yaw = totem.getDirection().toYRot();
         if (!place(created, level, x, base.getY(), z, yaw)) {
-            // Every candidate was blocked. A rite that promises uncontrolled creation must not
-            // quietly do nothing, and the encounter brings its own unstick search, so it is placed
-            // at the lowest candidate regardless.
+            // Every candidate was blocked; a rite that promises uncontrolled creation must not
+            // quietly do nothing, and the encounter brings its own unstick search.
             created.moveTo(x, base.getY() + SUMMON_HEIGHTS[0], z, yaw, 0.0F);
         }
         level.addFreshEntity(created);

@@ -1,5 +1,4 @@
 """Original plate and gauntlet pixel plans, read at each surface's UV resolution."""
-# Keep a broad middle value: the darkest pixels belong to joints and lower lips.
 FRONTS = {
 'vertebra': '''011223322110
 123343343321
@@ -208,7 +207,6 @@ def shade(role,face,x,y,width,height):
         if role in ('scapula','shell') and 3<=xx<=4 and 3<=yy<=11:
             value=3 if xx==3 else 1
         if role=='vertebra':
-            # Recessed back channel, with paired bony flanges rather than a cross.
             if 5<=xx<=6: value=1 if yy not in (2,7,12) else 2
             elif xx in (4,7) and 2<=yy<=13: value=3
     elif face in ('inner','lane4','lane5'):

@@ -25,25 +25,22 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
- * Confiscation and return of Curios for the Vicissitude encounter.
+ * Confiscation and return of Curios for the Vicissitude encounter; confiscation skips stacks in
+ * {@code maledict:vicissitude_confiscation_immune}.
  *
- * <p>Confiscation skips stacks in {@code maledict:vicissitude_confiscation_immune}. Returns are
- * attempted on login, respawn and the low frequency queue for online owners, always in the order
- * original slot, any legal empty Curio slot, main inventory. Anything that cannot be delivered
- * stays in the world ledger and a claim token is issued so a full inventory can never eat items.
+ * <p>Delivery order: original slot, any legal empty Curio slot, then main inventory.
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class VicissitudeCurioReturns {
     public static final String REMAINING_MESSAGE_KEY = "message.maledict.first_vicissitude.curio_return_pending";
     private static final String COMPLETED_MESSAGE_KEY = "message.maledict.first_vicissitude.curio_return_complete";
-    /** Low frequency retry for owners that are online but were short on space. */
+    /** Low-frequency retry for owners that are online but were short on space. */
     private static final int QUEUE_INTERVAL_TICKS = 20;
     private static final int ATTEMPT_COOLDOWN_TICKS = 100;
 
     private VicissitudeCurioReturns() {
     }
 
-    /** Removes every confiscatable equipped Curio and returns the taken stacks. */
     public static List<VicissitudeCurioLedger.Entry> confiscate(ServerPlayer player) {
         List<VicissitudeCurioLedger.Entry> taken = new ArrayList<>();
         ICuriosItemHandler inventory = CuriosApi.getCuriosInventory(player).orElse(null);
@@ -61,7 +58,7 @@ public final class VicissitudeCurioReturns {
             for (int slot = 0; slot < stacks.getSlots(); slot++) {
                 ItemStack equipped = stacks.getStackInSlot(slot);
                 if (equipped.isEmpty() || equipped.is(MaledictTags.VICISSITUDE_CONFISCATION_IMMUNE)) {
-                    // Protected curios stay equipped, are not queued and never fire unequip hooks.
+                    // Protected curios stay equipped and never fire unequip hooks.
                     continue;
                 }
                 taken.add(new VicissitudeCurioLedger.Entry(identifier, slot, equipped.copy()));
@@ -71,7 +68,7 @@ public final class VicissitudeCurioReturns {
         return taken;
     }
 
-    /** Hands boss held stacks to the world ledger without dropping or deleting anything. */
+    /** Hands boss-held stacks to the world ledger without dropping or deleting anything. */
     public static void retain(@Nullable ServerLevel level, UUID owner,
                               List<VicissitudeCurioLedger.Entry> entries) {
         if (level == null || entries.isEmpty()) {
@@ -80,7 +77,7 @@ public final class VicissitudeCurioReturns {
         VicissitudeCurioLedger.get(level).addAll(owner, entries);
     }
 
-    /** Tries to deliver everything held for this player; returns true when the balance is empty. */
+    /** Tries to deliver everything held for this player; true when nothing remains owed. */
     public static boolean deliverAll(ServerPlayer player) {
         VicissitudeCurioLedger ledger = VicissitudeCurioLedger.get(player.serverLevel());
         List<VicissitudeCurioLedger.Entry> entries = ledger.entries(player.getUUID());
@@ -107,8 +104,8 @@ public final class VicissitudeCurioReturns {
     }
 
     /**
-     * Returns what could not be delivered. Only the delivered part is removed from the record, so
-     * a partial inventory add can never duplicate or delete a stack.
+     * Returns the undelivered remainder. Only the delivered part leaves the record, so a partial
+     * inventory add can never duplicate or delete a stack.
      */
     private static ItemStack deliver(ServerPlayer player, VicissitudeCurioLedger.Entry entry) {
         ICuriosItemHandler inventory = CuriosApi.getCuriosInventory(player).orElse(null);
@@ -193,7 +190,7 @@ public final class VicissitudeCurioReturns {
     }
 
     public static void onPlayerDeath(ServerPlayer player) {
-        // The boss keeps its own hold; death only makes the player eligible for immediate returns.
+        // Death only makes the player eligible for an immediate return; the boss keeps its own hold.
         deliverAll(player);
     }
 

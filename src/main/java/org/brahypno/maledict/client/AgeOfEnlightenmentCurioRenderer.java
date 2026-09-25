@@ -16,11 +16,7 @@ import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.client.ICurioRenderer;
 
 /**
- * 启蒙之年的饰品渲染器：把面具画在佩戴者脸上。
- *
- * <p>调用链：Curios 给玩家渲染器挂的 {@code CuriosLayer} 遍历饰品槽 → 按物品找到本渲染器 →
- * 在玩家模型的坐标空间里回调 {@link #render}。所以这里不需要自己摆位置，
- * 只要把头部姿态复制给面具模型即可。
+ * 启蒙之年的饰品渲染器：回调发生在玩家模型的坐标空间里，故不必自己摆位置，把头部姿态复制给面具模型即可。
  */
 public final class AgeOfEnlightenmentCurioRenderer implements ICurioRenderer {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
@@ -36,7 +32,7 @@ public final class AgeOfEnlightenmentCurioRenderer implements ICurioRenderer {
                                                                          float netHeadYaw, float headPitch) {
         AgeOfEnlightenmentModel model = MaledictEntityRenderers.ageOfEnlightenmentModel();
         if (model == null) {
-            // 图层还没烘焙（理论上只会在极端加载顺序下发生），跳过这一帧好过抛异常。
+            // 图层还没烘焙（极端加载顺序下才会发生），跳过这一帧好过抛异常。
             return;
         }
         ICurioRenderer.followHeadRotations(slotContext.entity(), model.mask());

@@ -1,9 +1,6 @@
 package org.brahypno.maledict.common.entity;
 
-/**
- * Authored encounter stages. DORMANT means "phase one silhouette, but the timer has not started
- * yet"; death can interrupt any stage and DYING never returns to a living stage.
- */
+/** Authored encounter stages; DORMANT is phase one with the timer not started, and DYING is terminal. */
 public enum VicissitudeBossStage {
     DORMANT,
     PHASE_ONE,

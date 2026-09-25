@@ -25,11 +25,8 @@ import org.brahypno.maledict.common.enchantment.AftertasteEnchantment;
 import org.brahypno.maledict.registry.MaledictEnchantments;
 
 /**
- * Feeds a scythe's wielder with whatever the victim's corpse was going to feed them.
- * <p>
- * A hit restores the expected saturation and hunger of the victim's drops, scaled by the share of
- * the victim's health the hit took and by the enchantment's own share. Because the drop list is
- * only a value here, nothing is spawned, removed or rolled - the scythe merely tastes it.
+ * Feeds a scythe's wielder with whatever the victim's corpse was going to feed them; the drop list
+ * is only a value here, so nothing is spawned, removed or rolled.
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class AftertasteEnchantmentEffect {
@@ -65,8 +62,8 @@ public final class AftertasteEnchantmentEffect {
             return;
         }
 
-        // Only the share of the corpse this hit actually claimed is tasted, so overkill cannot pay
-        // out more than the whole creature.
+        // Only the share of the corpse this hit claimed is tasted, so overkill cannot pay out more
+        // than the whole creature.
         double claimedShare = Mth.clamp(event.getAmount() / (double) maxHealth, 0.0D, 1.0D);
         double restoreShare = AftertasteEnchantment.getRestoreShare(enchantmentLevel) * claimedShare;
 
@@ -83,10 +80,9 @@ public final class AftertasteEnchantmentEffect {
     }
 
     /**
-     * True for the damage a wielder deals with the weapon in their own hands. Arrows, owned
-     * explosions and thorns retaliation all carry the wielder as the causing entity as well, so the
-     * direct entity has to be the wielder, or the hit has to be one Malum builds from a damage type
-     * that names no direct entity at all.
+     * The direct entity has to be the wielder (arrows, owned explosions and thorns retaliation all
+     * carry the wielder as the causing entity too), or the type has to be one Malum builds from a
+     * damage type that names no direct entity at all.
      */
     private static boolean isScytheSwing(DamageSource source, Player player) {
         if (source.is(DamageTypes.THORNS)){
@@ -97,9 +93,8 @@ public final class AftertasteEnchantmentEffect {
     }
 
     /**
-     * Expectation is fractional while hunger is a whole number, so the leftover is carried on the
-     * player until it adds up. Rounding each hit instead would quietly delete every gain below a
-     * whole point.
+     * Expectation is fractional while hunger is whole, so the leftover is carried on the player
+     * until it adds up; rounding each hit would delete every gain below a whole point.
      */
     private static void feed(Player player, double hunger, double saturation) {
         CompoundTag data = player.getPersistentData();
@@ -115,9 +110,8 @@ public final class AftertasteEnchantmentEffect {
     }
 
     /**
-     * Applies the effects of the food that was tasted, the way eating it would have. Vanilla rolls
-     * once per eaten item, but applying the same effect again only refreshes its duration, so a
-     * single roll at the at-least-once chance gives the same outcome for a fraction of the work.
+     * Vanilla rolls once per eaten item, but applying the same effect again only refreshes its
+     * duration, so a single roll at the at-least-once chance gives the same outcome.
      */
     private static void applyFoodEffects(
             Player player,
@@ -139,7 +133,6 @@ public final class AftertasteEnchantmentEffect {
         }
     }
 
-    /** Loot tables are data driven, so the scanned expectations have to be rescanned with them. */
     @SubscribeEvent
     public static void onAddReloadListener(AddReloadListenerEvent event) {
         LootFoodExpectation.clearCache();

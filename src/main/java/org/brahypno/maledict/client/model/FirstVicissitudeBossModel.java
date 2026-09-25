@@ -19,8 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Blender-authored rigid mesh on the shared vanilla joint hierarchy. Animation, held-item
- * transforms and authoritative attack anchors continue to use {@link VicissitudeRig}.
+ * Blender 导出的刚性网格，挂在原版 ModelPart 关节层级上；动画、持械变换与判定锚点依旧走 {@link VicissitudeRig}。
  */
 public final class FirstVicissitudeBossModel
         extends HierarchicalModel<FirstVicissitudeBossEntity> {
@@ -90,11 +89,8 @@ public final class FirstVicissitudeBossModel
     }
 
     /**
-     * Moves the pose stack to a joint by walking the whole ancestor chain.
-     *
-     * <p>{@link ModelPart#translateAndRotate} only applies a part's own local transform, so using
-     * it on a deep joint such as the right hand anchor would leave the item at the model origin.
-     * The full chain is applied root first, exactly like the renderer does for the mesh.
+     * 沿整条祖先链把 pose stack 挪到某个关节：{@link ModelPart#translateAndRotate} 只应用该部件自身的局部变换，
+     * 直接用在右手锚点这种深层关节上会让物品停在模型原点，所以这里与网格渲染一样从根开始。
      */
     public void poseStackTo(VicissitudeRigData.Joint joint, PoseStack poseStack) {
         List<ModelPart> chain = new ArrayList<>(8);
@@ -122,7 +118,7 @@ public final class FirstVicissitudeBossModel
     public void setupAnim(FirstVicissitudeBossEntity entity, float limbSwing, float limbSwingAmount,
                           float ageInTicks, float netHeadYaw, float headPitch) {
         root.getAllParts().forEach(ModelPart::resetPose);
-        // Sample the same clock and pose as the effect anchors, independent of render frequency.
+        // 与特效锚点采同一个时钟和姿势，不随渲染频率变化。
         float partialTick = net.minecraft.util.Mth.clamp(ageInTicks - entity.tickCount, 0.0F, 1.0F);
         renderAge = entity.level().getGameTime() + partialTick;
         renderWingFold = entity.getWingFold();

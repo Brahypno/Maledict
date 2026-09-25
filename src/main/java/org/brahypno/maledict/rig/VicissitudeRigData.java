@@ -5,29 +5,19 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Authoring data for the First Vicissitude skeleton: joints, cubes, the deterministic UV
- * packing and the material palette. This class intentionally has no Minecraft imports so the
- * offline art tooling in {@code art/first-vicissitude} can compile it standalone and produce a
- * texture that matches the runtime model exactly.
- *
- * <p>Model space conventions (identical to vanilla entity models):
- * <ul>
- *   <li>+x points to the entity's left, +y points down, +z points to the entity's back.</li>
- *   <li>Model y = {@link #MODEL_ORIGIN_Y} is the entity origin (feet), so a point at height
- *       {@code h} blocks has {@code y = MODEL_ORIGIN_Y - 16h}.</li>
- * </ul>
+ * Authoring data for the First Vicissitude skeleton: joints, cubes, the deterministic UV packing
+ * and the material palette; no Minecraft imports, so the offline art tooling can compile it.
+ * Model space: +x left, +y down, +z back, y = {@link #MODEL_ORIGIN_Y} at the entity origin (feet).
  */
 public final class VicissitudeRigData {
     public static final float UNITS_PER_BLOCK = 16.0F;
-    /** Model-space y that matches the entity origin; matches the vanilla model offset convention. */
     public static final float MODEL_ORIGIN_Y = 24.0F;
     public static final int TEXTURE_SIZE = 256;
     public static final int UV_MARGIN = 1;
 
     /**
-     * Animated joints. Constructor arguments are offsets relative to the parent pivot; the
-     * enum resolves them into absolute model-space pivots so both the blockbench project and
-     * the runtime forward kinematics can use one value. Order is parent-before-child.
+     * Animated joints; constructor arguments are offsets from the parent pivot, resolved here into
+     * absolute model-space pivots. Order is parent-before-child, which the forward kinematics need.
      */
     public enum Joint {
         ROOT(null, 0.0F, 0.0F, 0.0F),
@@ -279,28 +269,23 @@ public final class VicissitudeRigData {
 
     private static List<CubeSpec> buildCubeSpecs() {
         List<CubeSpec> cubes = new ArrayList<>();
-        // Torso: three separated shell fragments around a genuinely hollow chest.
         cubes.add(new CubeSpec(Joint.CHEST_SHELL_LEFT, Material.SHELL, 0.0F, 0.0F, 0.0F, 3, 15, 9, false));
         cubes.add(new CubeSpec(Joint.CHEST_SHELL_RIGHT, Material.SHELL, 0.0F, 0.0F, 0.0F, 3, 15, 9, true));
         cubes.add(new CubeSpec(Joint.CHEST_SHELL_BACK, Material.SHELL_DARK, 0.0F, 0.0F, 0.0F, 9, 15, 2, false));
         cubes.add(new CubeSpec(Joint.TORSO, Material.BONE_DARK, 0.0F, -7.0F, -2.0F, 8, 2, 4, false));
-        // Chest remains of the ring; the broken arcs never close.
         cubes.add(new CubeSpec(Joint.CHEST_RING_LEFT, Material.RING, 0.0F, 0.0F, 0.0F, 2, 6, 2, false));
         cubes.add(new CubeSpec(Joint.CHEST_RING_RIGHT, Material.RING, 0.0F, 0.0F, 0.0F, 2, 6, 2, true));
         cubes.add(new CubeSpec(Joint.CHEST_RING_BOTTOM, Material.RING, 0.0F, 0.0F, 0.0F, 8, 2, 3, false));
-        // Head: core is mostly hidden by the shell fragments until death reveals the assembly.
         cubes.add(new CubeSpec(Joint.HEAD_CORE, Material.CORE, 0.0F, 0.0F, 0.0F, 6, 7, 6, false));
         cubes.add(new CubeSpec(Joint.HEAD_SHELL_LEFT, Material.SHELL, 0.0F, 0.0F, 0.0F, 3, 8, 8, false));
         cubes.add(new CubeSpec(Joint.HEAD_SHELL_RIGHT, Material.SHELL, 0.0F, 0.0F, 0.0F, 3, 8, 8, true));
         cubes.add(new CubeSpec(Joint.HEAD_SHELL_TOP, Material.SHELL_DARK, 0.0F, 1.0F, 0.0F, 7, 3, 8, false));
-        // The halo is a permanently broken ring: four unequally long fragments that never close.
         cubes.add(new CubeSpec(Joint.HALO_FRAGMENT_1, Material.RING, 0.0F, 0.0F, 0.0F, 13, 2, 2, false));
         cubes.add(new CubeSpec(Joint.HALO_FRAGMENT_1, Material.SHELL_DARK, 5.0F, -2.0F, 0.0F, 3, 3, 2, false));
         cubes.add(new CubeSpec(Joint.HALO_FRAGMENT_2, Material.RING, 0.0F, 0.0F, 0.0F, 9, 2, 2, false));
         cubes.add(new CubeSpec(Joint.HALO_FRAGMENT_2, Material.SHELL_DARK, -3.0F, 2.0F, 0.0F, 3, 3, 2, false));
         cubes.add(new CubeSpec(Joint.HALO_FRAGMENT_3, Material.RING, 0.0F, 0.0F, 0.0F, 7, 2, 2, false));
         cubes.add(new CubeSpec(Joint.HALO_FRAGMENT_4, Material.RING, 0.0F, 0.0F, 0.0F, 6, 2, 2, false));
-        // Arms.
         cubes.add(new CubeSpec(Joint.UPPER_ARM_LEFT, Material.BONE, 0.0F, 5.0F, 0.0F, 3, 11, 3, false));
         cubes.add(new CubeSpec(Joint.FOREARM_LEFT, Material.BONE, 0.0F, 4.0F, 0.0F, 3, 10, 3, false));
         cubes.add(new CubeSpec(Joint.HAND_LEFT, Material.BONE_DARK, 0.0F, 1.0F, 0.0F, 3, 4, 3, false));
@@ -309,7 +294,6 @@ public final class VicissitudeRigData {
         cubes.add(new CubeSpec(Joint.HAND_RIGHT, Material.BONE_DARK, 0.0F, 1.0F, 0.0F, 3, 4, 3, true));
         addWing(cubes, true);
         addWing(cubes, false);
-        // Lower body: three spine sections plus loose fragments, no legs.
         cubes.add(new CubeSpec(Joint.SPINE_TAIL_1, Material.BONE_DARK, 0.0F, 4.0F, 0.0F, 4, 8, 4, false));
         cubes.add(new CubeSpec(Joint.SPINE_TAIL_2, Material.BONE_DARK, 0.0F, 4.0F, 0.0F, 3, 8, 3, false));
         cubes.add(new CubeSpec(Joint.SPINE_TAIL_3, Material.BONE, 0.0F, 3.0F, 0.0F, 2, 7, 2, false));
@@ -331,13 +315,11 @@ public final class VicissitudeRigData {
                 Material.FEATHER, sign * 6.0F, 0.0F, 0.0F, 12, 3, 3, mirror));
         for (int i = 1; i <= 4; i++) {
             Joint feather = Joint.valueOf("WING_" + (left ? "LEFT" : "RIGHT") + "_FEATHER_" + i);
-            // Main feathers sweep back and down from the wing bone.
             cubes.add(new CubeSpec(feather, Material.FEATHER,
                     0.0F, 5.0F, 5.0F + i * 4.0F, 5, 3, 15, mirror));
         }
         for (int i = 1; i <= 2; i++) {
             Joint broken = Joint.valueOf("WING_" + (left ? "LEFT" : "RIGHT") + "_BROKEN_" + i);
-            // Broken quills: exposed bone without the feather blade.
             cubes.add(new CubeSpec(broken, Material.BONE_DARK,
                     0.0F, 3.0F, 3.0F + i * 5.0F, 3, 2, 9, mirror));
         }
@@ -347,8 +329,8 @@ public final class VicissitudeRigData {
     }
 
     /**
-     * Deterministic shelf packing of every cube's box-UV rectangle. Both the runtime model and
-     * the offline texture generator call this, so their layouts can never drift apart.
+     * Deterministic shelf packing shared by the runtime model and the offline texture generator,
+     * so their layouts cannot drift apart.
      */
     private static List<PlacedCube> packUvs(List<CubeSpec> cubes) {
         List<PlacedCube> placed = new ArrayList<>(cubes.size());

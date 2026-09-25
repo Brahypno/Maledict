@@ -239,7 +239,7 @@ DRAWINGS = {
 001222221100''',
 }
 
-# Explicit part-to-drawing assignments, shared only by matching mirrored parts.
+# Part-to-drawing assignment; mirrored parts share one entry.
 PARTS = {
  'Ossuary socket seat':'ring_socket', 'Fate ring stock':'ring_chest',
  'Fate arc':'ring_halo',
@@ -267,8 +267,7 @@ PARTS = {
  'Transverse ossuary flange':'rib',
 }
 
-# Each anatomical wing tier has its own painted width and fracture placement.
-# Matching left/right tiers share it; broad primaries never stretch a small spur map.
+# Each wing tier has its own painted width and fracture placement.
 WINGS = {
  'wing': (80,12,2,((20,11),(20,10),(21,9),(21,8),(22,7),(43,11),(43,10),(44,9),(45,8))),
  'wing_middle': (80,12,3,((29,11),(30,10),(30,9),(31,8),(59,11),(59,10),(60,9))),
@@ -330,7 +329,6 @@ BACK_DRAWINGS = {
 }
 
 # Cross-width pixel profiles placed at explicit lengths along each short blade.
-# Broad bone planes and an adjacent dark groove replace the distal solid ridge.
 SPUR_PALETTE=('302739','53405f','796083','9299af','c2ccd9','e1e6e8')
 SPUR_PROFILES={
  'wing_hook': ((0,'00122100'),(3,'13443210'),(7,'34543210'),
@@ -383,18 +381,15 @@ class SurfaceSample:
         rows=DRAWINGS.get(role,DRAWINGS['root']).splitlines()
         for y in range(r['height']):
             for x in range(r['width']):
-                # Read explicit pixel drawings at their native resolution on front planes.
                 xx=min(11,x*12//r['width']); yy=min(15,y*16//r['height'])
                 shade=int(rows[yy][xx])
                 if face in ('back','lane2','lane3'):
-                    # Broad underside, with a narrow tendon relief down the center.
                     shade=2 if 4<=xx<=7 and 2<yy<13 else 1
                     if yy in (0,15): shade=0
                 elif face in ('inner','lane4','lane5'):
                     shade=2 if xx<7 else 1
                     if yy<2 or yy>13: shade=0
                 elif face.startswith('cap') or face in ('top','bottom'):
-                    # Cut bone/metal ends: a perimeter surrounding a recessed center.
                     edge=min(xx,11-xx,yy,15-yy)
                     shade=3 if edge<2 else 1 if edge<3 else 2
                     if face in ('cap0','bottom'): shade=max(0,shade-1)
@@ -402,8 +397,6 @@ class SurfaceSample:
                     drawing=BACK_DRAWINGS.get(role,DRAWINGS[role]).splitlines()
                     shade=int(drawing[yy][xx])
                 if role in WINGS:
-                    # Longitudinal hand-laid lamella: pale load ridge, violet web,
-                    # root socket, two stepped separations and an unbroken distal edge.
                     along=x; across=y
                     shade=2
                     _,_,ridge,fractures=WINGS[role]
@@ -412,7 +405,6 @@ class SurfaceSample:
                     elif across==ridge+1: shade=3
                     elif across>=r['height']-2: shade=1
                     if along<7: shade=max(0,shade-2)
-                    # Two narrow, stepped fractures; avoid square dark stickers.
                     cracks=set(fractures)
                     if (along,across) in cracks: shade=0
                     elif (along-1,across) in cracks: shade=3
@@ -423,7 +415,6 @@ class SurfaceSample:
                     profile=next(p for start,p in reversed(SPUR_PROFILES[role]) if x>=start)
                     palette=SPUR_PALETTE
                     shade=int(profile[y])
-                    # Short grooves interrupt the underside, not the load-bearing ridge.
                     cracks=set(WINGS[role][3])
                     if (x,y) in cracks: shade=0
                     elif (x-1,y) in cracks: shade=3
@@ -503,8 +494,7 @@ class SurfaceSample:
                     face='cap0' if min(ids)==0 else 'cap1'; size=(4,4)
                     local={i:((i%3)/2,0 if i%3!=1 else 1) for i in ids}
             else:
-                # Canonical mirrored coordinates give corresponding left/right surfaces
-                # the same UV direction, including caps and the palm sides.
+                # Canonical mirrored coordinates give mirrored parts the same UV direction.
                 a,b,c=[coords[i] for i in ids[:3]]
                 ab=[b[k]-a[k] for k in range(3)]; ac=[c[k]-a[k] for k in range(3)]
                 n=[ab[1]*ac[2]-ab[2]*ac[1],ab[2]*ac[0]-ab[0]*ac[2],ab[0]*ac[1]-ab[1]*ac[0]]

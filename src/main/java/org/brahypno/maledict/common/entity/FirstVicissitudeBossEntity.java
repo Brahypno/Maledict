@@ -61,14 +61,7 @@ import team.lodestar.lodestone.helpers.SoundHelper;
 
 import java.util.*;
 
-/**
- * The first Vicissitude encounter.
- *
- * <p>Server authority: stage, action, action sequence, weapon ownership, wing blocking, part
- * multipliers and the unstick search all live here. The client only reads synced state and the
- * one shot event packets, so a late joiner can rebuild the current pose from the action start
- * time without replaying anything.
- */
+/** The first Vicissitude encounter; stage, action and weapon state are server-authored and synced. */
 public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public static final int PHASE_ONE_WARMUP_TICKS = 20;
     public static final int TRANSITION_TICKS = 60;
@@ -83,49 +76,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public static final int DASH_COOLDOWN = 160;
     public static final int THROW_COOLDOWN = 120;
     public static final int RANGED_FALLBACK_COOLDOWN = 60;
-    /**
-     * 一阶段名单空着多久就回到「未参战」。
-     *
-     * <p>没有对手的一阶段不该继续空转阶段计时、更不该自己走进二阶段：那只会留下一只
-     * 谁也叫不动的雕像（见 19 的实测记录）。五个呼吸之后重新打它一次就能从头再来。
-     */
+    /** Ticks with no living opponent before phase one returns to DORMANT and clears the roster. */
     public static final int EMPTY_ENCOUNTER_RESET_TICKS = 100;
     public static final int MAX_NON_HOMING_BOLTS = 48;
     public static final int MAX_HOMING_ORBS = 2;
-    /**
-     * How far the boss is willing to <b>start</b> a melee action from. The blade itself is defined
-     * by {@link VicissitudeRig#BLADE_LENGTH_MODEL_UNITS} and reaches wherever the pose puts it, so
-     * this number only decides when a swing is worth committing to; it is deliberately a little
-     * longer than the blade so a target that drifts during the windup is still inside the cut, and
-     * a target that backs off is a genuine whiff.
-     */
     public static final double MELEE_COMMIT_RANGE = 5.75D;
-    /** Kept for the difficulty table and any external reader; the blade decides real reach now. */
+    /** Reference value mirrored by the rig test; the blade decides real reach. */
     public static final double MELEE_REACH = 5.0D;
-    /**
-     * Distance at which the boss commits to a melee swing and starts descending onto the target.
-     *
-     * <p>Larger than {@link #MELEE_COMMIT_RANGE} so it can turn and lean into the crowd before the
-     * arm actually moves; it is the same measurement (centre to centre) so the two cannot disagree.
-     */
     private static final double MELEE_APPROACH_DISTANCE = 7.0D;
-    /**
-     * How wide a swath the blade cuts, in blocks - the tolerance the melee test allows around the
-     * edge's centreline.
-     *
-     * <p>This is a <b>range</b>, like every other melee attack in the game, and it is meant to be
-     * forgiving. The blade segment gives the swing its direction, its length and its height, which
-     * is what fixes the two failures a typed-in radius used to cause - a blade that sweeps through a
-     * target without hurting it, and a hit that lands from a place the weapon never reached. What it
-     * should not do is demand that the target's centre lie on the line: a swing is a swath, not a
-     * laser, and no Minecraft melee resolves to the model's millimetre.
-     *
-     * <p>0.6 covers the whole engagement band measured by {@code tools/rig-probe} (the largest
-     * clearance anywhere from 1.5 to 4.5 blocks in front is 0.69, and that only at point-blank).
-     * Sized to the swing, not to the rig's small asymmetries: the scythe hangs in the right hand, so
-     * its edge naturally runs a little off the body's centre line, and closing that in the pose
-     * would be fighting the arm for no readable gain.
-     */
+    /** The blade's swath, in blocks: the tolerance the melee test allows around the edge's centreline. */
     private static final double BLADE_HIT_RADIUS = 0.6D;
     public static final double THROW_MIN_RANGE = 6.0D;
     public static final double THROW_MAX_RANGE = 24.0D;
@@ -133,10 +92,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public static final double DASH_MAX_RANGE = 20.0D;
     public static final double DASH_DISTANCE = 10.0D;
     public static final double NO_FIRE_RANGE = 64.0D;
-    /** Quick reference for the chat announcement. */
-    /**
-     * Phase one set piece line, shown once per player life when the fight starts.
-     */
     public static final String PHASE_ONE_MESSAGE_KEY = VicissitudeLightOrbEntity.ATTACK_MESSAGE_KEY;
     public static final String PHASE_TWO_MESSAGE_KEY =
             "message.maledict.first_vicissitude.phase_two";
@@ -161,9 +116,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> DATA_WEAPON_STATE =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
-    /**
-     * Weapon tier of the current difficulty; the client draws from this, never from the hand.
-     */
+    /** Weapon tier of the current difficulty; the client draws from this, never from the hand. */
     private static final EntityDataAccessor<Byte> DATA_WEAPON_TIER =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> DATA_ACTION_SEQUENCE =
@@ -213,30 +166,18 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private static final int UNSTICK_SUCCESS_COOLDOWN = 100;
     private static final int UNSTICK_MAX_CANDIDATES = 64;
     private static final int[] UNSTICK_RADII = {4, 8, 12, 16};
-    /**
-     * Stable id for the difficulty health modifier, so it can be rewritten without stacking.
-     */
+    /** Fixed id so the difficulty health modifier is rewritten instead of stacking. */
     private static final UUID MAX_HEALTH_MODIFIER_ID =
             UUID.fromString("2c4b1d5a-9f34-4b1c-9a37-6d1f4c0a51e2");
-    /**
-     * Base id for the baked weapon modifiers; each one gets the next least significant value.
-     */
+    /** Base id for baked weapon modifiers; each slot gets the next least significant value. */
     private static final UUID WEAPON_ATTRIBUTE_ID =
             UUID.fromString("8a17c3d2-5e64-4d0b-9c31-7b2f5a0e6d44");
-    /**
-     * How often the hand is checked against the weapon the encounter expects.
-     */
     private static final int WEAPON_GUARD_INTERVAL = 20;
 
     private final ServerBossEvent bossEvent = new ServerBossEvent(
             getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
     private final Set<UUID> phaseOneTargets = new LinkedHashSet<>();
-    /**
-     * 二阶段参战名单。
-     *
-     * <p>存档键仍是 {@code PhaseTwoPlayers}（旧档兼容），但名单里装的不再只有玩家：
-     * 一阶段的参战者会整体带过来，宠物、召唤物和别的生物同样能打到二阶段。
-     */
+    /** Save key stays {@code PhaseTwoPlayers}; the set holds any living entity, not only players. */
     private final Set<UUID> phaseTwoParticipants = new LinkedHashSet<>();
     private final Map<UUID, Integer> targetPlayerDeaths = new HashMap<>();
     private final Map<UUID, Integer> announcedPlayerDeaths = new HashMap<>();
@@ -250,10 +191,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private VicissitudeRig.Action action = VicissitudeRig.Action.NONE;
     private boolean actionLeft;
     private boolean actionReleased;
-    /**
-     * Whether the current melee swing has connected at least once, so the impact feedback fires on
-     * first contact instead of once per tick of the damage window.
-     */
     private boolean actionHitLanded;
     @Nullable
     private LivingEntity committedTarget;
@@ -267,7 +204,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private int phaseOneTicks;
     private int phaseOneDurationTicks;
     private boolean phaseOneDurationLocked;
-    /** 刷怪蛋用：下一 tick 把一阶段数满，直接开始二阶段，见 {@link #setSpawnPhase}。 */
+    /** Set by the spawn egg to run phase one out at once, see {@link #setSpawnPhase}. */
     private boolean forcedPhaseTwo;
     private int baseSlotIndex;
     private int targetCursor;
@@ -281,13 +218,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private int dashCooldown;
     private int throwCooldown;
     private int rangedCooldown;
-    /**
-     * 适应效果：记最近挨过的几条伤害消息，滑出窗口即重新全额，见 {@link DamageAdaptation}。
-     */
+    /** Recently hit damage messages, see {@link DamageAdaptation}. */
     private final DamageAdaptation damageAdaptation = new DamageAdaptation();
-    /**
-     * 一阶段名单已经空了多久，见 {@link #EMPTY_ENCOUNTER_RESET_TICKS}。
-     */
     private int emptyEncounterTicks;
     private int meleeAlternator;
     private int currentBaseSlot;
@@ -311,18 +243,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private ItemStack stashedWeapon = ItemStack.EMPTY;
     private int pendingWeaponTier = -1;
     private BossDifficulty bossDifficulty = BossDifficulty.SIMPLE;
-    /**
-     * Set once the vitality ledger has captured the pool; a mode change may not alter it after.
-     */
+    /** Set once the vitality ledger has captured the pool; a mode change may not alter it after. */
     private boolean difficultyLocked;
-    /**
-     * Client side render stack, rebuilt only when the synced tier changes.
-     */
     private ItemStack displayWeapon = ItemStack.EMPTY;
     private int displayWeaponTier = -1;
-    /**
-     * Weapon modifiers currently baked into the entity's attribute map.
-     */
     private final List<AppliedAttribute> appliedWeaponAttributes = new ArrayList<>();
 
     public FirstVicissitudeBossEntity(
@@ -337,24 +261,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public static AttributeSupplier.Builder createAttributes() {
         return createBossAttributes()
                 .add(Attributes.ATTACK_DAMAGE, 8.0D)
-                // The encounter cannot be shoved around and ordinary hits mostly glance off; the
-                // weapon in the hand contributes nothing to either value.
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .add(Attributes.ARMOR, 15.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.FLYING_SPEED, 0.45D)
-                // Kept in step with the engagement range in the config: this boss chases through
-                // its own combat goal, but every vanilla and modded system that reads the
-                // attribute should see the same reach the encounter actually uses.
                 .add(Attributes.FOLLOW_RANGE, 96.0D);
     }
 
-    /**
-     * Writes the difficulty's health pool onto the attribute. The attribute stays the single
-     * authority for the maximum; only the permanent modifier is rewritten, and only before the
-     * vitality ledger captures the pool, so an in-progress fight can never be healed or
-     * shortened by changing the mode.
-     */
     private void applyDifficultyAttributes() {
         AttributeInstance attribute = getAttribute(Attributes.MAX_HEALTH);
         if (attribute == null){
@@ -369,21 +282,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     /**
-     * Bakes the difficulty weapon's attribute loadout into the entity itself.
-     *
-     * <p>The values are read from the weapon the encounter holds, never typed out here: the item
-     * stays the definition, the entity carries the result. Attack damage, attack speed and any
-     * other attribute the weapon provides therefore survive a disarm, an inventory swap or a mod
-     * that deletes the held item, and {@code attackDamage()} keeps reading the plain vanilla
-     * attribute like every other mob.
-     *
-     * <p>The copies get their own ids, and {@link #suppressHeldItemAttributes()} removes the
-     * weapon's own equipment modifiers every tick, so the same bonus is never counted twice.
-     *
-     * <p>Every id is cleared before it is written again: permanent modifiers are part of the
-     * entity's saved attributes, so after a reload the attribute map already holds them while the
-     * in-memory list below is empty. Adding a modifier whose id is present throws, which is
-     * exactly what a boss reloading from disk used to do.
+     * Bakes the weapon's attribute modifiers into the entity under our own ids; the item's own
+     * copies are stripped so nothing counts twice.
      */
     private void applyWeaponAttributes() {
         for (AppliedAttribute applied : appliedWeaponAttributes) {
@@ -399,8 +299,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             UUID id = weaponModifierId(slot++);
             AttributeInstance instance = getAttribute(entry.getKey());
             if (instance == null){
-                // The entity simply does not carry that attribute (modded ones such as Lodestone's
-                // magic damage are player only); there is nothing to bake in.
                 continue;
             }
             instance.removeModifier(id);
@@ -412,19 +310,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * Stable id per loadout slot, so a re-apply always clears the modifier it wrote before.
-     */
     private static UUID weaponModifierId(int slot) {
         return new UUID(WEAPON_ATTRIBUTE_ID.getMostSignificantBits(),
                         WEAPON_ATTRIBUTE_ID.getLeastSignificantBits() + slot);
     }
 
-    /**
-     * Strips whatever the hand currently provides. The encounter's own copies are permanent, so
-     * nothing equipped may add to them; this also covers a replacement item dropped in by another
-     * mod before the guard restores the real weapon.
-     */
     private void suppressHeldItemAttributes() {
         ItemStack held = getMainHandItem();
         if (held.isEmpty()){
@@ -434,9 +324,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 held.getAttributeModifiers(EquipmentSlot.MAINHAND));
     }
 
-    /**
-     * One baked weapon modifier, remembered so it can be replaced instead of stacking.
-     */
     private record AppliedAttribute(Attribute attribute, UUID id) {
     }
 
@@ -447,7 +334,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         entityData.define(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
         entityData.define(DATA_ACTIVE_SIDE, (byte) 0);
         entityData.define(DATA_WEAPON_STATE, (byte) 0);
-        // Field initializers have not run yet at this point, so the tier starts as SIMPLE (0).
+        // defineSynchedData runs before field initializers, so the tier starts as SIMPLE (0).
         entityData.define(DATA_WEAPON_TIER, (byte) 0);
         entityData.define(DATA_ACTION_SEQUENCE, 0);
         entityData.define(DATA_ACTION_START, 0L);
@@ -480,8 +367,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         goalSelector.addGoal(0, new CombatGoal(this));
     }
 
-    // ------------------------------------------------------------------ stage and sync
-
     public VicissitudeBossStage getStage() {
         return VicissitudeBossStage.byId(entityData.get(DATA_STAGE));
     }
@@ -491,27 +376,17 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         entityData.set(DATA_STAGE, (byte) value.ordinal());
     }
 
-    /**
-     * 刷怪蛋要求从哪一阶段开始。
-     */
     public enum BossSpawnPhase {
-        /** 与祭坛请出来的那只一样：先站着当像，等第一刀再进一阶段。 */
+        /** Idol until the first hit starts phase one. */
         DORMANT,
-        /** 一阶段立刻开始，挨第一刀就结仇、开打。 */
         PHASE_ONE,
-        /** 直接落到二阶段：一阶段时长归零立刻转场，走完整的 60 tick 转场后开始。 */
+        /** Runs phase one out at once, so the full transition still plays. */
         PHASE_TWO;
     }
 
     /**
-     * 刷怪蛋的落点：定难度，并且按 {@link BossSpawnPhase} 把这只安排到当前阶段。
-     *
-     * <p>必须在加入世界之前调用（刷怪蛋就是在 {@code finalizeSpawn} 里调它的），因为血量池是
-     * 在 {@link #onAddedToWorld()} 里被账本捕获的，难度一旦定下就不能再改。
-     *
-     * <p>二阶段不是直接把 {@code stage} 写成 PHASE_TWO：一阶段的收尾、转场里的换武器与姿态、
-     * 名单移交全都在 {@link #beginTransition()} / {@link #completeTransition()} 里，跳过去会漏掉
-     * 这些。所以这里只把一阶段时长归零，让正常的阶段推进自己走完那段路。
+     * Must run before the entity joins the world: the health pool is captured in
+     * {@link #onAddedToWorld()} and locks the difficulty.
      */
     public void setSpawnPhase(BossDifficulty difficulty, BossSpawnPhase phase) {
         setBossDifficulty(difficulty);
@@ -568,9 +443,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return entityData.get(DATA_CORE_GLOW);
     }
 
-    /**
-     * Action clock in ticks; -1 when no action is running.
-     */
+    /** Action clock in ticks, or -1 when no action is running. */
     public float getActionTicks(float partialTick) {
         VicissitudeRig.Action current = getRenderAction();
         if (current == VicissitudeRig.Action.NONE){
@@ -584,9 +457,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return entityData.get(DATA_ACTION_SEQUENCE);
     }
 
-    /**
-     * True while the encounter is still the phase one pressure state.
-     */
     public boolean isPhaseOneStage() {
         VicissitudeBossStage current = getStage();
         return current == VicissitudeBossStage.DORMANT || current == VicissitudeBossStage.PHASE_ONE;
@@ -604,13 +474,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return entityData.get(DATA_WEAPON_STATE) == 1;
     }
 
-    /**
-     * The stack the renderer draws, rebuilt from the synced tier rather than read from the hand.
-     *
-     * <p>Disarm effects, inventory swaps and mods that delete held items therefore cannot leave
-     * the encounter visibly unarmed; the weapon on screen and the weapon in the hand are two
-     * separate things by design.
-     */
+    /** The stack the renderer draws, rebuilt from the synced tier rather than read from the hand. */
     public ItemStack getDisplayWeapon() {
         int tier = entityData.get(DATA_WEAPON_TIER);
         if (tier != displayWeaponTier || displayWeapon.isEmpty()){
@@ -633,9 +497,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return (int) (level().getGameTime() - entityData.get(DATA_ACTION_START));
     }
 
-    /**
-     * Starts a new action; the release frame is executed exactly once by the action tick.
-     */
+    /** Starts a new action; the release frame is executed once, from {@link #tickAction()}. */
     private void startAction(VicissitudeRig.Action next, boolean left) {
         action = next;
         actionLeft = left;
@@ -670,18 +532,14 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         clearGroundMarker();
     }
 
-    // ------------------------------------------------------------------ tick
-
     @Override
     public void onAddedToWorld() {
         if (!level().isClientSide){
-            // The base class captures the health pool into the vitality ledger from here on, so
-            // the difficulty modifier has to be in place before that call.
+            // The base class captures the health pool here, so the modifier must be in place first.
             applyDifficultyAttributes();
             difficultyLocked = true;
             if (entityData.get(DATA_WEAPON_STATE) == 1){
-                // A save loaded with the weapon already in hand never runs the equip step again,
-                // so the weapon's attribute loadout is rebuilt here.
+                // A loaded save never runs the equip step again, so the attributes are rebuilt here.
                 applyWeaponAttributes();
             }
         }
@@ -732,18 +590,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         tickUnstick();
     }
 
-    /**
-     * Aim point plus eye height the body should be oriented towards this tick.
-     */
     private record FacingAim(Vec3 point, double eyeY) {
     }
 
-    /**
-     * Facing for several targets: a distance weighted blend of every engaged player inside the
-     * engagement radius, so with two or three opponents the body settles on the group instead of
-     * snapping between individuals every time the attack target rotates. During an attack the
-     * committed target takes precedence, followed by a fixed direction through the recovery.
-     */
     @Nullable
     private FacingAim blendedFacingAim() {
         if (!(level() instanceof ServerLevel serverLevel)){
@@ -789,9 +638,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return entity instanceof LivingEntity living ? living : null;
     }
 
-    /**
-     * Configurable aggro radius; the boss never starts or keeps a fight beyond it.
-     */
+    /** Configurable aggro radius; the boss never starts or keeps a fight beyond it. */
     private static double engagementRange() {
         try {
             return MaledictConfig.VICISSITUDE_ENGAGEMENT_RANGE.get();
@@ -806,12 +653,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return range * range;
     }
 
-    /**
-     * 全额伤害的距离；往外线性衰减，到 {@code 1.5 ×} 这里就没有伤害了。
-     *
-     * <p>与 {@link #engagementRange()} 各管一头：那个决定"还跟不跟你打"，这个决定"打得到多疼"。
-     * 取不到配置（构造期、客户端）时给作者默认值，和 {@code engagementRange} 一样的写法。
-     */
     private static double damageRange() {
         try {
             return MaledictConfig.VICISSITUDE_DAMAGE_RANGE.get();
@@ -821,16 +662,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * 每 10 tick 清一次参战名单，规则只有一条：**不在场的人退出名单**。
-     *
-     * <p>不在场 = 解不开 UUID（离线、所在区块没加载、已经不在世界上）、不在这个维度、
-     * 或者已经死了。玩家额外走原版的死亡计数规则（{@code forgiveDeadPlayers} 决定阵亡后
-     * 是原谅还是继续记仇），并且在被移出时一并删掉死亡记录与公告记录，不留悬空 UUID。
-     *
-     * <p>离线玩家同样退出名单：饰品返还走的是账本 + 登录/重生/克隆钩子
-     * （{@code VicissitudeCurioReturns}），不依赖这份名单，所以这里可以放心清干净。
-     */
+    /** Drops anyone not present (unresolvable, wrong dimension, dead) from the rosters. */
     private void forgetDeadParticipants() {
         if (!(level() instanceof ServerLevel serverLevel)){
             return;
@@ -856,11 +688,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             @Nullable ServerPlayer player, UUID identity, boolean forgive,
             Map<UUID, Integer> deathRecords, ServerLevel serverLevel) {
         if (player == null){
-            // 不是在线玩家：解不开、别的维度、死了都算不在场。
             return dropAbsentParticipant(identity, serverLevel, deathRecords);
         }
         if (player.level() != level()){
-            // Leaving the dimension always ends the engagement.
             deathRecords.remove(identity);
             clearTargetIf(identity);
             return true;
@@ -872,23 +702,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 clearTargetIf(identity);
                 return true;
             }
-            // Angry mobs keep hunting the same player after respawn.
+            // Without forgiveness the boss keeps hunting the same player after respawn.
             deathRecords.put(identity, getDeathCount(player));
             return false;
         }
         if (!player.isAlive()){
-            // A dead entity is never an active target, with or without forgiveness.
             clearTargetIf(identity);
         }
         return false;
     }
 
-    /**
-     * 非玩家参战者与离线玩家的共同清理：拿不到活的实体就退出名单。
-     *
-     * <p>这里不区分"区块没加载"与"已经不存在"——两者都不在场，留着只会变成悬空 UUID，
-     * 还会让 {@link #hasPossibleOpponent()} 误以为还有对手。
-     */
     private boolean dropAbsentParticipant(
             UUID identity, ServerLevel serverLevel,
             Map<UUID, Integer> deathRecords) {
@@ -909,29 +732,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private static final float YAW_RATE_TRACKING = 20.0F;
-    /**
-     * Early windup catches the intended target before the direction locks.
-     */
     private static final float YAW_RATE_WINDUP = 30.0F;
-    /**
-     * A target far off axis gets a speed boost, so nobody can orbit faster than the body turns.
-     */
     private static final float YAW_CATCH_UP_ARC = 90.0F;
     private static final float YAW_CATCH_UP_BOOST = 1.8F;
 
-    /**
-     * The boss owns its facing: it always turns towards the current target at a bounded rate.
-     * Vanilla look control plus path following used to fight over the yaw, which snapped the
-     * body around and left the model flying backwards; doing it here, after super.tick(), makes
-     * the facing both smooth and deterministic.
-     */
+    /** The boss owns its facing; runs after {@code super.tick()} so look control cannot fight it. */
     private void tickFacing() {
-        // Summoned but not yet provoked: an idol has no reason to follow anyone around.
         if (stage == VicissitudeBossStage.DORMANT || getHealth() <= 0.0F){
             return;
         }
         if (action != VicissitudeRig.Action.NONE && actionTicks() >= action.aimLockTick()){
-            // Restore after vanilla movement/body controls, which also run during super.tick().
             setYRot(committedYaw);
             setYHeadRot(committedYaw);
             yBodyRot = committedYaw;
@@ -1006,9 +816,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         switch (stage) {
             case DORMANT, PHASE_ONE -> {
                 if (forcedPhaseTwo){
-                    // 刷怪蛋要的是直接开始二阶段：借用一阶段自己那套收尾流程——先把一阶段
-                    // 时长归零，让它数满即转场，再走正常的 60 tick 转场，所以换成二阶段的
-                    // 过程（换武器、名单移交、公告）与打满一阶段时完全同一条路。
+                    // Run phase one out instead of jumping to PHASE_TWO, so the normal transition does the handover.
                     phaseOneDurationTicks = 0;
                     phaseOneDurationLocked = true;
                     forcedPhaseTwo = false;
@@ -1044,17 +852,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * 一阶段没有对手时倒数，数满就把遭遇战放回「未参战」，并把这份名单清干净。
-     *
-     * <p>判断的是「场上还有没有活的对手」，而不是名单里有没有 UUID：名单里的创造/旁观
-     * 玩家（打到一半切了模式）不算对手；解不开 UUID 的会在
-     * {@link #forgetDeadParticipants()} 里被清掉，这里只是不等它那 10 tick。
-     *
-     * <p>回到 DORMANT 只是解除阶段时长锁与计时，不动真生命、难度与武器。
-     *
-     * @return 这一 tick 是否已经放回未参战（调用方不再推进阶段计时）
-     */
+    /** Counts down while no living opponent remains; at zero the encounter returns to DORMANT. */
     private boolean tickEmptyEncounter() {
         if (hasPossibleOpponent()){
             emptyEncounterTicks = 0;
@@ -1067,28 +865,21 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         setStage(VicissitudeBossStage.DORMANT);
         phaseOneDurationLocked = false;
         phaseOneTicks = 0;
-        // 名单、死亡记录一起清：不放着任何指向"上一场"的 UUID。
-        // 二阶段名单在一阶段本就应当是空的，顺手清掉以防旧档带来残留。
         phaseOneTargets.clear();
         targetPlayerDeaths.clear();
         phaseTwoParticipants.clear();
         phaseTwoPlayerDeaths.clear();
-        // 适应是「这一场」的账：回到未参战就连它一起清，下一场重新记。
         damageAdaptation.clear();
         setTarget(null);
         clearGroundMarker();
         return true;
     }
 
-    /**
-     * 场上还有没有活着的、可以被当成对手的参战者，见 {@link #tickEmptyEncounter()}。
-     */
     private boolean hasPossibleOpponent() {
         if (phaseOneTargets.isEmpty()){
             return false;
         }
         if (!(level() instanceof ServerLevel serverLevel)){
-            // 客户端不会走到这里（tickStage 只在服务端推进）；拿不到世界时按"还有对手"处理。
             return true;
         }
         for (UUID identity : phaseOneTargets) {
@@ -1102,8 +893,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void tickTransitionEffects() {
-        // 0-14 hover and stop, 15-29 fold wings and offset the ring/shell, 30-44 press the
-        // feathers down, 45 equip, 45-59 blend into the phase two pose.
+        // Transition timeline: 0-14 hover, 15-29 wings fold, 30-44 feathers press, 45 equip, 45-59 blend.
         if (transitionTicks == 1){
             setDeltaMovement(Vec3.ZERO);
             getNavigation().stop();
@@ -1130,10 +920,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         clearPhaseOneProjectiles();
     }
 
-    /**
-     * The transition wipes leftover phase one attack entities and warnings, so the second phase
-     * can never keep pressing health through old orbs.
-     */
     private void clearPhaseOneProjectiles() {
         if (!(level() instanceof ServerLevel serverLevel)){
             return;
@@ -1161,12 +947,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         for (UUID identity : phaseOneTargets) {
             LivingEntity member = resolveParticipant(serverLevel, identity);
             if (member == null || member.level() != level() || !member.isAlive()){
-                // 死掉或已经不在这个维度的不带走；离线的玩家留给账本处理返还。
                 continue;
             }
             if (member instanceof ServerPlayer player){
                 recipients.add(player);
-                // 名单里可能有中途切进创造/旁观的玩家：他们不带走，也不没收饰品。
                 if (isIgnoredPlayer(player)){
                     continue;
                 }
@@ -1220,8 +1004,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    // ------------------------------------------------------------------ combat scheduling
-
     private boolean isPhaseOne() {
         return stage == VicissitudeBossStage.DORMANT || stage == VicissitudeBossStage.PHASE_ONE;
     }
@@ -1249,13 +1031,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         if (distanceTo(target) > NO_FIRE_RANGE){
-            // Same rule as phase two: close the gap first. Phase one bolts only live long enough
-            // for about 36 blocks, so firing from across the arena would only spawn duds.
+            // Phase one bolts live for about 36 blocks, so firing from across the arena spawns duds.
             return;
         }
         currentBaseSlot = baseSlotIndex++;
-        // Every other slot may be a special skill. Alternating instead of always preferring a
-        // special keeps the wing fan the main source of pressure, as 07 requires.
         if (currentBaseSlot % 2 == 0 && tryRangedSpecialSkill(target)){
             return;
         }
@@ -1263,9 +1042,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         startAction(VicissitudeRig.Action.WING_RANGED, (currentBaseSlot / 2) % 2 == 0);
     }
 
-    /**
-     * Barrage, chest mark and halo verdict rotate; reusable in phase two as ranged options.
-     */
     private boolean tryRangedSpecialSkill(LivingEntity target) {
         for (int attempt = 0; attempt < 3; attempt++) {
             int choice = specialRotator % 3;
@@ -1342,7 +1118,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 startAction(VicissitudeRig.Action.DASH, false);
                 return;
             }
-            // Give a ready pursuit its turn before the ranged rotation consumes the opening.
             if (tryRangedSpecialSkill(target)){
                 return;
             }
@@ -1388,8 +1163,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                                        target.getZ()));
     }
 
-    // ------------------------------------------------------------------ release events
-
     private void releaseAction() {
         LivingEntity target = committedTarget;
         switch (action) {
@@ -1398,8 +1171,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             case CAST_FROM_CHEST -> resolveChestMark();
             case CAST_FROM_HALO -> resolveHaloVerdict();
             case SLASH_HORIZONTAL, SLASH_VERTICAL, HEAVY_ATTACK -> {
-                // Melee deals no damage here: it is resolved while the blade is live, see
-                // tickBladeHits().
+                // Melee deals no damage here; it is resolved while the blade is live, see tickBladeHits().
             }
             case SCYTHE_THROW -> throwScythe(target);
             case RANGED_FALLBACK -> fireFallbackVolley(target);
@@ -1434,7 +1206,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private void fireBarrageWave(@Nullable LivingEntity target, int wave) {
         if (target == null || !target.isAlive() || target.level() != level()
             || isIgnoredPlayer(target) || !(level() instanceof ServerLevel serverLevel)){
-            // No live target: the wave is dropped instead of being fired into empty air.
             barrageWaveTick = 0L;
             lastBarrageWave = 0;
             return;
@@ -1443,7 +1214,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         double distance = position().distanceTo(committedAim);
         double spread = Math.min(30.0D, 6.0D + distance * 1.5D);
         for (int index = 0; index < 4; index++) {
-            // A deliberate center gap keeps at least one passable lane in every wave.
+            // The centre gap keeps a passable lane in every wave.
             float offset = (float) (spread * (0.35D + index * 0.35D));
             for (int side = 0; side < 2; side++) {
                 Vec3 origin = wingOrigin(side == 0, index);
@@ -1489,17 +1260,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         sendEvent(VicissitudeEffectPacket.EVENT_RELEASE, position().add(0.0D, 2.0D, 0.0D));
     }
 
-    /**
-     * {@code pressInPhaseOne} is the authored phase one behaviour; in phase two the same volley
-     * becomes ordinary damage, which is what lets the wing/chest/halo skills be reused there.
-     */
+    /** {@code pressInPhaseOne} only presses in phase one; in phase two the volley deals damage. */
     private void spawnBolt(
             ServerLevel serverLevel, Vec3 origin, Vec3 motion, boolean pressInPhaseOne,
             float damage, int life) {
         boolean press = pressInPhaseOne && isPhaseOneStage();
         float actualDamage = press ? 0.0F : (damage > 0.0F ? damage : attackDamage() * 0.75F);
         if (countBolts(serverLevel, false) >= MAX_NON_HOMING_BOLTS){
-            // The cap is a hard skip: bolts are never queued for later.
             return;
         }
         VicissitudeSpiritBoltEntity bolt = new VicissitudeSpiritBoltEntity(serverLevel, this,
@@ -1530,7 +1297,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         double radius = getGroundMarkerOuterRadius();
         float damage = attackDamage();
         for (LivingEntity victim : groundTargets(center, radius, 2.0D)) {
-            // Judgement is the drawn circle, not the square that was used to find candidates.
+            // The candidate box is only a filter: judgement is the drawn circle.
             if (victim.distanceToSqr(center.x, victim.getY(), center.z) > radius * radius){
                 continue;
             }
@@ -1554,7 +1321,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         for (LivingEntity victim : groundTargets(center, outer, 2.0D)) {
             double distance = Math.sqrt(victim.distanceToSqr(center.x, victim.getY(), center.z));
             if (distance < inner || distance > outer){
-                // Centre and everything outside the ring are safe, matching the drawn geometry.
                 continue;
             }
             float angle = (float) Math.toDegrees(Math.atan2(victim.getZ() - center.z,
@@ -1579,21 +1345,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return targets;
     }
 
-    /**
-     * Melee damage, resolved from the blade the player can actually see.
-     *
-     * <p>Every tick inside the action's hit window the current pose is sampled, the scythe's edge
-     * is turned into a world-space segment ({@link VicissitudeRig#bladeSegment}) and every combat
-     * participant within the segment's inflated bounds is tested against that segment. A hit is a
-     * hit because the weapon crossed the target, not because the target stood inside a radius: the
-     * old version compared the victim's <em>centre</em> against a typed-in reach and a yaw arc,
-     * which both reached targets the weapon never touched and missed targets it visually cut
-     * through.
-     *
-     * <p>The window is a window for the same reason. Resolving once on the release tick meant a
-     * target could be passed through on the way in or on the follow-through and take nothing; the
-     * blade sweeps across several ticks and so does the damage.
-     */
+    /** Melee damage: the scythe's world-space segment is tested each tick of the hit window. */
     private void tickBladeHits() {
         int[] window = action.hitWindow();
         if (window == null){
@@ -1634,9 +1386,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 }
                 continue;
             }
-            // Capsule test against the victim's volume, not against its centre point. Asking about
-            // the centre is only fair when the victim is a ball; for a body it under-reports by up
-            // to half its diagonal, which is most of a tall mob's torso.
             double gap = VicissitudeRig.distanceToBladeBox(
                     VicissitudeRig.Box.of(living.getBoundingBox().minX,
                                           living.getBoundingBox().minY,
@@ -1659,21 +1408,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             }
             hurtBySkill(living, damage, false);
             if (!actionHitLanded){
-                // First contact of this swing carries the impact feedback; the rest of the window
-                // keeps cutting without replaying it.
                 actionHitLanded = true;
                 onMeleeConnected();
             }
         }
     }
 
-    /**
-     * Diagnostic switch for the melee test: {@code -Dmaledict.meleeTrace=true}.
-     *
-     * <p>Off by default. It exists because the numbers that decide a hit - the boss's altitude, the
-     * blade segment in world space, the gap to the victim - cannot be read off the static rig probe,
-     * which has no entity, no target and no movement in it.
-     */
+    /** Diagnostic melee trace, enabled with {@code -Dmaledict.meleeTrace=true}. */
     private static final boolean MELEE_TRACE =
             Boolean.getBoolean("maledict.meleeTrace");
 
@@ -1705,10 +1446,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * Whiff feedback: the arc still draws, so a missed swing reads as a missed swing instead of
-     * as a broken attack.
-     */
     private void onMeleeMissed() {
         spawnSlashEffect(action == VicissitudeRig.Action.HEAVY_ATTACK
                          || action == VicissitudeRig.Action.SLASH_VERTICAL);
@@ -1717,24 +1454,14 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private boolean hurtBySkill(LivingEntity victim, float damage, boolean area) {
         UUID identity = victim.getUUID();
         if (!roundDamagedTargets.add(identity)){
-            // One damage instance per round and target: a fan or wave never double dips.
+            // One damage instance per round and target.
             return false;
         }
         return hurtParticipant(victim,
                                DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this), damage);
     }
 
-    /**
-     * The encounter's only damage entry point for combat participants.
-     *
-     * <p>Players are hit through the ChangeLib probe ladder. Phase one always uses the light
-     * ladder: its damage lands after the press projectiles have already driven the player down to
-     * a single hit point, so armour, enchantments and caps keep deciding how much of it lands.
-     * The press no longer buys a pause afterwards (see {@code 21}), which is exactly why this
-     * ladder matters. Phase two keeps the per difficulty table of {@code 07}: SIMPLE and
-     * DIFFICULT use the light ladder, COMPLETE and EXTREME the medium one. Everything that is not
-     * a player is hit normally.
-     */
+    /** The encounter's only damage entry point for combat participants. */
     public boolean hurtParticipant(LivingEntity victim, DamageSource source, float damage) {
         if (damage <= 0.0F || victim.level().isClientSide){
             return false;
@@ -1765,8 +1492,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                                         direction);
     }
 
-    // ------------------------------------------------------------------ dash
-
     private void tickDash(int ticks) {
         if (ticks < action.releaseTick()){
             return;
@@ -1788,7 +1513,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                                                                    position().add(step), net.minecraft.world.level.ClipContext.Block.COLLIDER,
                                                                    net.minecraft.world.level.ClipContext.Fluid.NONE, this))
                    .getType() != net.minecraft.world.phys.HitResult.Type.MISS){
-            // A solid obstacle stops the charge; the boss never teleports through walls.
             setDeltaMovement(Vec3.ZERO);
             dashTicks = 12;
             return;
@@ -1811,8 +1535,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    // ------------------------------------------------------------------ scythe throw
-
     private boolean hasWeaponInHand() {
         return !getMainHandItem().isEmpty();
     }
@@ -1823,7 +1545,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         ItemStack weapon = getMainHandItem();
         if (weapon.isEmpty()){
-            // A disarm must not skip the throw either: fall back to the code owned copy.
             weapon = createWeaponForDifficulty(bossDifficulty);
         }
         Vec3 direction = committedAim.subtract(handAnchorWorldPosition()).normalize();
@@ -1841,9 +1562,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                               RandomHelper.randomBetween(level().getRandom(), 0.8F, 1.0F));
     }
 
-    /**
-     * Called by the projectile when it is caught or gives up.
-     */
+    /** Called by the projectile when it is caught or gives up. */
     public void onScytheReturned(VicissitudeScytheProjectileEntity projectile, boolean caught) {
         if (scytheToken == null || !scytheToken.equals(projectile.getUUID())){
             return;
@@ -1874,8 +1593,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             entity.discard();
         }
         scytheToken = null;
-        // The stash is the authoritative copy. A copy that was lost, disarmed or replaced while
-        // the weapon flew is re-issued from code instead of leaving the encounter empty handed.
+        // The stash is the authoritative copy; if it is gone the weapon is re-issued from code.
         ItemStack restored = stashedWeapon.isEmpty()
                              ? (getHealth() > 0.0F ? createWeaponForDifficulty(bossDifficulty)
                                                    : ItemStack.EMPTY)
@@ -1886,32 +1604,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         setWeaponState(restored.isEmpty() ? 0 : 1);
     }
 
-    /**
-     * 常规掉落物表跟着难度走：四档各有一张表，内容见 {@code MaledictEntityLoot}
-     * （珍金块、虚无板石、虚空盐）。
-     *
-     * <p>盖的是 {@code Mob#getDefaultLootTable}：Mob 把 {@code getLootTable()} 定成了 final，
-     * 实体自己带一份显式表（NBT 上的 {@code DeathLootTable}）时才不经过这里——本实体不会带。
-     *
-     * <p>选表发生在死亡时，读的是实体自己那份权威难度（存档里缺失时已经退到 SIMPLE），
-     * 所以旧存档不会因为找不到难度字段而掉不出东西。
-     */
+    /** Per-difficulty loot table; {@code Mob#getLootTable} is final, so this is the only override point. */
     @Override
     protected ResourceLocation getDefaultLootTable() {
         return bossDifficulty.lootTable();
     }
 
-    /**
-     * 启蒙之年的专属额外掉落，写法照抄下界之星：原版凋灵在 {@code dropCustomDeathLoot} 里
-     * 把下界之星放进世界并让它不自然消失，这里同样——只不过额外交给 {@code recentlyHit} 把关。
-     *
-     * <p>{@code recentlyHit} 是原版 {@code lastHurtByPlayerTime > 0}，也就是最后 100 tick 内
-     * 有玩家（含玩家射出的弹体、玩家驯服的宠物）对它造成过伤害：不是玩家杀的就不发。
-     * 等级仍跟难度走（I–IV 级），见 {@link BossDifficulty#enlightenmentLevel()}。
-     *
-     * <p>调用时机由原版死亡流程保证：{@code VicissitudeBossEntity#dropAllDeathLoot} 只在真死
-     * 那一次放行，所以这里不需要自己记账；{@code doMobLoot} 关闭时同一条路也不会走到。
-     */
+    /** Extra Age of Enlightenment drop, gated on {@code recentlyHit}: a player hit it in the last 100 ticks. */
     @Override
     protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
         super.dropCustomDeathLoot(source, looting, recentlyHit);
@@ -1964,8 +1663,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    // ------------------------------------------------------------------ curio handling
-
     private void confiscateEquippedCurios(ServerPlayer player) {
         List<VicissitudeCurioLedger.Entry> taken = VicissitudeCurioReturns.confiscate(player);
         if (taken.isEmpty()){
@@ -2002,20 +1699,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * Removes a stack only after delivery succeeded, otherwise it stays in the ledger.
-     */
     private boolean returnOneCurioTo(ServerPlayer player) {
         Deque<VicissitudeCurioLedger.Entry> held = confiscated.get(player.getUUID());
         if (held == null || held.isEmpty()){
             return false;
         }
-        // Hand the stack to the ledger first, then try to deliver it: ownership moves exactly
-        // once, so nothing can be returned twice or dropped between the two holders.
+        // Hand the stack to the ledger first, then deliver: ownership moves exactly once.
         VicissitudeCurioLedger.Entry entry = held.removeFirst();
         VicissitudeCurioReturns.retain(player.serverLevel(), player.getUUID(), List.of(entry));
         if (!VicissitudeCurioReturns.deliverAll(player)){
-            // Whatever could not be delivered stays in the ledger; the rest of the hold moves too.
             VicissitudeCurioReturns.retain(player.serverLevel(), player.getUUID(),
                                            new ArrayList<>(held));
             held.clear();
@@ -2028,39 +1720,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return true;
     }
 
-    // ------------------------------------------------------------------ part caps and damage rules
-
-    /**
-     * 非玩家来源的伤害固定减半：这个 Boss 只认真打它的人，其余来源（别的生物、环境爆炸、
-     * 别人的宠物）吃 50% 减免。它和落点无关，落点管的是上限，见
-     * {@link #incomingHitWeight(DamageSource)}。
-     */
+    /** Damage from anything that is not a player is halved. */
     private static final float NON_PLAYER_DAMAGE_MULTIPLIER = 0.5F;
 
-    /**
-     * 适应效果：这里的返回值再乘一档「伤害消息」的适应倍率。
-     *
-     * <p>记账写在 {@link DamageAdaptation} 里：它只记住<b>最近挨过的那几条消息</b>，容量就是
-     * {@code firstVicissitude.adaptationLevel}（「适应几」，默认 2）。消息不在窗口里＝已经忘了，
-     * 照常全额并被记回窗口；还在窗口里才吃 e⁻⁽ⁿ⁻¹⁾ 递减。滑出窗口就重新按全额算，不会
-     * 一路衰减下去。放在最后一档乘，是因为它压的是「这一击最后落到真生命上的量」——
-     * 非玩家减半、适应与距离衰减都是各自独立的缩减，谁先谁后不影响乘积。
-     *
-     * <p>适应<b>没有时限</b>，但窗口会自己滚动：整场遭遇战里一直有效，只有回到未参战才清空。
-     * 它与那两道门也无关——原版的全局无敌帧和 {@link VicissitudeVitality#gateClosed} 都只决定
-     * "这一刀算不算数"，适应既不读它们也不改它们；反过来，被任何一道挡下的攻击根本走不到这里，
-     * 所以它们也不进窗口。
-     *
-     * <p>只认伤害消息、不认实体：同一种消息（玩家近战都是 {@code player}）无论谁来打都吃
-     * 同一份递减。一阶段、转场与无来源的环境伤害都在 {@code hurt} 里被 {@link #isDamageImmune}
-     * 挡掉，走不到这里——所以真正记账的只有二阶段那些会扣血的打击。
-     *
-     * <p>最后再乘一档距离衰减，见 {@link #distanceDamageScale(DamageSource)}：它排在适应之后，
-     * 与前面几档各自独立，所以谁先谁后都不改乘积。
-     *
-     * <p>这里<b>不</b>乘部位权重：落点决定的是一次命中的上限有多高，见
-     * {@link #incomingHitWeight(DamageSource)}，两件事分开，同一个部位优势才不会被算两遍。
-     */
+    /** Applies the non-player cut, adaptation and distance falloff; hit location is only a cap. */
     @Override
     protected float modifyIncomingDamage(DamageSource source, float amount) {
         float scaled = amount;
@@ -2071,12 +1734,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                * distanceDamageScale(source);
     }
 
-    /**
-     * 这一击落在哪个部位，拿它的 {@code capWeight} 当单次上限的缩放。
-     *
-     * <p>取法沿用部位判定的老规矩：有命中点就取最近的体块，没有（近战、间接伤害）就用攻击者
-     * 所在的位置去比。射线那类没有位置的来源最终落到身体，和以前倍率取不到时的行为一致。
-     */
+    /** Single-hit cap from the hit segment's {@code capWeight}. */
     @Override
     protected float incomingHitWeight(DamageSource source) {
         return nearestHitSegment(source).capWeight();
@@ -2095,16 +1753,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                                                attacker.getEyeY(), attacker.getZ());
     }
 
-    /**
-     * 距离衰减：作者距离内全额，往外线性降到零，超过 {@code 1.5 ×} 作者距离就什么都打不进来。
-     *
-     * <p>形状照抄 {@code IABoss_monster#hurt} 的那一段，因为要的就是同一个手感：贴脸是全额，
-     * 拉远是纯粹变钝，不是"过一条线突然全免"。没有实体来源的伤害（环境、指令、跌落）
-     * 不参与——它们本来就没有"距离"这个量。
-     *
-     * <p>默认 48 格，刚好落在 64 格不开火距离之内：站在那圈外打进来的伤害已经只剩百分之几，
-     * 不必再靠 {@code engagementRange} 那种"直接退场"来处理远程消耗，两者分工不再重叠。
-     */
     private float distanceDamageScale(DamageSource source) {
         LivingEntity attacker = resolveLivingAttacker(source);
         if (attacker == null){
@@ -2122,19 +1770,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return (float) ((outer - distance) / (outer - inner));
     }
 
-    /**
-     * 这个 Boss 是「适应几」：{@code firstVicissitude.adaptationLevel}，默认 2（适应二）。
-     */
     private static int adaptationLevel() {
         return Math.max(0, MaledictConfig.VICISSITUDE_ADAPTATION_LEVEL.get());
     }
 
-    /**
-     * 这一击算不算玩家的账。
-     *
-     * <p>看 {@code getEntity()}（箭矢这类弹体的出手者就是玩家）与 {@code getDirectEntity()}：
-     * 玩家本人近战、玩家射出的弹体、玩家扣下的爆炸都算，玩家宠物与别的生物则不算。
-     */
+    /** Player credit: the shooter counts, a player's pet does not. */
     private static boolean isPlayerDamage(DamageSource source) {
         return source.getEntity() instanceof Player || source.getDirectEntity() instanceof Player;
     }
@@ -2142,8 +1782,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private List<VicissitudeRig.SegmentVolume> segmentVolumes() {
         return VicissitudeRig.segmentVolumes(serverPose, getX(), getY(), getZ(), getYRot());
     }
-
-    // ------------------------------------------------------------------ geometry and pose
 
     private void refreshPose() {
         float death = getHealth() > 0.0F ? -1.0F : deathTime;
@@ -2162,9 +1800,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * Shared render sample for the mesh and effects; callers must not mutate this scratch pose.
-     */
+    /** Shared scratch pose for the mesh and effects; callers must not mutate it. */
     public VicissitudeRig.Pose poseForRender(float partialTick) {
         float death = getHealth() > 0.0F ? -1.0F : deathTime + partialTick;
         float ticks = Math.max(0.0F, getActionTicks(partialTick));
@@ -2208,18 +1844,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return new Vec3(world.x(), world.y(), world.z());
     }
 
-    /**
-     * Where the fan converges: the target's torso, not the empty air above it.
-     */
     private static Vec3 aimPoint(LivingEntity target) {
         return target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
     }
 
-    /**
-     * Direction from a wing tip to the aim point, spread horizontally by {@code offsetDegrees}.
-     * Aiming in three dimensions is what makes part of a volley land on and around the target
-     * instead of sailing over its head into the distance.
-     */
     private static Vec3 aimedDirection(Vec3 origin, Vec3 aim, float offsetDegrees) {
         Vec3 direction = aim.subtract(origin);
         if (direction.lengthSqr() < 1.0E-4D){
@@ -2239,12 +1867,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return (float) (Math.toDegrees(Math.atan2(-dx, dz)));
     }
 
-    /**
-     * Damage comes from the entity's own attribute, exactly like any other mob. What changed is
-     * where the weapon's contribution lives: {@link #applyWeaponAttributes()} bakes the difficulty
-     * weapon's modifiers into the entity, so the number no longer depends on the item being in the
-     * hand and is never written out by hand here.
-     */
+    /** The entity's own attribute, which already includes the weapon's baked modifiers. */
     private float attackDamage() {
         return Math.max(1.0F, (float) getAttributeValue(Attributes.ATTACK_DAMAGE));
     }
@@ -2253,8 +1876,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         SoundHelper.playSound(this, SoundRegistry.SCYTHE_SWEEP.get(), 0.9F,
                               RandomHelper.randomBetween(level().getRandom(), 0.9F, 1.2F));
     }
-
-    // ------------------------------------------------------------------ wing collision and unstick
 
     private void tickWingCollision() {
         if (!(level() instanceof ServerLevel)){
@@ -2274,7 +1895,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         wingsBlockedLastTick = blocked;
         if (blocked){
-            // Stop the blocked motion, fold the wings, then keep trying to path around.
             wingFold = Mth.clamp(wingFold + 0.12F, 0.0F, 1.0F);
             setDeltaMovement(getDeltaMovement().scale(0.35D));
         }else {
@@ -2287,10 +1907,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * Only a real overlap with an actual wing segment moves a player, and then only with a short
-     * velocity nudge: standing next to the boss must never feel like being bounced away.
-     */
     private void pushOutOfWings(Player player, List<VicissitudeRig.SegmentVolume> volumes) {
         AABB playerBox = player.getBoundingBox();
         for (VicissitudeRig.SegmentVolume volume : volumes) {
@@ -2306,10 +1922,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 away = new Vec3(1.0D, 0.0D, 0.0D);
             }
             away = away.normalize();
-            // A short velocity nudge only: no teleport and no forced resync, so brushing a wing
-            // never reads as being bounced away from the boss.
             if (!level().noCollision(player, player.getBoundingBox().move(away.scale(0.05D)))){
-                // The player is wedged against a wall: yield with the wing instead of crushing.
+                // Wedged against a wall: yield with the wing instead of crushing.
                 wingFold = Mth.clamp(wingFold + 0.1F, 0.0F, 1.0F);
                 continue;
             }
@@ -2350,7 +1964,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             stuckTicks = 0;
             unstickCooldown = UNSTICK_SUCCESS_COOLDOWN;
         }else {
-            // No valid space yet: stay put and retry after another window.
             stuckTicks = 0;
         }
     }
@@ -2415,15 +2028,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return usable;
     }
 
-    /**
-     * Emergency escape only: a finite search around the boss, never a chase teleport.
-     */
     private void unstickTeleport(double x, double y, double z) {
         Vec3 before = position();
         setPos(x, y, z);
         setDeltaMovement(Vec3.ZERO);
         getNavigation().stop();
-        // Interrupt the current attack into recovery: nothing already released is replayed.
         if (action != VicissitudeRig.Action.NONE && action != VicissitudeRig.Action.SCYTHE_RECOVER){
             endAction();
             startAction(VicissitudeRig.Action.SCYTHE_RECOVER, false);
@@ -2452,8 +2061,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return value * value;
     }
 
-    // ------------------------------------------------------------------ ground markers
-
     @Nullable
     private Vec3 findGroundPoint(LivingEntity target) {
         BlockPos origin = target.blockPosition();
@@ -2467,9 +2074,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return null;
     }
 
-    /**
-     * The ground marker center is locked ten ticks into the windup and never slides after.
-     */
+    /** Called ten ticks into the windup; the marker centre never moves after this. */
     private void lockGroundMarker(double inner, double outer, float gapCenter, float gapWidth) {
         Vec3 center = groundMarkerTarget;
         if (center == null){
@@ -2549,14 +2154,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 groundMarkerTarget = target == null ? null : findGroundPoint(target);
             }
             if (ticks == 10){
-                // The 60 degree safe gap is chosen once and stays visible.
                 float gap = level().getRandom().nextFloat() * 360.0F;
                 lockGroundMarker(3.0D, 6.0D, gap, 60.0F);
             }
         }
     }
-
-    // ------------------------------------------------------------------ targets and damage rules
 
     public boolean isValidCombatParticipant(Entity entity) {
         if (!(entity instanceof LivingEntity living) || living == this || !living.isAlive()
@@ -2572,14 +2174,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return phaseOneTargets.contains(living.getUUID());
     }
 
-    /**
-     * 每档一个基准上限比例，乘最大生命就是身体（权重 1.0）那一刀最多推掉多少血。
-     *
-     * <p>它就是"标准无倍率"的那一条：头的上限是它的 1.25 倍、翼外是 0.5 倍，全部由
-     * {@code VicissitudeRig.Segment#capWeight()} 决定（见
-     * {@link VicissitudeBossEntity#getVitalityDamageLimit(float)}）。四档各自写自己的数，
-     * 不从难度或生命推导。
-     */
+    /** Base cap ratio for a body hit; segment {@code capWeight} scales it (head 1.25x, outer wing 0.5x). */
     @Override
     protected float getVitalityDamageLimit() {
         float ratio = switch (bossDifficulty) {
@@ -2592,7 +2187,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Override
     protected boolean isDamageImmune(DamageSource source) {
-        // Transition and the authored death sequence are damage free.
         if (stage == VicissitudeBossStage.TRANSITION || getHealth() <= 0.0F){
             return true;
         }
@@ -2610,16 +2204,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                && super.canBeAffected(effect);
     }
 
-    /**
-     * 原版式的仇恨：谁打它，谁就进它的名单——不看视线，隔着墙也一样。
-     *
-     * <p>三处与原版一致：受击即结仇（对应 {@code HurtByTargetGoal}，原版被隔墙打中也会还手）、
-     * 宠物与召唤物算在主人头上（对应原版的 {@code lastHurtByPlayer}，只是这里连非玩家的主人也算）、
-     * 创造与旁观不结仇也不挨揍（原版的目标选择同样排除这两种身份）。
-     *
-     * <p>挨打就醒：{@link VicissitudeBossStage#DORMANT} 的像被任何人打中都会进入一阶段，
-     * 只剩「没人在打它满 100 tick 就回去当像」这一条自有规则，见 {@link #tickEmptyEncounter()}。
-     */
+    /** Vanilla-style aggro, no line of sight needed; hitting the DORMANT idol starts phase one. */
     @Override
     protected void onIncomingAttack(DamageSource source, float amount) {
         LivingEntity attacker = resolveLivingAttacker(source);
@@ -2651,12 +2236,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * 宠物与召唤物的主人，没有主人的（野生生物、玩家自己）返回 null。
-     *
-     * <p>拿 {@code OwnableEntity#getOwnerUUID} 而不是 {@code getOwner()}：后者只认玩家，
-     * 而主人也可能是别的生物。解析方式与参战名单一致，主人离线时拿不到就当作没有。
-     */
+    /** {@code OwnableEntity#getOwnerUUID} is used rather than {@code getOwner()}: the owner may not be a player. */
     @Nullable
     private LivingEntity ownerOf(@Nullable LivingEntity attacker) {
         if (!(attacker instanceof OwnableEntity ownable)
@@ -2671,12 +2251,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return owner == this ? null : owner;
     }
 
-    /**
-     * 把一名攻击者写进一阶段名单。
-     *
-     * <p>创造与旁观在这里就被挡掉（{@link #isIgnoredPlayer}）：他们永远不参战、也不挨揍，
-     * 出手不算数。围观者同理永远进不来，所以「不打旁观者」这条规则靠入口而不是靠过滤维持。
-     */
     private void registerPhaseOneParticipant(@Nullable LivingEntity participant) {
         if (participant == null || participant == this || !participant.isAlive()
             || participant.level() != level() || isIgnoredPlayer(participant)){
@@ -2688,19 +2262,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * 宠物、召唤物出手时账要算在主人头上：能选主人就选主人。
-     */
     private LivingEntity preferredTarget(LivingEntity attacker, @Nullable LivingEntity owner) {
         return isValidPhaseOneTarget(owner) ? owner : attacker;
     }
 
-    /**
-     * 二阶段的参战者：与一阶段同一套归属规则。
-     *
-     * <p>名单在这里从「玩家」放宽到任意存活生物，宠物、召唤物和别的生物都能一路打到底；
-     * 选目标时玩家优先，见 {@link #selectBalancedPhaseTwoTarget()}。
-     */
     private void registerPhaseTwoParticipant(@Nullable LivingEntity participant) {
         if (participant == null || participant == this || !participant.isAlive()
             || participant.level() != level() || isIgnoredPlayer(participant)){
@@ -2718,20 +2283,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * Set piece lines use the action bar, but with the mod's palette instead of vanilla white.
-     * A Style can carry colour and weight; the action bar itself is a single fixed font size,
-     * which is why this needs no custom overlay or timer.
-     */
     private static Component announcement(String key) {
         return Component.translatable(key).withStyle(style -> style
                 .withColor(TextColor.fromRgb(0xE6EDF5))
                 .withBold(true));
     }
 
-    /**
-     * The phase one set piece line, once per player life.
-     */
+    /** Phase one line, shown once per player life. */
     private void announceFirstAttack(ServerPlayer player) {
         int deathCount = getDeathCount(player);
         if (announcedPlayerDeaths.getOrDefault(player.getUUID(), -1) != deathCount){
@@ -2772,8 +2330,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    // ------------------------------------------------------------------ movement and targets
-
     @Nullable
     private LivingEntity currentPhaseOneTarget() {
         LivingEntity target = getTarget();
@@ -2809,12 +2365,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return null;
     }
 
-    /**
-     * 一阶段轮换用的名单：玩家排前面，宠物、召唤物与别的生物排后面。
-     *
-     * <p>玩家拖着无常、周围还围着一群僵尸时，无常盯的仍然是人；
-     * 名单里没有玩家时才会去招呼这群召唤物，见 19。
-     */
     private List<UUID> orderedPhaseOneTargets(ServerLevel serverLevel) {
         List<UUID> players = new ArrayList<>();
         List<UUID> others = new ArrayList<>();
@@ -2835,7 +2385,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (!(level() instanceof ServerLevel serverLevel)){
             return null;
         }
-        // 玩家优先，其次才是宠物/召唤物/别的生物：中途加入的玩家不会被一只高血量的宠物挡住。
         LivingEntity selected = healthiestPhaseTwoTarget(serverLevel, true);
         if (selected == null){
             selected = healthiestPhaseTwoTarget(serverLevel, false);
@@ -2861,7 +2410,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return false;
         }
         if (distanceToSqr(target) > engagementRangeSqr()){
-            // Out of engagement range: the boss holds position instead of crossing the arena.
             return false;
         }
         if (target instanceof ServerPlayer player){
@@ -2872,13 +2420,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return !isIgnoredPlayer(target);
     }
 
-    /**
-     * 被无视的目标：创造与旁观的玩家。
-     *
-     * <p>他们永远不参战、也不挨揍，这一点不因为「受击还手」而改变：受击还手说的是
-     * 打它的人（宠物、召唤物、别的生物）会进名单，而创造/旁观从入口就被排除，
-     * 连自己出手都不算数——作者在创造模式下要试招，请让手下的生物去打它。
-     */
+    /** Creative and spectator players never join a roster and are never hit, even when they attack. */
     private static boolean isIgnoredPlayer(@Nullable LivingEntity target) {
         return target instanceof Player player && (player.isCreative() || player.isSpectator());
     }
@@ -2900,23 +2442,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * Whether the current action is a melee swing that the boss should dive onto the target for.
-     */
     private boolean isDivingMelee() {
         return action.isMelee() && committedTarget != null && committedTarget.isAlive();
     }
 
-    /**
-     * Whether the boss should already be descending onto its target, before the swing starts.
-     *
-     * <p>Without this the boss parked at its cruise altitude, committed to a swing it could not
-     * land, and then did it again: the blade hangs off a shoulder high above the entity origin, so
-     * at the phase-two cruise altitude the edge swept 2.0 to 3.7 blocks up - over a standing
-     * target's 1.8 - and nothing ever connected. The approach starts outside the commit range so
-     * the descent is finished by the time the arm moves, and it uses the same centre-to-centre
-     * distance as {@code tickPhaseTwoCombat}, so the two can never disagree about range.
-     */
+    /** Starts the descent before the swing commits, so the blade is at target height when the arm moves. */
     private boolean isApproachingMelee(@Nullable LivingEntity target) {
         if (action != VicissitudeRig.Action.NONE || target == null
             || !target.isAlive() || target.level() != level()){
@@ -2925,18 +2455,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return distanceTo(target) <= MELEE_APPROACH_DISTANCE;
     }
 
-    /**
-     * Where the boss wants to stand this tick during a melee approach or swing.
-     *
-     * <p>It comes straight down the line it is facing instead of holding a station off to the side:
-     * a swing sweeps forward, so the body has to be on the target's side of that line, not orbiting
-     * around it.
-     *
-     * <p>The stand-off is what puts the target inside the arc rather than under or behind it, so it
-     * is measured against the swing's own forward reach ({@code Action#bladeForwardReach()}) and not
-     * against a single engagement distance: holding at the wrong radius leaves the blade falling
-     * short in front of the target or sweeping down past it.
-     */
+    /** With no action given, the vertical cut's reach and height are used, so the approach is on target. */
     private Vec3 meleeStancePosition(LivingEntity target, double wantedY,
                                      @Nullable VicissitudeRig.Action forAction) {
         VicissitudeRig.Action swing = forAction != null && forAction.isMelee()
@@ -2950,18 +2469,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                         getZ() + Math.cos(yaw) * standOff);
     }
 
-    /**
-     * Feet altitude that puts this swing's edge through the target's torso.
-     *
-     * <p>The three melee swings do not sweep at the same height - the horizontal cut crosses a
-     * standing target lower than the chops do - so each one gets its own altitude from
-     * {@link VicissitudeRig.Action#bladeHeightAboveFeet()}. With no action running the boss aims
-     * for the vertical cut's altitude, so the descent it makes while closing is already in the
-     * right place for whichever swing it picks.
-     *
-     * <p>Measured from the target rather than from a fixed absolute altitude, so it works on a
-     * player standing on the ground and on one standing on a tower alike.
-     */
     private double meleeDiveY(LivingEntity target, @Nullable VicissitudeRig.Action forAction) {
         VicissitudeRig.Action swing = forAction != null && forAction.isMelee()
                                       ? forAction : VicissitudeRig.Action.SLASH_VERTICAL;
@@ -2979,13 +2486,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         if (action != VicissitudeRig.Action.NONE){
             if (isDivingMelee()){
-                // Close the last of the distance and drop onto the target; a swing that starts out
-                // of reach has to be able to arrive, not just to be aimed.
                 steerToward(meleeStancePosition(target, meleeDiveY(target, action), action), MAX_FLIGHT_SPEED);
                 return;
             }
-            // Hold the station through the windup and the release: casting has to read as
-            // aiming at the target, not as drifting past it.
             setDeltaMovement(getDeltaMovement().scale(0.5D));
             hasImpulse = true;
             return;
@@ -3023,13 +2526,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         if (action != VicissitudeRig.Action.NONE){
             if (isDivingMelee()){
-                // The dive is the attack: keep flying the body onto the target through the windup
-                // and the cut, so the blade reaches somebody who was out of range when it started.
                 steerToward(meleeStancePosition(target, meleeDiveY(target, action), action),
                             PHASE_TWO_MAX_FLIGHT_SPEED);
                 return;
             }
-            // Plant the floating body through the tell and recovery; the rig supplies recoil.
             setDeltaMovement(getDeltaMovement().scale(0.5D));
             hasImpulse = true;
             return;
@@ -3119,8 +2619,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    // ------------------------------------------------------------------ weapon loadout
-
     private void equipPhaseTwoWeapon() {
         setItemSlot(EquipmentSlot.MAINHAND, createWeaponForDifficulty(bossDifficulty));
         setDropChance(EquipmentSlot.MAINHAND, 0.0F);
@@ -3129,16 +2627,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         setWeaponState(1);
     }
 
-    /**
-     * Keeps the hand matching the encounter while the weapon is supposed to be held.
-     *
-     * <p>The rendered weapon no longer depends on this stack, and neither does the damage, but the
-     * throw loop and everything else that reads the hand still expect a scythe there. Only the
-     * "weapon is held" state is policed, which leaves a weapon in flight alone.
-     *
-     * @param fullCheck also compares the item type, on the slow cadence; an empty hand is always
-     *                  restored immediately
-     */
+    /** Keeps the hand matching the encounter while the weapon is meant to be held; a weapon in flight is left alone. */
     private void tickWeaponGuard(boolean fullCheck) {
         if (scytheToken != null || entityData.get(DATA_WEAPON_STATE) != 1){
             return;
@@ -3175,7 +2664,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         bossDifficulty = difficulty == null ? BossDifficulty.SIMPLE : difficulty;
         setWeaponTier(bossDifficulty);
         if (!difficultyLocked && !level().isClientSide){
-            // Before the fight starts the pool simply follows the mode; afterwards it is frozen.
             applyDifficultyAttributes();
         }
         if (!phaseOneDurationLocked){
@@ -3183,7 +2671,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         if (isPhaseTwo() && !level().isClientSide){
             if (scytheToken != null){
-                // A weapon change while the scythe flies waits for this recovery.
                 pendingWeaponTier = bossDifficulty.ordinal();
                 return;
             }
@@ -3197,8 +2684,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             equipPhaseTwoWeapon();
         }
     }
-
-    // ------------------------------------------------------------------ persistence
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
@@ -3332,12 +2817,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * 适应窗口：一条记录一个伤害消息，<b>列表顺序就是最新在前的顺序</b>。
-     *
-     * <p>跟着实体一起存档，是因为这份账属于「这一场遭遇战」：区块卸载再回来、或者存档重载，
-     * 适应过的消息不该被洗白。真正清账只有一条路——回到未参战（见 {@link #tickEmptyEncounter}）。
-     */
+    /** One record per damage message, list order is newest-first. */
     private ListTag saveAdaptation() {
         ListTag entries = new ListTag();
         for (String message : damageAdaptation.snapshot()) {
@@ -3348,12 +2828,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return entries;
     }
 
-    /**
-     * 读回适应窗口，顺序即"最新在前"；空消息由 {@link DamageAdaptation#restore} 丢掉。
-     *
-     * <p>旧存档里的 {@code Hits} 字段不再读取：新规则不保留跨窗口的计数，一条消息滑出去
-     * 就等于没挨过。
-     */
     private void loadAdaptation(ListTag entries) {
         List<String> saved = new ArrayList<>();
         for (Tag entry : entries) {
@@ -3405,8 +2879,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    // ------------------------------------------------------------------ helpers
-
     @Nullable
     private LivingEntity resolveLivingAttacker(DamageSource source) {
         Entity attacker = source.getEntity();
@@ -3426,26 +2898,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return player.getStats().getValue(Stats.CUSTOM.get(Stats.DEATHS));
     }
 
-    /**
-     * Difficulty table: phase one gets shorter as the difficulty rises.
-     */
     public enum BossDifficulty {
-        /**
-         * {@code maxHealth} is the pool the vitality ledger captures when the entity joins the
-         * world. Attack damage is not listed here: it comes from the difficulty weapon's own
-         * attribute modifiers, which {@link #applyWeaponAttributes()} bakes into the entity.
-         *
-         * <p>{@code damagePress} picks the ChangeLib damage ladder used when the boss damages a
-         * player in <em>phase two</em>: {@code LIGHT} stops after the first authoritative hit, so
-         * armour, enchantments and damage caps still decide how much lands, while {@code MEDIUM}
-         * keeps pressing until the authored amount has actually been taken. The two easy modes use
-         * the light ladder, the two hard modes the medium one; phase one always uses the light
-         * ladder whatever the mode, see {@code hurtParticipant}.
-         *
-         * <p>The trailing path is this mode's loot table, see {@link #lootTable()}; the number
-         * after it is the Age of Enlightenment level handed out by
-         * {@link #enlightenmentLevel()} when a player lands the kill.
-         */
+        /** Args: phase one ticks, max health, phase-two damage press, loot table path, enlightenment level. */
         SIMPLE(1800, 500.0D, DamagePress.LIGHT, "entities/first_vicissitude", 0),
         DIFFICULT(1400, 750.0D, DamagePress.LIGHT, "entities/first_vicissitude_difficult", 1),
         COMPLETE(1000, 1000.0D, DamagePress.MEDIUM, "entities/first_vicissitude_complete", 2),
@@ -3479,25 +2933,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return damagePress;
         }
 
-        /**
-         * 该难度使用的常规掉落物表。
-         *
-         * <p>每一档都有自己的表，内容见 {@code MaledictEntityLoot}（四张表内容相同），
-         * 这里只保存 ID。SIMPLE 用的就是实体默认路径
-         * {@code maledict:entities/first_vicissitude}，所以照着默认 ID 找表的一方看到的
-         * 是一份真奖励，而不是一张空表。
-         */
         public ResourceLocation lootTable() {
             return lootTable;
         }
 
-        /**
-         * 该难度的启蒙之年等级，也就是物品 NBT 上的 amplifier：0 即游戏里显示的一级
-         * （见 {@code EnlightenmentLevel}），四档由易到难正好是 I–IV 级。
-         *
-         * <p>这个数字曾经写在掉落物表里；启蒙之年改成玩家击杀才发的专属掉落后，
-         * 它跟着发奖励的 {@code dropCustomDeathLoot} 一起搬到了实体侧，仍然只有这一处权威。
-         */
+        /** Enlightenment amplifier: {@code 0} is displayed as level I. */
         public int enlightenmentLevel() {
             return enlightenmentLevel;
         }
@@ -3510,9 +2950,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return name().toLowerCase(Locale.ROOT);
         }
 
-        /**
-         * Synced weapon tiers travel as a byte; anything unexpected falls back to SIMPLE.
-         */
         private static BossDifficulty byId(int id) {
             BossDifficulty[] values = values();
             return id >= 0 && id < values.length ? values[id] : SIMPLE;
@@ -3528,17 +2965,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /**
-     * How hard the boss presses its damage through a player's defences.
-     */
+    /** How hard the boss presses its damage through a player's defences. */
     public enum DamagePress {
         LIGHT,
         MEDIUM
     }
 
-    /**
-     * Single combat goal; phase selection happens inside so goals never fight each other.
-     */
+    /** Single combat goal; phase selection happens inside so goals never fight each other. */
     private static final class CombatGoal extends Goal {
         private final FirstVicissitudeBossEntity boss;
         private int targetRefreshCooldown;

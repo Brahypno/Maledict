@@ -18,18 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * How much hunger and saturation a living entity's drops are expected to provide, plus the mob
- * effects the food among them carries.
- * <p>
- * The changelib scanners report, for every entry of every loot source, how likely the entry is to
- * be reached and how many items it hands out. Expectation is linear, so summing
- * {@code reach * expectedCount * value} over the entries is the expected nourishment of one kill
- * rather than a guess. Nothing is rolled here: the result is a value, not an item.
- * <p>
- * {@code hungerPerItem} and {@code saturationPerItem} are the coefficients of the enchantment's
- * "one extra item per level" bonus. That bonus is part of the same expectation, so it is weighted
- * by the reach chance as well and can only ever pay out on food the victim would really drop.
- * {@link EffectSource} keeps the same two numbers for the food that carries effects, because
- * tasting a meal means its aftertaste comes with it.
+ * effects the food among them carries. Nothing is rolled here: the result is a value, not an item.
+ * <p>{@code hungerPerItem} and {@code saturationPerItem} are the coefficients of the enchantment's
+ * "one extra item per level" bonus.
  */
 public record LootFoodExpectation(
         double hunger,
@@ -45,10 +36,8 @@ public record LootFoodExpectation(
     private static final Map<Key, LootFoodExpectation> CACHE = new ConcurrentHashMap<>();
 
     /**
-     * One food entry that carries mob effects, with the expectation of how many of it the victim
-     * would have handed over. Vanilla rolls eating effects once per item, but repeated applications
-     * of the same effect only refresh its duration, so the consumer can roll once at the
-     * at-least-once chance and get the same outcome.
+     * One food entry that carries mob effects. Vanilla rolls eating effects once per item, but
+     * repeated applications only refresh the duration, so one roll at the at-least-once chance matches.
      */
     public record EffectSource(
             double reach,
@@ -59,17 +48,15 @@ public record LootFoodExpectation(
             effects = List.copyOf(effects);
         }
 
-        /** Expected number of this item a kill is worth, with the per level bonus included. */
+        /** Expected servings, with the per level bonus included. */
         public double servingsAt(int level) {
             return reach * (expectedCount + level);
         }
     }
 
     /**
-     * The expectation for this victim, resolved from everything it can drop and cached per loot
-     * table, entity type, looting level and fire state - the fire state matters because a burning
-     * victim smelts its meat on death. Only {@link #clearCache()} invalidates the entries, so a
-     * datapack reload has to call it.
+     * Cached per loot table, entity type, looting level and fire state - the fire state matters
+     * because a burning victim smelts its meat. A datapack reload must call {@link #clearCache()}.
      */
     public static LootFoodExpectation of(ServerLevel level, LivingEntity victim, int lootingLevel) {
         ResourceLocation lootTable = victim.getLootTable();
@@ -92,7 +79,6 @@ public record LootFoodExpectation(
         return scanned;
     }
 
-    /** Drops are data driven, so every cached expectation dies with the resource reload. */
     public static void clearCache() {
         CACHE.clear();
     }
@@ -152,9 +138,8 @@ public record LootFoodExpectation(
     }
 
     /**
-     * The effects eating this food would apply, with the entries vanilla skips already dropped.
-     * The instances stay shared with the item's food properties - the consumer copies them, the
-     * same way vanilla does.
+     * The effects eating this food would apply, vanilla-skipped entries dropped. The instances stay
+     * shared with the item's food properties - the consumer copies them.
      */
     private static List<Pair<MobEffectInstance, Float>> effectsOf(FoodProperties food) {
         List<Pair<MobEffectInstance, Float>> effects = new ArrayList<>();

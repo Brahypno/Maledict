@@ -23,9 +23,7 @@ import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.rig.VicissitudeRigData;
 
 /**
- * Renderer for the First Vicissitude boss: base texture, an additive emissive pass, the real
- * weapon in the right hand and the effect entry point. Frustum culling is widened to include
- * the full wing span so the wings never pop out at the edge of the screen.
+ * First Vicissitude boss 的渲染器：基础贴图、叠加自发光层、右手真武器与特效入口。
  */
 public final class FirstVicissitudeBossRenderer
         extends MobRenderer<FirstVicissitudeBossEntity, FirstVicissitudeBossModel> {
@@ -35,9 +33,7 @@ public final class FirstVicissitudeBossRenderer
             Maledict.MODID, "textures/entity/first_vicissitude.png");
     public static final ResourceLocation EMISSIVE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "textures/entity/first_vicissitude_emissive.png");
-    /**
-     * Half of the maximum wing span plus the ring, so large wings stay visible.
-     */
+    /** 视锥剔除的放宽量：最大翼展的一半加上环，免得大翅膀在屏幕边缘被剔掉。 */
     private static final double CULL_INFLATE = 4.5D;
 
     public FirstVicissitudeBossRenderer(EntityRendererProvider.Context context) {
@@ -53,12 +49,8 @@ public final class FirstVicissitudeBossRenderer
     }
 
     /**
-     * Vanilla applies two things here: the body yaw ({@code Ry(180 - rotationYaw)}) and, once
-     * {@code deathTime} is positive, a roll that lays the corpse on its side.
-     *
-     * <p>Only the yaw is kept. Dropping the whole method earlier removed the yaw as well, which
-     * froze the model's heading while the entity itself still turned; the authored eighty tick
-     * collapse is meant to stay upright, so the death roll is the only part skipped.
+     * 原版这里既加身体朝向（{@code Ry(180 - rotationYaw)}），也在 {@code deathTime} 转正后加一段侧倒；
+     * 只保留朝向——手写的倒地动画本身是直立的，侧倒是唯一被跳过的部分。
      */
     @Override
     protected void setupRotations(FirstVicissitudeBossEntity entity, PoseStack poseStack,
@@ -81,9 +73,7 @@ public final class FirstVicissitudeBossRenderer
         return frustum.isVisible(entity.getBoundingBox().inflate(CULL_INFLATE));
     }
 
-    /**
-     * Additive pass for the cold core, the cracks and the few glowing ring plates.
-     */
+    /** 冷核、裂纹与几块发光环甲板的叠加自发光层。 */
     private static final class EmissiveLayer
             extends RenderLayer<FirstVicissitudeBossEntity, FirstVicissitudeBossModel> {
         private EmissiveLayer(FirstVicissitudeBossRenderer renderer) {
@@ -109,11 +99,7 @@ public final class FirstVicissitudeBossRenderer
     }
 
     /**
-     * The difficulty weapon, drawn in the bind pose of the right hand chain.
-     *
-     * <p>The stack comes from the entity's synced tier, not from the main hand: the encounter has
-     * to stay visibly armed even when a disarm effect, an inventory swap or another mod empties
-     * or replaces the real item.
+     * 难度武器，按右手链的绑定姿势绘制；物品取自实体同步的档位而非主手，免得被解除武装或换掉物品后 Boss 空着手。
      */
     private static final class WeaponLayer
             extends RenderLayer<FirstVicissitudeBossEntity, FirstVicissitudeBossModel> {
@@ -134,13 +120,9 @@ public final class FirstVicissitudeBossRenderer
                 return;
             }
             poseStack.pushPose();
-            // Walk the whole shoulder -> upper arm -> forearm -> hand chain plus the grip anchor;
-            // a single translateAndRotate would leave the weapon floating at the model origin.
+            // 走完整条 肩→上臂→前臂→手 的链加握把锚点；只做一次 translateAndRotate 会让武器飘在模型原点。
             getParentModel().poseStackTo(VicissitudeRigData.Joint.SCYTHE_HAND_ANCHOR, poseStack);
-            // Exactly the basis vanilla's ItemInHandLayer uses for a held item on a mob arm:
-            // Rx(-90) then Ry(180), which leaves the blade along the arm, tilted ~35 degrees
-            // forward. The anchor already sits at the hand, so vanilla's shoulder-to-hand
-            // translation is not repeated here.
+            // 与原生 ItemInHandLayer 持械同一套基：Rx(-90) 再 Ry(180)；锚点已在手上，故不再补肩到手的平移。
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
             float scale = weaponScale(stack);

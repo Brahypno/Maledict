@@ -46,9 +46,8 @@ public final class RemembranceBowProjectileEffect {
 
         arrow.getPersistentData().putInt(PHASE_COUNT,
                 arrow.getPersistentData().getInt(PHASE_COUNT) - 1);
-        // AbstractArrow.tick() applies one more full velocity movement after the
-        // impact hook. Offset it here so this tick ends at the nearest exit,
-        // instead of skipping an unchecked segment beyond the wall.
+        // AbstractArrow.tick() applies one more full velocity movement after the impact
+        // hook. Offset it here so this tick ends at the nearest exit.
         Vec3 compensatedPosition = exit.subtract(velocity);
         arrow.setPos(compensatedPosition.x, compensatedPosition.y, compensatedPosition.z);
         arrow.setDeltaMovement(velocity);

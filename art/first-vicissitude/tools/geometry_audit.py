@@ -48,8 +48,7 @@ def reference(path):
                            'east':dims[2]*dims[1],'west':dims[2]*dims[1],
                            'up':dims[0]*dims[2],'down':dims[0]*dims[2]}
                     explicit_faces.extend(areas[f] for f in faces)
-    # Six quads allocated per ordinary cube. Zero-width sheets have only two
-    # nondegenerate coincident faces, although a renderer may submit all six.
+    # Six quads per ordinary cube; a zero-width sheet contributes only two nondegenerate faces.
     zeros=collections.Counter(sum(abs(d)<1e-8 for d in b) for b in boxes)
     return dict(boxes=len(boxes),nominal_triangle_slots=len(explicit_faces)*2 if explicit_faces else len(boxes)*12,
                 nondegenerate_triangle_equivalent=sum(abs(a)>1e-8 for a in explicit_faces)*2 if explicit_faces else zeros[0]*12+zeros[1]*4,

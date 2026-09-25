@@ -21,8 +21,7 @@ import team.lodestar.lodestone.systems.rendering.LodestoneRenderType;
 import team.lodestar.lodestone.systems.rendering.VFXBuilders;
 
 /**
- * The real thrown weapon with its own culling and a fading historical trail. The scythe is never
- * hidden inside the boss model, so the flight is always readable.
+ * 掷出的镰刀本体：自带旋转与一条渐隐尾迹；镰刀从不藏进 Boss 模型里，飞行过程始终看得见。
  */
 public final class VicissitudeScytheRenderer
         extends EntityRenderer<VicissitudeScytheProjectileEntity> {

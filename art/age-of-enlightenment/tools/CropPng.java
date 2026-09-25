@@ -5,8 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * 从一张 PNG 里裁一块出来另存（不改像素，不做缩放）。
- *
+ * 从一张 PNG 里裁一块另存（不改像素，不做缩放）。
  * 用法：java -cp build/mask-tool CropPng <输入.png> <输出.png> <x> <y> <w> <h>
  */
 public final class CropPng {

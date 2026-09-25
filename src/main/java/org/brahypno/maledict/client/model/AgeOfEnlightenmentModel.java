@@ -15,16 +15,8 @@ import net.minecraft.world.entity.player.Player;
 import org.brahypno.maledict.Maledict;
 
 /**
- * 启蒙之年的面具模型：一个盖住前半张脸的盒子。
- *
- * <p>几何约定（别随手改，贴图 UV 是按这个算的）：
- * <ul>
- *   <li>模型空间原点在眼睛高度，头是 x,z ∈ [-4,4]、y ∈ [-8,0]，-z 是脸朝向；</li>
- *   <li>盒子边界全部取整数 {@code addBox(-5, -9, -5, 10, 10, 5)}：比头每边大 1，
- *       既避免与头部的面共面（z-fighting），又让正脸 10x10 里中间的 8x8 与原版脸 1:1 对齐，
- *       于是贴图上挖的眼洞正好对得上玩家自己的眼睛；</li>
- *   <li>盒子本身不做动画，头部姿态每帧由 {@code ICurioRenderer.followHeadRotations} 复制过来。</li>
- * </ul>
+ * 启蒙之年的面具模型：一个盖住前半张脸的盒子；原点在眼睛高度，头占 x,z ∈ [-4,4]、y ∈ [-8,0]，-z 是脸朝向。
+ * 盒界全取整数（比头每边大 1，既不与头共面 z-fighting，又让正脸 10x10 中间的 8x8 与原版脸 1:1），贴图 UV 是按这个算的，别随手改。
  */
 public final class AgeOfEnlightenmentModel extends EntityModel<Player> {
     public static final ModelLayerLocation LAYER = new ModelLayerLocation(
@@ -49,7 +41,6 @@ public final class AgeOfEnlightenmentModel extends EntityModel<Player> {
         return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);
     }
 
-    /** 供饰品的渲染器复制头部姿态。 */
     public ModelPart mask() {
         return mask;
     }
@@ -57,7 +48,7 @@ public final class AgeOfEnlightenmentModel extends EntityModel<Player> {
     @Override
     public void setupAnim(Player entity, float limbSwing, float limbSwingAmount, float ageInTicks,
                           float netHeadYaw, float headPitch) {
-        // 空实现：面具跟随头部的方式是复制头部姿态，不是在模型里做动画。
+        // 故意留空：头部姿态每帧由 ICurioRenderer.followHeadRotations 复制过来，不在模型里做动画。
     }
 
     @Override

@@ -22,15 +22,11 @@ import team.lodestar.lodestone.systems.rendering.trail.TrailPointBuilder;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
-/**
- * A straight Vicissitude bolt. Phase one bolts press the target to a single hit point, phase two
- * bolts deal ordinary damage; the firing phase is decided by the boss and stored per projectile
- * so a mid flight phase change cannot silently convert one into the other.
- */
+/** A straight Vicissitude bolt; the firing phase is fixed at release and stored per projectile. */
 public final class VicissitudeSpiritBoltEntity extends Projectile {
     private static final EntityDataAccessor<Boolean> DATA_PRESS_HEALTH =
             SynchedEntityData.defineId(VicissitudeSpiritBoltEntity.class, EntityDataSerializers.BOOLEAN);
-    /** Client side trail history; 12 points at most, one sample per tick. */
+    /** Client-side trail history: 12 points, one sample per tick. */
     public final TrailPointBuilder trail = TrailPointBuilder.create(12);
 
     private float damage = 6.0F;
@@ -112,8 +108,7 @@ public final class VicissitudeSpiritBoltEntity extends Projectile {
                 living.setHealth(Math.min(living.getHealth(), 1.0F));
             } else {
                 Entity owner = getOwner();
-                // Phase two bolts belong to the encounter: they go through the same difficulty
-                // ladder as its melee so a hard mode cannot be dodged by putting armour on.
+                // Phase two bolts go through the encounter's difficulty ladder, not vanilla armour.
                 if (owner instanceof FirstVicissitudeBossEntity boss) {
                     boss.hurtParticipant(living, damageSources().mobProjectile(this, boss), damage);
                 } else {
@@ -131,13 +126,7 @@ public final class VicissitudeSpiritBoltEntity extends Projectile {
         discard();
     }
 
-    /**
-     * Phase one bolts always press the target down to a single hit point.
-     *
-     * <p>The flag is set at release time, which is what {@code 07} asks for, but the owning
-     * boss' current stage is checked as well: a bolt released during phase one can never turn
-     * into ordinary damage, whatever happens to the flag while it flies.
-     */
+    /** The stored flag is not enough: a bolt released in phase one must never deal ordinary damage, so the owner's stage is checked too. */
     private boolean shouldPressHealth() {
         if (pressesHealth()) {
             return true;
@@ -145,7 +134,6 @@ public final class VicissitudeSpiritBoltEntity extends Projectile {
         return getOwner() instanceof FirstVicissitudeBossEntity boss && boss.isPhaseOneStage();
     }
 
-    /** Bolts never scratch bystanders: only this fight's registered participants are valid. */
     private boolean isCombatParticipant(Entity candidate) {
         return !(getOwner() instanceof FirstVicissitudeBossEntity boss)
                || boss.isValidCombatParticipant(candidate);

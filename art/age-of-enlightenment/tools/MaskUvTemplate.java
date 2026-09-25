@@ -14,22 +14,8 @@ import java.util.List;
 
 /**
  * 生成面具饰品（curio）的 UV 布局参考图。
- *
- * <p>几何：一个 10x10x5 的盒子，盖住头的正脸 + 两侧耳朵之前的部分。
- * 盒子 UV 展开规则（原版 ModelPart.Cube，u/v = texOffs，w/h/d = 盒子的 X/Y/Z 尺寸）：
- *
- * <pre>
- * 第一行（高 d）：[u+d, v] 上面(w x d)   [u+d+w, v] 下面(w x d)
- * 第二行（高 h）：[u, v+d] -X(d x h)  [u+d] 正面(w x h)  [u+d+w] +X(d x h)  [u+d+w+d] 背面(w x h)
- * </pre>
- *
- * 模型空间：原点在眼睛高度，头是 x,z ∈ [-4,4]、y ∈ [-8,0]；-z 是脸朝向。
- * 盒子用整数边界（±5 / -9~1），所以正脸 10x10 里中间的 8x8 与原版脸 1:1 对齐。
- *
- * 输出：
- * uv_template_64.png         纯色块，无描边（色块边界即 UV 分界）
- * preview/uv_template_64_preview.png   x8 预览，带面名、区域框、8x8 标记
- *
+ * 原版 ModelPart.Cube 盒子展开：第一行（高 d）上面/下面，第二行（高 h）-X/正面/+X/背面。
+ * 模型原点在眼睛高度，头占 x,z ∈ [-4,4]、y ∈ [-8,0]，-z 是脸朝向；盒子取整数边界，正脸 10x10 中间的 8x8 与原版脸 1:1。
  * 用法（仓库根目录，Java 17）：
  * javac -encoding UTF-8 -d build/mask-tool art/age-of-enlightenment/tools/MaskUvTemplate.java
  * java -cp build/mask-tool MaskUvTemplate
@@ -40,11 +26,9 @@ public final class MaskUvTemplate {
     private static final int SCALE = 8;
     private static final int MARGIN = 28;
 
-    /** 面具盒子尺寸（模型像素）：宽 10（头宽 8 + 两侧各 1，整数边界才与原版脸对齐）。 */
+    /** 面具盒子尺寸（模型像素）：10x10x5，整数边界才与原版脸 1:1 对齐。 */
     private static final int BOX_W = 10;
-    /** 高 10（-9 ~ 1，同样留整数余量，避免与头顶/下巴共面）。 */
     private static final int BOX_H = 10;
-    /** 深 5（z -5..0：脸前留 1 格空隙，后面停在耳朵前）。 */
     private static final int BOX_D = 5;
 
     private static final int BODY_U = 0;
@@ -55,7 +39,6 @@ public final class MaskUvTemplate {
     private static final Color FACE = new Color(0xC8, 0x5A, 0x50);
     private static final Color SIDE = new Color(0x5A, 0x82, 0xC8);
     private static final Color CAP = new Color(0x5F, 0xAF, 0x6B);
-    /** 底面用另一个色相，否则和相邻的顶面同色，纯色块模板里看不出分界。 */
     private static final Color BOTTOM = new Color(0x4E, 0x9A, 0xA0);
     private static final Color INNER = new Color(0x3A, 0x3A, 0x3A);
     private static final Color OUTLINE = new Color(0x10, 0x10, 0x10);
@@ -83,7 +66,6 @@ public final class MaskUvTemplate {
         printTable(regions);
     }
 
-    /** 按原版盒子展开规则往列表里加 6 个面。 */
     private static void addBox(List<Region> regions, int u, int v, boolean shell) {
         int w = BOX_W;
         int h = BOX_H;
@@ -115,8 +97,7 @@ public final class MaskUvTemplate {
         g.fillRect(0, 0, TEX, TEX);
         g.setComposite(java.awt.AlphaComposite.SrcOver);
 
-        // 只填纯色块，不描边：描边会吃掉每个区域最外一圈 texel，让人误以为可用面积小了一圈。
-        // 区域分界靠颜色区分（相邻区域刻意用不同色相），标注只画在放大预览图上。
+        // 不描边：描边会吃掉每个区域最外一圈 texel。
         for (Region region : regions) {
             g.setColor(region.color());
             g.fillRect(region.x(), region.y(), region.w(), region.h());
@@ -134,7 +115,6 @@ public final class MaskUvTemplate {
         g.setColor(new Color(0x1A, 0x1A, 0x1E));
         g.fillRect(0, 0, image.getWidth(), image.getHeight());
 
-        // 棋盘底，方便看清透明区域
         for (int y = 0; y < TEX; y++) {
             for (int x = 0; x < TEX; x++) {
                 if (((x >> 2) + (y >> 2)) % 2 == 0) {
@@ -145,7 +125,7 @@ public final class MaskUvTemplate {
         }
         g.drawImage(template, MARGIN, MARGIN, size, size, null);
 
-        // 区域框只画在预览图上（1 预览像素 = 1/8 texel，不占用贴图）
+        // 区域框只画在预览图上，不占用贴图。
         for (Region region : regions) {
             if (region.shell()) {
                 g.setStroke(new BasicStroke(2F, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
@@ -159,14 +139,12 @@ public final class MaskUvTemplate {
         }
         g.setStroke(new BasicStroke(1F));
 
-        // 每 texel 的细网格 + 每 8 texel 的粗网格
         for (int i = 0; i <= TEX; i++) {
             g.setColor(i % 8 == 0 ? GRID_MAJOR : GRID);
             g.drawLine(MARGIN + i * SCALE, MARGIN, MARGIN + i * SCALE, MARGIN + size);
             g.drawLine(MARGIN, MARGIN + i * SCALE, MARGIN + size, MARGIN + i * SCALE);
         }
 
-        // 坐标刻度
         g.setFont(new Font("SansSerif", Font.PLAIN, 12));
         g.setColor(new Color(0xC8, 0xC8, 0xD0));
         for (int i = 0; i <= TEX; i += 8) {
@@ -174,7 +152,6 @@ public final class MaskUvTemplate {
             g.drawString(Integer.toString(i), 4, MARGIN + i * SCALE + 4);
         }
 
-        // 区域名（用能显示中文的字体，找不到就退回英文）
         Font font = cjkFont(11);
         g.setFont(font);
         FontMetrics metrics = g.getFontMetrics();
@@ -189,12 +166,10 @@ public final class MaskUvTemplate {
             g.drawString(text, cx - tw / 2, cy);
         }
 
-        // 图例
         g.setFont(font.deriveFont(13F));
         g.setColor(new Color(0xE0, 0xE0, 0xE8));
         g.drawString("框线只是本预览图的标注；贴图本体是纯色块，色块边界即 UV 分界", MARGIN, size + MARGIN + 18);
 
-        // 两块 UV 岛的说明，贴在本体/壳体右侧的空白区
         drawIslandCaption(g, font, 8, new Color(0xE0, 0xE0, 0xE8), new String[] {
                 "① 本体 @ texOffs(0, 0)",
                 "addBox(-5, -9, -5, 10, 10, 5)"});
@@ -202,7 +177,7 @@ public final class MaskUvTemplate {
                 "② 可选外扩壳 @ texOffs(0, 17)",
                 "CubeDeformation(0.35)，不做就整块留空"});
 
-        // 圈出正脸里真正要画的那 8x8：与玩家头部 1:1 对齐的区域
+        // 正脸里真正要画的 8x8：与原版脸 1:1 对齐。
         int inner = MARGIN + (BOX_D + 1) * SCALE;
         int innerSize = 8 * SCALE;
         g.setStroke(new BasicStroke(3F));
@@ -217,7 +192,6 @@ public final class MaskUvTemplate {
         return image;
     }
 
-    /** 在 UV 岛右侧的空白处画两行说明，并用引线连回该岛。 */
     private static void drawIslandCaption(Graphics2D g, Font base, int nativeCenterY, Color color, String[] lines) {
         Font font = base.deriveFont(12F);
         g.setFont(font);

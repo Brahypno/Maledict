@@ -75,20 +75,11 @@ public final class MaledictItemModels extends ItemModelProvider {
                         ResourceLocation.fromNamespaceAndPath("malum", "item/runewood_obelisk")))
                 .texture("0", modLoc("block/runewood_obelisk"));
 
-        // 刷怪蛋用原版那张模板贴图，两种颜色由物品自己给。
         registerSpawnEggModel("first_vicissitude_phase_one_spawn_egg");
         registerSpawnEggModel("first_vicissitude_phase_two_spawn_egg");
     }
 
-    /**
-     * 神侵恶刃：手上用大贴图，物品栏里用 16x16 那张，并且会在物品栏里眨眼。
-     *
-     * <p>眨眼靠模型覆盖：谓词 {@code maledict:blinking}（{@code MaledictItemProperties} 注册，
-     * 名字来自 {@link IncursusBladeItem#BLINK_PROPERTY}）在闭眼的那几个 tick 置 1，整份模型
-     * 换成 {@code incursus_blade_blink}。那一份的 {@code base}（手上那张大贴图）与 {@code fixed}
-     * （展示框）跟常态一模一样，只有 {@code gui} 换成闭眼贴图——所以「眨眼」只在物品栏里看得见，
-     * 拿在手上和挂在展示框上都不受影响。
-     */
+    /** 神侵恶刃的眨眼：只有 GUI 那层换成闭眼贴图，base 与 fixed 与常态相同，所以只在物品栏里看得见。 */
     private void registerIncursusBladeModels() {
         ItemModelBuilder handheld = getBuilder("incursus_blade_handheld")
                 .parent(new ModelFile.UncheckedModelFile(
@@ -120,14 +111,6 @@ public final class MaledictItemModels extends ItemModelProvider {
         getBuilder(name).parent(new ModelFile.UncheckedModelFile(mcLoc("item/template_spawn_egg")));
     }
 
-    /**
-     * 启蒙之年：两张贴图。
-     *
-     * <p>谓词 {@code maledict:enlightened} 由 {@code MaledictItemProperties} 注册，
-     * 佩戴者身上有启蒙之年药水效果时置 1，切到 {@code _enlightened} 那张。
-     * 谓词名和物品侧共用 {@link AgeOfEnlightenmentItem#ENLIGHTENED_PROPERTY}，
-     * 免得两边各写一遍字符串、改了模型忘了改代码。
-     */
     private void registerAgeOfEnlightenmentModel() {
         ItemModelBuilder enlightened = getBuilder("age_of_enlightenment_enlightened")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))

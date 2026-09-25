@@ -26,10 +26,8 @@ import team.lodestar.lodestone.systems.rendering.trail.TrailPointBuilder;
 import javax.annotation.Nullable;
 
 /**
- * The boss' own boomerang scythe. Malum's projectile is bound to player slots, so the boss uses
- * this dedicated entity: straight outbound flight with a single hit, then a homing return to the
- * right hand. The item stack lives in the projectile while it flies, which is why the boss can
- * never end up permanently empty handed.
+ * The boss' own boomerang scythe: Malum's projectile is bound to player slots, so the boss uses
+ * this dedicated entity, whose item stack never leaves it.
  */
 public final class VicissitudeScytheProjectileEntity extends Projectile {
     private static final EntityDataAccessor<ItemStack> DATA_ITEM =
@@ -44,7 +42,7 @@ public final class VicissitudeScytheProjectileEntity extends Projectile {
     public static final double MAX_OUTBOUND_DISTANCE = 16.0D;
     public static final int MAX_LIFETIME = 100;
 
-    /** Client side trail history; one sample per tick, 16 points. */
+    /** Client-side trail history: 16 points, one sample per tick. */
     public final TrailPointBuilder trail = TrailPointBuilder.create(16);
 
     private float damage = 8.0F;
@@ -92,7 +90,7 @@ public final class VicissitudeScytheProjectileEntity extends Projectile {
         entityData.set(DATA_RETURNING, value);
     }
 
-    /** Server side request from the boss: start returning as soon as possible. */
+    /** Server-side recall request; return starts as soon as possible. */
     public void recall() {
         forceRecall = true;
         if (!level().isClientSide) {
@@ -114,7 +112,7 @@ public final class VicissitudeScytheProjectileEntity extends Projectile {
         }
         Entity owner = getOwner();
         if (!(owner instanceof FirstVicissitudeBossEntity boss) || !boss.isAlive()) {
-            // The boss is gone: the dedicated weapon copy is destroyed, never dropped.
+            // Boss gone: the dedicated weapon copy is destroyed, never dropped.
             discard();
             return;
         }

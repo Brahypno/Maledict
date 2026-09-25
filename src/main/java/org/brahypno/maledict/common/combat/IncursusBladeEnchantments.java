@@ -32,13 +32,7 @@ import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.helpers.SoundHelper;
 
 public final class IncursusBladeEnchantments {
-    /**
-     * 强化状态下回旋投掷的伤害倍率。
-     */
     private static final float THROWN_DAMAGE_MULTIPLIER = 1.5f;
-    /**
-     * 强化状态下升腾斩的伤害倍率。
-     */
     private static final float ASCENSION_DAMAGE_MULTIPLIER = 1.25f;
 
     public static void throwScythe(Level level, Player player, InteractionHand hand, ItemStack stack) {
@@ -171,9 +165,7 @@ public final class IncursusBladeEnchantments {
                && !player.isPassengerOfSameVehicle(entity);
     }
 
-    /**
-     * Malum 判定这把镰刀不能横扫（戴着把横扫换成单体强化的项链）时即为强化状态。
-     */
+    /** 强化状态 = Malum 判定这把镰刀不能横扫（戴着把横扫换成单体强化的项链）。 */
     private static boolean isEnhanced(Player player) {
         return !MalumScytheItem.canSweep(player);
     }

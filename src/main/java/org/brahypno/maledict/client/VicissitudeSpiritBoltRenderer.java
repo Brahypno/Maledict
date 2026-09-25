@@ -19,8 +19,7 @@ import team.lodestar.lodestone.systems.rendering.LodestoneRenderType;
 import team.lodestar.lodestone.systems.rendering.VFXBuilders;
 
 /**
- * Straight phase-one/phase-two bolts: a single cold core with a short straight trail, visually
- * distinct from the double glimmer of the tracking orb.
+ * 一/二阶段灵矢的渲染器：单个冷核加一条短直尾迹。
  */
 public final class VicissitudeSpiritBoltRenderer
         extends EntityRenderer<VicissitudeSpiritBoltEntity> {
@@ -36,8 +35,6 @@ public final class VicissitudeSpiritBoltRenderer
     @Override
     public void render(VicissitudeSpiritBoltEntity entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
-        // Phase one pressure bolts read as a big slow double core; the phase two damage volley is
-        // a small fast flicker, so the two can never be confused in flight.
         boolean press = entity.pressesHealth();
         float phase = entity.tickCount + partialTick;
         MalumSpiritType spirit = press

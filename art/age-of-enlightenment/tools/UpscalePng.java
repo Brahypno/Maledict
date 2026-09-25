@@ -11,8 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * 把一张像素贴图按整数倍放大成便于查看的预览图（最近邻，带 texel 网格和坐标刻度）。
- *
+ * 把像素贴图按整数倍放大成带 texel 网格和坐标刻度的预览图（最近邻）。
  * 用法：java -cp build/mask-tool UpscalePng <输入.png> <输出.png> [倍数]
  */
 public final class UpscalePng {
@@ -42,7 +41,6 @@ public final class UpscalePng {
 
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                // 浅色棋盘：深色贴图（比如黑礼帽）才看得清形状
                 g.setColor(((x >> 2) + (y >> 2)) % 2 == 0
                         ? new Color(0xC4, 0xC4, 0xCA)
                         : new Color(0xA0, 0xA0, 0xA8));

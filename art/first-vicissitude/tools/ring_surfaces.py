@@ -25,30 +25,25 @@ def paint_ring(atlas, region, role, face):
     for y in range(height):
         for x in range(width):
             if cap:
-                # Dark fracture core framed by exposed metal, with an offset split.
                 edge=min(x,width-1-x,y,height-1-y)
                 ink=4 if edge==0 else 2
                 if x==width//2+(1 if y>=height//2 else 0): ink=0
                 if x==width//2-1 and y<height//2: ink=5
             elif face in ('front','back'):
                 ink=int(design[face][y])
-                # Broken trim ends before the stock's fracture face.
                 if x<2 or x>=width-2:
                     ink=3 if y in (0,height-1) else 1
                 for seal in design['seals']:
                     if face=='front':
-                        # Painted clasp: contact shadow, broad metal face, edge light.
                         if x==seal-1 and 1<=y<height-1: ink=0
                         if x==seal and 1<=y<height-1: ink=5
                         if x==seal+1 and 1<=y<height-1: ink=6 if y<height//2 else 4
                         if x==seal+2 and 1<=y<height-1: ink=3
                     else:
-                        # The reverse has inset registration marks, not protruding bars.
                         if (x-seal,y) in ((0,2),(1,2),(2,2),(2,3),(2,4)): ink=0
                         if (x-seal,y)==(1,3): ink=7
                 cracks=design['fractures']
                 if role in ('ring_chest','ring_socket'):
-                    # Inset stepped inscriptions in the stock between the clasps.
                     marks={(12,3),(13,3),(14,3),(14,4),(15,4),
                            (25,4),(26,4),(26,3),(27,3)}
                     if (x,y) in marks: ink=0
@@ -57,7 +52,6 @@ def paint_ring(atlas, region, role, face):
                 if (x,y) in cracks: ink=0
                 elif (x-1,y) in cracks: ink=4
             else:
-                # Sidewall has its own depth shading and continues the seal contacts.
                 profile='4321' if height==4 else '433211'
                 ink=int(profile[y])
                 if face=='inner': ink=max(0,ink-1)

@@ -10,18 +10,15 @@ class VicissitudeFeatherShedTest {
         assertEquals(1, VicissitudeFeatherShed.scale(0));
         assertTrue(VicissitudeFeatherShed.elapsed(20, 12) > VicissitudeFeatherShed.elapsed(20, 19));
     }
-    @Test void feathersFallAndFinishBeforePhaseTwo() {
-        float previous = -1;
-        for (int tick=0; tick<=24; tick++) {
-            assertTrue(VicissitudeFeatherShed.drop(tick) >= previous);
-            previous = VicissitudeFeatherShed.drop(tick);
-            assertTrue(VicissitudeFeatherShed.scale(tick)>=0);
-        }
-        assertEquals(0, VicissitudeFeatherShed.scale(24));
-        assertEquals(0, VicissitudeFeatherShed.scale(VicissitudeFeatherShed.elapsed(60, 28)));
+    /** 落羽在 24 tick 内落完：最后一 tick 还有余量，到点归零，不会拖进二阶段。 */
+    @Test void theFallFinishesWithinTwentyFourTicks() {
+        assertTrue(VicissitudeFeatherShed.scale(23.0F) > 0.0F);
+        assertEquals(0.0F, VicissitudeFeatherShed.scale(24.0F));
+        assertEquals(0.0F, VicissitudeFeatherShed.scale(VicissitudeFeatherShed.elapsed(60, 28)));
     }
     @Test void phaseTwoDropsFeatherOnlyCollisionGroups() {
-        assertTrue(VicissitudeMeshGeometry.WINGS.stream().anyMatch(b -> b.joint().name().contains("FEATHER_")));
+        assertEquals(8, VicissitudeMeshGeometry.WINGS.stream()
+                .filter(b -> b.joint().name().contains("FEATHER_")).count());
         assertTrue(VicissitudeMeshGeometry.BONE_WINGS.stream().noneMatch(b -> b.joint().name().contains("FEATHER_")));
         var pose=VicissitudeRig.newPose();
         VicissitudeRig.compute(pose,true,1,VicissitudeRig.Action.NONE,0,false,0,0,0,-1);

@@ -110,8 +110,6 @@ public final class MaledictRecipes extends RecipeProvider {
                 .setSecondaryInput(SpiritTypeRegistry.SACRED_SPIRIT.spiritShard.get(), 32)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "runeworking/rune_of_satiation"));
 
-        // 邪恶线的两枚图腾符文：符板认极性，精魂认路线——都是 Malum 图腾符文的写法
-        // （符文木符板配 32 枚精魂，普通符文的污岩/虚空符板只要 16 枚）。
         new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_DECAY.get(), 1)
                 .setPrimaryInput(ItemRegistry.RUNEWOOD_TABLET.get(), 1)
                 .setSecondaryInput(SpiritTypeRegistry.WICKED_SPIRIT.spiritShard.get(), 32)
@@ -122,7 +120,6 @@ public final class MaledictRecipes extends RecipeProvider {
                 .setSecondaryInput(SpiritTypeRegistry.WICKED_SPIRIT.spiritShard.get(), 32)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "runeworking/rune_of_the_pack"));
 
-        // 神圣线的灵魂木那枚：同样 32 枚精魂，换神圣精魂、符板仍旧认极性。
         new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_RIPENING.get(), 1)
                 .setPrimaryInput(ItemRegistry.SOULWOOD_TABLET.get(), 1)
                 .setSecondaryInput(SpiritTypeRegistry.SACRED_SPIRIT.spiritShard.get(), 32)
@@ -145,7 +142,6 @@ public final class MaledictRecipes extends RecipeProvider {
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(
                         Maledict.MODID, "runeworking/rune_of_stagnant_evolution"));
 
-        // 同一块白镴符板，第二枚喂的是血肉：64 份鲜活血肉，是 Malum 符文工艺里最贵的一档。
         new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_ROTTEN_BONE.get(), 1)
                 .setPrimaryInput(MaledictItems.MALIGNANT_PEWTER_TABLET.get(), 1)
                 .setSecondaryInput(ItemRegistry.LIVING_FLESH.get(), 64)

@@ -10,13 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * 神侵恶刃在物品栏里的眨眼：睁着眼，隔一阵闭一下。
- *
- * <p>钉住的是规律本身（{@code IncursusBladeBlink} 是纯换算，不碰世界）：同一 tick 永远同一个
- * 答案、单次闭眼不超过 {@link IncursusBladeBlink#MAX_BLINK_TICKS} tick（跨轮也不许粘起来）、
- * 越被盯着眨得越勤、不同的堆各眨各的。至于「看上去像不像活物」，只能进游戏用眼睛验。
- */
+/** 神侵恶刃在物品栏里的眨眼：睁着眼，隔一阵闭一下，越被盯着眨得越勤。 */
 class IncursusBladeBlinkTest {
 
     /** 采样窗口，40 000 tick ≈ 33 分钟，够把三档节奏的差距拉开。 */
@@ -25,11 +19,6 @@ class IncursusBladeBlinkTest {
     private static final int SEED = 0x5EED_1234;
     private static final int OTHER_SEED = 0x0BAD_C0DE;
 
-    /**
-     * 同一个 tick 问多少次都是同一个答案。
-     *
-     * <p>渲染一秒要问六十次；答案要是跟着调用次数变，物品栏里就会闪成一片。
-     */
     @Test
     void theSameTickAlwaysAnswersTheSame() {
         for (Gaze gaze : Gaze.values()) {
@@ -43,12 +32,7 @@ class IncursusBladeBlinkTest {
         }
     }
 
-    /**
-     * 一次闭眼就是一次眨眼：1 到 {@link IncursusBladeBlink#MAX_BLINK_TICKS} tick，不能更长。
-     *
-     * <p>「不能更长」同时管住了跨轮粘连：某轮的闭眼贴着轮边界、下一轮的又贴着另一边的话，
-     * 两段会连成一段长闭眼——那看起来就不是眨眼，是闭眼休息。
-     */
+    /** 单次闭眼是 1 到 3 tick（真人眨眼约 100–150 毫秒），跨轮也不许粘成一段。 */
     @Test
     void everyBlinkIsShort() {
         for (int seed = 0; seed < 64; seed++) {
@@ -56,20 +40,13 @@ class IncursusBladeBlinkTest {
                 List<Integer> lengths = blinkLengths(seed, gaze, SAMPLE_TICKS);
                 assertFalse(lengths.isEmpty(), gaze + " 在 33 分钟里一次都没眨");
                 for (int length : lengths) {
-                    assertTrue(length >= IncursusBladeBlink.MIN_BLINK_TICKS
-                                    && length <= IncursusBladeBlink.MAX_BLINK_TICKS,
-                            gaze + " 眨了一次 " + length + " tick 的眼");
+                    assertTrue(length >= 1 && length <= 3, gaze + " 眨了一次 " + length + " tick 的眼");
                 }
             }
         }
     }
 
-    /**
-     * 越被盯着眨得越勤：快捷栏选中 &gt; 鼠标指着 &gt; 只是躺在背包里。
-     *
-     * <p>这就是「根据是否选中采取不同的贴图交换速度」那一条：三档之间要拉开足够大的差距，
-     * 不然玩家根本看不出选中与否有区别。
-     */
+    /** 快捷栏选中 &gt; 鼠标指着 &gt; 只是躺在背包里。 */
     @Test
     void theMoreAttentionTheMoreItBlinks() {
         int selected = blinkLengths(SEED, Gaze.SELECTED, SAMPLE_TICKS).size();
@@ -81,7 +58,6 @@ class IncursusBladeBlinkTest {
         assertTrue(selected > hovered * 1.5, "选中该比悬停明显勤：" + selected + " vs " + hovered);
     }
 
-    /** 两把一模一样的刃各眨各的：不是复制粘贴，也不是同一套节奏平移。 */
     @Test
     void differentStacksBlinkToTheirOwnRhythm() {
         int firstSeedBlinks = 0;
@@ -106,7 +82,6 @@ class IncursusBladeBlinkTest {
                 "两把刃闭眼的时刻重合太多（" + bothClosed + " 次），看着像同步的");
     }
 
-    /** 一段窗口里每一次闭眼各占多少 tick，按发生顺序排好。 */
     private static List<Integer> blinkLengths(int seed, Gaze gaze, int ticks) {
         List<Integer> lengths = new ArrayList<>();
         int current = 0;

@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * Rigid Blender mesh attached to vanilla ModelPart joints, also used by the emissive pass.
+ * 挂在原版 ModelPart 关节上的 Blender 刚性网格，自发光那一趟也复用它。
  */
 final class VicissitudeBlenderMesh {
     private static final ResourceLocation RESOURCE = ResourceLocation.fromNamespaceAndPath(
@@ -28,7 +28,7 @@ final class VicissitudeBlenderMesh {
     private record Triangle(Vertex a, Vertex b, Vertex c, float nx, float ny, float nz) {}
 
     VicissitudeBlenderMesh() {
-        // Model instances are rebuilt on resource reload; never retain a static mesh across F3+T.
+        // 模型实例在资源重载时会重建，别把网格静态缓存住，否则 F3+T 之后还是旧网格。
         try (var reader = Minecraft.getInstance().getResourceManager()
                                    .getResourceOrThrow(RESOURCE).openAsReader()) {
             var root = JsonParser.parseReader(reader).getAsJsonObject();
@@ -96,7 +96,7 @@ final class VicissitudeBlenderMesh {
                 emit(triangle.a, triangle, pose, buffer, light, overlay, red, green, blue, alpha);
                 emit(triangle.b, triangle, pose, buffer, light, overlay, red, green, blue, alpha);
                 emit(triangle.c, triangle, pose, buffer, light, overlay, red, green, blue, alpha);
-                // Entity RenderTypes use QUADS: duplicate the final corner for a triangle.
+                // 实体 RenderType 按 QUADS 消费：三角形要把最后一个角重复一次。
                 emit(triangle.c, triangle, pose, buffer, light, overlay, red, green, blue, alpha);
             }
             stack.popPose();

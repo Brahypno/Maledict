@@ -60,10 +60,7 @@ public final class RigMeshCheck {
         System.out.println("PASS: " + checks + " exported vertex / action / phase / yaw / fold checks");
     }
 
-    /**
-     * The chest ring and the halo are one mechanism: the chest arcs must travel rigidly around
-     * their hub, and they must turn the other way at the same rate as the ring behind the head.
-     */
+    /** Chest arcs travel rigidly around the shared hub and counter rotate against the halo. */
     private static void checkActualRingMesh() throws Exception {
         long checks = 0;
         var lines = Files.readAllLines(Path.of("build/rig-tool/chest-ring-vertices.csv"));
@@ -111,7 +108,6 @@ public final class RigMeshCheck {
                 } else {
                     for (int index = 0; index < radii.length; index++) {
                         if (Math.abs(radii[index] - reference[index]) > .0005F) {
-                            // A per joint rotation would swing each arc around its own pivot instead.
                             throw new AssertionError("Chest ring arc left its circle: "
                                     + VicissitudeRig.CHEST_RING_ARCS[index] + " at " + tick);
                         }
@@ -120,10 +116,7 @@ public final class RigMeshCheck {
                 if (tick == 0) {
                     continue;
                 }
-                // Idle only: the same action pose at the same action clock is the reference, so the
-                // authored fragment flare of a cast cancels and only the slow spin is left. Each
-                // ring is measured against its own non spinning ancestor, which removes the body
-                // bob and the torso lean as well.
+                // Same action pose at the same clock is the reference: the cast flare cancels.
                 var spine = VicissitudeRig.newPose();
                 VicissitudeRig.compute(spine, false, 0, action, tick % 50, false, 0, 0, 0, -1);
                 float ringTurn = inPlaneAngle(pose, Joint.TORSO, Joint.CHEST_RING_LEFT, 1.0F, 0.0F)
@@ -166,18 +159,12 @@ public final class RigMeshCheck {
                                  + (a.z() - b.z()) * (a.z() - b.z()));
     }
 
-    /**
-     * Wings must stay wings. Sweeps every action, phase, idle clock and wing fold and checks that
-     * no wing joint is rotated further than the authored poses ever intend: an earlier secondary
-     * motion pass scaled the wing drag by a factor twice and sent the roots through a full turn,
-     * which read as the wings flapping on their own.
-     */
+    /** Sweeps every action, phase, clock and fold; no wing joint may leave its authored envelope. */
     private static void checkWingComposure() {
         String[] wingJoints = {"WING_LEFT_ROOT", "WING_RIGHT_ROOT", "WING_LEFT_OUTER",
                 "WING_RIGHT_OUTER", "WING_LEFT_LOWER", "WING_RIGHT_LOWER",
                 "WING_LEFT_FEATHERS", "WING_RIGHT_FEATHERS"};
-        // Authored envelope per joint, roughly fifteen percent above the largest pose the sweep
-        // actually produces, so any accidental extra multiplier trips the check immediately.
+        // Authored envelope per joint, ~15% above the largest pose the sweep produces.
         float[][] limits = {{14.0F, 70.0F, 66.0F}, {14.0F, 70.0F, 66.0F}, {10.0F, 56.0F, 24.0F},
                 {10.0F, 56.0F, 24.0F}, {8.0F, 52.0F, 10.0F}, {8.0F, 52.0F, 10.0F},
                 {12.0F, 12.0F, 10.0F}, {12.0F, 12.0F, 10.0F}};

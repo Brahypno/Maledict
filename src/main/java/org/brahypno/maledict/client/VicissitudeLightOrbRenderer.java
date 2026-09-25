@@ -17,7 +17,7 @@ import team.lodestar.lodestone.registry.client.LodestoneRenderTypeRegistry;
 import team.lodestar.lodestone.systems.rendering.LodestoneRenderType;
 import team.lodestar.lodestone.systems.rendering.VFXBuilders;
 
-/** Mirrors the umbral/eldritch double glimmer and trail of Malum's pneuma void. */
+/** 幽暗与邪异双微光加双尾迹的光球渲染器。 */
 public final class VicissitudeLightOrbRenderer extends EntityRenderer<VicissitudeLightOrbEntity> {
     public VicissitudeLightOrbRenderer(EntityRendererProvider.Context context) {
         super(context);

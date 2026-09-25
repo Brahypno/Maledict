@@ -24,16 +24,8 @@ import java.util.Objects;
 
 /**
  * 无常的刷怪蛋，一个阶段一个：落地的同时就把这一只安排到那个阶段。
- *
- * <p>它是调试用的门：一阶段那颗不用等像自己醒过来，二阶段那颗不用陪它打满一阶段，
- * 所以配平阶段数值时可以直接从要测的那一段开始。
- *
- * <p>放置流程照抄原版刷怪蛋，唯一的差别是生成那一步自己走：原版
- * {@code EntityType#spawn} 会 create 之后立刻把实体交给世界，而
- * {@link FirstVicissitudeBossEntity#setSpawnPhase} 必须赶在 {@code onAddedToWorld} <b>之前</b>
- * ——血量池是在那里被账本按当时的难度捕获的，晚一步就锁不上难度，更谈不上按要求开工。
- * 所以这里用 {@code EntityType#create}（它照样跑 {@code finalizeSpawn} 与生成事件），
- * 定完阶段再自己 {@code addFreshEntityWithPassengers}。
+ * {@code setSpawnPhase} 必须赶在 {@code onAddedToWorld} <b>之前</b>（血量池在那里按当时的难度捕获），
+ * 所以用 {@code EntityType#create} 定完阶段再自己 {@code addFreshEntityWithPassengers}。
  */
 public class VicissitudeSpawnEggItem extends ForgeSpawnEggItem {
     private final BossDifficulty difficulty;

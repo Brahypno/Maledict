@@ -17,10 +17,8 @@ import javax.annotation.Nullable;
 
 /**
  * Claim token for confiscated Curios that could not be delivered automatically.
- *
- * <p>The token is a ticket, never the storage: the stacks themselves stay on the server side
- * ledger until they are really equipped or placed in the inventory, so a lost or duplicated
- * token can never duplicate or destroy an item.
+ * <p>The token is a ticket, never the storage: the stacks stay on the server side ledger until they
+ * are really equipped or placed, so a lost or duplicated token can never duplicate an item.
  */
 public final class CurioReturnTokenItem extends Item {
     public CurioReturnTokenItem() {

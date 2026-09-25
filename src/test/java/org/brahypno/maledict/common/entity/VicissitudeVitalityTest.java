@@ -13,14 +13,12 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Run with gradlew test; entity integration still needs a Forge game. */
 public final class VicissitudeVitalityTest {
     @BeforeAll
     static void initializeMinecraftVersion() {
         SharedConstants.tryDetectVersion();
     }
 
-    // 示例 1：同 tick 去重；三个不同 tick 的 kill 才能击穿。
     @Test
     void thirdDistinctKillBypasses() {
         VicissitudeVitality state = VicissitudeVitality.initial(1000.0F);
@@ -37,7 +35,6 @@ public final class VicissitudeVitalityTest {
         assertTrue(state.killAttempt(13, 100).equals(state), "Repeated death calls must remain terminal");
     }
 
-    // 示例 2：验证连续尝试窗口的边界和超时重置。
     @Test
     void expiredSequenceRestarts() {
         VicissitudeVitality state = VicissitudeVitality.initial(1000.0F)
@@ -49,7 +46,6 @@ public final class VicissitudeVitalityTest {
         assertTrue(state.killAttempts() == 1, "Moving world time backwards must restart the sequence");
     }
 
-    // 示例 3：普通扣血、治疗与 kill 计数共存。
     @Test
     void ordinaryWoundsDoNotResetTheSequence() {
         VicissitudeVitality state = VicissitudeVitality.initial(1000.0F)
@@ -59,13 +55,12 @@ public final class VicissitudeVitalityTest {
         assertTrue(state.current() == 0.0F, "Damage/healing within the window must not erase bypass attempts");
     }
 
-    // 示例 4：实际写入文件并重载，验证 UUID 隔离与状态保留。
     @Test
     void persistenceKeepsWoundsAndDeadIdentities(@TempDir Path directory) throws IOException {
         UUID woundedId = UUID.randomUUID();
         UUID deadId = UUID.randomUUID();
         VicissitudeVitality wounded = VicissitudeVitality.initial(1400.0F)
-                .afterDamage(14.0F).killAttempt(11, 100).killAttempt(12, 100);
+                .afterDamage(14.0F).afterAcceptedHit(37, 20).killAttempt(11, 100).killAttempt(12, 100);
         VicissitudeVitality corpse = VicissitudeVitality.initial(1000.0F)
                 .killAttempt(1, 100).killAttempt(2, 100).killAttempt(3, 100);
         VicissitudeVitalityLedger ledger = new VicissitudeVitalityLedger();
@@ -75,14 +70,13 @@ public final class VicissitudeVitalityTest {
         ledger.save(file.toFile());
         VicissitudeVitalityLedger restored =
                 VicissitudeVitalityLedger.load(NbtIo.readCompressed(file.toFile()).getCompound("data"));
-        assertTrue(wounded.equals(restored.find(woundedId)), "Saving must retain captured bonus, wounds and timers");
+        assertTrue(wounded.equals(restored.find(woundedId)), "Saving must retain the open gate, wounds and timers");
         assertTrue(corpse.equals(restored.find(deadId)), "A dead UUID must stay dead on reload");
         assertTrue(restored.find(woundedId).killAttempt(13, 100).current() == 0.0F,
                 "Reload must not reset two accumulated attempts");
         assertTrue(restored.find(UUID.randomUUID()) == null, "Different UUIDs must not share vitality");
     }
 
-    // 示例 5：伪造 Capability 的 NBT，验证绑定后的防反写行为。
     @Test
     void entityNbtCannotRewriteTheLedgerOrBoundCapability() {
         UUID identity = UUID.randomUUID();

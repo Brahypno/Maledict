@@ -36,7 +36,7 @@ public final class MaledictEntityRenderers {
                 event.getEntityModels().bakeLayer(AgeOfEnlightenmentModel.LAYER));
     }
 
-    /** 面具模型实例，供饰品渲染器使用；在 {@code AddLayers} 阶段烘焙。 */
+    /** 面具模型实例，在 {@code AddLayers} 阶段烘焙。 */
     public static AgeOfEnlightenmentModel ageOfEnlightenmentModel() {
         return ageOfEnlightenmentModel;
     }

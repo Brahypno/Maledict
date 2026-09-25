@@ -19,14 +19,11 @@ import java.util.Locale;
 /**
  * Offline art tool for the First Vicissitude boss.
  *
- * <p>Reads the same authoring data the runtime model uses ({@link VicissitudeRigData}), so the
- * generated base/emissive textures, the Blockbench project and the preview renders can never
- * drift from the in-game model. No Minecraft classes are involved, so it compiles standalone:
- *
- * <pre>
+ * <p>Reads the runtime authoring data ({@link VicissitudeRigData}), so the generated textures, the
+ * Blockbench project and the preview renders cannot drift from the in-game model. No Minecraft
+ * classes are involved, so it compiles standalone:
  * javac -d build/rig-tool -sourcepath src/main/java art/first-vicissitude/tools/RigArtGenerator.java
  * java -cp build/rig-tool RigArtGenerator
- * </pre>
  */
 public final class RigArtGenerator {
     private static final int TEXTURE_SIZE = VicissitudeRigData.TEXTURE_SIZE;
@@ -46,7 +43,6 @@ public final class RigArtGenerator {
         System.out.println("cubes=" + VicissitudeRigData.placedCubes().size());
     }
 
-    /** Claim token icon: a broken custody seal in the boss' cold violet palette. */
     private static void writeTokenIcon() throws IOException {
         int size = 16;
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
@@ -90,8 +86,6 @@ public final class RigArtGenerator {
         ImageIO.write(image, "PNG", path.toFile());
         System.out.println("wrote " + path);
     }
-
-    // ---------------------------------------------------------------- textures
 
     private static void writeTexture(Path path, boolean emissive) throws IOException {
         BufferedImage image = new BufferedImage(TEXTURE_SIZE, TEXTURE_SIZE, BufferedImage.TYPE_INT_ARGB);
@@ -162,7 +156,6 @@ public final class RigArtGenerator {
                 float noise = hash(cube.u() * 31 + x, cube.v() * 17 + y, cube.joint().ordinal());
                 int base = mix(material.primary(), material.secondary(), noise * 0.75F);
                 float factor = shade.factor;
-                // Edge darkening keeps individual plates readable at a distance.
                 if (x == 0 || y == 0 || x == width - 1 || y == height - 1) {
                     factor *= 0.72F;
                 } else if (x == 1 || y == 1 || x == width - 2 || y == height - 2) {
@@ -193,8 +186,6 @@ public final class RigArtGenerator {
         int seed = cube.joint().ordinal() * 7 + cube.u();
         return ((x * 3 + y * 5 + seed) % 23 == 0) || ((x + y * 2 + seed) % 41 == 0);
     }
-
-    // ---------------------------------------------------------------- bbmodel
 
     private static void writeBlockbenchProject(Path path) throws IOException {
         StringBuilder json = new StringBuilder();
@@ -318,9 +309,7 @@ public final class RigArtGenerator {
         return String.format(Locale.ROOT, "%.1f", value);
     }
 
-    // ---------------------------------------------------------------- previews
-
-    /** Orthographic software render of the posed skeleton; stands in for in-game screenshots. */
+    /** Orthographic software render of the posed skeleton. */
     private static void writePreviews() throws IOException {
         for (boolean phaseTwo : new boolean[]{false, true}) {
             VicitudeView view = phaseTwo ? VicitudeView.PHASE_TWO : VicitudeView.PHASE_ONE;
@@ -350,10 +339,9 @@ public final class RigArtGenerator {
         SIDE(0.0F, -1.0F, 1.0F, 0.0F),
         BACK(-1.0F, 0.0F, 0.0F, -1.0F);
 
-        /** Screen right axis in entity-local space. */
         private final float rightX;
         private final float rightZ;
-        /** View depth axis; larger means closer to the camera. */
+        /** Larger depth means closer to the camera. */
         private final float depthX;
         private final float depthZ;
 
@@ -365,7 +353,6 @@ public final class RigArtGenerator {
         }
     }
 
-    /** Reuses the runtime rig so previews show exactly what the game model will pose. */
     private record RenderPose(VicissitudeRig.Pose pose) {
         static RenderPose build(VicitudeView view, boolean phaseTwo) {
             VicissitudeRig.Pose pose = VicissitudeRig.newPose();
@@ -483,8 +470,6 @@ public final class RigArtGenerator {
             return length == 0.0F ? 0.0F : ny / length;
         }
     }
-
-    // ---------------------------------------------------------------- helpers
 
     private static boolean insideGap(float angle, float gapCenter, float gapWidth) {
         float delta = angle - gapCenter;

@@ -11,7 +11,6 @@ def paint_relic(atlas, region):
         for x in range(region['width']):
             alpha=1
             if crystal:
-                # Facet intersections and mineral fissures, without facial marks.
                 seam=4+y//3 if variant%2==0 else 11-y//4
                 ink=3 if x<seam else 1
                 if x==seam: ink=5
@@ -22,7 +21,6 @@ def paint_relic(atlas, region):
                 if (x,y) in ((2,7),(3,8),(3,9),(4,10)): ink=4
                 if variant in (2,5) and 2<x<seam-1 and y<11: ink=4
             else:
-                # Native 16 x 32 cloth: tapering folds and independently torn threads.
                 fold=4+(1 if y>8 else 0)+(1 if y>20 else 0)
                 ink=2 if x<8 else 1
                 if x in (fold,fold+1): ink=3
@@ -31,7 +29,6 @@ def paint_relic(atlas, region):
                 if x in (1,14) and y<23: ink=3
                 if x in (2,13) and y<23: ink=0
                 if y<3: ink=1 if y else 0
-                # Sparse interrupted stitching; no solid badge or rectangular frame.
                 if x==3 and y in (5,6,10,14,15,19): ink=4
                 if (x,y) in ((10,8),(11,9),(10,10),(9,11),(10,12)): ink=3
                 hem=(24,27,29,26,30,31,27,23,26,29,25,28,30,26,23,25)[x]
