@@ -1,0 +1,14 @@
+{
+  "type": "malum:runeworking",
+  "output": {
+    "item": "maledict:rune_of_rotten_bone"
+  },
+  "primaryInput": {
+    "count": 1,
+    "item": "maledict:malignant_pewter_tablet"
+  },
+  "secondaryInput": {
+    "count": 64,
+    "item": "malum:living_flesh"
+  }
+}

@@ -46,6 +46,13 @@ public final class MaledictCodexEntries {
     private static final String RUNE_OF_RIPENING_ENTRY = "maledict.rune_of_ripening";
     private static final String VOID_RUNEWORKING_ENTRY = "void.maledict.runeworking";
 
+    /**
+     * 白镴符板上刻出来的两枚符文：与图腾符文那四条一样，各自是一个条目，
+     * 由符板那条末尾的图标页指过来（点图标进各自的条目看合成）。
+     */
+    private static final String RUNE_OF_STAGNANT_EVOLUTION_ENTRY = "void.maledict.rune_of_stagnant_evolution";
+    private static final String RUNE_OF_ROTTEN_BONE_ENTRY = "void.maledict.rune_of_rotten_bone";
+
     private static final int TOTEMIC_RUNES_CONTINUED_X = 4;
     private static final int TOTEMIC_RUNES_CONTINUED_Y = 15;
 
@@ -93,9 +100,20 @@ public final class MaledictCodexEntries {
     }
 
     /**
-     * 虚空线的符文工艺：正文一页，接符板的精魂灌注配方，再接符文的符文工艺配方。
+     * 虚空线的符文工艺：正文一页，接符板的精魂灌注配方，末尾一页摆出这块符板刻得出的两枚符文
+     * ——演进凝滞符文、朽骨符文，点图标进各自的条目。排法与「图腾符文：续」一致
+     * （那边也是 {@code HeadlineTextItemPage} 接 {@code EntrySelectorPage}）。
+     *
+     * <p><b>两枚符文不落节点。</b>虚空卷里符文条目只从图标页进：Malum 自家那八枚虚空符文
+     * （异端、献祭赋能那一批）同样只 {@code BookEntry.build(id)} 不摆位置，这条路走的是它们的排法。
+     * 摆成节点的话，同一枚符文会在书里出现两趟——图标页上一趟、图上又一趟。
      */
     private static void addVoidRuneworkingEntry() {
+        EntryReference stagnantEvolution = voidRuneEntry(
+                RUNE_OF_STAGNANT_EVOLUTION_ENTRY, MaledictItems.RUNE_OF_STAGNANT_EVOLUTION);
+        EntryReference rottenBone = voidRuneEntry(
+                RUNE_OF_ROTTEN_BONE_ENTRY, MaledictItems.RUNE_OF_ROTTEN_BONE);
+
         if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, VOID_RUNEWORKING_ENTRY)){
             return;
         }
@@ -109,7 +127,7 @@ public final class MaledictCodexEntries {
                 VOID_RUNEWORKING_ENTRY + ".1",
                 MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
-        builder.addPage(RuneworkingPage.fromOutput(MaledictItems.RUNE_OF_STAGNANT_EVOLUTION.get()));
+        builder.addPage(new EntrySelectorPage(List.of(stagnantEvolution, rottenBone)));
         builder.afterUmbralCrystal();
 
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
@@ -170,6 +188,20 @@ public final class MaledictCodexEntries {
         PlacedBookEntry entry = builder.build();
         ArcanaProgressionScreen.ENTRIES.add(entry);
         return entry;
+    }
+
+    /**
+     * 一枚虚空线符文的条目：正文一页接符文工艺配方一页，与图腾符文那几条同排法，
+     * 但<b>不摆位置</b>——虚空卷里符文只从 {@link #addVoidRuneworkingEntry} 的图标页进，
+     * 与 Malum 那八枚虚空符文一致（它们也是只 build 不落点）。
+     *
+     * <p>返回的是 {@link EntryReference}：图标页收的就是这个（物品 + 条目），
+     * 所以这里直接把引用交出去，而不是两边各 build 一份。
+     */
+    private static EntryReference voidRuneEntry(String identifier, RegistryObject<Item> rune) {
+        return new EntryReference(rune, BookEntry.build(identifier)
+                .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
+                .addPage(RuneworkingPage.fromOutput(rune.get())));
     }
 
     /**

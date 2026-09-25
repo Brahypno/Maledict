@@ -99,6 +99,19 @@ public final class MaledictItems {
                                                        1.0D,
                                                        AttributeModifier.Operation.MULTIPLY_TOTAL));
 
+    /**
+     * 虚空线的第二枚符文，同一块恶念白镴符板：喂进去的是 64 份鲜活血肉。
+     *
+     * <p>它替佩戴者去死，最多四次，每次从生命上限里抽走四分之一；抽走的骨头跟着玩家走，
+     * 摘下符文也不会还，只有真正死一次才清账。数值在
+     * {@link org.brahypno.maledict.common.curio.RottenBone}，出手点在
+     * {@link org.brahypno.maledict.common.curio.RottenBoneEvents}。
+     */
+    public static final RegistryObject<Item> RUNE_OF_ROTTEN_BONE =
+            ITEMS.register("rune_of_rotten_bone",
+                           () -> new RuneOfRottenBoneItem(new Item.Properties().stacksTo(1),
+                                                          SpiritTypeRegistry.ELDRITCH_SPIRIT));
+
     public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.MNEMONIC_OBELISK.get(), new Item.Properties(), MnemonicObeliskBlockEntity.STRUCTURE));
     public static final RegistryObject<Item> SOULWOOD_OBELISK = ITEMS.register("soulwood_obelisk", () ->

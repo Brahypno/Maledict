@@ -72,6 +72,16 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text." + VOID_RUNEWORKING_ENTRY + ".1",
                 "作为与这本书原作者不同的魔 法施行者，将恶念白镴这一反 魔法金属拗转到能为魔法所用 是我一直以来的研究。基于虚 "
                 + "空符文的工艺，我引入了一些 变量来突出白镴的一面而拒绝 其另一面。用白镴施行魔法既 不实用又不安全，但这就是我 想要的。");
+            add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY, "演进凝滞符文");
+            add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY + ".description", "阻止演进");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY, "演进凝滞符文");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY + ".1",
+                "阻止演进，是白镴的核心要 素。与意识相配后，具有一定 的倾向性，能够阻止由外而来 的演进");
+            add("malum.gui.book.entry." + RUNE_OF_ROTTEN_BONE_ENTRY, "朽骨符文");
+            add("malum.gui.book.entry." + RUNE_OF_ROTTEN_BONE_ENTRY + ".description", "拥抱枯骨");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_ROTTEN_BONE_ENTRY, "朽骨符文");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_ROTTEN_BONE_ENTRY + ".1",
+                "终有一天， 她将离开他们而独自离去， 她会厌倦天国天使们的歌声， 而更愿意去拥抱凡人的枯骨。");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "回忆方尖碑");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "灵魂木方尖碑");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "神圣精魂箭");
@@ -95,6 +105,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.RUNE_OF_THE_PACK, "兽群符文");
             addItem(MaledictItems.RUNE_OF_RIPENING, "熟成符文");
             addItem(MaledictItems.RUNE_OF_STAGNANT_EVOLUTION, "演进凝滞符文");
+            addItem(MaledictItems.RUNE_OF_ROTTEN_BONE, "朽骨符文");
             add("effect.maledict.age_of_enlightenment", "启蒙之年");
             add("effect.maledict.age_of_darkness", "黑暗时代");
             add("effect.maledict.age_of_enlightenment.description",
@@ -121,6 +132,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.curio.effect.maledict.decay", "身边敌对之物每两秒被磨去半颗心，永不致命。");
             add("malum.gui.curio.effect.maledict.ripening", "获得的经验多出四分之一。");
             add("malum.gui.curio.effect.maledict.pack_boon", "十六格内属于自己的随从获得抗性提升、力量与迅捷各 I 级。");
+            add("malum.gui.curio.effect.maledict.rotten_bone",
+                "若生命大于1点，则死亡时以25%最大生命值为代价逃离死亡");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "按住 Shift 追问一个不该问的问题");
             add("tooltip.maledict.age_of_enlightenment.shift", "黑暗的时代曾经存在过吗");
             add("tooltip.maledict.age_of_enlightenment.shift.enlightened", "那无穷，无限，永动的启蒙之年啊");
@@ -255,6 +268,22 @@ public final class MaledictLanguage extends LanguageProvider {
                 + "of Voidish Runecraft, I introduced certain variables, that one face of the pewter might be "
                 + "exalted and the other refused. Working magic through pewter is neither practical nor safe - "
                 + "but that is what I want.");
+            add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY, "Rune of Stagnant Evolution");
+            add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY + ".description",
+                "To Halt Advancement");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY,
+                "Rune of Stagnant Evolution");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY + ".1",
+                "To hold back advancement is the pewter's core property. Paired with a consciousness it takes on "
+                + "a certain bias, and can hold back the advancement that comes from without.");
+            add("malum.gui.book.entry." + RUNE_OF_ROTTEN_BONE_ENTRY, "Rune of Rotten Bone");
+            add("malum.gui.book.entry." + RUNE_OF_ROTTEN_BONE_ENTRY + ".description",
+                "To Embrace Mortal Bone");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_ROTTEN_BONE_ENTRY,
+                "Rune of Rotten Bone");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_ROTTEN_BONE_ENTRY + ".1",
+                "And she shall go one day separated from them, And be weary of the singing of the acoustic "
+                + "angels, And prefer to hug the mortal bone.");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "Mnemonic Obelisk");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "Soulwood Obelisk");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "Sacred Spirit Arrow");
@@ -277,6 +306,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.RUNE_OF_THE_PACK, "Rune of the Pack");
             addItem(MaledictItems.RUNE_OF_RIPENING, "Rune of Ripening");
             addItem(MaledictItems.RUNE_OF_STAGNANT_EVOLUTION, "Rune of Stagnant Evolution");
+            addItem(MaledictItems.RUNE_OF_ROTTEN_BONE, "Rune of Rotten Bone");
             add("effect.maledict.age_of_enlightenment", "Age of Enlightenment");
             add("effect.maledict.age_of_darkness", "Age of Darkness");
             add("effect.maledict.age_of_enlightenment.description",
@@ -313,6 +343,9 @@ public final class MaledictLanguage extends LanguageProvider {
                 "Experience Gained Is a Quarter Higher");
             add("malum.gui.curio.effect.maledict.pack_boon",
                 "Your Own Companions Within Sixteen Blocks Gain Resistance, Strength and Speed");
+            add("malum.gui.curio.effect.maledict.rotten_bone",
+                "On Death, If Maximum Health Is Above 1: Lose a Quarter of It, Heal 7 Health and Gain "
+                + "3.5 Seconds of Invulnerability, Four Times at Most");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "Hold Shift to ask a question better left unasked");
             add("tooltip.maledict.age_of_enlightenment.shift", "Was there ever a true age of darkness?");
             add("tooltip.maledict.age_of_enlightenment.shift.enlightened",
@@ -399,6 +432,8 @@ public final class MaledictLanguage extends LanguageProvider {
     private static final String RUNE_OF_THE_PACK_ENTRY = "maledict.rune_of_the_pack";
     private static final String RUNE_OF_RIPENING_ENTRY = "maledict.rune_of_ripening";
     private static final String VOID_RUNEWORKING_ENTRY = "void.maledict.runeworking";
+    private static final String RUNE_OF_STAGNANT_EVOLUTION_ENTRY = "void.maledict.rune_of_stagnant_evolution";
+    private static final String RUNE_OF_ROTTEN_BONE_ENTRY = "void.maledict.rune_of_rotten_bone";
     private static final String VICISSITUDE_RITE_ID = "vicissitude_rite";
     private static final String GREATER_RITE_ID = "greater_vicissitude_rite";
     private static final String ELDRITCH_RITE_ID = "eldritch_vicissitude_rite";

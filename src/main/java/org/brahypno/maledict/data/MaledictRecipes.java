@@ -145,6 +145,13 @@ public final class MaledictRecipes extends RecipeProvider {
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(
                         Maledict.MODID, "runeworking/rune_of_stagnant_evolution"));
 
+        // 同一块白镴符板，第二枚喂的是血肉：64 份鲜活血肉，是 Malum 符文工艺里最贵的一档。
+        new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_ROTTEN_BONE.get(), 1)
+                .setPrimaryInput(MaledictItems.MALIGNANT_PEWTER_TABLET.get(), 1)
+                .setSecondaryInput(ItemRegistry.LIVING_FLESH.get(), 64)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "runeworking/rune_of_rotten_bone"));
+
         new SpiritRepairRecipeBuilder(1.0f, Ingredient.of(ItemRegistry.NULL_SLATE.get()), 1)
                 .addItem(MaledictItems.ELEGY_BOW.get())
                 .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 11)
