@@ -41,6 +41,13 @@ public final class MaledictNetwork {
                 VicissitudeEffectPacket::decode,
                 VicissitudeEffectPacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(
+                3,
+                DelayedVitalsPacket.class,
+                DelayedVitalsPacket::encode,
+                DelayedVitalsPacket::decode,
+                DelayedVitalsPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendRadialAttack() {
@@ -54,6 +61,12 @@ public final class MaledictNetwork {
     /** One shot boss presentation event for a single tracking player. */
     public static void sendEffect(ServerPlayer player, VicissitudeEffectPacket packet) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    /** 延迟池：入队、清零、低频校正、进世界时各发一次，不逐 tick 发。 */
+    public static void sendDelayedVitals(ServerPlayer player, float pendingDamage, float pendingHeal) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                     new DelayedVitalsPacket(pendingDamage, pendingHeal));
     }
 
     private MaledictNetwork() {

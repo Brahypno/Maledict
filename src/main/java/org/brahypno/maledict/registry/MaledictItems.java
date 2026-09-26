@@ -85,6 +85,15 @@ public final class MaledictItems {
                            () -> new RuneOfRottenBoneItem(new Item.Properties().stacksTo(1),
                                                           SpiritTypeRegistry.ELDRITCH_SPIRIT));
 
+    /**
+     * 抑郁符文：污染石档 + 幽影精魂。适应的账目写在物品自己的 NBT 上，延迟池挂在玩家身上，
+     * 见 {@link RuneOfMelancholiaItem} 与 {@code DelayedVitalsEvents}。
+     */
+    public static final RegistryObject<Item> RUNE_OF_MELANCHOLIA =
+            ITEMS.register("rune_of_melancholia",
+                           () -> new RuneOfMelancholiaItem(new Item.Properties().stacksTo(1),
+                                                           SpiritTypeRegistry.UMBRAL_SPIRIT));
+
     public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.MNEMONIC_OBELISK.get(), new Item.Properties(), MnemonicObeliskBlockEntity.STRUCTURE));
     public static final RegistryObject<Item> SOULWOOD_OBELISK = ITEMS.register("soulwood_obelisk", () ->

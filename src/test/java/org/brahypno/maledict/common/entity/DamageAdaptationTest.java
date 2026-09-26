@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -161,5 +162,22 @@ class DamageAdaptationTest {
 
         assertEquals(List.of("player"), adaptation.snapshot());
         assertEquals(Math.exp(-1.0D), adaptation.adapt("player", 2), DELTA);
+    }
+
+    /** 新存档连次数一起存：读回来之后该多钝还是多钝，不会因为重登退回第一下。 */
+    @Test
+    void restoreKeepsTheHitCountsWhenTheyAreSaved() {
+        DamageAdaptation adaptation = new DamageAdaptation();
+        adaptation.adapt("mob|minecraft:zombie", 1);
+        adaptation.adapt("mob|minecraft:zombie", 1);
+        adaptation.adapt("mob|minecraft:zombie", 1);
+        assertEquals(Map.of("mob|minecraft:zombie", 3), adaptation.hitCounts());
+
+        DamageAdaptation loaded = new DamageAdaptation();
+        loaded.restore(adaptation.snapshot(), adaptation.hitCounts());
+
+        assertEquals(List.of("mob|minecraft:zombie"), loaded.snapshot());
+        assertEquals(Math.exp(-3.0D), loaded.adapt("mob|minecraft:zombie", 1), DELTA);
+        assertEquals(Map.of("mob|minecraft:zombie", 4), loaded.hitCounts());
     }
 }

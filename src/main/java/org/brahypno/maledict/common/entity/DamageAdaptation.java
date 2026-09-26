@@ -73,14 +73,24 @@ public final class DamageAdaptation {
 
     /** 从存档恢复窗口；只认非空消息，顺序即「最新在前」，每条都算刚挨过一次。 */
     public void restore(List<String> saved) {
+        restore(saved, Map.of());
+    }
+
+    /**
+     * 从存档恢复窗口与各消息已经挨过的次数；{@code savedWindow} 的顺序即「最新在前」。
+     *
+     * <p>次数缺失或小于 1 时按 1 算，不在窗口里的次数条目忽略 —— 只存窗口的旧存档照样读得进来，
+     * 代价是每条的次数退回 1。
+     */
+    public void restore(List<String> savedWindow, Map<String, Integer> savedHits) {
         clear();
-        if (saved == null) {
+        if (savedWindow == null) {
             return;
         }
-        for (String message : saved) {
+        for (String message : savedWindow) {
             if (message != null && !message.isEmpty() && !hitsByMessage.containsKey(message)) {
                 window.add(message);
-                hitsByMessage.put(message, 1);
+                hitsByMessage.put(message, Math.max(1, savedHits.getOrDefault(message, 1)));
             }
         }
     }

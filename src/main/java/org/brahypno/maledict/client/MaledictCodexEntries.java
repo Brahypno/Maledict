@@ -4,6 +4,7 @@ import com.sammy.malum.client.screen.codex.BookEntry;
 import com.sammy.malum.client.screen.codex.BookWidgetStyle;
 import com.sammy.malum.client.screen.codex.PlacedBookEntry;
 import com.sammy.malum.client.screen.codex.PlacedBookEntryBuilder;
+import com.sammy.malum.client.screen.codex.objects.progression.IconObject;
 import com.sammy.malum.client.screen.codex.pages.EntryReference;
 import com.sammy.malum.client.screen.codex.pages.EntrySelectorPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.RuneworkingPage;
@@ -15,6 +16,7 @@ import com.sammy.malum.client.screen.codex.pages.text.TextPage;
 import com.sammy.malum.client.screen.codex.screens.ArcanaProgressionScreen;
 import com.sammy.malum.client.screen.codex.screens.VoidProgressionScreen;
 import com.sammy.malum.common.events.SetupMalumCodexEntriesEvent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -48,6 +50,23 @@ public final class MaledictCodexEntries {
 
     private static final String RUNE_OF_STAGNANT_EVOLUTION_ENTRY = "void.maledict.rune_of_stagnant_evolution";
     private static final String RUNE_OF_ROTTEN_BONE_ENTRY = "void.maledict.rune_of_rotten_bone";
+    private static final String UMBRAL_EXPERIMENT_ENTRY = "void.maledict.umbral_experiment";
+    private static final String RUNE_OF_MELANCHOLIA_ENTRY = "void.maledict.rune_of_melancholia";
+
+    /**
+     * 接在「虚空符文工艺：拾遗」(6,10) 与「神侵恶刃」(6,11) 下面，凑成 x=6 的一列。
+     *
+     * <p>坐标是硬碰硬的：{@code SetupMalumCodexEntriesEvent} 只负责让你往 {@code VOID_ENTRIES} 里
+     * 塞一个带 x/y 的条目，屏幕照着坐标画，**没有任何重叠判断**。虚空页上 Malum 自己占了 25 个
+     * 坐标（(4,10) 是 weight_of_worlds、(5,10) 是 edge_of_deliverance、(3,9) 是 malignant_pewter…），
+     * 挪这一页之前先反汇编一遍 {@code VoidProgressionScreen} 把占用表列出来。
+     */
+    private static final int UMBRAL_EXPERIMENT_X = 6;
+    private static final int UMBRAL_EXPERIMENT_Y = 12;
+
+    /** Malum 那枚幽影碎片图标，「研究：精魂晶体」与「幽影奥术能量」章节共用的就是它。 */
+    private static final ResourceLocation UMBRAL_SHARD_ICON =
+            ResourceLocation.fromNamespaceAndPath("malum", "textures/gui/book/icons/umbral_shard.png");
 
     private static final int TOTEMIC_RUNES_CONTINUED_X = 4;
     private static final int TOTEMIC_RUNES_CONTINUED_Y = 15;
@@ -71,6 +90,7 @@ public final class MaledictCodexEntries {
         addIncursusBladeEntry();
         addVicissitudeRiteEntry();
         addVoidRuneworkingEntry();
+        addUmbralExperimentEntry();
 
         PlacedBookEntry satiationRune = addRuneEntry(RUNE_OF_SATIATION_ENTRY, MaledictItems.RUNE_OF_SATIATION,
                                                      RUNE_COLUMN_X, RUNE_OF_SATIATION_Y, BookWidgetStyle.SOULWOOD);
@@ -107,6 +127,32 @@ public final class MaledictCodexEntries {
                 MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
         builder.addPage(new EntrySelectorPage(List.of(stagnantEvolution, rottenBone)));
+        builder.afterUmbralCrystal();
+
+        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+    }
+
+    /**
+     * 「幽影精魂的实验」：幽影精魂没有对应的仪式，所以这一页不讲仪式，只讲拿已经验证过的符板
+     * 做自由创作；目前只有抑郁符文一件成品，用选择页挂上去。
+     */
+    private static void addUmbralExperimentEntry() {
+        EntryReference melancholia = voidRuneEntry(RUNE_OF_MELANCHOLIA_ENTRY, MaledictItems.RUNE_OF_MELANCHOLIA);
+
+        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, UMBRAL_EXPERIMENT_ENTRY)) {
+            return;
+        }
+
+        PlacedBookEntryBuilder builder = BookEntry.build(
+                UMBRAL_EXPERIMENT_ENTRY, UMBRAL_EXPERIMENT_X, UMBRAL_EXPERIMENT_Y);
+        // 纹理图标只能换掉部件供应商（ProgressionEntryObject 的 setIcon 只收物品），
+        // 这里用 Malum 自己那枚幽影碎片，「研究：精魂晶体」与「幽影奥术能量」章节用的就是它。
+        builder.setWidgetSupplier((entry, x, y) -> new IconObject(entry, x, y, UMBRAL_SHARD_ICON));
+        builder.configureWidget(widget -> widget.setStyle(BookWidgetStyle.DARK_SOULWOOD));
+        builder.addPage(new HeadlineTextPage(
+                UMBRAL_EXPERIMENT_ENTRY,
+                UMBRAL_EXPERIMENT_ENTRY + ".1"));
+        builder.addPage(new EntrySelectorPage(List.of(melancholia)));
         builder.afterUmbralCrystal();
 
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());

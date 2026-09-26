@@ -148,6 +148,14 @@ public final class MaledictRecipes extends RecipeProvider {
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(
                         Maledict.MODID, "runeworking/rune_of_rotten_bone"));
 
+        // 污染石符板 + 16 幽影精魂：Malum 污染石档的模子（例如 rune_of_culling 就是 16 邪恶精魂），
+        // 成本差异全在幽影精魂比基础精魂稀有多少上。
+        new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_MELANCHOLIA.get(), 1)
+                .setPrimaryInput(ItemRegistry.TAINTED_ROCK_TABLET.get(), 1)
+                .setSecondaryInput(SpiritTypeRegistry.UMBRAL_SPIRIT.spiritShard.get(), 16)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "runeworking/rune_of_melancholia"));
+
         new SpiritRepairRecipeBuilder(1.0f, Ingredient.of(ItemRegistry.NULL_SLATE.get()), 1)
                 .addItem(MaledictItems.ELEGY_BOW.get())
                 .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 11)
