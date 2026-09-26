@@ -34,7 +34,7 @@ public final class VicissitudeRigData {
         HEAD_SHELL_LEFT(HEAD_ROOT, 4.0F, -8.0F, 0.0F),
         HEAD_SHELL_RIGHT(HEAD_ROOT, -4.0F, -8.0F, 0.0F),
         HEAD_SHELL_TOP(HEAD_ROOT, 0.0F, -13.0F, 0.0F),
-        HALO_ROOT(HEAD_ROOT, 0.0F, -4.0F, 9.0F),
+        HALO_ROOT(HEAD_ROOT, 0.0F, -8.0F, 16.0F),
         HALO_FRAGMENT_1(HALO_ROOT, -7.0F, -12.0F, 0.0F),
         HALO_FRAGMENT_2(HALO_ROOT, 12.0F, 2.0F, 0.0F),
         HALO_FRAGMENT_3(HALO_ROOT, 4.0F, 13.0F, 0.0F),

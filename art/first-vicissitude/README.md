@@ -18,7 +18,7 @@ Blender 导出器输出。旧 `RigArtGenerator.java` 是早期方块预览工具
   `tools/surface_sample.py`：逐表面图稿的编排与样稿生成；`tools/atlas16.py` 只生成样稿范围以外的旧占位。
 - `tools/lower_surfaces.py`：下腹与祭衣的高密度表面绘制及 UV 分配；旧图集原密度保留，新增区域独立绘制。
 - [preview/index.html](preview/index.html)：唯一预览入口，仅四张图：一阶段整体、二阶段整体、
-  下腹修改前、下腹修改后。均为离线渲染，**不是游戏截图**。
+  本轮胸背与头环修改前、修改后。均为离线渲染，**不是游戏截图**。
 - `build/first-vicissitude-review/`（仓库根目录下）：技术检查产物，包括其他视角、无灯光图、
   UV 线稿、图集布局和验证报告。由工具重建，不放进用户预览目录。
 - `../../src/main/resources/assets/maledict/models/entity/first_vicissitude.mesh.json`：游戏实际加载的网格。
@@ -71,12 +71,11 @@ java -cp build/rig-tool RigMeshCheck
 
 ## 尚未验证
 
-本轮仅细化圆环下方：腹桥与三个腹部残节增加内收边和浅凸面；每幅祭衣从 12 面增至 32 面，
-增加上缘衔接及两条实际折脊。完整模型由 3,344 增至 3,450 三角面（增加 106 面）。
-图集扩至 512×512；旧 263 个区域的像素保持原样及原密度，圆环、上半身、双臂几何不变。
-仅下腹与祭衣新增 30 个独立绘制区域：下腹主面 48×64、祭衣 64×128，连续明暗、刻槽与织纹按新密度绘制，
-没有把旧图放大。网格、Blockbench UV 和自发光图集同步适配新尺寸；仍是 185 网格和 65 关节。
-同机位下腹对照见 `preview/index.html`；无灯光等技术图输出到仓库根目录的 `build/first-vicissitude-review/`。
+按用户反馈撤去新增的圆形内壁与整圈背缘，恢复之前开放的胸背空洞；完整模型回到 3,450 面。
+头环中心由 `(0,-28,9)` 移至 `(0,-32,16)`；椭圆半径由 14.1/15 缩至 11.5/12，
+截面半宽 1.2→0.65、半厚 0.85→0.32，保留四段断片与旋转。正背发光刻纹使用已有自发光渲染层。
+图集仍为 512×512，共 293 个区域；前胸活动环、双臂、下腹与祭衣的形体保持。
+同机位胸背对照见 `preview/index.html`；其他视角和无灯光技术图输出到 `build/first-vicissitude-review/`。
 
 游戏实机光照、资源重载、三类武器握持和实战性能尚未在客户端验收；所有 `preview/` 图都是离线正交预览，
 不能代替游戏截图。逐轮验证记录见 `docs/design/first-vicissitude/03_ENGINEERING_AND_VERIFICATION.md`。

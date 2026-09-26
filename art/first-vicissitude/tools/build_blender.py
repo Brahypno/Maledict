@@ -56,7 +56,7 @@ PALETTE = [
     ('Pale shoulder covert', 'B6C0CF', 0),
     ('Load bearing violet armor', '554262', 0),
     ('Ivory armor facing', 'C4CCDA', 0),
-    ('Inscribed violet halo', '59436C', 0),
+    ('Inscribed violet halo', '59436C', .65),
 ]
 
 sys.path.insert(0,str(Path(__file__).parent))
@@ -311,7 +311,7 @@ legacy=[-30,99,163,-108]
 for i,(start,end) in enumerate([(-162,-74),(-57,19),(42,105),(126,158)],1):
     before=len(meshes)
     joint='halo_fragment_'+str(i)
-    relic_arc('Fate arc %d'%i,joint,(0,-28,9),14.1,15,start,end,1.2,0,.85)
+    relic_arc('Fate arc %d'%i,joint,tuple(pivots['halo_root']),11.5,12,start,end,.65,15,.32)
     rot=BASIS @ Euler((0,0,math.radians(-legacy[i-1]))).to_matrix() @ BASIS.transposed()
     for obj in meshes[before:]:
         for v in obj.data.vertices: v.co=rot @ v.co

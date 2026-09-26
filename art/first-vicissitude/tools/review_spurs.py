@@ -24,7 +24,12 @@ views=[('phase_two_front',(30,-130,18),(0,0,0),65,41),
        ('phase_two_side',(130,-25,18),(0,0,0),65,41),
        ('phase_one',(30,-130,18),(0,0,0),65,1),
        ('hook_close',(20,-100,8),(0,2,-8),38,41),
-       ('overall',(40,-210,38),(0,0,12),178,41)]
+       ('overall',(40,-210,38),(0,0,12),178,41),
+       ('upper_back',(18,130,29),(0,4,22),58,41),
+       ('upper_front',(18,-130,29),(0,4,22),58,41),
+       ('upper_side',(130,30,29),(0,4,22),58,41),
+       ('upper_phase_one',(18,130,29),(0,4,22),58,1),
+       ('upper_death',(18,130,29),(0,4,22),58,81)]
 def render(name,pos,target,scale,frame):
     scene.frame_set(frame)
     camera.location=pos
@@ -58,3 +63,5 @@ for material in bpy.data.materials:
 scene.view_settings.view_transform='Standard'
 if not selected or 'hook_unlit' in selected:
     render('hook_unlit',*views[4][1:])
+if 'upper_unlit' in selected:
+    render('upper_unlit',*views[6][1:])

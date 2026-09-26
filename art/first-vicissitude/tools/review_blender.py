@@ -204,6 +204,11 @@ scene.frame_set(1)
 bpy.context.view_layer.update()
 hand_center=(bpy.data.objects['hand_left'].matrix_world.translation+
              bpy.data.objects['forearm_left'].matrix_world.translation)*.5
+if '--hero-only' in sys.argv:
+    scene.cycles.samples=20
+    for phase,frame in [('phase_one',1),('phase_two',41)]:
+        view(phase+'_hero',(65,-190,48),(0,0,10),175,frame)
+    sys.exit(0)
 if '--lower-only' in sys.argv:
     scene.cycles.samples=20
     for phase,frame in [('phase_one',1),('phase_two',41)]:

@@ -10,8 +10,8 @@ def image_target(name, comparison=None):
     public_name = {
         ('phase_one_hero', None): '01-phase-one.png',
         ('phase_two_hero', None): '02-phase-two.png',
-        ('hook_close', 'before'): '03-lower-before.png',
-        ('hook_close', 'after'): '04-lower-after.png',
+        ('upper_back', 'before'): '03-lower-before.png',
+        ('upper_back', 'after'): '04-lower-after.png',
     }.get((name, comparison))
     if public_name:
         target = PUBLIC / public_name

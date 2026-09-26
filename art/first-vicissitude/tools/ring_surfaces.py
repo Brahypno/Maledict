@@ -61,3 +61,17 @@ def paint_ring(atlas, region, role, face):
             i=((region['y']+y)*256+region['x']+x)*4
             atlas.base[i:i+4]=rgb+[1]
             atlas.emission[i:i+4]=[0,0,0,0]
+            if role=='ring_halo':
+                # Violet carrier and interrupted luminous script replace silver bands.
+                halo=('21192f','34253f','4c365e','715283',
+                      '9472aa','b999ce','e4d7ef','b68ccf')
+                rgb=[int(halo[ink][k:k+2],16)/255 for k in (0,2,4)]
+                lit=False
+                if face in ('front','back'):
+                    rail=y in (4,5) and x%21 not in (0,1,2,17,18,19,20)
+                    rune=any((x-seal,y) in ((-2,3),(-1,2),(0,1),(1,2),(2,3),
+                                           (1,6),(0,7),(-1,8),(0,9)) for seal in design['seals'])
+                    lit=rail or rune
+                    if lit: rgb=[.80,.64,.95] if rune else [.63,.43,.83]
+                atlas.base[i:i+4]=rgb+[1]
+                if lit: atlas.emission[i:i+4]=rgb+[1]
