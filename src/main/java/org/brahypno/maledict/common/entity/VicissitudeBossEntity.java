@@ -439,6 +439,27 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
         return false;
     }
 
+    /**
+     * Body contact cannot displace the boss. Vanilla asks {@link #isPushable()} for both sides of a contact
+     * ({@code EntitySelector#pushableBy} filters the candidates, {@code Entity#push} guards each shove) and then
+     * adds that shove straight to the victim's delta movement, once per tick per overlapping entity -- which our
+     * own movement blends into instead of overwriting, so leaning on the boss would walk it around. Only the
+     * boss's own movement code may change its velocity; players touching it still get the usual separation.
+     */
+    @Override
+    public final boolean isPushable() {
+        return false;
+    }
+
+    /**
+     * Ram attacks and other mods hand out impulses through this method directly, bypassing
+     * {@link #isPushable()}: the ender dragon, ravager, hoglin charge, warden sonic boom and moving minecarts all
+     * call it on their victim. None of them may move the boss either.
+     */
+    @Override
+    public final void push(double x, double y, double z) {
+    }
+
     /** Boss movement cannot be disabled by boats, minecarts, mounts or forced passengers. */
     @Override
     public final boolean startRiding(net.minecraft.world.entity.Entity vehicle, boolean force) {
