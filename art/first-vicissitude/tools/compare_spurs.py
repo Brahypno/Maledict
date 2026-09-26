@@ -9,11 +9,13 @@ old = {p['name']: p for p in before['parts']}
 new = {p['name']: p for p in after['parts']}
 assert old.keys() == new.keys()
 changed = []
+def geometry(part):
+    return [(t['n'],[v[:3] for v in t['v']]) for t in part['triangles']]
 for name, part in old.items():
     current = new[name]
-    if part == current:
+    if geometry(part) == geometry(current):
         continue
-    assert name.startswith(('Fractured crystal shell', 'Crystal edge clasp', 'Vestment pennant')), name
+    assert name.startswith(('Lower ossuary bridge','Ventral ossuary segment','Vestment pennant')), name
     def vertices(p):
         return {tuple(v[:3]) for t in p['triangles'] for v in t['v']}
     a, b = vertices(part), vertices(current)
@@ -21,6 +23,7 @@ for name, part in old.items():
 report = {'changed_parts': changed, 'unchanged_parts': len(old)-len(changed),
           'before_triangles': sum(len(p['triangles']) for p in old.values()),
           'after_triangles': sum(len(p['triangles']) for p in new.values())}
-target = ROOT / 'art/first-vicissitude/preview/blender/spur-comparison/geometry-comparison.json'
+target = ROOT / 'build/first-vicissitude-review/comparison/geometry-comparison.json'
+target.parent.mkdir(parents=True,exist_ok=True)
 target.write_text(json.dumps(report, indent=2)+'\n')
 print(json.dumps(report, indent=2))

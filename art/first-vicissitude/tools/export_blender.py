@@ -14,12 +14,14 @@ def export(root):
     ART = ROOT / 'art/first-vicissitude'
     TEX = ROOT / 'src/main/resources/assets/maledict/textures/entity'
     MESH = ROOT / 'src/main/resources/assets/maledict/models/entity'
-    PREVIEW = ART / 'preview/blender'
+    PREVIEW = ROOT / 'build/first-vicissitude-review'
+    PREVIEW.mkdir(parents=True,exist_ok=True)
     RIG = json.loads(bpy.context.scene['runtime_rig'])
     joints = {d['name']: bpy.data.objects[d['name']] for d in RIG['joints']}
     pivots = {d['name']: Vector(d['pivot']) for d in RIG['joints']}
     meshes = sorted((o for o in bpy.context.scene.objects if o.type == 'MESH' and 'runtime_joint' in o), key=lambda o:o.name)
-    result = {'format':1,'texture_size':256,'parts':[]}
+    texture_size=int(bpy.context.scene.get('atlas_size',256))
+    result = {'format':1,'texture_size':texture_size,'parts':[]}
     elements = []
     children = {j:[] for j in joints}
     triangles = 0
@@ -58,7 +60,7 @@ def export(root):
         bbfaces = {}
         for i,tri in enumerate(data.loop_triangles):
             bbfaces[str(i)] = {'vertices':[str(v) for v in reversed(tri.vertices)],
-                'uv':{str(v):[data.uv_layers.active.data[l].uv.x*256,(1-data.uv_layers.active.data[l].uv.y)*256]
+                'uv':{str(v):[data.uv_layers.active.data[l].uv.x*texture_size,(1-data.uv_layers.active.data[l].uv.y)*texture_size]
                       for v,l in zip(tri.vertices,tri.loops)},'texture':0}
         elements.append({'name':obj.name,'uuid':uid,'type':'mesh','origin':[0,0,0],
                          'vertices':bbverts,'faces':bbfaces,'visibility':True,'color':obj['material_index']})
@@ -98,16 +100,16 @@ public final class VicissitudeMeshGeometry {
                             -RIG['poses']['phase_one'][name]['rotation'][2]],'children':children[name]+[
                     group(c) for c in RIG['joints'] if c['parent']==name]}
     bb = {'meta':{'format_version':'4.10','model_format':'free','box_uv':False},
-          'name':'First Vicissitude — Blender mesh','resolution':{'width':256,'height':256},
+          'name':'First Vicissitude — Blender mesh','resolution':{'width':texture_size,'height':texture_size},
           'elements':elements,'outliner':[group(RIG['joints'][0])],
           'textures':[{'name':'first_vicissitude.png','id':'0','uuid':str(uuid.uuid5(uuid.NAMESPACE_URL,'first_vicissitude_atlas')),
-                       'width':256,'height':256,'uv_width':256,'uv_height':256,
+                       'width':texture_size,'height':texture_size,'uv_width':texture_size,'uv_height':texture_size,
                        'source':'data:image/png;base64,'+base64.b64encode((TEX/'first_vicissitude.png').read_bytes()).decode()}]}
     (ART/'first_vicissitude.bbmodel').write_text(json.dumps(bb,separators=(',',':')))
     report = {'objects':len(meshes),'triangles':triangles,'joints':len(joints),
               'phase_two_triangles':sum(len(p['triangles']) for p in result['parts'] if 'shed_delay' not in p),
               'source':'Blender mesh, same geometry exported to runtime and Blockbench',
-              'texture_size':[256,256]}
+              'texture_size':[texture_size,texture_size]}
     (PREVIEW/'mesh-report.json').write_text(json.dumps(report,indent=2))
     print('MESH_REPORT',json.dumps(report),flush=True)
 

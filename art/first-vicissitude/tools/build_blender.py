@@ -8,8 +8,9 @@ import bmesh
 import json
 import math
 import sys
-import shutil
 from pathlib import Path
+sys.path.insert(0,str(Path(__file__).parent))
+from preview_paths import DIAGNOSTICS, image_target
 from mathutils import Vector, Matrix, Euler
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -17,7 +18,7 @@ ART = ROOT / 'art/first-vicissitude'
 TEX = ROOT / 'src/main/resources/assets/maledict/textures/entity'
 MESH = ROOT / 'src/main/resources/assets/maledict/models/entity'
 RIG = json.loads((ROOT / 'build/rig-tool/blender-rig.json').read_text())
-PREVIEW = ART / 'preview/blender'
+PREVIEW = DIAGNOSTICS
 for directory in (TEX, MESH, PREVIEW):
     directory.mkdir(parents=True, exist_ok=True)
 bpy.ops.object.select_all(action='SELECT')
@@ -207,11 +208,20 @@ def block(name,joint,center,size,mat=1):
     return mesh(name,joint,verts,[(0,1,3,2),(4,6,7,5),(0,4,5,1),
                                 (2,3,7,6),(0,2,6,4),(1,5,7,3)],mat)
 
-def armor(name,joint,outline,front,back,mat=1):
+def armor(name,joint,outline,front,back,mat=1,relief=0):
     n=len(outline)
     verts=[(x,y,z) for z in (front,back) for x,y in outline]
     faces=[tuple(range(n)),tuple(range(n,2*n))]
     faces += [(i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n)]
+    if relief:
+        # Shallow inset shoulder and convex face, confined to lower plates.
+        cx=sum(p[0] for p in outline)/n
+        cy=sum(p[1] for p in outline)/n
+        verts += [(cx+(x-cx)*.78,cy+(y-cy)*.82,front-relief*.45) for x,y in outline]
+        verts.append((cx,cy,front-relief))
+        faces=faces[1:]
+        faces += [(i,(i+1)%n,2*n+(i+1)%n,2*n+i) for i in range(n)]
+        faces += [(2*n+i,2*n+(i+1)%n,3*n) for i in range(n)]
     return mesh(name,joint,verts,faces,mat)
 
 def relic_arc(name,joint,center,rx,ry,start,end,width=1.3,mat=2,depth=.55):
@@ -264,7 +274,7 @@ for side,label in [(1,'left'),(-1,'right')]:
              [1.05,1.35,1.3,.75],14,4)
 armor('Upper sternal keel','torso',[(-1,-23),(1,-23),(1.2,-17),(0,-15.8),(-1.2,-17)],-4.2,3,3)
 armor('Lower ossuary bridge','torso',[(-6.5,-2.3),(-3,-2.7),(0,-1.8),(3,-2.7),(6.5,-2.3),
-                                     (5,1.5),(0,3),(-5,1.5)],-3.6,5,0)
+                                     (5,1.5),(0,3),(-5,1.5)],-3.6,5,0,relief=.7)
 for i,(a,b) in enumerate([(-177,-96),(-87,-3),(6,84),(95,171)]):
     relic_arc('Ossuary socket seat %d'%i,'torso',(CX,CY,-3.8),SOCKET_RADIUS,SOCKET_RADIUS,a,b,.65,3,.9)
 for i,(joint,a,b) in enumerate([('chest_ring_left',-83,22),('chest_ring_right',132,250),
@@ -449,7 +459,7 @@ for i in range(3):
     tube('Vertebral spindle %d'%i,joint,[(0,y-1,2),(0,y+8,2)],[width*.65,.85 if i<2 else .32],3)
     armor('Ventral ossuary segment %d'%i,joint,
           [(-width*.7,y-2),(width*.7,y-2),(width,y+.7),(width*.5,y+5),
-           (0,y+8),(-width*.5,y+5),(-width,y+.7)],-2,1,13)
+           (0,y+8),(-width*.5,y+5),(-width,y+.7)],-2,1,13,relief=1.05 if i==0 else .8)
     armor('Dorsal vertebral plate %d'%i,joint,
           [(-width*.7,y-1),(width*.7,y-1),(width*.85,y+2),(0,y+7),(-width*.85,y+2)],3.6,5.2,13)
     for s in (-1,1):
@@ -459,18 +469,23 @@ for i in range(3):
 for s,label in [(1,'left'),(-1,'right')]:
     blade('Floating pelvic relic '+label,'lower_fragment_'+label,(s*5,1,2),(s*6,9,2),1.65,1,0,1)
     cloth=[]; cloth_uv=[]; cloth_faces=[]
-    stations=[(1,(1.8,7.8,4.8),(-4.7,0,5.8)),
+    stations=[(0,(1.8,7.2,4.8),(-3.8,0,5.8)),
+              (2,(1.8,7.8,4.8),(-4.7,0,5.8)),
               (9,(2.2,9.0,5.5),(-4.0,1.0,7.0)),
               (18,(2.8,10.5,6.5),(-2.0,3.0,9.0)),
               (28 if s>0 else 25,(3.7,11.6,7.3),(0,5,11))]
     for row,(y,xs,zs) in enumerate(stations):
-        for col in range(3):
-            cloth.append((s*xs[col],y,zs[col]))
-            cloth_uv.append((col/2,row/3))
+        for col in range(5):
+            a=col//2; b=min(2,a+1); f=(col%2)*.5
+            x=xs[a]*(1-f)+xs[b]*f
+            z=zs[a]*(1-f)+zs[b]*f
+            if col in (1,3): z+=(-.8 if col==1 else .65)*min(1,row)
+            cloth.append((s*x,y,z))
+            cloth_uv.append((col/4,y/stations[-1][0]))
         if row:
-            for col in range(2):
-                a=(row-1)*3+col
-                cloth_faces.append((a,a+1,a+4,a+3))
+            for col in range(4):
+                a=(row-1)*5+col
+                cloth_faces.append((a,a+1,a+6,a+5))
     mesh('Vestment pennant '+label,'cloth_fragment_'+label,cloth,cloth_faces,7,cloth_uv)
 
 def set_pose(name):
@@ -486,8 +501,12 @@ def set_pose(name):
 
 
 # Finish the atlas only after every part has allocated its own UV region.
+from lower_surfaces import refine_lower_surfaces
+refine_lower_surfaces(part_atlas,meshes)
+bpy.context.scene['atlas_size']=part_atlas.size
 for original,pixels,name in [(base,part_atlas.base,'first_vicissitude'),
                               (emission,part_atlas.emission,'first_vicissitude_emissive')]:
+    original.scale(part_atlas.size,part_atlas.size)
     original.pixels.foreach_set(pixels)
     path=str(TEX/(name+'.png'))
     original.filepath_raw=path
@@ -571,8 +590,6 @@ if '--no-render' not in sys.argv:
         bpy.context.scene.frame_set(frame)
         for view,pos,scale in views:
             camera_view(pos,scale=scale)
-            bpy.context.scene.render.filepath = str(PREVIEW/(phase+'_'+view+'.png'))
+            bpy.context.scene.render.filepath = str(image_target(phase+'_'+view))
             bpy.ops.render.render(write_still=True)
-            if view in ('front','side','back'):
-                shutil.copyfile(PREVIEW/(phase+'_'+view+'.png'), ART/'preview'/(phase+'_'+view+'.png'))
             print('RENDER_DONE',phase,view,flush=True)

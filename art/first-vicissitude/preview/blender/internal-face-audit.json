@@ -1,7 +1,0 @@
-{
-  "checked_faces": 367,
-  "occluding_plates": 20,
-  "eligible_triangles": 0,
-  "faces": [],
-  "proof": "complete face covered by the union of solid plate prisms on the same rigid joint"
-}

@@ -3,15 +3,17 @@ import bpy
 import json
 import math
 import sys
-import shutil
 import time
 import uuid
 from pathlib import Path
+sys.path.insert(0,str(Path(__file__).parent))
+from preview_paths import DIAGNOSTICS, image_target
 from mathutils import Vector, Matrix
 
 ROOT = Path(__file__).resolve().parents[3]
 ART = ROOT/'art/first-vicissitude'
-OUT = ART/'preview/blender'
+OUT = DIAGNOSTICS
+OUT.mkdir(parents=True,exist_ok=True)
 scene = bpy.context.scene
 scene.frame_set(1)
 bpy.context.view_layer.update()
@@ -70,12 +72,13 @@ assert ring_radii and min(ring_radii)>4.4 and max(ring_radii)<5.6, 'Ring stock i
 atlas=bpy.data.images.load(str(ROOT/'src/main/resources/assets/maledict/textures/entity/first_vicissitude.png'),check_existing=False)
 pixels=atlas.pixels[:]
 layout=json.loads((OUT/'atlas-layout.json').read_text())
+atlas_size=layout['size']
 regions={r['name']:r for r in layout['regions']}
 occupied=set()
 for region in regions.values():
     cells={(x,y) for x in range(region['x'],region['x']+region['width'])
            for y in range(region['y'],region['y']+region['height'])}
-    assert all(0<=x<256 and 0<=y<256 for x,y in cells)
+    assert all(0<=x<atlas_size and 0<=y<atlas_size for x,y in cells)
     assert not occupied & cells, 'Atlas regions overlap'
     occupied.update(cells)
 for obj in meshes.values():
@@ -84,7 +87,7 @@ for obj in meshes.values():
         region=regions[islands[poly.index] if islands else obj['atlas_region']]
         for loop in poly.loop_indices:
             uv=obj.data.uv_layers.active.data[loop]
-            x,y=uv.uv[0]*256,uv.uv[1]*256
+            x,y=uv.uv[0]*atlas_size,uv.uv[1]*atlas_size
             assert region['x']<=x<region['x']+region['width']
             assert region['y']<=y<region['y']+region['height'], 'UV escapes its surface island'
 mirror_pairs=0
@@ -101,7 +104,7 @@ for obj in ring_parts:
     names=set(json.loads(obj['surface_islands']))
     assert {regions[n]['surface'] for n in names}=={'front','back','inner','outer','cap0','cap1'}, 'Ring surfaces share or lack required UV islands'
 def color(region,x,y):
-    i=((region['y']+y)*256+region['x']+x)*4
+    i=((region['y']+y)*atlas_size+region['x']+x)*4
     return pixels[i:i+3]
 bone=max((color(r,x,y) for r in regions.values() if r['material']==14
           for x in range(r['width']) for y in range(r['height'])),key=sum)
@@ -114,7 +117,7 @@ assert violet[2]>violet[0]>violet[1], 'The violet shell hue has been lost'
 feather_alpha=[]
 for region in regions.values():
     if not 9<=region['material']<=12: continue
-    values=[pixels[((region['y']+y)*256+region['x']+x)*4+3]
+    values=[pixels[((region['y']+y)*atlas_size+region['x']+x)*4+3]
             for y in range(region['height']) for x in range(16)]
     assert min(values)==0 and max(values)==1, 'Feather cutout lost its gaps'
     feather_alpha.append(sum(v==0 for v in values))
@@ -179,14 +182,15 @@ def view(name,pos,target,scale,frame=1,ring_turn=0):
     camera.location=pos
     camera.rotation_euler=(Vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
     camera.data.ortho_scale=scale
-    scene.render.filepath=str(OUT/(name+'.png'))
+    destination=image_target(name)
+    scene.render.filepath=str(destination)
     # Render to a temporary path first: overwriting a PNG open in a Windows preview can fail.
     bpy.ops.render.render(write_still=False)
     temporary=ROOT/'build/rig-tool'/('review-'+uuid.uuid4().hex+'.png')
     bpy.data.images['Render Result'].save_render(str(temporary),scene=scene)
     for attempt in range(4):
         try:
-            temporary.replace(OUT/(name+'.png'))
+            temporary.replace(destination)
             break
         except PermissionError:
             if attempt==3: raise
@@ -200,6 +204,18 @@ scene.frame_set(1)
 bpy.context.view_layer.update()
 hand_center=(bpy.data.objects['hand_left'].matrix_world.translation+
              bpy.data.objects['forearm_left'].matrix_world.translation)*.5
+if '--lower-only' in sys.argv:
+    scene.cycles.samples=20
+    for phase,frame in [('phase_one',1),('phase_two',41)]:
+        view(phase+'_hero',(65,-190,48),(0,0,10),175,frame)
+        for direction,position in [('front',(20,-130,8)),('back',(-20,130,8)),('side',(130,-20,8))]:
+            view('lower_'+phase+'_'+direction,position,(0,2,-6),52,frame)
+    view('death_reveal',(60,-190,50),(0,0,10),175,81)
+    scene.world.node_tree.nodes.get('Background').inputs[1].default_value=.15
+    for obj in scene.objects:
+        if obj.type=='LIGHT': obj.data.energy*=.20
+    view('night',(65,-190,48),(0,0,10),175)
+    sys.exit(0)
 if '--ring-turn-only' in sys.argv:
     scene.render.resolution_x=1100
     scene.render.resolution_y=1100
@@ -237,37 +253,42 @@ if '--sample-only' in sys.argv:
         out=next(n for n in nodes if n.type=='OUTPUT_MATERIAL')
         emission=nodes.new('ShaderNodeEmission')
         material.node_tree.links.new(texture.outputs['Color'],emission.inputs['Color'])
-        material.node_tree.links.new(emission.outputs[0],out.inputs['Surface'])
+        transparent=nodes.new('ShaderNodeBsdfTransparent')
+        mix=nodes.new('ShaderNodeMixShader')
+        material.node_tree.links.new(texture.outputs['Alpha'],mix.inputs[0])
+        material.node_tree.links.new(transparent.outputs[0],mix.inputs[1])
+        material.node_tree.links.new(emission.outputs[0],mix.inputs[2])
+        material.node_tree.links.new(mix.outputs[0],out.inputs['Surface'])
     scene.view_settings.view_transform='Standard'
     view('surface_sample_arm_unlit',hand_center+Vector((25,-100,16)),hand_center+Vector((0,0,5)),38)
     view('surface_body_unlit',(30,-130,30),(0,0,14),58)
+    view('surface_phase_two_unlit',(30,-130,30),(0,0,14),58,41)
     from html import escape
-    svg=['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 576">',
-         '<rect width="1024" height="576" fill="#17151e"/>']
+    svg=['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">',
+         '<rect width="1024" height="1024" fill="#17151e"/>']
     for obj in meshes.values():
         if 'surface_islands' not in obj or 'right' in obj.name: continue
         for poly in obj.data.polygons:
             points=' '.join(f'{obj.data.uv_layers.active.data[l].uv.x*1024:.2f},{(1-obj.data.uv_layers.active.data[l].uv.y)*1024:.2f}' for l in poly.loop_indices)
             svg.append(f'<polygon points="{points}" fill="none" stroke="#9ec5dd" stroke-width=".4"/>')
     for n,r in enumerate(regions.values()):
-        if r.get('source')!='authored_surface_sample': continue
-        x,y=r['x']*4,(256-r['y']-r['height'])*4
-        svg.append(f'<rect x="{x}" y="{y}" width="{r["width"]*4}" height="{r["height"]*4}" fill="none" stroke="#b8864a" stroke-width=".5"><title>{escape(r["name"])}</title></rect>')
+        if r.get('source') not in ('authored_surface_sample','lower_surface_detail'): continue
+        x,y=r['x']*1024/atlas_size,(atlas_size-r['y']-r['height'])*1024/atlas_size
+        svg.append(f'<rect x="{x}" y="{y}" width="{r["width"]*1024/atlas_size}" height="{r["height"]*1024/atlas_size}" fill="none" stroke="#b8864a" stroke-width=".5"><title>{escape(r["name"])}</title></rect>')
         svg.append(f'<text x="{x+1}" y="{y+6}" font-size="5" fill="white">{n}</text>')
         r['review_id']=n
     svg.append('</svg>')
     (OUT/'surface_sample_uv.svg').write_text('\n'.join(svg))
-    (OUT/'surface_sample_islands.json').write_text(json.dumps([r for r in regions.values() if r.get('source')=='authored_surface_sample'],indent=2))
+    (OUT/'surface_sample_islands.json').write_text(json.dumps([r for r in regions.values() if r.get('source') in ('authored_surface_sample','lower_surface_detail')],indent=2))
     sys.exit(0)
 if '--views-only' not in sys.argv:
     view('hand_and_elbow_detail',hand_center+Vector((22,-100,15)),hand_center,29)
 
 for phase,frame in ([] if '--details-only' in sys.argv else [('phase_one',1),('phase_two',41)]):
-    for direction,position,scale in [('front',(0,-210,10),175),
+    for direction,position,scale in [('hero',(65,-190,48),175),('front',(0,-210,10),175),
                                      ('side',(210,0,10),110),('back',(0,210,10),175)]:
         name=phase+'_'+direction
         view(name,position,(0,0,10),scale,frame)
-        shutil.copyfile(OUT/(name+'.png'),ART/'preview'/(name+'.png'))
 
 if '--views-only' in sys.argv:
     sys.exit(0)

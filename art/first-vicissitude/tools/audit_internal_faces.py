@@ -95,6 +95,7 @@ if __name__=='__main__':
     objects=[o for o in bpy.context.scene.objects if o.type=='MESH' and 'runtime_joint' in o]
     result=audit(objects)
     from pathlib import Path
-    out=Path(__file__).resolve().parents[1]/'preview/blender/internal-face-audit.json'
+    out=Path(__file__).resolve().parents[3]/'build/first-vicissitude-review/internal-face-audit.json'
+    out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps(result,indent=2))
     print(json.dumps(result,indent=2))

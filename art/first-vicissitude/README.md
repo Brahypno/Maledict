@@ -6,7 +6,7 @@ Blender 导出器输出。旧 `RigArtGenerator.java` 是早期方块预览工具
 
 ## 文件
 
-- `first_vicissitude.blend`：185 个可编辑网格，3,344 个三角面，二阶段可见 3,044 面，65 个层级关节/锚点。
+- `first_vicissitude.blend`：185 个可编辑网格，3,450 个三角面，二阶段可见 3,150 面，65 个层级关节/锚点。
   贴图内嵌；时间轴第 1 / 41 / 81 帧分别为一阶段、二阶段、死亡露核检查姿态。
   使用 Empty 父子关节做刚性绑定，没有蒙皮依赖。Blender 坐标 = `(javaX, javaZ, -javaY)`，
   实体原点对应 Blender Z = -24；16 单位 = 1 格。
@@ -16,13 +16,13 @@ Blender 导出器输出。旧 `RigArtGenerator.java` 是早期方块预览工具
 - `tools/build_blender.py`、`tools/export_blender.py`、`tools/review_blender.py`：重建造型、导出资产、生成检查图。
 - `tools/body_surfaces.py`、`tools/wing_surfaces.py`、`tools/ring_surfaces.py`、`tools/relic_surfaces.py`、
   `tools/surface_sample.py`：逐表面图稿的编排与样稿生成；`tools/atlas16.py` 只生成样稿范围以外的旧占位。
-- `preview/blender/`：全部离线预览。`phase_one_*`、`phase_two_*` 为正交三视图与主视角，
-  另有灰模三视图、胸/头/手/翼/环细节、死亡露核、夜间灯光、逐表面样稿和无灯光材质图，
-  以及 `atlas-layout.json`（全部纹理区域）和 `surface_sample_uv.svg` + `surface_sample_islands.json`
-  （实际多边形 UV 线稿与编号）。**这些不是游戏内截图。**
-- `preview/blender/spur-comparison/`：滚动前后对照，只有 before/after 两槽和七个固定视角。
+- `tools/lower_surfaces.py`：下腹与祭衣的高密度表面绘制及 UV 分配；旧图集原密度保留，新增区域独立绘制。
+- [preview/index.html](preview/index.html)：唯一预览入口，仅四张图：一阶段整体、二阶段整体、
+  下腹修改前、下腹修改后。均为离线渲染，**不是游戏截图**。
+- `build/first-vicissitude-review/`（仓库根目录下）：技术检查产物，包括其他视角、无灯光图、
+  UV 线稿、图集布局和验证报告。由工具重建，不放进用户预览目录。
 - `../../src/main/resources/assets/maledict/models/entity/first_vicissitude.mesh.json`：游戏实际加载的网格。
-- `../../src/main/resources/assets/maledict/textures/entity/first_vicissitude.png`：基础贴图（256×256）。
+- `../../src/main/resources/assets/maledict/textures/entity/first_vicissitude.png`：基础贴图（512×512）。
 - `../../src/main/resources/assets/maledict/textures/entity/first_vicissitude_emissive.png`：
   同 UV 的自发光层，只有头核、能量与部分环片被绘制。
 - `../../src/main/java/org/brahypno/maledict/rig/VicissitudeMeshGeometry.java`：导出的逐关节翼部包围盒。
@@ -70,6 +70,13 @@ java -cp build/rig-tool RigMeshCheck
   禁止用重复小格或简单放大贴图冒充细节提升。
 
 ## 尚未验证
+
+本轮仅细化圆环下方：腹桥与三个腹部残节增加内收边和浅凸面；每幅祭衣从 12 面增至 32 面，
+增加上缘衔接及两条实际折脊。完整模型由 3,344 增至 3,450 三角面（增加 106 面）。
+图集扩至 512×512；旧 263 个区域的像素保持原样及原密度，圆环、上半身、双臂几何不变。
+仅下腹与祭衣新增 30 个独立绘制区域：下腹主面 48×64、祭衣 64×128，连续明暗、刻槽与织纹按新密度绘制，
+没有把旧图放大。网格、Blockbench UV 和自发光图集同步适配新尺寸；仍是 185 网格和 65 关节。
+同机位下腹对照见 `preview/index.html`；无灯光等技术图输出到仓库根目录的 `build/first-vicissitude-review/`。
 
 游戏实机光照、资源重载、三类武器握持和实战性能尚未在客户端验收；所有 `preview/` 图都是离线正交预览，
 不能代替游戏截图。逐轮验证记录见 `docs/design/first-vicissitude/03_ENGINEERING_AND_VERIFICATION.md`。

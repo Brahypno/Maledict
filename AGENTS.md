@@ -62,6 +62,20 @@ probes for exactly that: `IncursusBladeItem#hurtEvent` reports back through `mar
 own resolution, and a miss is compensated with the same magic damage. The aqueous (freeze) channel left
 `hurtEvent` for the same reason: it is dealt by `IncursusBladeAttack` now, not by whatever event happens to fire.
 
+### Boss has no collision movement (`VicissitudeBossEntity`)
+
+`LivingEntity#aiStep` ends with `pushEntities()`, which shoves every pair of **pushable** living entities apart —
+`EntitySelector#pushableBy` filters the candidates, `Entity#push` guards each side — and adds that shove straight to
+`deltaMovement`, once per tick per overlapping entity. `LivingEntity#isPushable` is true for anything alive, and
+`FirstVicissitudeBossEntity`'s steering *blends* (`FLIGHT_STEERING = 0.2`) with the previous velocity instead of
+overwriting it, so a player leaning on the boss walks it around at up to ~0.18 blocks/tick.
+
+`VicissitudeBossEntity` therefore answers `isPushable() == false` **and** no-ops the three-argument `push`, because
+ram attacks (ender dragon, ravager, hoglin charge, warden sonic boom, moving minecarts) and other mods call that
+method directly without ever asking `isPushable`. Players touching the boss are still separated by the boss's own
+`pushEntities()`; the wing push (`Player#push`, 0.06 horizontal) is a separate, deliberate shove. Only the boss's
+own movement code may change its velocity.
+
 ### Working agreement for mechanics with more than one reading
 
 When a mechanic can be read in more than one way (window/eviction order, "record then judge" vs "judge then record",

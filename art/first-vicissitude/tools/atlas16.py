@@ -123,6 +123,6 @@ class PartAtlas:
                 self.emission[offset+3] = alpha if glow else 0
 
     def report(self):
-        return dict(size=256, prototype_cell_size=16,
+        return dict(size=getattr(self,'size',256), prototype_cell_size=16,
                     allocated_pixels=sum(r['width']*r['height'] for r in self.regions.values()),
                     regions=list(self.regions.values()))

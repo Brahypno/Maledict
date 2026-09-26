@@ -7,7 +7,7 @@ import json
 import math
 from ring_surfaces import RINGS, paint_ring
 from wing_surfaces import PLANS, primary_pixels
-from body_surfaces import FRONTS as BODY_PLANS, shade as body_shade
+from body_surfaces import FRONTS as BODY_PLANS, color as body_color
 
 # 12-pixel wide structural drawings: recess, shade, body, lit plane, edge.
 INK = ('302b40', '595269', '9397ad', 'c3ccda', 'e1e3e6')
@@ -418,9 +418,10 @@ class SurfaceSample:
                     cracks=set(WINGS[role][3])
                     if (x,y) in cracks: shade=0
                     elif (x-1,y) in cracks: shade=3
-                if role in BODY_PLANS:
-                    shade=body_shade(role,face,x,y,r['width'],r['height'])
                 rgb=[int(palette[shade][k:k+2],16)/255 for k in (0,2,4)]
+                if role in BODY_PLANS:
+                    rgb=body_color(role,face,x,y,r['width'],r['height'],
+                                   violet=r['material'] in (0,13,8))
                 i=((r['y']+y)*256+r['x']+x)*4
                 self.atlas.base[i:i+4]=rgb+[1]
                 self.atlas.emission[i:i+4]=[0,0,0,0]
