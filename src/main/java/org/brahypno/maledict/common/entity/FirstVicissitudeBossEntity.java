@@ -82,8 +82,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     /** Reference value mirrored by the rig test; the blade decides real reach. */
     public static final double MELEE_REACH = 5.0D;
     private static final double MELEE_APPROACH_DISTANCE = 7.0D;
-    /** The blade's swath, in blocks: the tolerance the melee test allows around the edge's centreline. */
-    private static final double BLADE_HIT_RADIUS = 0.6D;
     public static final double THROW_MIN_RANGE = 6.0D;
     public static final double THROW_MAX_RANGE = 24.0D;
     public static final double DASH_MIN_RANGE = 8.0D;
@@ -1354,7 +1352,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return targets;
     }
 
-    /** Melee damage: the scythe's world-space segment is tested each tick of the hit window. */
+    /**
+     * Melee damage: the action's authored reach turns into a forward band each tick of the hit
+     * window (see {@link VicissitudeRig.SwingBand}), and anything whose centre falls inside that
+     * band is cut. The blade segment is read for its length, which sizes the candidate query - the
+     * band, not the blade line, decides the hit.
+     */
     private void tickBladeHits() {
         int[] window = action.hitWindow();
         if (window == null){
@@ -1370,49 +1373,24 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (blade == null){
             return;
         }
-        double reach = blade.length() + BLADE_HIT_RADIUS;
+        double reach = meleeReach();
+        VicissitudeRig.SwingBand swing = meleeSwing();
+        double startX = getX();
+        double startZ = getZ();
+        float yaw = getYRot();
+        double sweep = Math.max(blade.length(), reach) + VicissitudeRig.SWING_HALF_WIDTH;
         float damage = attackDamage() * meleeMultiplier();
-        boolean trace = MELEE_TRACE;
-        if (trace){
-            System.out.println("[melee] " + action + " tick " + ticks
-                                       + " boss=" + fmt(getX()) + "," + fmt(getY()) + "," + fmt(getZ())
-                                       + " yaw=" + fmt(getYRot())
-                                       + " grip=" + fmt(blade.grip().x()) + "," + fmt(blade.grip().y())
-                                       + "," + fmt(blade.grip().z())
-                                       + " tip=" + fmt(blade.tip().x()) + "," + fmt(blade.tip().y())
-                                       + "," + fmt(blade.tip().z()));
-        }
         for (Entity entity : level().getEntities(this,
-                                                 getBoundingBox().inflate(reach, reach, reach))) {
+                                                 getBoundingBox().inflate(sweep, sweep, sweep))) {
             if (!(entity instanceof LivingEntity living)){
                 continue;
             }
-            if (!isValidCombatParticipant(living)){
-                if (trace){
-                    System.out.println("[melee]   DROP " + living.getName().getString()
-                                               + " not a participant (phase=" + stage
-                                               + " roster=" + combatRosterSize() + ")");
-                }
-                continue;
-            }
-            double gap = VicissitudeRig.distanceToBladeBox(
-                    VicissitudeRig.Box.of(living.getBoundingBox().minX,
-                                          living.getBoundingBox().minY,
-                                          living.getBoundingBox().minZ,
-                                          living.getBoundingBox().maxX,
-                                          living.getBoundingBox().maxY,
-                                          living.getBoundingBox().maxZ),
-                    blade, getX(), getY(), getZ(), getYRot());
-            boolean sight = hasLineOfSight(living);
-            if (trace){
-                System.out.println("[melee]   " + living.getName().getString()
-                                           + " gapBox=" + fmt(gap)
-                                           + " limit=" + fmt(BLADE_HIT_RADIUS)
-                                           + " sight=" + sight
-                                           + (gap <= BLADE_HIT_RADIUS && sight ? "  -> HIT"
-                                                                               : "  -> miss"));
-            }
-            if (gap > BLADE_HIT_RADIUS || !sight){
+            double forward = VicissitudeRig.SwingBand.forward(yaw, startX, startZ,
+                                                              living.getX(), living.getZ());
+            double lateral = VicissitudeRig.SwingBand.lateral(yaw, startX, startZ,
+                                                              living.getX(), living.getZ());
+            if (!isValidCombatParticipant(living) || !hasLineOfSight(living)
+                || !swing.contains(forward, lateral)){
                 continue;
             }
             hurtBySkill(living, damage, false);
@@ -1423,16 +1401,23 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
     }
 
-    /** Diagnostic melee trace, enabled with {@code -Dmaledict.meleeTrace=true}. */
-    private static final boolean MELEE_TRACE =
-            Boolean.getBoolean("maledict.meleeTrace");
-
-    private static String fmt(double value) {
-        return String.format(java.util.Locale.ROOT, "%.2f", value);
+    /**
+     * Outer edge of this swing's band: the reach the action was authored for. It is read from the
+     * action rather than measured off the blade so that the stand-off formula and the band can never
+     * drift apart, and {@code bladeEdgeReachesWhatTheCommitRangePromises} keeps it inside
+     * {@code MELEE_COMMIT_RANGE}.
+     */
+    private double meleeReach() {
+        return action.bladeForwardReach();
     }
 
-    private int combatRosterSize() {
-        return isPhaseTwo() ? phaseTwoParticipants.size() : phaseOneTargets.size();
+    /**
+     * One swing's damage band; see {@link VicissitudeRig.SwingBand}. The inner edge comes from the
+     * boss' own body width, the outer edge from the reach the action was authored for.
+     */
+    private VicissitudeRig.SwingBand meleeSwing() {
+        return VicissitudeRig.SwingBand.of(getYRot(), getBbWidth(), meleeReach(),
+                                           VicissitudeRig.SWING_HALF_WIDTH);
     }
 
     private float meleeMultiplier() {

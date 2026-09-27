@@ -833,6 +833,79 @@ public final class VicissitudeRig {
         }
     }
 
+    /** Inner edge of a swing band, in blocks in front of the boss' centre. */
+    public static final double SWING_MIN_DEPTH = 0.6D;
+    /**
+     * Half the width of a swing band across the boss' facing, in blocks. The reference bosses sweep a
+     * box the full width of their own body (Cataclysm and Legendary Monsters inflate by the entity
+     * box) and vanilla melee is a wide cone; 1.25 covers the 0.75 blocks the scythe sits off-centre
+     * plus the target's own half width without turning the swing into a room-wide hit.
+     */
+    public static final double SWING_HALF_WIDTH = 1.25D;
+    /**
+     * Slack on a band's outer edge, in blocks. Yaw is a {@code float} while the band maths is
+     * {@code double}, so a point placed exactly on the reach comes back a few 1e-6 blocks beyond it;
+     * the edge has to absorb that or the outer boundary reads as a coin flip.
+     */
+    public static final double SWING_EDGE_TOLERANCE = 0.01D;
+
+    /**
+     * One swing's damage band: an interval along the boss' facing plus a half width across it. This
+     * is the melee hit test, and it lives here rather than on the entity because it is pure geometry
+     * - the sign convention below is exactly what broke once already, when "forward" was measured
+     * along the mirror of the boss' facing and a target standing in front of the blade read as
+     * behind it.
+     *
+     * @param minimumBlocks inner edge, in blocks in front of the boss' centre
+     * @param reachBlocks   outer edge, in blocks in front of the boss' centre
+     * @param halfWidth     half width across the facing, in blocks
+     */
+    public record SwingBand(double minimumBlocks, double reachBlocks, double halfWidth) {
+
+        /**
+         * The inner edge is one body width, or {@link #SWING_MIN_DEPTH} if the body is narrower than
+         * the band: the same idea as vanilla reaching from {@code 2 x bbWidth}, measured from the
+         * body surface, and as the reference bosses' negative inflate. It keeps a target pressed
+         * against the chest out of the sweep without opening a gap in front of it.
+         */
+        public static SwingBand of(float yawDegrees, double bodyWidth, double reach,
+                                   double halfWidth) {
+            double minimum = Math.max(SWING_MIN_DEPTH, halfWidth - bodyWidth);
+            return new SwingBand(minimum, reach, halfWidth);
+        }
+
+        public boolean contains(double forward, double lateral) {
+            return forward >= minimumBlocks && forward <= reachBlocks + SWING_EDGE_TOLERANCE
+                   && lateral <= halfWidth;
+        }
+
+        /** How far along this swing's facing the point sits; negative means behind the boss. */
+        public static double forward(float yawDegrees, double fromX, double fromZ,
+                                     double x, double z) {
+            return (x - fromX) * facingX(yawDegrees) + (z - fromZ) * facingZ(yawDegrees);
+        }
+
+        /** How far across this swing's facing the point sits, always positive. */
+        public static double lateral(float yawDegrees, double fromX, double fromZ,
+                                     double x, double z) {
+            return Math.abs((x - fromX) * facingZ(yawDegrees) - (z - fromZ) * facingX(yawDegrees));
+        }
+    }
+
+    /**
+     * Horizontal facing, x component. A local {@code +z} (forward) point lands at {@code (-sin, cos)}
+     * under the same rotation {@link #toWorld} applies to the blade, which is what the boss' own
+     * stand-off and steering code stand on. A swing band has to use the same basis as the blade.
+     */
+    public static double facingX(float yawDegrees) {
+        return -Math.sin(Math.toRadians(yawDegrees));
+    }
+
+    /** Horizontal facing, z component; see {@link #facingX(float)}. */
+    public static double facingZ(float yawDegrees) {
+        return Math.cos(Math.toRadians(yawDegrees));
+    }
+
     /** Blade geometry at {@code ticks}, or {@code null} for actions with no blade in hand. */
     public static BladeSegment bladeSegment(Pose pose, Action action, float ticks) {
         if (pose == null || action == null || !action.isMelee()) {
@@ -850,7 +923,7 @@ public final class VicissitudeRig {
         return new BladeSegment(toEntityLocal(grip), toEntityLocal(tip));
     }
 
-    /** World-space distance from a point to the blade; the melee test inflates it into a capsule. */
+    /** World-space distance from a point to the blade; a diagnostic, not the melee test. */
     public static double distanceToBlade(double x, double y, double z,
                                          BladeSegment blade,
                                          double entityX, double entityY, double entityZ,
@@ -874,7 +947,7 @@ public final class VicissitudeRig {
 
     /**
      * World-space distance from the blade to an AABB - a diagnostic and a fallback, not the melee
-     * test, which measures to the victim's centre so that clipping a shoulder cannot count as a hit.
+     * test, which is the forward {@link SwingBand}.
      */
     public static double distanceToBladeBox(Box box, BladeSegment blade,
                                             double entityX, double entityY, double entityZ,

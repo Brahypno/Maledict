@@ -177,10 +177,12 @@ public final class RigProbe {
                     world.tip().x(), world.tip().y(), world.tip().z(), victimCentre);
         }
 
-        // Clearances print in 1/100 block; the melee test's tolerance is BLADE_HIT_RADIUS = 0.75.
+        // Clearances print in 1/100 block. These are geometry readings: the melee hit test is a
+        // forward band (inner edge one body width, outer edge Action#bladeForwardReach), not a
+        // tolerance around the blade line, so this table no longer decides hits.
         System.out.println();
         System.out.println("=== victim offset ahead of the boss -> gap to its volume ===");
-        System.out.println("gap in 1/100 block: gapPoint / gapBox, box limit 75");
+        System.out.println("gap in 1/100 block: gapPoint / gapBox (geometry only, not bounds)");
         double[] offsets = {1.5D, 2.0D, 2.5D, 3.0D, 3.5D, 4.0D, 4.5D, 5.0D};
         System.out.printf(Locale.ROOT, "%-18s", "action");
         for (double o : offsets) {
