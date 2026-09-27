@@ -1,0 +1,20 @@
+{
+  "music.vicissitude.phase_one": {
+    "subtitle": "sounds.maledict.music.vicissitude.phase_one",
+    "sounds": [
+      {
+        "name": "maledict:music/vicissitude_phase_one",
+        "stream": true
+      }
+    ]
+  },
+  "music.vicissitude.phase_two": {
+    "subtitle": "sounds.maledict.music.vicissitude.phase_two",
+    "sounds": [
+      {
+        "name": "maledict:music/vicissitude_phase_two",
+        "stream": true
+      }
+    ]
+  }
+}

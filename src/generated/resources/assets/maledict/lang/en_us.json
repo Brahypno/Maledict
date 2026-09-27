@@ -133,6 +133,8 @@
   "message.maledict.first_vicissitude.curio_return_complete": "Every confiscated curio has been returned",
   "message.maledict.first_vicissitude.curio_return_pending": "%s curio(s) are still in custody: free up inventory or curio slots and they will be returned automatically",
   "message.maledict.first_vicissitude.phase_two": "Vicissitude is the fate even sages meet while walking the righteous path.",
+  "sounds.maledict.music.vicissitude.phase_one": "Vicissitude: An Unwelcome Guest",
+  "sounds.maledict.music.vicissitude.phase_two": "Vicissitude: What Cannot Be Helped",
   "tooltip.maledict.age_of_enlightenment.hold_shift": "Hold Shift to ask a question better left unasked",
   "tooltip.maledict.age_of_enlightenment.shift": "Was there ever a true age of darkness?",
   "tooltip.maledict.age_of_enlightenment.shift.enlightened": "That infinite, boundless, perpetual \"Age of Enlightenment.\"",

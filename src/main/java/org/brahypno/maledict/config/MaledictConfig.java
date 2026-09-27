@@ -6,6 +6,8 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec COMMON_SPEC;
     public static final ForgeConfigSpec CLIENT_SPEC;
     public static final ForgeConfigSpec.DoubleValue SCREENSHAKE_INTENSITY;
+    public static final ForgeConfigSpec.BooleanValue VICISSITUDE_BOSS_MUSIC;
+    public static final ForgeConfigSpec.DoubleValue VICISSITUDE_BOSS_MUSIC_VOLUME;
     public static final ForgeConfigSpec.DoubleValue VICISSITUDE_ENGAGEMENT_RANGE;
     public static final ForgeConfigSpec.DoubleValue VICISSITUDE_DAMAGE_RANGE;
     public static final ForgeConfigSpec.IntValue VICISSITUDE_ADAPTATION_LEVEL;
@@ -98,6 +100,17 @@ public final class MaledictConfig {
         SCREENSHAKE_INTENSITY = clientBuilder
                 .comment("Client side multiplier for the First Vicissitude screenshake. 0 disables it.")
                 .defineInRange("screenshakeIntensity", 1.0D, 0.0D, 1.0D);
+        VICISSITUDE_BOSS_MUSIC = clientBuilder
+                .comment("When true, the First Vicissitude gets its own battle theme: one for phase",
+                        "one, one for phase two. Turning this off means no music from this mod",
+                        "during the encounter at all.",
+                        "The boss bar is unaffected either way.")
+                .define("bossMusic", true);
+        VICISSITUDE_BOSS_MUSIC_VOLUME = clientBuilder
+                .comment("Volume multiplier for the encounter's music, 1.0 being as authored.",
+                        "Vanilla's Music slider still applies on top of this, and setting that",
+                        "slider to 0 mutes the theme on its own.")
+                .defineInRange("bossMusicVolume", 1.0D, 0.0D, 1.0D);
         clientBuilder.pop();
         CLIENT_SPEC = clientBuilder.build();
     }

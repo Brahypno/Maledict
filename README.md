@@ -55,7 +55,8 @@ Build or download the jar and drop it into your `mods` folder alongside those de
 
 `config/maledict-common.toml` holds the blade's per-spirit infusion costs, the First Vicissitude's engagement and
 damage ranges, how many kinds of harm it learns to shrug off, and which entity its rites summon;
-`config/maledict-client.toml` holds the encounter's screenshake.
+`config/maledict-client.toml` holds the encounter's screenshake and its battle music (on/off and a volume
+multiplier — vanilla's Music slider still applies on top).
 
 ## Building
 
@@ -79,4 +80,8 @@ Build artifacts are written to `build/libs`. Two other tasks are worth knowing:
 
 ## License
 
-Maledict is licensed under the [GNU Lesser General Public License v3.0 only](LICENSE) (`LGPL-3.0-only`).
+Maledict's code is licensed under the [GNU Lesser General Public License v3.0 only](LICENSE)
+(`LGPL-3.0-only`).
+
+**Bundled audio and image assets carry their own licences and are not covered by the LGPL** — see
+[CREDITS.md](src/main/resources/CREDITS.md), which also ships inside the jar.

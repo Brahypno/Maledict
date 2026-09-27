@@ -159,6 +159,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("message.maledict.first_vicissitude.attack", "命运总是会将人逼上悬崖，犹如恶客造访");
             add("message.maledict.first_vicissitude.phase_two",
                 "所谓无常，就是圣人行走在正道上，依然会遇见的命运");
+            add("sounds.maledict.music.vicissitude.phase_one", "无常：恶客造访");
+            add("sounds.maledict.music.vicissitude.phase_two", "无常：不得已");
             add("tooltip.maledict.incursus_blade.description", "吞噬精魂成长，向周身挥出锋刃的凶邪镰刀。");
             add("tooltip.maledict.incursus_blade.medium_unlock_hint", "精魂之力到达神圣之数会解锁更本征的力量");
             add("tooltip.maledict.incursus_blade.hold_shift", "按住 Shift 查看精魂详情");
@@ -395,6 +397,10 @@ public final class MaledictLanguage extends LanguageProvider {
                 "Fate always drives people to the edge of a cliff, like an unwelcome guest calling.");
             add("message.maledict.first_vicissitude.phase_two",
                 "Vicissitude is the fate even sages meet while walking the righteous path.");
+            add("sounds.maledict.music.vicissitude.phase_one",
+                "Vicissitude: An Unwelcome Guest");
+            add("sounds.maledict.music.vicissitude.phase_two",
+                "Vicissitude: What Cannot Be Helped");
             add("tooltip.maledict.incursus_blade.description", "A evil scythe that devours spirits and strikes all around its wielder.");
             add("tooltip.maledict.incursus_blade.medium_unlock_hint", "When every spirit reaches the sacred number, a more intrinsic power will awaken.");
             add("tooltip.maledict.incursus_blade.hold_shift", "Hold Shift for spirit details");

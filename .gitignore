@@ -23,3 +23,6 @@ run-data/
 
 # Forge data generator cache (generated resource JSON remains tracked)
 src/generated/resources/.cache/
+
+# BGM 候选素材（下载来试听的原始文件，选中后再转码进 src/main/resources）
+bgm-candidates/

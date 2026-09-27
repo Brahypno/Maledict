@@ -17,12 +17,10 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
-import net.minecraft.world.BossEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -177,8 +175,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             UUID.fromString("8a17c3d2-5e64-4d0b-9c31-7b2f5a0e6d44");
     private static final int WEAPON_GUARD_INTERVAL = 20;
 
-    private final ServerBossEvent bossEvent = new ServerBossEvent(
-            getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
+    /** 自定义血条：皮肤号跟着阶段走，一 / 二阶段各一套贴图。 */
+    private final VicissitudeBossEvent bossEvent = new VicissitudeBossEvent(
+            getDisplayName(), VicissitudeBossEvent.STYLE_PHASE_ONE);
     private final Set<UUID> phaseOneTargets = new LinkedHashSet<>();
     /** Save key stays {@code PhaseTwoPlayers}; the set holds any living entity, not only players. */
     private final Set<UUID> phaseTwoParticipants = new LinkedHashSet<>();
@@ -947,6 +946,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         setStage(VicissitudeBossStage.PHASE_TWO);
         phaseTwoReached = true;
         entityData.set(DATA_PHASE_TWO_REACHED, true);
+        // 阶段是单向的（PHASE_TWO 不会再退回 DORMANT），所以血条皮肤换一次就够。
+        bossEvent.setStyle(VicissitudeBossEvent.STYLE_PHASE_TWO);
         if (!(level() instanceof ServerLevel serverLevel)){
             return;
         }
@@ -2782,6 +2783,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         phaseOneDurationLocked = tag.getBoolean("PhaseOneDurationLocked");
         phaseTwoReached = stage == VicissitudeBossStage.PHASE_TWO || tag.getBoolean("PhaseTwoReached");
         entityData.set(DATA_PHASE_TWO_REACHED, phaseTwoReached);
+        // 存档里已经是二阶段的，血条皮肤要跟着回来，否则读档后血条会退回一阶段的样子。
+        bossEvent.setStyle(phaseTwoReached ? VicissitudeBossEvent.STYLE_PHASE_TWO
+                                           : VicissitudeBossEvent.STYLE_PHASE_ONE);
         int savedDuration = tag.getInt("PhaseOneDuration");
         int savedTicks = Mth.clamp(tag.getInt("PhaseOneTicks"), 0, 6000);
         if (savedDuration > 0){

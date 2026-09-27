@@ -134,6 +134,8 @@
   "message.maledict.first_vicissitude.curio_return_complete": "被没收的饰品已全部归还",
   "message.maledict.first_vicissitude.curio_return_pending": "还有 %s 件饰品由无常保管：腾出背包或饰品栏空间后会自动归还",
   "message.maledict.first_vicissitude.phase_two": "所谓无常，就是圣人行走在正道上，依然会遇见的命运",
+  "sounds.maledict.music.vicissitude.phase_one": "无常：恶客造访",
+  "sounds.maledict.music.vicissitude.phase_two": "无常：不得已",
   "tooltip.maledict.age_of_enlightenment.hold_shift": "按住 Shift 追问一个不该问的问题",
   "tooltip.maledict.age_of_enlightenment.shift": "黑暗的时代曾经存在过吗",
   "tooltip.maledict.age_of_enlightenment.shift.enlightened": "那无穷，无限，永动的启蒙之年啊",

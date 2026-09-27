@@ -10,6 +10,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import org.brahypno.maledict.Maledict;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public final class MaledictNetwork {
     private static final String PROTOCOL = "1";
@@ -48,6 +49,13 @@ public final class MaledictNetwork {
                 DelayedVitalsPacket::decode,
                 DelayedVitalsPacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(
+                4,
+                BossBarStylePacket.class,
+                BossBarStylePacket::encode,
+                BossBarStylePacket::decode,
+                BossBarStylePacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendRadialAttack() {
@@ -67,6 +75,12 @@ public final class MaledictNetwork {
     public static void sendDelayedVitals(ServerPlayer player, float pendingDamage, float pendingHeal) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                      new DelayedVitalsPacket(pendingDamage, pendingHeal));
+    }
+
+    /** 血条皮肤：入队补发、阶段切换、离队清映射时各发一次。{@code style} 为 -1 表示删除映射。 */
+    public static void sendBossBarStyle(ServerPlayer player, UUID bar, int style) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                     new BossBarStylePacket(bar, style));
     }
 
     private MaledictNetwork() {
