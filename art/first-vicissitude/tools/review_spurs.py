@@ -29,7 +29,8 @@ views=[('phase_two_front',(30,-130,18),(0,0,0),65,41),
        ('upper_front',(18,-130,29),(0,4,22),58,41),
        ('upper_side',(130,30,29),(0,4,22),58,41),
        ('upper_phase_one',(18,130,29),(0,4,22),58,1),
-       ('upper_death',(18,130,29),(0,4,22),58,81)]
+       ('upper_death',(18,130,29),(0,4,22),58,81),
+       ('chest_crystal',(14,-130,22),(0,0,11),38,41)]
 def render(name,pos,target,scale,frame):
     scene.frame_set(frame)
     camera.location=pos

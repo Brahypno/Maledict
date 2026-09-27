@@ -29,6 +29,7 @@ public final class FirstVicissitudeBossModel
             new EnumMap<>(VicissitudeRigData.Joint.class);
     private final VicissitudeRig.Pose pose = VicissitudeRig.newPose();
     private final VicissitudeRig.Pose releasePose = VicissitudeRig.newPose();
+    private final VicissitudePoseMatrices matrices = new VicissitudePoseMatrices();
     private float sheddingTicks;
     private float renderAge;
     private float renderWingFold;
@@ -81,7 +82,11 @@ public final class FirstVicissitudeBossModel
     @Override
     public void renderToBuffer(PoseStack stack, VertexConsumer buffer, int light, int overlay,
                                float red, float green, float blue, float alpha) {
-        mesh.render(this, stack, buffer, light, overlay, red, green, blue, alpha);
+        mesh.render(this, stack, buffer, light, overlay, red, green, blue, alpha, false);
+    }
+
+    public void renderEmissive(PoseStack stack, VertexConsumer buffer, int light, int overlay, float fade) {
+        mesh.render(this, stack, buffer, light, overlay, fade, fade, fade, 1, true);
     }
 
     public ModelPart part(VicissitudeRigData.Joint joint) {
@@ -89,20 +94,11 @@ public final class FirstVicissitudeBossModel
     }
 
     /**
-     * 沿整条祖先链把 pose stack 挪到某个关节：{@link ModelPart#translateAndRotate} 只应用该部件自身的局部变换，
-     * 直接用在右手锚点这种深层关节上会让物品停在模型原点，所以这里与网格渲染一样从根开始。
+     * 应用 setupAnim 中缓存的完整祖先变换；基础层、发光层和持械共用位置与法线矩阵。
      */
     public void poseStackTo(VicissitudeRigData.Joint joint, PoseStack poseStack) {
-        List<ModelPart> chain = new ArrayList<>(8);
-        for (VicissitudeRigData.Joint current = joint; current != null; current = current.parent()) {
-            ModelPart part = parts.get(current);
-            if (part != null) {
-                chain.add(part);
-            }
-        }
-        for (int index = chain.size() - 1; index >= 0; index--) {
-            chain.get(index).translateAndRotate(poseStack);
-        }
+        poseStack.last().pose().mul(matrices.position(joint));
+        poseStack.last().normal().mul(matrices.normal(joint));
     }
 
     public VicissitudeRig.Pose pose() {
@@ -127,6 +123,7 @@ public final class FirstVicissitudeBossModel
         if (blend > 0 && blend < 1) sheddingTicks += partialTick;
         pose.copyFrom(entity.poseForRender(partialTick));
         applyPose(pose);
+        matrices.update(pose);
     }
 
     private void applyPose(VicissitudeRig.Pose applied) {

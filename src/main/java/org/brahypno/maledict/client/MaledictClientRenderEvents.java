@@ -33,12 +33,13 @@ public final class MaledictClientRenderEvents {
         MARKERS.clear();
         ClientLevel level = Minecraft.getInstance().level;
         LocalPlayer player = Minecraft.getInstance().player;
-        if (level == null || player == null) {
+        if (level == null || player == null || Minecraft.getInstance().isPaused()) {
             return;
         }
         AABB area = player.getBoundingBox().inflate(MARKER_SEARCH_RADIUS);
         for (FirstVicissitudeBossEntity boss
                 : level.getEntitiesOfClass(FirstVicissitudeBossEntity.class, area)) {
+            FirstVicissitudeEffects.tickEntityEffects(boss);
             if (boss.isGroundMarkerActive()) {
                 MARKERS.add(boss);
             }

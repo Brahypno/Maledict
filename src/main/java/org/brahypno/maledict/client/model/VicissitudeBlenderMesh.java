@@ -4,6 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import org.brahypno.maledict.Maledict;
@@ -21,13 +23,15 @@ final class VicissitudeBlenderMesh {
     private static final ResourceLocation RESOURCE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "models/entity/first_vicissitude.mesh.json");
     private final List<MeshPart> parts = new ArrayList<>();
-    private record MeshPart(Joint joint, List<Triangle> triangles, float delay, float deployScale, Vertex center) {}
+    private record MeshPart(Joint joint, List<Triangle> triangles, List<Triangle> emissive,
+                            float delay, float deployScale, Vertex center) {}
 
     private record Vertex(float x, float y, float z, float u, float v) {}
 
     private record Triangle(Vertex a, Vertex b, Vertex c, float nx, float ny, float nz) {}
 
     VicissitudeBlenderMesh() {
+        VicissitudeEmissiveMask mask = readEmissiveMask();
         // 模型实例在资源重载时会重建，别把网格静态缓存住，否则 F3+T 之后还是旧网格。
         try (var reader = Minecraft.getInstance().getResourceManager()
                                    .getResourceOrThrow(RESOURCE).openAsReader()) {
@@ -50,7 +54,8 @@ final class VicissitudeBlenderMesh {
                 float x=0, y=0, z=0;
                 for (Triangle t : target) { x+=t.a.x+t.b.x+t.c.x; y+=t.a.y+t.b.y+t.c.y; z+=t.a.z+t.b.z+t.c.z; }
                 float count=target.size()*3F;
-                parts.add(new MeshPart(joint, target, part.has("shed_delay") ? part.get("shed_delay").getAsFloat() : -1,
+                List<Triangle> emissive = mask == null ? target : target.stream().filter(t -> touches(mask, t)).toList();
+                parts.add(new MeshPart(joint, target, emissive, part.has("shed_delay") ? part.get("shed_delay").getAsFloat() : -1,
                         part.has("deploy_scale") ? part.get("deploy_scale").getAsFloat() : 1,
                         new Vertex(x/count,y/count,z/count,0,0)));
             }
@@ -58,6 +63,32 @@ final class VicissitudeBlenderMesh {
         catch (IOException exception) {
             throw new IllegalStateException("Cannot load Blender First Vicissitude model", exception);
         }
+        LogUtils.getLogger().info("First Vicissitude mesh: base={} triangles, emissive={} triangles; phase two base={}, emissive={}",
+                parts.stream().mapToInt(p -> p.triangles.size()).sum(),
+                parts.stream().mapToInt(p -> p.emissive.size()).sum(),
+                parts.stream().filter(p -> p.delay < 0).mapToInt(p -> p.triangles.size()).sum(),
+                parts.stream().filter(p -> p.delay < 0).mapToInt(p -> p.emissive.size()).sum());
+    }
+
+    private static VicissitudeEmissiveMask readEmissiveMask() {
+        var resource = ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "textures/entity/first_vicissitude_emissive.png");
+        try (var stream = Minecraft.getInstance().getResourceManager().getResourceOrThrow(resource).open();
+             var image = NativeImage.read(stream)) {
+            int width = image.getWidth(), height = image.getHeight();
+            int[] pixels = new int[width * height];
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) pixels[y * width + x] = image.getPixelRGBA(x, y);
+            }
+            return new VicissitudeEmissiveMask(width, height, pixels);
+        } catch (IOException exception) {
+            LogUtils.getLogger().warn("Cannot inspect First Vicissitude emissive texture; rendering the full glow mesh", exception);
+            return null;
+        }
+    }
+
+    private static boolean touches(VicissitudeEmissiveMask mask, Triangle t) {
+        return mask.touches(Math.min(t.a.u, Math.min(t.b.u, t.c.u)), Math.min(t.a.v, Math.min(t.b.v, t.c.v)),
+                Math.max(t.a.u, Math.max(t.b.u, t.c.u)), Math.max(t.a.v, Math.max(t.b.v, t.c.v)));
     }
 
     private static Vertex vertex(JsonArray values) {
@@ -68,8 +99,10 @@ final class VicissitudeBlenderMesh {
 
     void render(
             FirstVicissitudeBossModel model, PoseStack stack, VertexConsumer buffer,
-            int light, int overlay, float red, float green, float blue, float alpha) {
+            int light, int overlay, float red, float green, float blue, float alpha, boolean emissivePass) {
         for (var part : parts) {
+            List<Triangle> triangles = emissivePass ? part.emissive : part.triangles;
+            if (triangles.isEmpty()) continue;
             float elapsed = part.delay < 0 ? 0 : VicissitudeFeatherShed.elapsed(model.sheddingTicks(),part.delay);
             if (elapsed >= VicissitudeFeatherShed.FALL_TICKS) continue;
             stack.pushPose();
@@ -92,7 +125,7 @@ final class VicissitudeBlenderMesh {
                 stack.scale(scale,scale,scale);
             }
             var pose = stack.last();
-            for (Triangle triangle : part.triangles) {
+            for (Triangle triangle : triangles) {
                 emit(triangle.a, triangle, pose, buffer, light, overlay, red, green, blue, alpha);
                 emit(triangle.b, triangle, pose, buffer, light, overlay, red, green, blue, alpha);
                 emit(triangle.c, triangle, pose, buffer, light, overlay, red, green, blue, alpha);

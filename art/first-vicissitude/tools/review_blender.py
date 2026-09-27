@@ -15,6 +15,9 @@ ART = ROOT/'art/first-vicissitude'
 OUT = DIAGNOSTICS
 OUT.mkdir(parents=True,exist_ok=True)
 scene = bpy.context.scene
+# Test the authored aperture independently of the intentional renderer-only insert.
+layer_previews=[o for o in scene.objects if o.get('render_layer_preview')]
+for obj in layer_previews: obj.hide_viewport=True
 scene.frame_set(1)
 bpy.context.view_layer.update()
 data = json.loads((ROOT/'src/main/resources/assets/maledict/models/entity/first_vicissitude.mesh.json').read_text())
@@ -93,7 +96,10 @@ for obj in meshes.values():
 mirror_pairs=0
 for obj in meshes.values():
     if 'surface_islands' not in obj or 'left' not in obj.name: continue
-    other=meshes[obj.name.replace('left','right')]
+    mirror_name=obj.name.replace('left','right')
+    if obj.name.startswith('Forearm paired strut'):
+        mirror_name=mirror_name.rsplit(' ',1)[0]+' '+str(-int(mirror_name.rsplit(' ',1)[1]))
+    other=meshes[mirror_name]
     assert set(json.loads(obj['surface_islands']))==set(json.loads(other['surface_islands'])), 'Mirrored parts must reuse matching surface islands'
     mirror_pairs+=1
 ring_parts=[o for o in meshes.values() if o.name.startswith(('Fate ring stock','Ossuary socket seat','Fate arc'))]
@@ -152,6 +158,8 @@ print('VALIDATION',json.dumps(report),flush=True)
 if '--check-only' in sys.argv:
     sys.exit(0)
 
+for obj in layer_previews: obj.hide_viewport=False
+bpy.context.view_layer.update()
 camera=scene.camera
 def view(name,pos,target,scale,frame=1,ring_turn=0):
     scene.frame_set(frame)

@@ -227,7 +227,9 @@ def armor(name,joint,outline,front,back,mat=1,relief=0):
 def relic_arc(name,joint,center,rx,ry,start,end,width=1.3,mat=2,depth=.55):
     c=Vector(center)
     verts,faces,uvs=[],[],[]
-    steps=max(3,math.ceil(abs(end-start)/15))
+    # At these radii a 20-degree bay has under .20 model units of arc sagitta.
+    # Keep the section thickness, end taper and every original break in the ring.
+    steps=max(3,math.ceil(abs(end-start)/20))
     for i in range(steps+1):
         t=i/steps
         a=math.radians(start+(end-start)*t)
@@ -372,7 +374,8 @@ for s,label in [(1,'left'),(-1,'right')]:
             verts.extend([center-side*w*.7,center+side*w*1.3,
                           center+Vector((0,0,.45*thickness))])
             uvs.extend([(0,t),(1,t),(.48,t)])
-        # Collapse a section only if all three rails stay within .30 model units; tips and root never move.
+        # Preserve all three rails within .45 model units (under .03 blocks).
+        # Tips, root and triangular thickness remain explicit geometry.
         keep={0,steps}
         def preserve(a,b):
             worst,index=0,None
@@ -380,7 +383,7 @@ for s,label in [(1,'left'),(-1,'right')]:
                 t=(i-a)/(b-a)
                 error=max((verts[i*3+j]-verts[a*3+j].lerp(verts[b*3+j],t)).length for j in range(3))
                 if error>worst: worst,index=error,i
-            if worst>.30:
+            if worst>.45:
                 keep.add(index)
                 preserve(a,index)
                 preserve(index,b)
@@ -523,6 +526,9 @@ print('ATLAS_REPORT',len(part_atlas.regions),'regions',part_atlas.report()['allo
 
 bpy.context.scene['runtime_rig'] = json.dumps(RIG)
 bpy.context.view_layer.update()
+from optimize_mesh import optimize
+optimization = optimize(meshes)
+(PREVIEW/'optimization-audit.json').write_text(json.dumps(optimization,indent=2))
 sys.path.insert(0,str(Path(__file__).parent))
 sys.dont_write_bytecode = True
 from export_blender import export
@@ -579,6 +585,8 @@ for screen in bpy.data.screens:
     for ar in screen.areas:
         if ar.type=='VIEW_3D':
             ar.spaces.active.region_3d.view_perspective = 'CAMERA'
+from chest_crystal_preview import add_preview
+add_preview()
 bpy.ops.wm.save_as_mainfile(filepath=str(ART/'first_vicissitude.blend'))
 
 if '--no-render' not in sys.argv:

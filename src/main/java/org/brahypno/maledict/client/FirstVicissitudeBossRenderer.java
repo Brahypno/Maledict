@@ -17,7 +17,6 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.model.FirstVicissitudeBossModel;
-import org.brahypno.maledict.client.vfx.FirstVicissitudeEffects;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.rig.VicissitudeRigData;
@@ -39,8 +38,8 @@ public final class FirstVicissitudeBossRenderer
     public FirstVicissitudeBossRenderer(EntityRendererProvider.Context context) {
         super(context, new FirstVicissitudeBossModel(context.bakeLayer(LAYER)), 1.6F);
         addLayer(new EmissiveLayer(this));
+        addLayer(new FirstVicissitudeChestCrystalLayer(this, context));
         addLayer(new WeaponLayer(this));
-        addLayer(new EffectsLayer(this));
     }
 
     @Override
@@ -92,9 +91,9 @@ public final class FirstVicissitudeBossRenderer
             if (fade <= 0.0F){
                 return;
             }
-            getParentModel().renderToBuffer(poseStack,
+            getParentModel().renderEmissive(poseStack,
                                             buffer.getBuffer(RenderType.eyes(EMISSIVE)), packedLight,
-                                            OverlayTexture.NO_OVERLAY, fade, fade, fade, 1.0F);
+                                            OverlayTexture.NO_OVERLAY, fade);
         }
     }
 
@@ -142,18 +141,4 @@ public final class FirstVicissitudeBossRenderer
         }
     }
 
-    private static final class EffectsLayer
-            extends RenderLayer<FirstVicissitudeBossEntity, FirstVicissitudeBossModel> {
-        private EffectsLayer(FirstVicissitudeBossRenderer renderer) {
-            super(renderer);
-        }
-
-        @Override
-        public void render(
-                PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-                FirstVicissitudeBossEntity entity, float limbSwing, float limbSwingAmount,
-                float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
-            FirstVicissitudeEffects.render(entity, partialTick, poseStack, buffer, packedLight);
-        }
-    }
 }

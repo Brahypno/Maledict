@@ -1,9 +1,7 @@
 package org.brahypno.maledict.client.vfx;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.sammy.malum.registry.client.ParticleRegistry;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
@@ -52,13 +50,28 @@ public final class FirstVicissitudeEffects {
     private FirstVicissitudeEffects() {
     }
 
-    /** 由渲染层调用，此时本帧的模型已经摆好姿势。 */
-    public static void render(FirstVicissitudeBossEntity entity, float partialTick,
-                              PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
-        spawnWingCharge(entity, partialTick);
-        if (entity.getDeathTicks() >= 0.0F) {
-            renderDeathCollapse(entity, partialTick);
+    /** Three samples per client tick retain the former 60 FPS density without FPS-dependent spawning. */
+    public static void tickEntityEffects(FirstVicissitudeBossEntity entity) {
+        if (entity.isRemoved() || entity.isInvisible()) return;
+        boolean charging = entity.isChargingRanged();
+        boolean dying = entity.getDeathTicks() >= 36;
+        if (!charging && !dying) return;
+        for (int sample = 0; sample < 3; sample++) {
+            float partialTick = sample / 3F;
+            VicissitudeRig.Pose pose = entity.poseForRender(partialTick);
+            if (charging) spawnWingCharge(entity, partialTick, pose);
+            if (dying) spawnDeathCollapse(entity, partialTick, pose);
         }
+    }
+
+    private static Vec3 anchor(FirstVicissitudeBossEntity entity, VicissitudeRigData.Joint joint,
+                               float partialTick, VicissitudeRig.Pose pose) {
+        var point = VicissitudeRig.worldPoint(pose, joint, 0, 0, 0,
+                Mth.lerp(partialTick, entity.xOld, entity.getX()),
+                Mth.lerp(partialTick, entity.yOld, entity.getY()),
+                Mth.lerp(partialTick, entity.zOld, entity.getZ()),
+                Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot));
+        return new Vec3(point.x(), point.y(), point.z());
     }
 
     private static float markerAlpha(float progress) {
@@ -221,7 +234,7 @@ public final class FirstVicissitudeEffects {
         return gapCenter + gapWidth * 0.5D + insetDegrees + random.nextDouble() * arc;
     }
 
-    private static void spawnWingCharge(FirstVicissitudeBossEntity entity, float partialTick) {
+    private static void spawnWingCharge(FirstVicissitudeBossEntity entity, float partialTick, VicissitudeRig.Pose pose) {
         VicissitudeRig.Action action = entity.getRenderAction();
         if (!entity.isChargingRanged()) {
             return;
@@ -239,7 +252,7 @@ public final class FirstVicissitudeEffects {
         VicissitudeRigData.Joint anchor = left
                 ? VicissitudeRigData.Joint.WING_LEFT_ATTACK_ANCHOR
                 : VicissitudeRigData.Joint.WING_RIGHT_ATTACK_ANCHOR;
-        Vec3 point = entity.anchorWorldPosition(anchor, partialTick);
+        Vec3 point = anchor(entity, anchor, partialTick, pose);
         WorldParticleBuilder.create(LodestoneParticleRegistry.WISP_PARTICLE)
                 .setColorData(ColorParticleData.create(COLD_WHITE, DARK_VIOLET).build())
                 .setTransparencyData(GenericParticleData.create(0.65F, 0.0F).build())
@@ -248,9 +261,9 @@ public final class FirstVicissitudeEffects {
                 .setRandomOffset(0.18D)
                 .spawn(level, point.x, point.y, point.z);
         if (build > 0.75F) {
-            Vec3 tip = entity.anchorWorldPosition(left
+            Vec3 tip = anchor(entity, left
                     ? VicissitudeRigData.Joint.WING_LEFT_TIP
-                    : VicissitudeRigData.Joint.WING_RIGHT_TIP, partialTick);
+                    : VicissitudeRigData.Joint.WING_RIGHT_TIP, partialTick, pose);
             WorldParticleBuilder.create(LodestoneParticleRegistry.STAR_PARTICLE)
                     .setColorData(ColorParticleData.create(COLD_WHITE, COLD_BONE).build())
                     .setTransparencyData(GenericParticleData.create(0.8F, 0.0F).build())
@@ -287,7 +300,7 @@ public final class FirstVicissitudeEffects {
         }
     }
 
-    private static void renderDeathCollapse(FirstVicissitudeBossEntity entity, float partialTick) {
+    private static void spawnDeathCollapse(FirstVicissitudeBossEntity entity, float partialTick, VicissitudeRig.Pose pose) {
         float ticks = entity.getDeathTicks();
         Level level = entity.level();
         if (ticks < 36.0F) {
@@ -295,7 +308,7 @@ public final class FirstVicissitudeEffects {
         }
         float fade = Mth.clamp((ticks - 36.0F) / 44.0F, 0.0F, 1.0F);
         float scale = Math.max(0.02F, 0.5F * (1.0F - fade));
-        Vec3 core = entity.anchorWorldPosition(VicissitudeRigData.Joint.HEAD_EFFECT_ANCHOR, partialTick);
+        Vec3 core = anchor(entity, VicissitudeRigData.Joint.HEAD_EFFECT_ANCHOR, partialTick, pose);
         WorldParticleBuilder.create(LodestoneParticleRegistry.WISP_PARTICLE)
                 .setColorData(ColorParticleData.create(COLD_WHITE, DEEP_BLACK).build())
                 .setTransparencyData(GenericParticleData.create(0.7F * (1.0F - fade), 0.0F).build())
@@ -304,7 +317,7 @@ public final class FirstVicissitudeEffects {
                 .setRandomOffset(0.3D)
                 .setMotion(0.0D, 0.02D, 0.0D)
                 .spawn(level, core.x, core.y, core.z);
-        Vec3 chest = entity.anchorWorldPosition(VicissitudeRigData.Joint.CHEST_EFFECT_ANCHOR, partialTick);
+        Vec3 chest = anchor(entity, VicissitudeRigData.Joint.CHEST_EFFECT_ANCHOR, partialTick, pose);
         WorldParticleBuilder.create(LodestoneParticleRegistry.SMOKE_PARTICLE)
                 .setColorData(ColorParticleData.create(DARK_VIOLET, DEEP_BLACK).build())
                 .setTransparencyData(GenericParticleData.create(0.5F * (1.0F - fade), 0.0F).build())

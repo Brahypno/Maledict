@@ -6,7 +6,11 @@ Blender 导出器输出。旧 `RigArtGenerator.java` 是早期方块预览工具
 
 ## 文件
 
-- `first_vicissitude.blend`：185 个可编辑网格，3,450 个三角面，二阶段可见 3,150 面，65 个层级关节/锚点。
+- 胸腔水晶试装由 `FirstVicissitudeChestCrystalLayer` 单独渲染：原版双层玻璃壳与深岩珍金块内核，
+  增加 3 个立方体、36 三角面；下述 185 网格/3,214 面仍指主体，不含该渲染层。
+  `.blend` 包含与该层对应的三个预览对象（`render_layer_preview`），不会重复导出到主体 mesh/Blockbench。
+  `tools/chest_crystal_preview.py` 从已安装依赖读取原图用于离线预览；游戏直接引用原资源。
+- `first_vicissitude.blend`：185 个可编辑网格，3,214 个三角面，二阶段可见 2,914 面，65 个层级关节/锚点。
   贴图内嵌；时间轴第 1 / 41 / 81 帧分别为一阶段、二阶段、死亡露核检查姿态。
   使用 Empty 父子关节做刚性绑定，没有蒙皮依赖。Blender 坐标 = `(javaX, javaZ, -javaY)`，
   实体原点对应 Blender Z = -24；16 单位 = 1 格。
@@ -18,7 +22,7 @@ Blender 导出器输出。旧 `RigArtGenerator.java` 是早期方块预览工具
   `tools/surface_sample.py`：逐表面图稿的编排与样稿生成；`tools/atlas16.py` 只生成样稿范围以外的旧占位。
 - `tools/lower_surfaces.py`：下腹与祭衣的高密度表面绘制及 UV 分配；旧图集原密度保留，新增区域独立绘制。
 - [preview/index.html](preview/index.html)：唯一预览入口，仅四张图：一阶段整体、二阶段整体、
-  本轮胸背与头环修改前、修改后。均为离线渲染，**不是游戏截图**。
+  胸腔水晶试装前、试装后近景。均为离线渲染，**不是游戏截图**。
 - `build/first-vicissitude-review/`（仓库根目录下）：技术检查产物，包括其他视角、无灯光图、
   UV 线稿、图集布局和验证报告。由工具重建，不放进用户预览目录。
 - `../../src/main/resources/assets/maledict/models/entity/first_vicissitude.mesh.json`：游戏实际加载的网格。
@@ -71,11 +75,14 @@ java -cp build/rig-tool RigMeshCheck
 
 ## 尚未验证
 
-按用户反馈撤去新增的圆形内壁与整圈背缘，恢复之前开放的胸背空洞；完整模型回到 3,450 面。
+保留开放的胸背空洞；本轮从 3,450 面减至 3,214 面。删除 56 个内藏三角面，
+圆环曲线减少 112 面，骨翼曲线减少 68 面；羽片和下身不变，贴图文件不变。
+`optimize_mesh.py` 在重建中自动删除同关节不透明实体完全覆盖的面，保留其余面原有 UV 和法线。
+`review_optimization.py -- before/after` 生成同机位对照，`check_optimization.py` 检查保存的基线与当前导出。
 头环中心由 `(0,-28,9)` 移至 `(0,-32,16)`；椭圆半径由 14.1/15 缩至 11.5/12，
 截面半宽 1.2→0.65、半厚 0.85→0.32，保留四段断片与旋转。正背发光刻纹使用已有自发光渲染层。
 图集仍为 512×512，共 293 个区域；前胸活动环、双臂、下腹与祭衣的形体保持。
-同机位胸背对照见 `preview/index.html`；其他视角和无灯光技术图输出到 `build/first-vicissitude-review/`。
+当前同机位水晶试装对照见 `preview/index.html`；其他视角和无灯光技术图输出到 `build/first-vicissitude-review/`。
 
 游戏实机光照、资源重载、三类武器握持和实战性能尚未在客户端验收；所有 `preview/` 图都是离线正交预览，
 不能代替游戏截图。逐轮验证记录见 `docs/design/first-vicissitude/03_ENGINEERING_AND_VERIFICATION.md`。
