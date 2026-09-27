@@ -17,6 +17,9 @@ import java.util.Map;
  * <p>一记命中进来时<b>先记录、再判定</b>：只有挨这一下之前就已经在窗口里的消息才吃
  * {@code e^-(它已经挨过的次数)}，刚被记进来的这条是全额。顺序有意义，同一 tick 里灌进来的
  * 一串伤害也照样一条一条地过这里；账目没有时限，唯一清账的时机是这场打完。
+ *
+ * <p>但<b>同一刻里的同一条消息只算一记</b>（{@link #adaptInBatch}）：一次挥砍会用同一个伤害源
+ * 落地好几次（伤害补足、追加通道），那是「同一种打法的一下」，不是「又挨了一下」。
  */
 public final class DamageAdaptation {
 
@@ -25,6 +28,12 @@ public final class DamageAdaptation {
 
     /** 还在窗口里的消息各挨过几次；被挤出去就作废。 */
     private final Map<String, Integer> hitsByMessage = new LinkedHashMap<>();
+
+    /** 当前这一批的刻；换刻即换批。 */
+    private long batchTick = Long.MIN_VALUE;
+
+    /** 这一批里各消息判定的倍率，批内重复出现时直接沿用。 */
+    private final Map<String, Float> batchMultipliers = new LinkedHashMap<>();
 
     /**
      * 为这一记伤害记账并给出倍率。
@@ -51,10 +60,37 @@ public final class DamageAdaptation {
         return multiplier;
     }
 
-    /** 重来一场：清空窗口。 */
+    /**
+     * 按「批」记账：同一 {@code tick} 里同一条消息只算一记，重复出现时沿用这一批第一次判定的倍率，
+     * 也不再记账。换一刻就是新的一批。
+     *
+     * <p>无常一次挥砍会把同一条消息打好几次（{@code DamageProbe} 补足差额时会拿同一个
+     * {@code DamageSource} 再打一记，追加通道同理），窗口只有「适应几」格，要是逐次记账，
+     * 一记挥砍自己就能把同一条消息顶到 e⁻²——那不是玩家在重复同一种打法。
+     */
+    public float adaptInBatch(@Nullable String message, int level, long tick) {
+        if (level <= 0 || message == null || message.isEmpty()) {
+            return 1.0F;
+        }
+        if (tick != batchTick) {
+            batchTick = tick;
+            batchMultipliers.clear();
+        }
+        Float judged = batchMultipliers.get(message);
+        if (judged != null) {
+            return judged;
+        }
+        float multiplier = adapt(message, level);
+        batchMultipliers.put(message, multiplier);
+        return multiplier;
+    }
+
+    /** 重来一场：清空窗口，也作废当前这一批。 */
     public void clear() {
         window.clear();
         hitsByMessage.clear();
+        batchTick = Long.MIN_VALUE;
+        batchMultipliers.clear();
     }
 
     public boolean isEmpty() {

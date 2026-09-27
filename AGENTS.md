@@ -29,6 +29,13 @@ A sliding window of the **most recently hit damage messages** (`DamageSource#get
   `e^-(times it has been hit while remembered)`. A message that was just recorded is full damage.
 - Evicted messages keep **no** state: their counter is discarded, so the next hit on them counts as the first.
 - Order matters, including inside one tick: a burst is processed one hit at a time, in call order.
+- **One tick, one hit per message** (the boss records through `adaptInBatch(message, level, tick)`). A single swing
+  lands the *same* `DamageSource` more than once — `DamageProbe` tops the amount up by hitting again with that same
+  source, and the arcane channel is cashed in inside the same `LivingHurtEvent` — so counting every call let one
+  swing adapt itself: the blade's `scythe_sweep` is dealt twice per use, the second call was already e⁻¹, and a use
+  where the other channels did not interleave pushed it to e⁻² (the taunt fired on the fifth `scythe_sweep` record).
+  Inside one tick a message that already landed is therefore **not recorded again** and **reuses the first call's
+  multiplier**; the next tick is a new batch. `RuneOfMelancholiaItem` keeps the plain `adapt`, where every call counts.
 
 Trace for `adaptation 2`, A→B→C→A→B→C — **nothing is ever reduced**:
 

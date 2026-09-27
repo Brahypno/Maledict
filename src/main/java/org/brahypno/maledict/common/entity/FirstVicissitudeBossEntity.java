@@ -1753,7 +1753,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (!isPlayerDamage(source)){
             scaled *= NON_PLAYER_DAMAGE_MULTIPLIER;
         }
-        float adaptation = damageAdaptation.adapt(source.getMsgId(), adaptationLevel());
+        float adaptation = damageAdaptation.adaptInBatch(source.getMsgId(), adaptationLevel(),
+                                                         level().getGameTime());
         adaptationBlunted = adaptation <= ADAPTATION_BLUNTED_MULTIPLIER;
         return scaled * adaptation * distanceDamageScale(source);
     }

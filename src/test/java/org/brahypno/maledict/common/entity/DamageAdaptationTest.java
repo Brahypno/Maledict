@@ -180,4 +180,60 @@ class DamageAdaptationTest {
         assertEquals(Math.exp(-3.0D), loaded.adapt("mob|minecraft:zombie", 1), DELTA);
         assertEquals(Map.of("mob|minecraft:zombie", 4), loaded.hitCounts());
     }
+
+    /** 一次挥砍会用同一个伤害源打好几记（补足、追加通道）：同一刻的同一条消息只算一记。 */
+    @Test
+    void oneTickCountsOneHitPerMessage() {
+        DamageAdaptation adaptation = new DamageAdaptation();
+        assertEquals(1.0D, adaptation.adaptInBatch("scythe_sweep", 2, 100), DELTA);
+        assertEquals(1.0D, adaptation.adaptInBatch("scythe_sweep", 2, 100), DELTA);
+        assertEquals(1.0D, adaptation.adaptInBatch("scythe_sweep", 2, 100), DELTA);
+        assertEquals(Map.of("scythe_sweep", 1), adaptation.hitCounts());
+
+        assertEquals(Math.exp(-1.0D), adaptation.adaptInBatch("scythe_sweep", 2, 101), DELTA);
+        assertEquals(Math.exp(-2.0D), adaptation.adaptInBatch("scythe_sweep", 2, 102), DELTA);
+    }
+
+    /** 批内重复的那几记沿用第一记的倍率：补足伤害不该比主伤害多吃一层减伤。 */
+    @Test
+    void theRestOfTheBatchReusesTheFirstVerdict() {
+        DamageAdaptation adaptation = new DamageAdaptation();
+        adaptation.adaptInBatch("scythe_sweep", 2, 100);
+        assertEquals(Math.exp(-1.0D), adaptation.adaptInBatch("scythe_sweep", 2, 101), DELTA);
+        assertEquals(Math.exp(-1.0D), adaptation.adaptInBatch("scythe_sweep", 2, 101), DELTA);
+        assertEquals(Map.of("scythe_sweep", 2), adaptation.hitCounts());
+    }
+
+    /** 一批里的三条通道各记一记，轮换照旧成立：三种以上伤害类型永远是全额。 */
+    @Test
+    void aThreeChannelSwingStaysAtFullDamageAcrossTicks() {
+        DamageAdaptation adaptation = new DamageAdaptation();
+        for (long tick = 100; tick < 104; tick++) {
+            for (String message : new String[] {"scythe_sweep", "voodoo", "freeze"}) {
+                assertEquals(1.0D, adaptation.adaptInBatch(message, 2, tick), DELTA);
+                assertEquals(1.0D, adaptation.adaptInBatch(message, 2, tick), DELTA);
+            }
+        }
+        assertEquals(1.0D, adaptation.adapt("scythe_sweep", 2), DELTA);
+    }
+
+    /** 不带批的记账还是老规矩：逐记都算，符文那边不受影响。 */
+    @Test
+    void adaptWithoutABatchStillRecordsEveryHit() {
+        DamageAdaptation adaptation = new DamageAdaptation();
+        assertEquals(1.0D, adaptation.adapt("mob|minecraft:zombie", 1), DELTA);
+        assertEquals(Math.exp(-1.0D), adaptation.adapt("mob|minecraft:zombie", 1), DELTA);
+        assertEquals(Map.of("mob|minecraft:zombie", 2), adaptation.hitCounts());
+    }
+
+    /** 清账连当前这一批一起作废，不然重开一场会把上一场的批内缓存接着用。 */
+    @Test
+    void clearAlsoDropsTheBatch() {
+        DamageAdaptation adaptation = new DamageAdaptation();
+        adaptation.adaptInBatch("scythe_sweep", 2, 100);
+        assertEquals(Math.exp(-1.0D), adaptation.adaptInBatch("scythe_sweep", 2, 101), DELTA);
+        adaptation.clear();
+        assertEquals(1.0D, adaptation.adaptInBatch("scythe_sweep", 2, 101), DELTA);
+        assertEquals(Map.of("scythe_sweep", 1), adaptation.hitCounts());
+    }
 }
