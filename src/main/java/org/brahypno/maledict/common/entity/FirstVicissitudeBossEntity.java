@@ -95,6 +95,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public static final String PHASE_ONE_MESSAGE_KEY = VicissitudeLightOrbEntity.ATTACK_MESSAGE_KEY;
     public static final String PHASE_TWO_MESSAGE_KEY =
             "message.maledict.first_vicissitude.phase_two";
+    /** Shown to the attacker when adaptation has already blunted the same measure. */
+    public static final String ADAPTATION_MESSAGE_KEY =
+            "message.maledict.first_vicissitude.adaptation";
     public static final String UNSTICK_MESSAGE_KEY =
             "message.maledict.first_vicissitude.unstick";
     private static final String[] INCURSUS_STATS = {
@@ -220,6 +223,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private int rangedCooldown;
     /** Recently hit damage messages, see {@link DamageAdaptation}. */
     private final DamageAdaptation damageAdaptation = new DamageAdaptation();
+    /** 本次命中被适应削到 e⁻² 档及更深，等它真的落地时再开口；见 {@link #announceAdaptation}。 */
+    private boolean adaptationBlunted;
+    /** 每名玩家上次听到那句话的游戏刻，10 秒内不重复。 */
+    private final Map<UUID, Long> adaptationSpokenAt = new HashMap<>();
     private int emptyEncounterTicks;
     private int meleeAlternator;
     private int currentBaseSlot;
@@ -870,6 +877,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         phaseTwoParticipants.clear();
         phaseTwoPlayerDeaths.clear();
         damageAdaptation.clear();
+        adaptationSpokenAt.clear();
         setTarget(null);
         clearGroundMarker();
         return true;
@@ -1675,8 +1683,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     protected void onDamageAccepted(DamageSource source, float amount) {
         hurtTicks = 6;
+        ServerPlayer attacker = resolveAttackingPlayer(source);
+        if (adaptationBlunted){
+            adaptationBlunted = false;
+            announceAdaptation(attacker);
+        }
         if (isPhaseTwo() && bossDifficulty.confiscatesCurios()){
-            returnOneCurio(resolveAttackingPlayer(source));
+            returnOneCurio(attacker);
         }
     }
 
@@ -1723,6 +1736,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     /** Damage from anything that is not a player is halved. */
     private static final float NON_PLAYER_DAMAGE_MULTIPLIER = 0.5F;
 
+    /**
+     * 适应至少削到 e⁻² 那一档才算「这一手没用」，也就是同一条消息累计挨到第三下
+     * （e⁻¹ ≈ 0.368 的第一档太浅，几乎每记被适应的命中都过线）；再往下 e⁻³、e⁻⁴ 当然也算。
+     */
+    private static final float ADAPTATION_BLUNTED_MULTIPLIER = (float) Math.exp(-2.0D);
+
+    /** 同一名玩家两条嘲弄之间至少隔 10 秒。 */
+    private static final int ADAPTATION_MESSAGE_COOLDOWN_TICKS = 200;
+
     /** Applies the non-player cut, adaptation and distance falloff; hit location is only a cap. */
     @Override
     protected float modifyIncomingDamage(DamageSource source, float amount) {
@@ -1730,8 +1752,28 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (!isPlayerDamage(source)){
             scaled *= NON_PLAYER_DAMAGE_MULTIPLIER;
         }
-        return scaled * damageAdaptation.adapt(source.getMsgId(), adaptationLevel())
-               * distanceDamageScale(source);
+        float adaptation = damageAdaptation.adapt(source.getMsgId(), adaptationLevel());
+        adaptationBlunted = adaptation <= ADAPTATION_BLUNTED_MULTIPLIER;
+        return scaled * adaptation * distanceDamageScale(source);
+    }
+
+    /**
+     * 这一记被适应削到 e⁻² 档及更深、而且真的落了地时，向出手的玩家说一句「墨守成规，
+     * 因循守旧，无常视之如粪土」；同一个人 10 秒内只听得见一条，创造与旁观不开口。
+     *
+     * <p>只发给这一记的出手者本人：不查参战名单、也不广播——挨打的是无常，被念的是出手的那个人。
+     */
+    private void announceAdaptation(@Nullable ServerPlayer attacker) {
+        if (attacker == null || isIgnoredPlayer(attacker)){
+            return;
+        }
+        long now = level().getGameTime();
+        Long spoken = adaptationSpokenAt.get(attacker.getUUID());
+        if (spoken != null && now - spoken < ADAPTATION_MESSAGE_COOLDOWN_TICKS){
+            return;
+        }
+        adaptationSpokenAt.put(attacker.getUUID(), now);
+        attacker.displayClientMessage(announcement(ADAPTATION_MESSAGE_KEY), true);
     }
 
     /** Single-hit cap from the hit segment's {@code capWeight}. */

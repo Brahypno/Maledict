@@ -128,6 +128,7 @@
   "malum.gui.rite.greater_eldritch_vicissitude_rite": "Greater Eldritch Rite of Vicissitude",
   "malum.gui.rite.greater_vicissitude_rite": "Greater Rite of Vicissitude",
   "malum.gui.rite.vicissitude_rite": "Rite of Vicissitude",
+  "message.maledict.first_vicissitude.adaptation": "It is of no use to adopt the same measures to Fortune",
   "message.maledict.first_vicissitude.attack": "Fate always drives people to the edge of a cliff, like an unwelcome guest calling.",
   "message.maledict.first_vicissitude.curio_return_complete": "Every confiscated curio has been returned",
   "message.maledict.first_vicissitude.curio_return_pending": "%s curio(s) are still in custody: free up inventory or curio slots and they will be returned automatically",

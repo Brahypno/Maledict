@@ -154,6 +154,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("message.maledict.first_vicissitude.curio_return_pending",
                 "还有 %s 件饰品由无常保管：腾出背包或饰品栏空间后会自动归还");
             add("message.maledict.first_vicissitude.curio_return_complete", "被没收的饰品已全部归还");
+            add("message.maledict.first_vicissitude.adaptation",
+                "墨守成规，因循守旧，无常视之如粪土");
             add("message.maledict.first_vicissitude.attack", "命运总是会将人逼上悬崖，犹如恶客造访");
             add("message.maledict.first_vicissitude.phase_two",
                 "所谓无常，就是圣人行走在正道上，依然会遇见的命运");
@@ -387,6 +389,8 @@ public final class MaledictLanguage extends LanguageProvider {
                 + "will be returned automatically");
             add("message.maledict.first_vicissitude.curio_return_complete",
                 "Every confiscated curio has been returned");
+            add("message.maledict.first_vicissitude.adaptation",
+                "It is of no use to adopt the same measures to Fortune");
             add("message.maledict.first_vicissitude.attack",
                 "Fate always drives people to the edge of a cliff, like an unwelcome guest calling.");
             add("message.maledict.first_vicissitude.phase_two",

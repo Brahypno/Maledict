@@ -109,9 +109,9 @@ UV/法线、胸洞 12 条射线和环内缘 32 条射线检查通过；报告在
 
 | 命令 | 结果 |
 | --- | --- |
-| `.\gradlew compileJava --offline` | BUILD SUCCESSFUL（实现轮、第十轮、第十三轮、各资产轮） |
+| `.\gradlew compileJava --offline` | BUILD SUCCESSFUL（实现轮、第十轮、第十三轮、各资产轮、适应台词轮） |
 | `.\gradlew test --offline` | BUILD SUCCESSFUL；测试数随轮次从 5 项增长到 54 项，始终 0 失败 |
-| `.\gradlew runData --offline` | BUILD SUCCESSFUL（实现轮、召唤仪式轮、掉落表轮）；不动生成器时不跑 |
+| `.\gradlew runData --offline` | BUILD SUCCESSFUL（实现轮、召唤仪式轮、掉落表轮、适应台词轮只改了语言文件） |
 | `javac` + `java RigArtGenerator` | 生成 base/emissive 贴图、凭证图标、bbmodel、预览图与尺寸报告 |
 | `javac` + `java RigMeshCheck` | 三条 PASS：光环保持面内、胸环刚性且与光环反向同速、翼顶点组合检查 |
 | `javac` + `java RigPoseExporter` | 从真实运行时骨架导出胸环中心 |
@@ -324,6 +324,13 @@ HTML 报告在 `build/reports/tests/test/index.html`，日志在 `build/tests`�
     所以贴着它走就能推着它走（稳态推挤速度约 `0.05 / (1 − 0.8 × 0.91) ≈ 0.18` 格/tick，
     只在离线推算，实机未验证）。改为 `isPushable()` 返回 false 且三参 `push` 空实现——
     撞击类攻击绕过前者；玩家一侧仍由 Boss 自己的 `pushEntities` 分离。
+28. **适应的台词**：被适应削到 e⁻² 档及更深（倍率 ≤ e⁻² ≈ 0.135，同一条消息累计挨到第三下）
+    **且真的落地**的打击，向出手的玩家发一句动作栏台词 `message.maledict.first_vicissitude.adaptation`
+    （zh「墨守成规，因循守旧，无常视之如粪土」，en 按用户给定）。**只发给这一记的出手者本人**，
+    不广播、不查参战名单（那是两句定场词的走法）。触发判定写在
+    `modifyIncomingDamage` 拿到适应倍率的那一行，由 `onDamageAccepted` 消费，
+    所以同 tick 重复、被上限清空而没落地的那一记不会开口；每名玩家 10 秒（200 tick）最多一条，
+    回到未参战时清掉计时；创造与旁观、非玩家出手都不发。
 
 ### 资产轮（2026-09-13 ~ 2026-09-23）
 
@@ -391,7 +398,8 @@ HTML 报告在 `build/reports/tests/test/index.html`，日志在 `build/tests`�
 13. 测试层面：`SpiritVoidCooldownCapability`（100 tick 自减计数器）、
     `AgeOfEnlightenmentEvents#onDarknessBearerHurt` 都没有单测；
     Malum 是否真的加载 `spirit_data`（目录、主键、命名空间）只能进游戏验证；
-    `DamageAdaptation` 的配置读取、清账时机与减伤档位在实体层，只能进游戏验证。
+    `DamageAdaptation` 的配置读取、清账时机与减伤档位在实体层，只能进游戏验证；
+    适应台词（是否只在该触发时出现、10 秒冷却的手感、动作栏是否读得清）同样只在实体层。
 14. **`rig/VicissitudeRigTest` 的连续性断言是静态采样，不是动画播放**：
     它证明姿态在数学上连续，不证明在实际帧率与插值下看起来连续。
 
