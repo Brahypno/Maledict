@@ -120,7 +120,7 @@
   "malum.gui.curio.effect.maledict.melancholia": "会逐渐获得同类伤害的抗性。治疗和伤害对你来说都很麻木。",
   "malum.gui.curio.effect.maledict.pack_boon": "十六格内属于自己的随从获得抗性提升、力量与迅捷各 I 级。",
   "malum.gui.curio.effect.maledict.ripening": "获得的经验多出四分之一。",
-  "malum.gui.curio.effect.maledict.rotten_bone": "若生命大于1点，则死亡时以25%最大生命值为代价逃离死亡",
+  "malum.gui.curio.effect.maledict.rotten_bone": "若生命上限大于1点，则死亡时以25%最大生命值为代价逃离死亡",
   "malum.gui.rite.corrupted_eldritch_vicissitude_rite": "邪术无常仪式",
   "malum.gui.rite.corrupted_greater_eldritch_vicissitude_rite": "邪术无常大仪式",
   "malum.gui.rite.corrupted_greater_vicissitude_rite": "无常大仪式",

@@ -144,7 +144,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.curio.effect.maledict.ripening", "获得的经验多出四分之一。");
             add("malum.gui.curio.effect.maledict.pack_boon", "十六格内属于自己的随从获得抗性提升、力量与迅捷各 I 级。");
             add("malum.gui.curio.effect.maledict.rotten_bone",
-                "若生命大于1点，则死亡时以25%最大生命值为代价逃离死亡");
+                "若生命上限大于1点，则死亡时以25%最大生命值为代价逃离死亡");
             add("malum.gui.curio.effect.maledict.melancholia",
                 "会逐渐获得同类伤害的抗性。治疗和伤害对你来说都很麻木。");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "按住 Shift 追问一个不该问的问题");
@@ -375,7 +375,7 @@ public final class MaledictLanguage extends LanguageProvider {
                 "Your Own Companions Within Sixteen Blocks Gain Resistance, Strength and Speed");
             add("malum.gui.curio.effect.maledict.rotten_bone",
                 "On Death, If Maximum Health Is Above 1: Lose a Quarter of It, Heal 7 Health and Gain "
-                + "3.5 Seconds of Invulnerability, Four Times at Most");
+                + "3.5 Seconds of Invulnerability.");
             add("malum.gui.curio.effect.maledict.melancholia",
                 "You Gradually Grow Resistant to the Same Kind of Harm; Both Healing and Damage Land on "
                 + "You Numbly");

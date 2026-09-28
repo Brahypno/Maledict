@@ -119,7 +119,7 @@
   "malum.gui.curio.effect.maledict.melancholia": "You Gradually Grow Resistant to the Same Kind of Harm; Both Healing and Damage Land on You Numbly",
   "malum.gui.curio.effect.maledict.pack_boon": "Your Own Companions Within Sixteen Blocks Gain Resistance, Strength and Speed",
   "malum.gui.curio.effect.maledict.ripening": "Experience Gained Is a Quarter Higher",
-  "malum.gui.curio.effect.maledict.rotten_bone": "On Death, If Maximum Health Is Above 1: Lose a Quarter of It, Heal 7 Health and Gain 3.5 Seconds of Invulnerability, Four Times at Most",
+  "malum.gui.curio.effect.maledict.rotten_bone": "On Death, If Maximum Health Is Above 1: Lose a Quarter of It, Heal 7 Health and Gain 3.5 Seconds of Invulnerability.",
   "malum.gui.rite.corrupted_eldritch_vicissitude_rite": "Eldritch Rite of Vicissitude",
   "malum.gui.rite.corrupted_greater_eldritch_vicissitude_rite": "Greater Eldritch Rite of Vicissitude",
   "malum.gui.rite.corrupted_greater_vicissitude_rite": "Greater Rite of Vicissitude",
