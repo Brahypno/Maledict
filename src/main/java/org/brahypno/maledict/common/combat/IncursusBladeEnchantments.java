@@ -26,6 +26,7 @@ import net.minecraft.world.phys.Vec3;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.common.entity.IncursusScytheBoomerangEntity;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
+import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.ItemHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
@@ -65,9 +66,9 @@ public final class IncursusBladeEnchantments {
         level.addFreshEntity(scythe);
         SoundHelper.playSound(
                 player,
-                SoundRegistry.SCYTHE_THROW.get(),
-                2.0f,
-                RandomHelper.randomBetween(level.getRandom(), 0.75f, 1.25f));
+                MaledictSounds.INCURSUS_BLADE_THROW.get(),
+                1.2f,
+                RandomHelper.randomBetween(level.getRandom(), 0.95f, 1.05f));
         TemporarilyDisabledItem.disable(serverPlayer, slot);
         player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
         player.swing(hand, true);
@@ -154,9 +155,9 @@ public final class IncursusBladeEnchantments {
         }
         SoundHelper.playSound(
                 player,
-                SoundRegistry.SCYTHE_ASCENSION.get(),
-                2.0f,
-                RandomHelper.randomBetween(level.getRandom(), 1.25f, 1.5f));
+                MaledictSounds.INCURSUS_BLADE_ASCENSION.get(),
+                1.2f,
+                RandomHelper.randomBetween(level.getRandom(), 0.95f, 1.05f));
     }
 
     private static boolean canHitEntity(Player player, Entity entity) {

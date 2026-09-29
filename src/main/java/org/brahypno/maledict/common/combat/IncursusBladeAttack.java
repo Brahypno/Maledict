@@ -3,7 +3,6 @@ package org.brahypno.maledict.common.combat;
 import com.sammy.malum.core.helpers.ParticleHelper;
 import com.sammy.malum.registry.common.DamageTypeRegistry;
 import com.sammy.malum.registry.common.ParticleEffectTypeRegistry;
-import com.sammy.malum.registry.common.SoundRegistry;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -24,6 +23,7 @@ import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
+import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.helpers.SoundHelper;
@@ -77,8 +77,10 @@ public final class IncursusBladeAttack {
         float attackStrength = player.getAttackStrengthScale(0.5f);
         DamageChannels channels = damageChannels(player, weapon);
         boolean attacked = false;
+        boolean critical = false;
         for (Entity target : targets) {
-            float damage = calculateDamage(player, weapon, target, channels.attack(), attackStrength, sweepingLevel);
+            Swing swing = calculateDamage(player, weapon, target, channels.attack(), attackStrength, sweepingLevel);
+            float damage = swing.damage();
             if (damage > 0.0f){
                 boolean reachedHurtEvent = applyScytheMeleeDamage(player, weapon, target, damage);
                 if (target instanceof LivingEntity livingTarget){
@@ -99,7 +101,11 @@ public final class IncursusBladeAttack {
                             channels.frozen());
                 }
                 attacked = true;
+                critical |= swing.critical();
             }
+        }
+        if (critical){
+            playCriticalSound(player);
         }
         if (attacked){
             IncursusBladeEffects.applyAerialEffect(player, weapon);
@@ -117,6 +123,10 @@ public final class IncursusBladeAttack {
             }
             return new DamageChannels(attack * factor, magic * factor, frozen * factor);
         }
+    }
+
+    /** 一次结算算出来的伤害和它算不算暴击；暴击音效按挥砍补，不按目标补。 */
+    private record Swing(float damage, boolean critical) {
     }
 
     public static DamageChannels damageChannels(LivingEntity attacker, ItemStack weapon) {
@@ -158,7 +168,7 @@ public final class IncursusBladeAttack {
         }
     }
 
-    private static float calculateDamage(
+    private static Swing calculateDamage(
             ServerPlayer player, ItemStack weapon, Entity target,
             float baseDamage, float attackStrength, int sweepingLevel) {
         MobType mobType = target instanceof LivingEntity livingTarget
@@ -184,19 +194,28 @@ public final class IncursusBladeAttack {
             damage *= criticalHit.getDamageModifier();
             player.crit(target);
         }
-        return damage;
+        return new Swing(damage, criticalHit != null);
     }
 
     private static void playSlashEffect(ServerPlayer player) {
         SoundHelper.playSound(
                 player,
-                SoundRegistry.TYRVING_SLASH.get(),
+                MaledictSounds.INCURSUS_BLADE_SLASH.get(),
                 1.0f,
-                RandomHelper.randomBetween(player.getRandom(), 1.0f, 1.5f));
+                RandomHelper.randomBetween(player.getRandom(), 0.9f, 1.1f));
         ParticleHelper.createSlashingEffect(ParticleEffectTypeRegistry.SCYTHE_SLASH)
                       .setSpiritType(SpiritTypeRegistry.UMBRAL_SPIRIT)
                       .setSlashAngle(0.0f)
                       .spawnForwardSlashingParticle(player);
+    }
+
+    /** 一次挥砍里至少打出一个暴击才补一层；逐个目标各放一次的话，横扫五只就是五声叠在一起。 */
+    private static void playCriticalSound(ServerPlayer player) {
+        SoundHelper.playSound(
+                player,
+                MaledictSounds.INCURSUS_BLADE_CRIT.get(),
+                1.2f,
+                RandomHelper.randomBetween(player.getRandom(), 0.95f, 1.05f));
     }
 
     private static boolean isValidTarget(

@@ -16,5 +16,45 @@
         "stream": true
       }
     ]
+  },
+  "item.incursus_blade.throw": {
+    "subtitle": "sounds.maledict.item.incursus_blade.throw",
+    "sounds": [
+      {
+        "name": "maledict:item/incursus_blade/throw"
+      }
+    ]
+  },
+  "item.incursus_blade.recall": {
+    "subtitle": "sounds.maledict.item.incursus_blade.recall",
+    "sounds": [
+      {
+        "name": "maledict:item/incursus_blade/recall"
+      }
+    ]
+  },
+  "item.incursus_blade.ascension": {
+    "subtitle": "sounds.maledict.item.incursus_blade.ascension",
+    "sounds": [
+      {
+        "name": "maledict:item/incursus_blade/ascension"
+      }
+    ]
+  },
+  "item.incursus_blade.slash": {
+    "subtitle": "sounds.maledict.item.incursus_blade.slash",
+    "sounds": [
+      {
+        "name": "maledict:item/incursus_blade/slash"
+      }
+    ]
+  },
+  "item.incursus_blade.crit": {
+    "subtitle": "sounds.maledict.item.incursus_blade.crit",
+    "sounds": [
+      {
+        "name": "maledict:item/incursus_blade/crit"
+      }
+    ]
   }
 }

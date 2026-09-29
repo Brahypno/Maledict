@@ -26,3 +26,7 @@ src/generated/resources/.cache/
 
 # BGM 候选素材（下载来试听的原始文件，选中后再转码进 src/main/resources）
 bgm-candidates/
+
+# 音效候选素材（同上；`art/incursus-blade/tools/make_blade_sfx.py` 会在这里找原料，
+# 缺文件时按脚本里的 SOURCES 表自动下载）
+sfx-candidates/

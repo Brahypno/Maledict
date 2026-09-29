@@ -30,6 +30,22 @@ public final class MaledictSounds {
     public static final RegistryObject<SoundEvent> VICISSITUDE_MUSIC_PHASE_TWO =
             register("music.vicissitude.phase_two");
 
+    /** 神侵恶刃：脱手（Rebound 投掷）。 */
+    public static final RegistryObject<SoundEvent> INCURSUS_BLADE_THROW =
+            register("item.incursus_blade.throw");
+    /** 神侵恶刃：收回（飞镰掉头回手的那一刻）。 */
+    public static final RegistryObject<SoundEvent> INCURSUS_BLADE_RECALL =
+            register("item.incursus_blade.recall");
+    /** 神侵恶刃：飞腾（Ascension 起跳旋斩）。 */
+    public static final RegistryObject<SoundEvent> INCURSUS_BLADE_ASCENSION =
+            register("item.incursus_blade.ascension");
+    /** 神侵恶刃：攻击（每次挥砍）。 */
+    public static final RegistryObject<SoundEvent> INCURSUS_BLADE_SLASH =
+            register("item.incursus_blade.slash");
+    /** 神侵恶刃：暴击（一次挥砍里至少打出一个暴击时补一层）。 */
+    public static final RegistryObject<SoundEvent> INCURSUS_BLADE_CRIT =
+            register("item.incursus_blade.crit");
+
     private static RegistryObject<SoundEvent> register(String name) {
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(
                 ResourceLocation.fromNamespaceAndPath(Maledict.MODID, name)));

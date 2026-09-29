@@ -161,6 +161,11 @@ public final class MaledictLanguage extends LanguageProvider {
                 "所谓无常，就是圣人行走在正道上，依然会遇见的命运");
             add("sounds.maledict.music.vicissitude.phase_one", "无常：恶客造访");
             add("sounds.maledict.music.vicissitude.phase_two", "无常：不得已");
+            add("sounds.maledict.item.incursus_blade.throw", "神侵恶刃：清脆的鸣叫 回旋而去");
+            add("sounds.maledict.item.incursus_blade.recall", "神侵恶刃：撕风裂帛 金声玉振");
+            add("sounds.maledict.item.incursus_blade.ascension", "神侵恶刃：振翅");
+            add("sounds.maledict.item.incursus_blade.slash", "神侵恶刃：侵蚀");
+            add("sounds.maledict.item.incursus_blade.crit", "神侵恶刃：狂喜咆哮");
             add("tooltip.maledict.incursus_blade.description", "吞噬精魂成长，向周身挥出锋刃的凶邪镰刀。");
             add("tooltip.maledict.incursus_blade.medium_unlock_hint", "精魂之力到达神圣之数会解锁更本征的力量");
             add("tooltip.maledict.incursus_blade.hold_shift", "按住 Shift 查看精魂详情");
@@ -401,6 +406,11 @@ public final class MaledictLanguage extends LanguageProvider {
                 "Vicissitude: An Unwelcome Guest");
             add("sounds.maledict.music.vicissitude.phase_two",
                 "Vicissitude: What Cannot Be Helped");
+            add("sounds.maledict.item.incursus_blade.throw", "Incursus Blade: Keening, Whirling Away");
+            add("sounds.maledict.item.incursus_blade.recall", "Incursus Blade: Rending Wind and Silk, Ringing Gold and Jade");
+            add("sounds.maledict.item.incursus_blade.ascension", "Incursus Blade: Wings Beat");
+            add("sounds.maledict.item.incursus_blade.slash", "Incursus Blade: Erosion");
+            add("sounds.maledict.item.incursus_blade.crit", "Incursus Blade: Ecstatic Roar");
             add("tooltip.maledict.incursus_blade.description", "A evil scythe that devours spirits and strikes all around its wielder.");
             add("tooltip.maledict.incursus_blade.medium_unlock_hint", "When every spirit reaches the sacred number, a more intrinsic power will awaken.");
             add("tooltip.maledict.incursus_blade.hold_shift", "Hold Shift for spirit details");

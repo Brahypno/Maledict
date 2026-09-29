@@ -14,6 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
+import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.ItemHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
@@ -25,10 +26,32 @@ import team.lodestar.lodestone.helpers.SoundHelper;
 public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
     private final float frozenDamage;
 
+    /** 「收回」只响一次：飞镰掉头（{@code returnTimer} 落到 0）的那一 tick。 */
+    private boolean recallAnnounced;
+
     public IncursusScytheBoomerangEntity(
             Level level, double x, double y, double z, float frozenDamage) {
         super(level, x, y, z);
         this.frozenDamage = frozenDamage;
+    }
+
+    /**
+     * 投掷与接住之间，玩家听到的只有 Malum 的旋转声（{@code SCYTHE_SPINS}）+ 接住时的
+     * {@code SCYTHE_CATCH}；本模组补的是「掉头回手」这一下。判定用 {@code returnTimer} 而不是
+     * {@code flyBack()}：后者只在撞墙和强化命中时被调用，普通投掷的返程不会走它。
+     */
+    @Override
+    public void tick() {
+        super.tick();
+        if (recallAnnounced || level().isClientSide() || returnTimer > 0) {
+            return;
+        }
+        recallAnnounced = true;
+        SoundHelper.playSound(
+                this,
+                MaledictSounds.INCURSUS_BLADE_RECALL.get(),
+                1.2f,
+                RandomHelper.randomBetween(level().getRandom(), 0.95f, 1.05f));
     }
 
     @Override
