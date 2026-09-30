@@ -9,6 +9,7 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.effect.AgeOfDarknessEffect;
 import org.brahypno.maledict.common.effect.AgeOfEnlightenmentEffect;
 import org.brahypno.maledict.common.effect.DecayEffect;
+import org.brahypno.maledict.common.effect.SacrificeEffect;
 import org.brahypno.maledict.common.effect.ThinningEffect;
 
 public final class MaledictMobEffects {
@@ -42,6 +43,13 @@ public final class MaledictMobEffects {
      */
     public static final RegistryObject<MobEffect> THINNING =
             MOB_EFFECTS.register("thinning", ThinningEffect::new);
+
+    /**
+     * 献祭：牺牲仪式按在提尔锋持有者身上的中性效果，每分钟 6 点，九天九夜后自行到期时发「智慧的牺牲」。
+     * 时间表在 {@code SacrificeSchedule}，发放写在 {@code WisdomSacrifice}。
+     */
+    public static final RegistryObject<MobEffect> SACRIFICE =
+            MOB_EFFECTS.register("sacrifice", SacrificeEffect::new);
 
     private static final int RIPENING_COLOR = 0xEE2C88;
 

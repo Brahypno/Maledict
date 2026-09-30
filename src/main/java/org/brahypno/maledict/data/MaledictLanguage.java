@@ -136,6 +136,10 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.ripening", "熟成之赐");
             add("effect.maledict.ripening.description",
                 "佩戴者获得的每一份经验都多出四分之一；零头按概率进位，长期下来分毫不差。");
+            add("effect.maledict.sacrifice", "献祭");
+            add("effect.maledict.sacrifice.description",
+                "贤者献祭生命，因而获取智慧。然而并非每一次牺牲都会带来智慧，只有模仿先贤的仪式，才有可能获得先贤的智慧");
+            add("curios.identifier.delusion", "妄见");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "佩戴时冷却速度加倍");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "攻击半生命值目标时触发收获精魂时的效果");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment", "击杀敌人时获得启蒙之年，已有则延长时间");
@@ -212,6 +216,15 @@ public final class MaledictLanguage extends LanguageProvider {
                 "无常不是我能够创造的存在， 它只是从伤口侵入的影子。遵 从未知的法则，三枚奥术精魂 推开一条缝，四枚推得更开； 那顺门扉而来之物即是命运的 恶客。");
             add("malum.gui.book.entry.page.text." + RITE_ENTRY + ".2",
                 "把邪术精魂放在最底下，召唤 就会落到更深处：一枚邪术交 织出完整的影子，虽然影子很 难说完整，两枚则是不再留手 的那一面。");
+            add("malum.gui.rite.corrupted_" + SACRIFICE_RITE_ID, "牺牲仪式");
+            add("malum.gui.book.entry.page.text.corrupt_" + SACRIFICE_RITE_ID + ".hover",
+                "在撑过献祭后，获得一个额外的符文槽位和一个妄见槽位");
+            add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY, "牺牲仪式");
+            add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY + ".description", "智慧的代价");
+            add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE,
+                "智慧从何而来？于一场刻意的 仪式中，使用提尔锋伤害自己 ，妄想获得贤人的智慧，这能 够实现吗？");
+            add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE + ".2",
+                "在九天九夜的折磨中，我确实 看到了些什么，也知道了些什 么。我的身体有额外的位置能 够刻画符文，而我的眼睛变成 了一处门扉");
         }else {
             add("itemGroup.maledict", "Maledict");
             add("enchantment.maledict.ectoplasm", "Ectoplasm");
@@ -366,6 +379,11 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.ripening.description",
                 "Every share of experience the wearer earns comes with a quarter more; the remainder is "
                 + "settled by chance, so in the long run the books balance exactly.");
+            add("effect.maledict.sacrifice", "Sacrifice");
+            add("effect.maledict.sacrifice.description",
+                "Sages gave their lives in sacrifice, and thereby gained wisdom. Yet not every sacrifice "
+                + "brings wisdom: only by imitating the rites of the sages might one gain a sage's wisdom.");
+            add("curios.identifier.delusion", "False View");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "Doubles the speed of item cooldowns while worn");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "Striking Half Health Targets Triggers Spirit Collection Effects");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment",
@@ -467,6 +485,18 @@ public final class MaledictLanguage extends LanguageProvider {
                 "Set eldritch spirits at the very bottom and the call reaches deeper: one eldritch weaves a "
                 + "whole shadow, though a shadow can hardly be called whole, and two bring the face that no "
                 + "longer holds back.");
+            add("malum.gui.rite.corrupted_" + SACRIFICE_RITE_ID, "Rite of Sacrifice");
+            add("malum.gui.book.entry.page.text.corrupt_" + SACRIFICE_RITE_ID + ".hover",
+                "After sacrifice, I gain a extra rune and delusion slot");
+            add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY, "Rite of Sacrifice");
+            add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY + ".description", "The Price of Wisdom");
+            add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE,
+                "Where does wisdom come from? To wound oneself with Tyrving in a deliberate rite, deludedly "
+                + "hoping to gain a sage's wisdom - can such a thing be done?");
+            add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE + ".2",
+                "Through nine days and nine nights of torment I did see something, and came to know something "
+                + "as well. My body has gained another place where runes may be carved, and my eyes have "
+                + "become a doorway.");
         }
     }
 
@@ -475,6 +505,14 @@ public final class MaledictLanguage extends LanguageProvider {
     private static final String SOULWOOD_OBELISK_PAGE = OBELISKS_ENTRY + ".soulwood_obelisk";
     private static final String MNEMONIC_OBELISK_PAGE = OBELISKS_ENTRY + ".mnemonic_obelisk";
     private static final String RITE_ENTRY = "void.maledict.vicissitude_rite";
+
+    /**
+     * 牺牲仪式的键名。键值（各语言的文案）是作者写的，别动；键名按 Malum 的灵魂木惯例带 {@code corrupt}，
+     * 这样 {@code RiteEntryObject} 与 {@code SpiritRiteRecipePage} 会自动画灵魂木那一套。
+     * 页面文本键是短名，{@code SpiritRiteTextPage} 与 {@code HeadlineTextItemPage} 共用它。
+     */
+    private static final String SACRIFICE_RITE_ENTRY = "maledict.corrupt_sacrifice_rite";
+    private static final String SACRIFICE_RITE_PAGE = "corrupt_sacrifice_rite";
     private static final String TOTEMIC_RUNES_CONTINUED_ENTRY = "maledict.totemic_runes_continued";
     private static final String RUNE_OF_SATIATION_ENTRY = "maledict.rune_of_satiation";
     private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";
@@ -486,6 +524,7 @@ public final class MaledictLanguage extends LanguageProvider {
     private static final String UMBRAL_EXPERIMENT_ENTRY = "void.maledict.umbral_experiment";
     private static final String RUNE_OF_MELANCHOLIA_ENTRY = "void.maledict.rune_of_melancholia";
     private static final String VICISSITUDE_RITE_ID = "vicissitude_rite";
+    private static final String SACRIFICE_RITE_ID = "sacrifice_rite";
     private static final String GREATER_RITE_ID = "greater_vicissitude_rite";
     private static final String ELDRITCH_RITE_ID = "eldritch_vicissitude_rite";
     private static final String GREATER_ELDRITCH_RITE_ID = "greater_eldritch_vicissitude_rite";

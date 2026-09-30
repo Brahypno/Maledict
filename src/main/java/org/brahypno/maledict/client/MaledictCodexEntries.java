@@ -5,6 +5,7 @@ import com.sammy.malum.client.screen.codex.BookWidgetStyle;
 import com.sammy.malum.client.screen.codex.PlacedBookEntry;
 import com.sammy.malum.client.screen.codex.PlacedBookEntryBuilder;
 import com.sammy.malum.client.screen.codex.objects.progression.IconObject;
+import com.sammy.malum.client.screen.codex.objects.progression.RiteEntryObject;
 import com.sammy.malum.client.screen.codex.pages.EntryReference;
 import com.sammy.malum.client.screen.codex.pages.EntrySelectorPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.RuneworkingPage;
@@ -12,10 +13,13 @@ import com.sammy.malum.client.screen.codex.pages.recipe.SpiritInfusionPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.SpiritRiteRecipePage;
 import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextItemPage;
 import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextPage;
+import com.sammy.malum.client.screen.codex.pages.text.SpiritRiteTextPage;
 import com.sammy.malum.client.screen.codex.pages.text.TextPage;
 import com.sammy.malum.client.screen.codex.screens.ArcanaProgressionScreen;
 import com.sammy.malum.client.screen.codex.screens.VoidProgressionScreen;
 import com.sammy.malum.common.events.SetupMalumCodexEntriesEvent;
+import com.sammy.malum.common.spiritrite.TotemicRiteType;
+import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
@@ -24,6 +28,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.common.rite.SacrificeRite;
+import org.brahypno.maledict.common.rite.SacrificeRiteType;
 import org.brahypno.maledict.common.rite.SummoningRite;
 import org.brahypno.maledict.common.rite.VicissitudeRiteType;
 import org.brahypno.maledict.registry.MaledictItems;
@@ -41,6 +47,15 @@ public final class MaledictCodexEntries {
     private static final String SOULWOOD_OBELISK_PAGE = OBELISKS_ENTRY + ".soulwood_obelisk";
     private static final String MNEMONIC_OBELISK_PAGE = OBELISKS_ENTRY + ".mnemonic_obelisk";
     private static final String RITE_ENTRY = "void.maledict.vicissitude_rite";
+
+    /**
+     * 牺牲仪式的键名：条目用 {@code maledict.corrupt_sacrifice_rite}——{@code corrupt} 是 Malum 的灵魂木
+     * 惯例，配方页与地图图标靠它判材质；页面正文用短名 {@code corrupt_sacrifice_rite}，首页与仪式页共用，
+     * {@code .2} 给最后一页。**只动键名，键值（各语言文案）一个字不改。**
+     * 仪式只在灵魂木上兑现（符文木那一半是空效果，见 {@code SacrificeRiteType}）。
+     */
+    private static final String SACRIFICE_RITE_ENTRY = "maledict.corrupt_sacrifice_rite";
+    private static final String SACRIFICE_RITE_PAGE = "corrupt_sacrifice_rite";
     private static final String TOTEMIC_RUNES_CONTINUED_ENTRY = "maledict.totemic_runes_continued";
     private static final String RUNE_OF_SATIATION_ENTRY = "maledict.rune_of_satiation";
     private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";
@@ -64,14 +79,18 @@ public final class MaledictCodexEntries {
     private static final int UMBRAL_EXPERIMENT_X = 6;
     private static final int UMBRAL_EXPERIMENT_Y = 12;
 
-    /** Malum 那枚幽影碎片图标，「研究：精魂晶体」与「幽影奥术能量」章节共用的就是它。 */
+    /**
+     * Malum 那枚幽影碎片图标，「研究：精魂晶体」与「幽影奥术能量」章节共用的就是它。
+     */
     private static final ResourceLocation UMBRAL_SHARD_ICON =
             ResourceLocation.fromNamespaceAndPath("malum", "textures/gui/book/icons/umbral_shard.png");
 
     private static final int TOTEMIC_RUNES_CONTINUED_X = 4;
     private static final int TOTEMIC_RUNES_CONTINUED_Y = 15;
 
-    /** 避开 Malum 符文条目占着的 (-15..-12, 7..10)：三枚竖排在左列 (-15, 7..9)，熟成落在 (-12, 8)。 */
+    /**
+     * 避开 Malum 符文条目占着的 (-15..-12, 7..10)：三枚竖排在左列 (-15, 7..9)，熟成落在 (-12, 8)。
+     */
     private static final int RUNE_COLUMN_X = -15;
     private static final int RUNE_OF_DECAY_Y = 7;
     private static final int RUNE_OF_SATIATION_Y = 8;
@@ -82,6 +101,16 @@ public final class MaledictCodexEntries {
     private static final int VOID_RUNEWORKING_X = 6;
     private static final int VOID_RUNEWORKING_Y = 10;
 
+    /**
+     * 牺牲仪式在**虚空之书**（点奥术全典里的「虚空通史」进去的那一本）里的位置：(0,-10)，也就是
+     * 「灵魂通史」(0,0) 同一列往下第十格，属于这一页比较靠下的空地。
+     *
+     * <p>坐标是硬碰硬的：{@code EntryObjectHandler} 按 {@code top - y * 40} 摆位置，**y 越大越靠上**，
+     * 往下走就是 y 更小。本模组的其它虚空条目都在 x=6~8 那一带，x=0 这条竖列只有 Malum 自己占到 y=0。
+     */
+    private static final int SACRIFICE_RITE_X = 0;
+    private static final int SACRIFICE_RITE_Y = -10;
+
     @SubscribeEvent
     public static void setupEntries(SetupMalumCodexEntriesEvent event) {
         addRemembranceBowEntry();
@@ -89,6 +118,7 @@ public final class MaledictCodexEntries {
         addObelisksEntry();
         addIncursusBladeEntry();
         addVicissitudeRiteEntry();
+        addSacrificeRiteEntry();
         addVoidRuneworkingEntry();
         addUmbralExperimentEntry();
 
@@ -139,7 +169,7 @@ public final class MaledictCodexEntries {
     private static void addUmbralExperimentEntry() {
         EntryReference melancholia = voidRuneEntry(RUNE_OF_MELANCHOLIA_ENTRY, MaledictItems.RUNE_OF_MELANCHOLIA);
 
-        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, UMBRAL_EXPERIMENT_ENTRY)) {
+        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, UMBRAL_EXPERIMENT_ENTRY)){
             return;
         }
 
@@ -183,6 +213,51 @@ public final class MaledictCodexEntries {
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
     }
 
+    /**
+     * 牺牲仪式：**虚空之书**里「灵魂通史」(0,0) 同一列往下第十格那一页。图标一律用仪式图标
+     * （{@link RiteEntryObject} 画在地图节点上、{@code SpiritRiteTextPage} 画在书页中央），
+     * 与 Malum 自己的仪式条目一致——本模组的 {@code SacrificeRiteType#getIcon()} 借的是狱火脉动图。
+     * 符文木那一半什么都不做（见 {@code SacrificeRiteType}），所以配方页钉死成灵魂木那一套辉光；
+     * 文案全部在语言文件里，键名见 {@link #SACRIFICE_RITE_ENTRY}。
+     *
+     * <p>这里有意不挂 {@code afterUmbralCrystal()}：本模组其它虚空条目都挂了，但这一条不加门槛，
+     * 免得玩家在书里又找不到它。
+     */
+    private static void addSacrificeRiteEntry() {
+        SacrificeRiteType rite = SacrificeRite.rite();
+        if (rite == null || containsEntry(VoidProgressionScreen.VOID_ENTRIES, SACRIFICE_RITE_ENTRY)){
+            return;
+        }
+
+        PlacedBookEntryBuilder builder = BookEntry.build(
+                SACRIFICE_RITE_ENTRY, SACRIFICE_RITE_X, SACRIFICE_RITE_Y);
+        // 不给 setIcon：RiteEntryObject 自己会把仪式图标画在节点上，再塞一个物品图标会叠在一起。
+        builder.setWidgetSupplier(RiteEntryObject::new);
+        builder.configureWidget(widget -> widget.setStyle(BookWidgetStyle.DARK_TOTEMIC_SOULWOOD));
+        // 仪式页：正文取问句，中央是发光的仪式图标；鼠标停在图标上会出「属极：灵魂木」「效果：…」，
+        // 那条效果文案就是语言文件里的 ...corrupt_sacrifice_rite.hover。
+        builder.addPage(new SpiritRiteTextPage(rite, SACRIFICE_RITE_PAGE));
+        builder.addPage(new TextPage(SACRIFICE_RITE_PAGE + ".2"));
+        builder.addPage(new SoulwoodSpiritRiteRecipePage(rite));
+
+        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+    }
+
+    /**
+     * 灵魂木版配方页：Malum 的 {@code SpiritRiteRecipePage} 看的是**条目 identifier** 里有没有 "corrupt"，
+     * 而 identifier 是键名、随时可能被改；这里干脆钉死成灵魂木那一套辉光，与本仪式只在灵魂木上兑现一致。
+     */
+    private static final class SoulwoodSpiritRiteRecipePage extends SpiritRiteRecipePage {
+        private SoulwoodSpiritRiteRecipePage(TotemicRiteType rite) {
+            super(rite);
+        }
+
+        @Override
+        public boolean isCorrupted() {
+            return true;
+        }
+    }
+
     private static PlacedBookEntry addRuneEntry(
             String identifier, RegistryObject<Item> rune, int x, int y,
             BookWidgetStyle style) {
@@ -203,8 +278,8 @@ public final class MaledictCodexEntries {
 
     private static EntryReference voidRuneEntry(String identifier, RegistryObject<Item> rune) {
         return new EntryReference(rune, BookEntry.build(identifier)
-                .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
-                .addPage(RuneworkingPage.fromOutput(rune.get())));
+                                                 .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
+                                                 .addPage(RuneworkingPage.fromOutput(rune.get())));
     }
 
     private static void addTotemicRunesContinuedEntry(List<EntryReference> runes) {
