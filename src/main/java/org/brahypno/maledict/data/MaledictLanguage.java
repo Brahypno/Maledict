@@ -40,12 +40,12 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + ELEGY_BOW_ENTRY + ".description", "停不下的思念");
             add("malum.gui.book.entry.page.headline." + ELEGY_BOW_ENTRY, "哀歌弓");
             add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".1",
-                "我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。 我将我不止息的哀歌灌注到弓 中，使之具有了满蓄力自动发 射的能力");
+                "我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。 我将我不止息的哀歌灌注到弓 中，使之具有了满蓄力自动发 射的能力。");
             add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY, "图腾符文：续");
             add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".description", "重复实验直至推翻");
             add("malum.gui.book.entry.page.headline." + TOTEMIC_RUNES_CONTINUED_ENTRY, "图腾符文：续");
             add("malum.gui.book.entry.page.text." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".1",
-                "在适当调整符文仪式的画法后 ，我又成功刻印了其他灵气仪 式在符板上。看来之前得出的 只有基本元素对应的仪式才能 起效是不完全正确的。原因是 这些脉动更加的单纯，因而效 果与完整的仪式有些区别");
+                "在适当调整符文仪式的画法后 ，我又成功刻印了其他灵气仪 式在符板上。看来之前得出的 只有基本元素对应的仪式才能 起效是不完全正确的。原因是 这些脉动更加的单纯，因而效 果与完整的仪式有些区别。");
             add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY, "饱食符文");
             add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY + ".description", "饱足里的第二份");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_SATIATION_ENTRY, "饱食符文");
@@ -60,9 +60,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + RUNE_OF_THE_PACK_ENTRY + ".description", "同行的獠牙");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_THE_PACK_ENTRY, "兽群符文");
             add("malum.gui.book.entry.page.text." + RUNE_OF_THE_PACK_ENTRY + ".1",
-                "赋能的脉动从前刻在怪物身上 ，如今拗回来只认自己的兽群 。十六格内的随从一同得到抗 性、力量与迅捷，各一级。它 们咬得动，也挨得住。");
+                "赋能的脉动从前刻在怪物身上 ， 如今拗回来只认自己的兽群。 十六格内的随从获得各一级抗 性提升、力量与迅捷。");
             add("malum.gui.book.entry." + RUNE_OF_RIPENING_ENTRY, "熟成符文");
-            add("malum.gui.book.entry." + RUNE_OF_RIPENING_ENTRY + ".description", "多出来的四分之一");
+            add("malum.gui.book.entry." + RUNE_OF_RIPENING_ENTRY + ".description", "点滴积累");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_RIPENING_ENTRY, "熟成符文");
             add("malum.gui.book.entry.page.text." + RUNE_OF_RIPENING_ENTRY + ".1",
                 "把滋养仪式的力量拗转而导向 自身，使滋养生灵肉体的力量 改为强健我的精神。熟成符文 可以相对稳定的增加四分之一 经验获取。不多，但是够用。");
@@ -70,13 +70,12 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + VOID_RUNEWORKING_ENTRY + ".description", "拗转白镴");
             add("malum.gui.book.entry.page.headline." + VOID_RUNEWORKING_ENTRY, "虚空符文工艺：拾遗");
             add("malum.gui.book.entry.page.text." + VOID_RUNEWORKING_ENTRY + ".1",
-                "作为与这本书原作者不同的魔 法施行者，将恶念白镴这一反 魔法金属拗转到能为魔法所用 是我一直以来的研究。基于虚 "
-                + "空符文的工艺，我引入了一些 变量来突出白镴的一面而拒绝 其另一面。用白镴施行魔法既 不实用又不安全，但这就是我 想要的。");
+                "作为与这本书原作者不同的魔 法施行者，将恶念白镴这一反 魔法金属拗转到能为魔法所用 是我一直以来的研究。基于虚 空符文的工艺，我引入了一些 变量来突出白镴的一面而拒绝 其另一面。用白镴施行魔法既 不实用又不安全，但这就是我 想要的。");
             add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY, "演进凝滞符文");
             add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY + ".description", "阻止演进");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY, "演进凝滞符文");
             add("malum.gui.book.entry.page.text." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY + ".1",
-                "阻止演进，是白镴的核心要 素。与意识相配后，具有一定 的倾向性，能够阻止由外而来 的演进");
+                "阻止演进，是白镴的核心要 素。与意识相配后，具有一定 的倾向性，能够阻止由外而来 的演进。");
             add("malum.gui.book.entry." + RUNE_OF_ROTTEN_BONE_ENTRY, "朽骨符文");
             add("malum.gui.book.entry." + RUNE_OF_ROTTEN_BONE_ENTRY + ".description", "拥抱枯骨");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_ROTTEN_BONE_ENTRY, "朽骨符文");
@@ -103,7 +102,6 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.EARTHEN_SPIRIT_ARROW, "大地精魂箭");
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "狱火精魂箭");
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
-            add("attribute.name.lodestone.magic_resistance", "魔法抗性");
             add("entity.maledict.first_vicissitude", "无常(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "启蒙之年");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "保管凭证");
@@ -131,15 +129,14 @@ public final class MaledictLanguage extends LanguageProvider {
                 "佩戴者身边的敌对之物每两秒被磨去半颗心，永不致命。");
             add("effect.maledict.thinning", "汰余之令");
             add("effect.maledict.thinning.description",
-                "佩戴者身边同种敌对生物超过八只时，最外围的那只每两秒挨一记 1.5 颗心的重击；"
-                + "与衰朽之息不同，这一记是会打死人的。");
+                "佩戴者身边同种敌对生物超过八只时，每2秒对外围的敌人造成1.5的伤害。");
             add("effect.maledict.ripening", "熟成之赐");
             add("effect.maledict.ripening.description",
-                "佩戴者获得的每一份经验都多出四分之一；零头按概率进位，长期下来分毫不差。");
+                "佩戴者获得的每一份经验都多出四分之一。");
             add("effect.maledict.sacrifice", "献祭");
             add("effect.maledict.sacrifice.description",
                 "贤者献祭生命，因而获取智慧。然而并非每一次牺牲都会带来智慧，只有模仿先贤的仪式，才有可能获得先贤的智慧");
-            add("curios.identifier.delusion", "妄见");
+            add("curios.identifier.delusion", "眼");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "佩戴时冷却速度加倍");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "攻击半生命值目标时触发收获精魂时的效果");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment", "击杀敌人时获得启蒙之年，已有则延长时间");
@@ -192,7 +189,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.3",
                 "最后我得到了这种武器，挽魂 锋镰本身的意志被虚空吞噬殆 尽，这片空无渴求着吞并一切 ，而八种精魂完全受其操控， 甚至脉动被扭曲，从而对外展 现出意料之外的能力。");
             add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.4",
-                "随着投入精魂数量的增加，这 柄武器也更加的难以捉摸。我 将之成为神侵恶刃，并希望这 片虚空能够满足于脉动。");
+                "随着投入精魂数量的增加，这 柄武器也更加的难以捉摸。我 将之称为神侵恶刃，并希望这 片虚空能够满足于脉动。");
             add("malum.gui.book.entry." + OBELISKS_ENTRY, "异质方尖碑");
             add("malum.gui.book.entry." + OBELISKS_ENTRY + ".description", "排斥与回忆");
             add("malum.gui.book.entry.page.headline." + SOULWOOD_OBELISK_PAGE, "灵魂木方尖碑");
@@ -213,32 +210,32 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + RITE_ENTRY + ".description", "唤来无法收回之物");
             add("malum.gui.book.entry.page.headline." + RITE_ENTRY, "无常仪式");
             add("malum.gui.book.entry.page.text." + RITE_ENTRY + ".1",
-                "无常不是我能够创造的存在， 它只是从伤口侵入的影子。遵 从未知的法则，三枚奥术精魂 推开一条缝，四枚推得更开； 那顺门扉而来之物即是命运的 恶客。");
+                "无常不是我能够创造的存在， 它只是从伤口侵入的影子。遵 从未知的法则，用三枚奥术精 魂 开启一扇微小的门扉，四枚推 得更开； 那顺门扉而来之物即是命运的 恶客。");
             add("malum.gui.book.entry.page.text." + RITE_ENTRY + ".2",
-                "把邪术精魂放在最底下，召唤 就会落到更深处：一枚邪术交 织出完整的影子，虽然影子很 难说完整，两枚则是不再留手 的那一面。");
+                "使用邪术精魂会扩大无常仪式 的影响力。更完整的影子照落 在此处，虽然影子很 难说完整。而两枚邪术精魂则 会召唤更加完整的一面。");
             add("malum.gui.rite.corrupted_" + SACRIFICE_RITE_ID, "牺牲仪式");
             add("malum.gui.book.entry.page.text.corrupt_" + SACRIFICE_RITE_ID + ".hover",
-                "在撑过献祭后，获得一个额外的符文槽位和一个妄见槽位");
+                "在撑过献祭后，获得一个额外 的符文槽位和一个眼槽位。");
             add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY, "牺牲仪式");
             add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY + ".description", "智慧的代价");
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE,
                 "智慧从何而来？于一场刻意的 仪式中，使用提尔锋伤害自己 ，妄想获得贤人的智慧，这能 够实现吗？");
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE + ".2",
-                "在九天九夜的折磨中，我确实 看到了些什么，也知道了些什 么。我的身体有额外的位置能 够刻画符文，而我的眼睛变成 了一处门扉");
+                "在九天九夜的折磨中，我确实 看到了些什么，也知道了些什 么。我的身体有额外的位置能 够刻画符文，而我的眼睛变成 了一处门扉。");
         }else {
             add("itemGroup.maledict", "Maledict");
             add("enchantment.maledict.ectoplasm", "Ectoplasm");
             add("enchantment.maledict.reminiscence", "Reminiscence");
             add("enchantment.maledict.aftertaste", "Aftertaste");
             add("enchantment.maledict.ectoplasm.desc",
-                "Each level speeds up fired arrows by 8%, spending (level + 1) / 2 spirits from your "
-                + "inventory per shot; without enough spirits nothing happens.");
+                "Each level increases arrow speed by 8%. Each shot consumes (level + 1) / 2 spirits from your inventory; "
+                + "the enchantment has no effect without enough spirits.");
             add("enchantment.maledict.reminiscence.desc",
-                "Arrows fired pass through one block, phasing up to 2 + level blocks deep.");
+                "Arrows can pass through blocks once, up to a thickness of 2 + level blocks.");
             add("enchantment.maledict.aftertaste.desc",
-                "A scythe hit tastes the hunger and saturation the victim's drops would have fed you, "
-                + "scaled by the share of its health the hit claimed: 50%, 60% and 70% at levels 1 to 3. "
-                + "Food effects from those drops come along with it.");
+                "When a scythe strikes, you taste the hunger and saturation that the target's drops would restore, scaled "
+                + "by the damage dealt as a fraction of its maximum health. Levels 1 to 3 restore 50%, 60% and 70% of that "
+                + "amount, respectively. Any food effects from those drops also apply.");
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
             addItem(MaledictItems.REMEMBRANCE_BOW, "Remembrance Bow");
             addItem(MaledictItems.ELEGY_BOW, "Elegy Bow");
@@ -246,86 +243,84 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.maledict.remembrance_bow.description", "Longing Beyond Barriers");
             add("malum.gui.book.entry.page.headline.maledict.remembrance_bow", "Remembrance Bow");
             add("malum.gui.book.entry.page.text.maledict.remembrance_bow.1",
-                "If endermen's magic were gathered into astral weave, soulwood might gain wondrous properties. "
-                + "A bow of this wood draws twice as fast, and its arrows fly faster and pierce blocks to a limited extent.");
+                "Gathering the magic of endermen into astral weave can give soulwood wondrous properties. A bow made from "
+                + "this wood takes half as long to draw as an ordinary bow. Its arrows fly faster and can pass through "
+                + "blocks to a limited depth.");
             add("malum.gui.book.entry." + ELEGY_BOW_ENTRY, "Elegy Bow");
             add("malum.gui.book.entry." + ELEGY_BOW_ENTRY + ".description", "Remembrance Without Respite");
             add("malum.gui.book.entry.page.headline." + ELEGY_BOW_ENTRY, "Elegy Bow");
             add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".1",
-                "I cannot get out. I cannot get out. I cannot get out. I cannot get out. I cannot get out. "
-                + "I cannot get out. I cannot get out. I cannot get out. I cannot get out. I cannot get out. "
-                + "I cannot get out. I poured my unceasing elegy into the bow, and it gained the ability to "
-                + "fire automatically at full draw.");
+                "I cannot move on. I cannot move on. I cannot move on. I cannot move on. I cannot move on. I cannot move "
+                + "on. I cannot move on. I cannot move on. I cannot move on. I cannot move on. I cannot move on. I poured my "
+                + "unceasing elegy into the bow, allowing it to fire automatically at full draw.");
             add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY, "Totemic Runes: Continued");
             add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".description", "Repeated Until Disproven");
             add("malum.gui.book.entry.page.headline." + TOTEMIC_RUNES_CONTINUED_ENTRY, "Totemic Runes: Continued");
             add("malum.gui.book.entry.page.text." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".1",
-                "Once I had adjusted the way the runic rite is drawn, I managed to inscribe other aura rites "
-                + "onto the tablets as well. It would seem my earlier conclusion - that only the rites of the "
-                + "basic elements would take - was not entirely correct. Their pulse is simpler, and so their "
-                + "effect differs somewhat from that of the full rite.");
+                "After adjusting the pattern of the runic rite, I succeeded in inscribing other aura rites onto tablets. "
+                + "My earlier conclusion that only rites of the basic elements would work was not entirely correct. These "
+                + "pulses are simpler, so their effects differ somewhat from those of the full rites.");
             add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY, "Rune of Satiation");
             add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY + ".description", "A Second Share of Fullness");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_SATIATION_ENTRY, "Rune of Satiation");
             add("malum.gui.book.entry.page.text." + RUNE_OF_SATIATION_ENTRY + ".1",
-                "The Rune of Satiation is a weakened extension of the Rite of Healing. Lacking a sufficient "
-                + "field, it mends the wearer from the energy refined out of food instead. Whenever fullness "
-                + "restores the wearer's health, one more share comes with it - as much as the food itself "
-                + "would have given.");
+                "The Rune of Satiation is a weaker extension of the Rite of Healing. Without a sufficient field, it "
+                + "instead refines the energy in food to restore health. Whenever nourishment restores health, the rune "
+                + "restores an additional amount equal to what the food itself would provide.");
             add("malum.gui.book.entry." + RUNE_OF_DECAY_ENTRY, "Rune of Decay");
             add("malum.gui.book.entry." + RUNE_OF_DECAY_ENTRY + ".description", "Grinding Down the Flesh");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_DECAY_ENTRY, "Rune of Decay");
             add("malum.gui.book.entry.page.text." + RUNE_OF_DECAY_ENTRY + ".1",
-                "The pulse of the Rite of Decay, cut into a tablet, grows dull as well: whatever stands hostile "
-                + "beside the wearer is slowly ground down, flesh and all, yet cannot die of it.");
+                "The pulse of the Rite of Decay grows sluggish when inscribed on a tablet. It slowly wears away the flesh "
+                + "of hostile creatures near the wearer, but cannot kill them.");
             add("malum.gui.book.entry." + RUNE_OF_THE_PACK_ENTRY, "Rune of the Pack");
             add("malum.gui.book.entry." + RUNE_OF_THE_PACK_ENTRY + ".description", "The Fangs That Follow");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_THE_PACK_ENTRY, "Rune of the Pack");
             add("malum.gui.book.entry.page.text." + RUNE_OF_THE_PACK_ENTRY + ".1",
-                "The pulse of the Rite of Empowerment once fell on the hostile crowd; bent back upon itself, "
-                + "it now answers only to the wearer's own beasts. Every companion within sixteen blocks "
-                + "gains resistance, strength and speed, each at level I. They bite harder, and they last longer.");
+                "The pulse of empowerment was once inscribed upon monsters. Now I have bent it back to recognize only my "
+                + "own pack. Companions within sixteen blocks gain Resistance I, Strength I and Speed I.");
             add("malum.gui.book.entry." + RUNE_OF_RIPENING_ENTRY, "Rune of Ripening");
-            add("malum.gui.book.entry." + RUNE_OF_RIPENING_ENTRY + ".description", "The Extra Quarter");
+            add("malum.gui.book.entry." + RUNE_OF_RIPENING_ENTRY + ".description",
+                "Little by Little");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_RIPENING_ENTRY, "Rune of Ripening");
             add("malum.gui.book.entry.page.text." + RUNE_OF_RIPENING_ENTRY + ".1",
-                "I have bent the power of the Rite of Nourishment back upon myself, so that what nourished "
-                + "living flesh now strengthens the mind instead. The Rune of Ripening raises the experience "
-                + "I earn by a quarter, steadily enough to rely on. Not much - but enough.");
+                "I have turned the power of the Rite of Nourishment inward, strengthening my mind with what once nourished "
+                + "living flesh. The Rune of Ripening provides a fairly steady increase of one quarter to the experience I "
+                + "gain. Not much, but enough.");
             add("malum.gui.book.entry." + VOID_RUNEWORKING_ENTRY, "Voidish Runecraft: Addenda");
             add("malum.gui.book.entry." + VOID_RUNEWORKING_ENTRY + ".description",
-                "Pewter bent to purpose");
+                "Bending Pewter to My Will");
             add("malum.gui.book.entry.page.headline." + VOID_RUNEWORKING_ENTRY,
                 "Voidish Runecraft: Addenda");
             add("malum.gui.book.entry.page.text." + VOID_RUNEWORKING_ENTRY + ".1",
-                "As a practitioner of magic unlike the author of this book, bending Malignant Pewter - a metal "
-                + "that refuses magic - to the service of magic has long been my study. Building upon the craft "
-                + "of Voidish Runecraft, I introduced certain variables, that one face of the pewter might be "
-                + "exalted and the other refused. Working magic through pewter is neither practical nor safe - "
-                + "but that is what I want.");
+                "My practice differs from that of this book's original author. I have long sought to bend Malignant "
+                + "Pewter, an anti-magic metal, to magical use. Building on Voidish Runecraft, I introduced variables to "
+                + "emphasize one aspect of the pewter while suppressing the other. Working magic through pewter is neither "
+                + "practical nor safe, but it is what I want.");
             add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY, "Rune of Stagnant Evolution");
             add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY + ".description",
-                "To Halt Advancement");
+                "To Halt Evolution");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY,
                 "Rune of Stagnant Evolution");
             add("malum.gui.book.entry.page.text." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY + ".1",
-                "To hold back advancement is the pewter's core property. Paired with a consciousness it takes on "
-                + "a certain bias, and can hold back the advancement that comes from without.");
+                "Halting evolution is pewter's defining property. When paired with consciousness, it gains a measure of "
+                + "direction, allowing it to halt evolution imposed from outside.");
             add("malum.gui.book.entry." + RUNE_OF_ROTTEN_BONE_ENTRY, "Rune of Rotten Bone");
             add("malum.gui.book.entry." + RUNE_OF_ROTTEN_BONE_ENTRY + ".description",
                 "To Embrace Mortal Bone");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_ROTTEN_BONE_ENTRY,
                 "Rune of Rotten Bone");
             add("malum.gui.book.entry.page.text." + RUNE_OF_ROTTEN_BONE_ENTRY + ".1",
-                "And she shall go one day separated from them, And be weary of the singing of the acoustic "
-                + "angels, And prefer to hug the mortal bone.");
+                "One day she will leave them and depart alone, weary of the songs of heaven's angels, preferring instead "
+                + "to embrace the bones of mortals.");
             add("malum.gui.book.entry." + UMBRAL_EXPERIMENT_ENTRY, "The Umbral Spirit Experiment");
-            add("malum.gui.book.entry." + UMBRAL_EXPERIMENT_ENTRY + ".description", "Is Seeking the Forbidden Meaningful…");
+            add("malum.gui.book.entry." + UMBRAL_EXPERIMENT_ENTRY + ".description",
+                "Seeking the Forbidden… Is There Any Point?");
             add("malum.gui.book.entry.page.headline." + UMBRAL_EXPERIMENT_ENTRY,
                 "The Umbral Spirit Experiment");
             add("malum.gui.book.entry.page.text." + UMBRAL_EXPERIMENT_ENTRY + ".1",
-                "With a great quantity of umbral spirit in hand, I took up a tablet already proven to work "
-                + "and made of it a free creation. After a few detours, I arrived at the tablets that follow.");
+                "Having gathered a great quantity of umbral spirits, I began experimenting freely with tablets already "
+                + "proven to work. After a few wrong turns, I produced the following tablets.");
             add("malum.gui.book.entry." + RUNE_OF_MELANCHOLIA_ENTRY, "Rune of Melancholia");
             add("malum.gui.book.entry." + RUNE_OF_MELANCHOLIA_ENTRY + ".description", "Delirium's Fancy, After All");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_MELANCHOLIA_ENTRY, "Rune of Melancholia");
@@ -358,54 +353,55 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.age_of_enlightenment", "Age of Enlightenment");
             add("effect.maledict.age_of_darkness", "Age of Darkness");
             add("effect.maledict.age_of_enlightenment.description",
-                "Where ignorance and shadow were mistaken for divine, your next strike is sealed as a critical blow. "
-                + "Each level grants an additional Reserve Staff Charge.");
+                "People mistake ignorance and darkness for the sacred. Your next strike is guaranteed to be a critical "
+                + "hit; each level also grants 1 additional Reserve Staff Charge.");
             add("effect.maledict.age_of_darkness.description",
-                "Burned through civilization, stripping a fifth of your magic resistance, "
-                + "Soul Ward capacity and Soul Ward integrity per level.");
+                "O dark age that lets barbarism burn civilization to ashes: each level reduces magic resistance, Soul Ward "
+                + "capacity and Soul Ward integrity by 20%.");
             add("effect.maledict.blessing_of_life", "Blessing of Life");
             add("effect.maledict.blessing_of_life.description",
-                "The blessing of the living flows in with your fullness: when natural regeneration mends "
-                + "your health, an extra share comes with it.");
+                "The prayers of the living flow through your veins with nourishment: natural health regeneration restores "
+                + "an additional share.");
             add("effect.maledict.decay", "Breath of Decay");
             add("effect.maledict.decay.description",
-                "Hostile things beside the wearer lose half a heart every two seconds, and the pulse "
-                + "never kills them.");
+                "Hostile creatures near the wearer lose half a heart every two seconds. This damage is never fatal.");
             add("effect.maledict.thinning", "Edict of Thinning");
             add("effect.maledict.thinning.description",
-                "Once more than eight hostiles of one kind crowd beside the wearer, the outermost of them takes "
-                + "1.5 hearts every two seconds. Unlike the Breath of Decay, this one can kill.");
+                "When more than eight hostile creatures of the same type surround the wearer, those on the outskirts take "
+                + "1.5 damage every two seconds.");
             add("effect.maledict.ripening", "Boon of Ripening");
             add("effect.maledict.ripening.description",
-                "Every share of experience the wearer earns comes with a quarter more; the remainder is "
-                + "settled by chance, so in the long run the books balance exactly.");
+                "The wearer gains an extra quarter of all experience earned.");
             add("effect.maledict.sacrifice", "Sacrifice");
             add("effect.maledict.sacrifice.description",
                 "Sages gave their lives in sacrifice, and thereby gained wisdom. Yet not every sacrifice "
                 + "brings wisdom: only by imitating the rites of the sages might one gain a sage's wisdom.");
-            add("curios.identifier.delusion", "False View");
-            add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "Doubles the speed of item cooldowns while worn");
-            add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "Striking Half Health Targets Triggers Spirit Collection Effects");
+            add("curios.identifier.delusion",
+                "Eye");
+            add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown",
+                "Cooldowns recover twice as fast while worn");
+            add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void",
+                "Attacking targets at half health triggers spirit-harvesting effects");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment",
-                "Slaying an enemy grants the Age of Enlightenment, or extends it if already held");
+                "Slaying an enemy grants Age of Enlightenment, or extends its duration if already active");
             add("malum.gui.curio.effect.maledict.blessing_of_life",
-                "Natural Regeneration Heals an Extra Share");
+                "Natural health regeneration restores an additional equal amount.");
             add("malum.gui.curio.effect.maledict.decay",
-                "Nearby Hostiles Lose Half a Heart Every Two Seconds, Never Fatally");
+                "Nearby hostile creatures lose half a heart every two seconds. This damage is never fatal.");
             add("malum.gui.curio.effect.maledict.ripening",
-                "Experience Gained Is a Quarter Higher");
+                "Gain a quarter more experience.");
             add("malum.gui.curio.effect.maledict.pack_boon",
-                "Your Own Companions Within Sixteen Blocks Gain Resistance, Strength and Speed");
+                "Your companions within sixteen blocks gain Resistance I, Strength I and Speed I.");
             add("malum.gui.curio.effect.maledict.rotten_bone",
-                "On Death, If Maximum Health Is Above 1: Lose a Quarter of It, Heal 7 Health and Gain "
-                + "3.5 Seconds of Invulnerability.");
+                "If your maximum health is greater than 1, escape death at the cost of 25% of your maximum health.");
             add("malum.gui.curio.effect.maledict.melancholia",
-                "You Gradually Grow Resistant to the Same Kind of Harm; Both Healing and Damage Land on "
-                + "You Numbly");
+                "You gradually become resistant to repeated damage of the same kind. Healing and harm alike leave you "
+                + "numb.");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "Hold Shift to ask a question better left unasked");
-            add("tooltip.maledict.age_of_enlightenment.shift", "Was there ever a true age of darkness?");
+            add("tooltip.maledict.age_of_enlightenment.shift",
+                "Did an age of darkness ever exist?");
             add("tooltip.maledict.age_of_enlightenment.shift.enlightened",
-                "That infinite, boundless, perpetual \"Age of Enlightenment.\"");
+                "O infinite, boundless, ever-turning Age of Enlightenment");
             add("tooltip.maledict.curio_return_token",
                 "Right-click to reclaim confiscated curios that are still in custody. "
                 + "The token only disappears once everything has been handed back.");
@@ -415,7 +411,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("message.maledict.first_vicissitude.curio_return_complete",
                 "Every confiscated curio has been returned");
             add("message.maledict.first_vicissitude.adaptation",
-                "It is of no use to adopt the same measures to Fortune");
+                "Rigid convention, blind adherence to the old ways: Vicissitude regards them as filth.");
             add("message.maledict.first_vicissitude.attack",
                 "Fate always drives people to the edge of a cliff, like an unwelcome guest calling.");
             add("message.maledict.first_vicissitude.phase_two",
@@ -429,17 +425,23 @@ public final class MaledictLanguage extends LanguageProvider {
             add("sounds.maledict.item.incursus_blade.ascension", "Incursus Blade: Wings Beat");
             add("sounds.maledict.item.incursus_blade.slash", "Incursus Blade: Erosion");
             add("sounds.maledict.item.incursus_blade.crit", "Incursus Blade: Ecstatic Roar");
-            add("tooltip.maledict.incursus_blade.description", "A evil scythe that devours spirits and strikes all around its wielder.");
-            add("tooltip.maledict.incursus_blade.medium_unlock_hint", "When every spirit reaches the sacred number, a more intrinsic power will awaken.");
+            add("tooltip.maledict.incursus_blade.description",
+                "A sinister scythe that grows by devouring spirits and sweeps its blade around the wielder.");
+            add("tooltip.maledict.incursus_blade.medium_unlock_hint",
+                "When spirit power reaches the sacred number, a deeper power awakens.");
             add("tooltip.maledict.incursus_blade.hold_shift", "Hold Shift for spirit details");
             add("tooltip.maledict.incursus_blade.infusion", "Right-click this item with spirits in the inventory to infuse them permanently:");
             add("tooltip.maledict.incursus_blade.spirit.earthen", "Earthen %s (%s/%s): Attack damage");
             add("tooltip.maledict.incursus_blade.spirit.aqueous", "Aqueous %s (%s/%s): Freezing damage");
             add("tooltip.maledict.incursus_blade.spirit.arcane", "Arcane %s (%s/%s): Magic damage");
-            add("tooltip.maledict.incursus_blade.spirit.aerial", "Aerial %s%% (%s/%s): Cleanse random negatives and gain random beneficial effects");
-            add("tooltip.maledict.incursus_blade.spirit.sacred", "Sacred %s%% (%s/%s): Shorten enemy benefits; extend or inflict harmful effects");
+            add("tooltip.maledict.incursus_blade.spirit.aerial",
+                "Aerial %s%% (%s/%s): Remove random harmful effects and gain random beneficial effects");
+            add("tooltip.maledict.incursus_blade.spirit.sacred",
+                "Sacred %s%% (%s/%s): Shorten enemies' beneficial effects; extend or inflict harmful effects");
             add("tooltip.maledict.incursus_blade.spirit.infernal", "Infernal %s (%s/%s): Additional looting level");
-            add("tooltip.maledict.incursus_blade.spirit.eldritch", "Eldritch %s%% (%s/%s): Damage grants capped absorption and immediately recovers Soul Ward");
+            add("tooltip.maledict.incursus_blade.spirit.eldritch",
+                "Eldritch %s%% (%s/%s): Convert a portion of damage into absorption up to a cap, and immediately restore "
+                + "Soul Ward");
             add("tooltip.maledict.incursus_blade.spirit.wicked", "Wicked %s%% (%s/%s): Critical damage");
             add("malum.gui.book.entry.void.maledict.incursus_blade", "The Incursus Blade");
             add("malum.gui.book.entry.void.maledict.incursus_blade.description", "A hunger without end");
@@ -462,10 +464,13 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + OBELISKS_ENTRY + ".description", "Rejection and remembrance");
             add("malum.gui.book.entry.page.headline." + SOULWOOD_OBELISK_PAGE, "Soulwood Obelisk");
             add("malum.gui.book.entry.page.text." + SOULWOOD_OBELISK_PAGE + ".1",
-                "By cleverly exploiting malignant metal's rejection of magic, the power of hallowed gold can be focused more intensely, producing an acceleration effect of one half.");
+                "By exploiting malignant metal's rejection of magic, I can focus the power of hallowed gold more "
+                + "intensely, providing a 50% acceleration effect.");
             add("malum.gui.book.entry.page.headline." + MNEMONIC_OBELISK_PAGE, "Mnemonic Obelisk");
             add("malum.gui.book.entry.page.text." + MNEMONIC_OBELISK_PAGE + ".1",
-                "Experience crystals have already proven this approach successful. Adding more of the power condensed within mnemonic fragments can make enchanting power shine even more brilliantly, reaching the astonishing strength of ten bookshelves.");
+                "Experience crystals have already proven their worth. Adding more of the power condensed in mnemonic "
+                + "fragments makes their enchanting power shine brighter still, reaching the astonishing strength of ten "
+                + "bookshelves.");
             add("malum.gui.rite." + VICISSITUDE_RITE_ID, "Rite of Vicissitude");
             add("malum.gui.rite.corrupted_" + VICISSITUDE_RITE_ID, "Rite of Vicissitude");
             add("malum.gui.rite." + GREATER_RITE_ID, "Greater Rite of Vicissitude");
@@ -482,17 +487,17 @@ public final class MaledictLanguage extends LanguageProvider {
                 + "By laws I do not know, three arcane spirits pry open a crack and four pry it wider - and "
                 + "what comes through that door is fate's own unwelcome guest.");
             add("malum.gui.book.entry.page.text." + RITE_ENTRY + ".2",
-                "Set eldritch spirits at the very bottom and the call reaches deeper: one eldritch weaves a "
-                + "whole shadow, though a shadow can hardly be called whole, and two bring the face that no "
-                + "longer holds back.");
+                "Using eldritch spirits extends the reach of the Rite of Vicissitude. A more complete shadow falls upon "
+                + "this place, though a shadow can hardly be called complete. Two eldritch spirits summon a more complete "
+                + "aspect still.");
             add("malum.gui.rite.corrupted_" + SACRIFICE_RITE_ID, "Rite of Sacrifice");
             add("malum.gui.book.entry.page.text.corrupt_" + SACRIFICE_RITE_ID + ".hover",
-                "After sacrifice, I gain a extra rune and delusion slot");
+                "Survive the sacrifice to gain an additional rune slot and an eye slot.");
             add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY, "Rite of Sacrifice");
             add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY + ".description", "The Price of Wisdom");
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE,
-                "Where does wisdom come from? To wound oneself with Tyrving in a deliberate rite, deludedly "
-                + "hoping to gain a sage's wisdom - can such a thing be done?");
+                "Where does wisdom come from? Could I truly gain a sage's wisdom by wounding myself with Tyrving in a "
+                + "deliberate rite, as I so foolishly hope?");
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE + ".2",
                 "Through nine days and nine nights of torment I did see something, and came to know something "
                 + "as well. My body has gained another place where runes may be carved, and my eyes have "
