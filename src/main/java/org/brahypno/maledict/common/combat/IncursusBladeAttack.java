@@ -5,6 +5,7 @@ import com.sammy.malum.registry.common.DamageTypeRegistry;
 import com.sammy.malum.registry.common.ParticleEffectTypeRegistry;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -38,6 +39,15 @@ import java.util.List;
 public final class IncursusBladeAttack {
     private static final String LAST_ATTACK_TICK = "maledict:last_incursus_blade_attack_tick";
     private static final int NO_PENDING_TARGET = -1;
+
+    /** 腰环斩弧的分段数；每段的精灵弧约 120°，8 段足以首尾相扣成一圈。 */
+    private static final int RING_SEGMENTS = 8;
+    /** 弧心所在的半径：贴住身体但留在碰撞箱外，正好是镰刀够得到的距离。 */
+    private static final double RING_RADIUS = 0.5;
+    /** 与 {@code spawnForwardSlashingParticle} 同源的弧心偏移，让每段的弧沿着环的走向摆开。 */
+    private static final double RING_ARC_OFFSET = 0.3;
+    /** 环的高度，取身高的比例，落在腰上。 */
+    private static final double RING_HEIGHT = 0.5;
 
     /**
      * 正在结算的那次近战命中打的是谁、有没有走到 {@link IncursusBladeItem#hurtEvent}；只在服务端
@@ -203,10 +213,49 @@ public final class IncursusBladeAttack {
                 MaledictSounds.INCURSUS_BLADE_SLASH.get(),
                 1.0f,
                 RandomHelper.randomBetween(player.getRandom(), 0.9f, 1.1f));
-        ParticleHelper.createSlashingEffect(ParticleEffectTypeRegistry.SCYTHE_SLASH)
-                      .setSpiritType(SpiritTypeRegistry.UMBRAL_SPIRIT)
-                      .setSlashAngle(0.0f)
-                      .spawnForwardSlashingParticle(player);
+        spawnSlashRing(player);
+    }
+
+    /**
+     * 绕身一圈的腰环斩弧。{@code HEAVY_SLASH} 的精灵只在贴图左上方画了一道约 120° 的弧，
+     * 弧心离粒子中心约 0.3×scale，所以单发粒子读起来是「正前方一道横斩」。要绕满一圈就得把
+     * 弧心摆到一个圆上、并让每段的弧对着自己那一段的方向：
+     *
+     * <p>Malum 把这套约定封在 {@code spawnForwardSlashingParticle} 里——方向 {@code d} 的
+     * 左右轴 {@code left = (-cos yaw, 0, sin yaw)}、上轴 {@code up = left × d}，粒子落在
+     * {@code position + d×0.4 + up×(-0.3)}，自旋角取 {@code atan2(d.x, d.z)}。这里照抄同一套
+     * 基，只是把弧心绕玩家轴转一圈，于是每段的弧都朝外、连成一条闭合的腰环。
+     */
+    private static void spawnSlashRing(ServerPlayer player) {
+        for (int i = 0; i < RING_SEGMENTS; i++) {
+            RingSegment segment = ringSegment(i);
+            Vec3 direction = segment.direction();
+            // 弧心沿半径外移；再按 Malum 那套基横向让开，让每段的弧顺着环的走向摆，而不是挤在一点。
+            Vec3 left = new Vec3(-direction.z, 0.0, direction.x);
+            Vec3 offset = direction.scale(RING_RADIUS)
+                                  .add(left.cross(direction).scale(-RING_ARC_OFFSET));
+            Vec3 position = player.position()
+                                  .add(offset.x, player.getBbHeight() * RING_HEIGHT, offset.z);
+            ParticleHelper.createSlashingEffect(ParticleEffectTypeRegistry.SCYTHE_SLASH)
+                          .setSpiritType(SpiritTypeRegistry.UMBRAL_SPIRIT)
+                          .setSlashAngle(segment.slashAngle())
+                          .spawnSlashingParticle(player.level(), position, direction);
+        }
+    }
+
+    /**
+     * 第 {@code index} 段腰环：方向沿半径向外，自旋角用 Malum 的刀光约定
+     * {@code atan2(direction.x, direction.z)}，于是这一段的弧正好铺在它自己那格上。
+     * 从 +Z 起按 {@link #RING_SEGMENTS} 等分整圈。
+     */
+    static RingSegment ringSegment(int index) {
+        float yaw = (float) Math.toRadians(index * (360.0f / RING_SEGMENTS));
+        Vec3 direction = new Vec3(Math.sin(yaw), 0.0, Math.cos(yaw));
+        return new RingSegment(direction, (float) Mth.atan2(direction.x, direction.z));
+    }
+
+    /** 腰环上一段斩弧的朝向和自旋角。 */
+    record RingSegment(Vec3 direction, float slashAngle) {
     }
 
     /** 一次挥砍里至少打出一个暴击才补一层；逐个目标各放一次的话，横扫五只就是五声叠在一起。 */
