@@ -19,7 +19,6 @@ import com.sammy.malum.client.screen.codex.screens.ArcanaProgressionScreen;
 import com.sammy.malum.client.screen.codex.screens.VoidProgressionScreen;
 import com.sammy.malum.common.events.SetupMalumCodexEntriesEvent;
 import com.sammy.malum.common.spiritrite.TotemicRiteType;
-import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
@@ -200,7 +199,7 @@ public final class MaledictCodexEntries {
 
         PlacedBookEntryBuilder builder = BookEntry.build(RITE_ENTRY, 8, 13);
         builder.configureWidget(widget -> widget
-                .setIcon(MaledictItems.INCURSUS_BLADE)
+                .setIcon(MaledictItems.AGE_OF_ENLIGHTENMENT)
                 .setStyle(BookWidgetStyle.DARK_SOULWOOD));
         builder.addPage(new HeadlineTextPage(RITE_ENTRY, RITE_ENTRY + ".1"));
         builder.addPage(new SpiritRiteRecipePage(simple));

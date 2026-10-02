@@ -23,6 +23,10 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue ELDRITCH_UPGRADE_COST_COEFFICIENT;
     public static final ForgeConfigSpec.DoubleValue WICKED_UPGRADE_COST_COEFFICIENT;
     public static final ForgeConfigSpec.DoubleValue ENLIGHTENMENT_COOLDOWN_SPEED;
+    public static final ForgeConfigSpec.BooleanValue INFRARED_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue INFRARED_INTENSITY;
+    public static final ForgeConfigSpec.DoubleValue INFRARED_GRAYSCALE_THRESHOLD;
+    public static final ForgeConfigSpec.DoubleValue INFRARED_GRAYSCALE_SOFTNESS;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -111,6 +115,39 @@ public final class MaledictConfig {
                         "Vanilla's Music slider still applies on top of this, and setting that",
                         "slider to 0 mutes the theme on its own.")
                 .defineInRange("bossMusicVolume", 1.0D, 0.0D, 1.0D);
+        clientBuilder.pop();
+        clientBuilder.push("infrared");
+        INFRARED_ENABLED = clientBuilder
+                .comment("When true, the eye slot (the 'delusion' slot earned from Wisdom's",
+                        "Sacrifice) works as a low-light optical device. With something in that",
+                        "slot and its eye toggle lit, the client fades in a grayscale low-light",
+                        "view whenever the camera sits in darkness, the wearer is blind or",
+                        "wrapped in darkness, or the camera is inside lava - and pushes the fog",
+                        "walls those things rely on out of the way. Purely visual and client",
+                        "side: no world lighting, no mob effects, nothing sent to the server.",
+                        "Turn this off to disable the whole feature.")
+                .define("enabled", true);
+        INFRARED_INTENSITY = clientBuilder
+                .comment("How far the low-light view fades in once every condition is met.",
+                        "1.0 is as authored - the far end of the fade. Lower values keep the",
+                        "effect as a lighter wash over the normal picture, and 0.0 means the",
+                        "fade never gets anywhere. The fade itself takes about four tenths of",
+                        "a second either way.")
+                .defineInRange("intensity", 1.0D, 0.0D, 1.0D);
+        INFRARED_GRAYSCALE_THRESHOLD = clientBuilder
+                .comment("Dynamic grayscale: pixels dimmer than this lose all of their colour,",
+                        "pixels above it keep theirs. 0.30 keeps the near, dark parts of the",
+                        "scene in infrared grey while lit surfaces, lava and the sky stay",
+                        "coloured. Raise it towards 1.0 to grey the whole picture out, lower it",
+                        "to leave more colour alone.")
+                .defineInRange("grayscaleThreshold", 0.30D, 0.0D, 1.0D);
+        INFRARED_GRAYSCALE_SOFTNESS = clientBuilder
+                .comment("How wide the band above grayscaleThreshold is, in the same 0..1",
+                        "luminance units. Colour fades back in across it, so 0.0 gives a hard",
+                        "edge between grey and colour while 0.30 gives a soft one. Setting this",
+                        "and the threshold to 0 together leaves the picture untouched, since",
+                        "nothing is dim enough to be caught.")
+                .defineInRange("grayscaleSoftness", 0.30D, 0.0D, 1.0D);
         clientBuilder.pop();
         CLIENT_SPEC = clientBuilder.build();
     }

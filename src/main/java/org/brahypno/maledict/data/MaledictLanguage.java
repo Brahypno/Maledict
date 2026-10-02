@@ -136,7 +136,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.sacrifice", "献祭");
             add("effect.maledict.sacrifice.description",
                 "贤者献祭生命，因而获取智慧。然而并非每一次牺牲都会带来智慧，只有模仿先贤的仪式，才有可能获得先贤的智慧");
-            add("curios.identifier.delusion", "眼");
+            add("curios.identifier.delusion", "视界");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "佩戴时冷却速度加倍");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "攻击半生命值目标时触发收获精魂时的效果");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment", "击杀敌人时获得启蒙之年，已有则延长时间");
@@ -215,13 +215,13 @@ public final class MaledictLanguage extends LanguageProvider {
                 "使用邪术精魂会扩大无常仪式 的影响力。更完整的影子照落 在此处，虽然影子很 难说完整。而两枚邪术精魂则 会召唤更加完整的一面。");
             add("malum.gui.rite.corrupted_" + SACRIFICE_RITE_ID, "牺牲仪式");
             add("malum.gui.book.entry.page.text.corrupt_" + SACRIFICE_RITE_ID + ".hover",
-                "在撑过献祭后，获得一个额外 的符文槽位和一个眼槽位。");
+                "在撑过献祭后，获得一个额外 的符文槽位和一个视界槽位。");
             add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY, "牺牲仪式");
             add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY + ".description", "智慧的代价");
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE,
                 "智慧从何而来？于一场刻意的 仪式中，使用提尔锋伤害自己 ，妄想获得贤人的智慧，这能 够实现吗？");
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE + ".2",
-                "在九天九夜的折磨中，我确实 看到了些什么，也知道了些什 么。我的身体有额外的位置能 够刻画符文，而我的眼睛变成 了一处门扉。");
+                "在九天九夜的折磨中，我确实 看到了些什么，也知道了些什 么。我的身体有额外的位置能 够刻画符文，而我的眼睛变成 了一处门扉。 透过这献祭的视界，我能够更 清楚的看这世界。");
         }else {
             add("itemGroup.maledict", "Maledict");
             add("enchantment.maledict.ectoplasm", "Ectoplasm");
@@ -492,7 +492,7 @@ public final class MaledictLanguage extends LanguageProvider {
                 + "aspect still.");
             add("malum.gui.rite.corrupted_" + SACRIFICE_RITE_ID, "Rite of Sacrifice");
             add("malum.gui.book.entry.page.text.corrupt_" + SACRIFICE_RITE_ID + ".hover",
-                "Survive the sacrifice to gain an additional rune slot and an eye slot.");
+                "Survive the sacrifice to gain an additional rune slot and an vision slot.");
             add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY, "Rite of Sacrifice");
             add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY + ".description", "The Price of Wisdom");
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE,
@@ -501,7 +501,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE + ".2",
                 "Through nine days and nine nights of torment I did see something, and came to know something "
                 + "as well. My body has gained another place where runes may be carved, and my eyes have "
-                + "become a doorway.");
+                + "become a doorway. With such vision, I have a better view.");
         }
     }
 
