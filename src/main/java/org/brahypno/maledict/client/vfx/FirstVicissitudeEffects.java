@@ -32,6 +32,7 @@ public final class FirstVicissitudeEffects {
     /**
      * 地面法阵画成黑色；这一点必须配合 {@link #spawnRune} 里的 lumitransparent 渲染类型，
      * 该组合下 alpha 取自贴图亮度、颜色取自这里，黑色才看得见而不是淡成一片。
+     * RGB 已经到底，观感上的「再深一点」只能靠顶点 alpha，见 {@link #sigilAlpha}。
      */
     private static final Color SIGIL_BLACK = new Color(0x000000);
     private static final Vec3 GROUND_UP = new Vec3(0.0D, 1.0D, 0.0D);
@@ -74,8 +75,20 @@ public final class FirstVicissitudeEffects {
         return new Vec3(point.x(), point.y(), point.z());
     }
 
-    private static float markerAlpha(float progress) {
+    /** 边界冷白微光的不透明度：0.5 → 0.9 → 0。 */
+    private static float moteAlpha(float progress) {
         return progress < 0.8F ? 0.5F + 0.4F * progress : 0.9F * (1.0F - (progress - 0.8F) / 0.2F);
+    }
+
+    /**
+     * 黑色符文的不透明度：0.6 → 1.0 → 0。
+     *
+     * <p>LUMITRANSPARENT 下符文的最终 alpha 是「贴图亮度 × 顶点 alpha」，而顶点色 RGB 恒为 0，
+     * 所以黑色有多黑完全由这条 ramp 决定，改 {@link #SIGIL_BLACK} 是改不动的。峰值 1.0 让贴图里
+     * 最亮的那圈笔画真正压成纯黑（原先的 0.85 倍乘子让峰值只有约 0.77，亮地表上会透成深灰）。
+     */
+    private static float sigilAlpha(float progress) {
+        return progress < 0.8F ? 0.6F + 0.5F * progress : 1.0F - (progress - 0.8F) / 0.2F;
     }
 
     /** 判定区收拢到多紧：锁定时 0，释放时 1。 */
@@ -109,7 +122,7 @@ public final class FirstVicissitudeEffects {
             return;
         }
         float progress = entity.getGroundMarkerProgress(0.0F);
-        float alpha = markerAlpha(progress);
+        float alpha = moteAlpha(progress);
         if (alpha <= 0.0F) {
             return;
         }
@@ -119,7 +132,7 @@ public final class FirstVicissitudeEffects {
         float closing = closingFactor(progress);
         if (tick % 5L == 0L) {
             // 圆盘内部没有安全区，任何尺寸画整圈都诚实；半径留在判定半径以内，只有符文的软边碰到边缘。
-            spawnRune(level, center, (float) (outer * (0.40D + 0.45D * closing)), alpha * 0.85F,
+            spawnRune(level, center, (float) (outer * (0.40D + 0.45D * closing)), sigilAlpha(progress),
                     runeSpin(tick), SIGIL_LIFETIME);
         }
         if (tick % 2L == 0L) {
@@ -136,7 +149,7 @@ public final class FirstVicissitudeEffects {
             return;
         }
         float progress = entity.getGroundMarkerProgress(0.0F);
-        float alpha = markerAlpha(progress);
+        float alpha = moteAlpha(progress);
         if (alpha <= 0.0F) {
             return;
         }
@@ -154,9 +167,10 @@ public final class FirstVicissitudeEffects {
         double arcStart = gapWidth * 0.5D + inset;
         double arc = 360.0D - gapWidth - inset * 2.0D;
         double angle = gapCenter + arcStart + arc * ((slot + 0.5D) / HALO_FRAGMENT_COUNT);
-        // 波峰只改亮度与大小，绝不动判定区域。
+        // 波峰只改黑度与大小，绝不动判定区域。
         float wave = 0.5F + 0.5F * Mth.sin(slot / (float) HALO_FRAGMENT_COUNT * TWO_PI - tick * 0.4F);
-        spawnRuneAt(level, center, angle, radius, fragmentScale, alpha * (0.45F + 0.40F * wave),
+        spawnRuneAt(level, center, angle, radius, fragmentScale,
+                sigilAlpha(progress) * (0.6F + 0.4F * wave),
                 runeSpin(tick), HALO_FRAGMENT_LIFETIME);
 
         if (tick % 2L == 0L) {
@@ -186,7 +200,8 @@ public final class FirstVicissitudeEffects {
 
     /**
      * 符文画成黑色必须搭配 lumitransparent：这些贴图是不透明白字黑底，走普通透明通道会盖出黑方块，从颜色推 alpha 又会把黑色整个抹掉。
-     * 该 shader 先用贴图自身的亮度替换 alpha、再乘顶点色，于是白笔画不透明、黑底隐形、符文本身呈黑色。
+     * 该 shader 先用贴图自身的亮度替换 alpha、再乘顶点色，于是白笔画不透明、黑底隐形、符文本身呈黑色；{@code alpha} 是顶点 alpha 的峰值，
+     * 也就是黑色能有多实，取 {@link #sigilAlpha}。淡入起点也从 0.3 提到 0.45，符文一出生就有可见的黑度。
      */
     private static void spawnRune(Level level, Vec3 position, float scale, float alpha,
                                   SpinParticleData spin, int lifetime) {
@@ -194,7 +209,7 @@ public final class FirstVicissitudeEffects {
                         new DirectionalBehaviorComponent(GROUND_UP))
                 .setRenderType(LodestoneWorldParticleRenderType.LUMITRANSPARENT)
                 .setColorData(ColorParticleData.create(SIGIL_BLACK, SIGIL_BLACK).build())
-                .setTransparencyData(GenericParticleData.create(alpha * 0.3F, alpha, 0.0F)
+                .setTransparencyData(GenericParticleData.create(alpha * 0.45F, alpha, 0.0F)
                         .setEasing(Easing.SINE_IN).build())
                 .setScaleData(GenericParticleData.create(scale).build())
                 .setSpinData(spin)

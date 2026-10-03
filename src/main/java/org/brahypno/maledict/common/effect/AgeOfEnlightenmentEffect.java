@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
- * 启蒙之年：佩戴启蒙之年的玩家击杀敌人后获得的增益，持续期间每次出手都必定暴击，每级额外 +1 法杖暂存弹数。
+ * 启蒙之年：佩戴启蒙之年的玩家击杀敌人后获得的增益，持续期间近战伤害翻倍，每级额外 +1 法杖暂存弹数。
  * 与 Malum 的 {@code grim_certainty} 不同，这里命中后不消耗效果；{@code addAttributeModifiers} 结算时会自乘 {@code (amplifier + 1)}。
  */
 public final class AgeOfEnlightenmentEffect extends MobEffect {

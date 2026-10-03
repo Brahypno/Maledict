@@ -124,7 +124,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.age_of_enlightenment", "启蒙之年");
             add("effect.maledict.age_of_darkness", "黑暗时代");
             add("effect.maledict.age_of_enlightenment.description",
-                "人们把蒙昧与黑暗错认为神圣，你的下一击必定造成暴击；每级额外给予 1 点法杖暂存弹数。");
+                "人们把蒙昧与黑暗错认为神圣，你的近战攻击伤害翻倍；每级额外给予 1 点法杖暂存弹数。");
             add("effect.maledict.age_of_darkness.description",
                 "任由野蛮焚烧文明的黑暗时代啊，每级降低 20% 魔法抗性、灵魂护盾容量与灵魂护盾稳固度。");
             add("effect.maledict.blessing_of_life", "生灵之祝");
@@ -370,8 +370,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.age_of_enlightenment", "Age of Enlightenment");
             add("effect.maledict.age_of_darkness", "Age of Darkness");
             add("effect.maledict.age_of_enlightenment.description",
-                "People mistake ignorance and darkness for the sacred. Your next strike is guaranteed to be a critical "
-                + "hit; each level also grants 1 additional Reserve Staff Charge.");
+                "People mistake ignorance and darkness for the sacred. Your melee attacks deal double "
+                + "damage; each level also grants 1 additional Reserve Staff Charge.");
             add("effect.maledict.age_of_darkness.description",
                 "O dark age that lets barbarism burn civilization to ashes: each level reduces magic resistance, Soul Ward "
                 + "capacity and Soul Ward integrity by 20%.");

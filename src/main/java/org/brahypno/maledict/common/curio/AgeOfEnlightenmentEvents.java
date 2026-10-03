@@ -13,8 +13,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.CriticalHitEvent;
-import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
@@ -28,7 +26,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * 启蒙之年的玩法钩子。常驻加速、半血刷魂息虚空、击杀续效果都要求护符在饰品栏里；传染与必暴击只看启蒙之年这个效果本身。
+ * 启蒙之年的玩法钩子。常驻加速、半血刷魂息虚空、击杀续效果都要求护符在饰品栏里；传染与近战翻倍只看启蒙之年这个效果本身。
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class AgeOfEnlightenmentEvents {
@@ -45,8 +43,8 @@ public final class AgeOfEnlightenmentEvents {
 
     private static final int EFFECT_DURATION_TICKS = 200;
 
-    /** 原版暴击的伤害倍率。 */
-    private static final float CRIT_DAMAGE_MULTIPLIER = 1.5F;
+    /** 近战伤害倍率：配置读不到时的退路，与 {@code meleeDamageMultiplier} 的默认值一致。 */
+    private static final float DEFAULT_MELEE_DAMAGE_MULTIPLIER = 2.0F;
 
     /** 半径（格）；击杀以玩家为心，传染以受击者为心。 */
     private static final double DARKNESS_RADIUS = 16.0D;
@@ -70,6 +68,15 @@ public final class AgeOfEnlightenmentEvents {
             return MaledictConfig.ENLIGHTENMENT_COOLDOWN_SPEED.get();
         } catch (RuntimeException exception) {
             return DEFAULT_COOLDOWN_SPEED;
+        }
+    }
+
+    /** 同 {@link #cooldownSpeed()}：配置读不到就退回默认倍率。 */
+    private static float meleeDamageMultiplier() {
+        try {
+            return MaledictConfig.ENLIGHTENMENT_MELEE_DAMAGE_MULTIPLIER.get().floatValue();
+        } catch (RuntimeException exception) {
+            return DEFAULT_MELEE_DAMAGE_MULTIPLIER;
         }
     }
 
@@ -151,23 +158,35 @@ public final class AgeOfEnlightenmentEvents {
     }
 
     /**
-     * 身上挂着启蒙之年时，出手必定暴击。走 {@link CriticalHitEvent}：{@code ALLOW} 拿到的是真暴击，
-     * 音效与粒子照常，而不是悄悄把伤害翻倍。
+     * 身上挂着启蒙之年时，近战伤害翻倍。
      *
-     * <p>副作用：原版暴击与横扫互斥，所以效果期间镰刀的横扫会被压掉。
+     * <p>判据是伤害源的**直接来源就是出手者本人**：原版攻击与神侵恶刃自己的挥砍都把玩家同时填进
+     * direct / causing 两个位子，而法术通道、箭矢、爆炸的直接来源另有其人（或为空），不吃这一份。
+     * 横扫也走 {@code player_attack}、直接来源同样是玩家，所以一起翻倍。
+     *
+     * <p>挂在 {@link LivingHurtEvent} 上而不是 {@code CriticalHitEvent} 上：这里拿到的是护甲前的伤害，
+     * 与暴击倍率同一条口径，但不再强迫原版暴击——暴击粒子与音效没了，镰刀的横扫也不会再被压掉。
+     * 真落下来的原版暴击（下落攻击那种）照旧先乘 1.5，再被这一份放大。
      */
     @SubscribeEvent
-    public static void onCriticalHit(CriticalHitEvent event) {
-        if (!(event.getTarget() instanceof LivingEntity)) {
+    public static void onMeleeHurt(LivingHurtEvent event) {
+        if (event.getEntity().level().isClientSide()) {
             return;
         }
-        Player player = event.getEntity();
-        if (!player.hasEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT.get())) {
+        if (event.getAmount() <= 0.0F) {
+            return;
+        }
+        if (!(event.getSource().getDirectEntity() instanceof Player attacker)) {
+            return;
+        }
+        if (event.getSource().getEntity() != attacker) {
+            return;
+        }
+        if (!attacker.hasEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT.get())) {
             return;
         }
 
-        event.setResult(Event.Result.ALLOW);
-        event.setDamageModifier(Math.max(event.getDamageModifier(), CRIT_DAMAGE_MULTIPLIER));
+        event.setAmount(event.getAmount() * meleeDamageMultiplier());
     }
 
     /**

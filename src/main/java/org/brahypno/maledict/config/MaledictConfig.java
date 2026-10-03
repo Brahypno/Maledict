@@ -23,6 +23,7 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue ELDRITCH_UPGRADE_COST_COEFFICIENT;
     public static final ForgeConfigSpec.DoubleValue WICKED_UPGRADE_COST_COEFFICIENT;
     public static final ForgeConfigSpec.DoubleValue ENLIGHTENMENT_COOLDOWN_SPEED;
+    public static final ForgeConfigSpec.DoubleValue ENLIGHTENMENT_MELEE_DAMAGE_MULTIPLIER;
     public static final ForgeConfigSpec.BooleanValue INFRARED_ENABLED;
     public static final ForgeConfigSpec.DoubleValue INFRARED_INTENSITY;
     public static final ForgeConfigSpec.DoubleValue INFRARED_GRAYSCALE_THRESHOLD;
@@ -54,6 +55,14 @@ public final class MaledictConfig {
                         "down on its own, so the cooldown sweep can look slower than it really is; the",
                         "cooldown does end when the server says it does.")
                 .defineInRange("cooldownSpeed", 2.0D, 1.0D, 20.0D);
+        ENLIGHTENMENT_MELEE_DAMAGE_MULTIPLIER = builder
+                .comment("Damage multiplier for the wearer's melee hits while the Age of Enlightenment",
+                        "is active. 2.0 doubles the pre-armour damage of anything the wearer's own",
+                        "body deals - vanilla attacks, the Incursus Blade's own swing and its sweep",
+                        "splash - while magic, arrows and explosions keep their own numbers. A real",
+                        "vanilla critical hit (the falling attack) still multiplies by 1.5 first",
+                        "and is then doubled by this. 1.0 turns the bonus off.")
+                .defineInRange("meleeDamageMultiplier", 2.0D, 1.0D, 100.0D);
         builder.pop();
         builder.push("firstVicissitude");
         VICISSITUDE_ENGAGEMENT_RANGE = builder

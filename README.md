@@ -22,8 +22,8 @@ meddles with time and darkness, two obelisks, and the rites that call the First 
   line refuses instead — *Stagnant Evolution* holds magic at arm's length, *Rotten Bone* spends your own flesh to
   keep you breathing, and *Melancholia* teaches you to ache less at the blow that keeps landing.
 - **The Age of Enlightenment** — a void curio amulet that recovers item cooldowns at double speed, harvests spirits
-  from anything it strikes below half health, and renews its own enlightenment on every kill: blows land certain, and
-  the nearest enemy is left wearing the Age of Darkness.
+  from anything it strikes below half health, and renews its own enlightenment on every kill: melee blows land for
+  double, and the nearest enemy is left wearing the Age of Darkness.
 - **Obelisks** — the **Soulwood Obelisk** speeds up a spirit altar by half again, and the **Mnemonic Obelisk**
   brings the enchanting power of ten bookshelves to one block.
 - **The First Vicissitude** — not something you craft, but something you *call*: the **Rites of Vicissitude** stack

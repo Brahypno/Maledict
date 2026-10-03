@@ -83,6 +83,16 @@ method directly without ever asking `isPushable`. Players touching the boss are 
 `pushEntities()`; the wing push (`Player#push`, 0.06 horizontal) is a separate, deliberate shove. Only the boss's
 own movement code may change its velocity.
 
+### Age of Enlightenment is a melee multiplier, not a forced crit (`AgeOfEnlightenmentEvents#onMeleeHurt`)
+
+It used to force a vanilla critical hit (`CriticalHitEvent`, `ALLOW` plus a 1.5× modifier). It is now a plain melee
+damage multiplier: `LivingHurtEvent` doubles the pre-armour amount when the damage source's **direct entity is a
+player** who has the effect. Melee only — the arcane channel, arrows and explosions carry someone else (or nothing) as
+the direct entity and keep their own numbers; sweep damage rides the same `player_attack` source, so it doubles with
+the swing. Deliberately given up with the crit: the crit particles and sound, and the fact that a forced crit
+suppresses the scythe's sweep. A real vanilla crit (the falling attack) still multiplies by 1.5 first and is doubled
+on top of that. The multiplier is `ageOfEnlightenment.meleeDamageMultiplier` in `MaledictConfig`, default 2.0.
+
 ### Working agreement for mechanics with more than one reading
 
 When a mechanic can be read in more than one way (window/eviction order, "record then judge" vs "judge then record",

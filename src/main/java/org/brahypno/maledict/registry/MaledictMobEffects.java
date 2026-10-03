@@ -16,7 +16,7 @@ public final class MaledictMobEffects {
     public static final DeferredRegister<MobEffect> MOB_EFFECTS =
             DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, Maledict.MODID);
 
-    /** 启蒙之年：击杀时给佩戴者，效果是出手必暴击 + 每级 1 点法杖暂存弹数。 */
+    /** 启蒙之年：击杀时给佩戴者，效果是近战伤害翻倍 + 每级 1 点法杖暂存弹数。 */
     public static final RegistryObject<MobEffect> AGE_OF_ENLIGHTENMENT =
             MOB_EFFECTS.register("age_of_enlightenment", AgeOfEnlightenmentEffect::new);
 
