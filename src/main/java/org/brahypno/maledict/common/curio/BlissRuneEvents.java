@@ -32,6 +32,11 @@ import org.jetbrains.annotations.Nullable;
  * 到我们这里还剩下多少就是多少 —— 增伤乘的是**别人处理完之后**的量，取消也才看得见
  * （{@code EventPriority.LOWEST} 是最后一个跑，此时 {@code isCanceled()} 才是最终答案）。
  *
+ * <p><b>为什么必须写 {@code receiveCanceled = true}：</b>{@code ASMEventHandler#invoke} 是
+ * {@code if (!event.isCanceled() || subInfo.receiveCanceled())} 才把事件交到方法里，
+ * 而注解上的 {@code receiveCanceled} 默认 {@code false}。不写这一条，被取消的事件**根本不会进这三个
+ * 方法**，「接到已经取消的那一个就补打」这一段就成了死代码 —— 优先级排得再后也没用。
+ *
  * <p>「双方」必须是两个生物：没有攻击者的伤害（摔落、火、毒）没有可比的血量比，也没有可言的
  * 「攻击命中」，一律不介入 —— 倍率是 {@code 1}，取消也不补打。自己打自己同理（比值为 0）。
  */
@@ -58,7 +63,7 @@ public final class BlissRuneEvents {
      * <p>没被取消时这里什么都不做：本事件只有量、没有落点，增伤留给随后的 {@code LivingHurtEvent}，
      * 免得同一记乘两遍。
      */
-    @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onLivingAttack(LivingAttackEvent event) {
         if (!event.isCanceled()) {
             return;
@@ -72,7 +77,7 @@ public final class BlissRuneEvents {
     }
 
     /** 正常一记在这里乘倍率；被取消的这一记连倍率一起补进去。 */
-    @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onLivingHurt(LivingHurtEvent event) {
         LivingEntity victim = event.getEntity();
         Float multiplier = multiplierOf(victim, event.getSource());
@@ -93,7 +98,7 @@ public final class BlissRuneEvents {
      * <p>这里**不再乘倍率**：能走到这一步说明 {@code LivingHurtEvent} 已经放过行，倍率乘过了。
      * 同时也意味着这一记走的是原版正路，补的也是已经减过防的量。
      */
-    @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onLivingDamage(LivingDamageEvent event) {
         if (!event.isCanceled()) {
             return;

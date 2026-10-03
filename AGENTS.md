@@ -93,6 +93,16 @@ the swing. Deliberately given up with the crit: the crit particles and sound, an
 suppresses the scythe's sweep. A real vanilla crit (the falling attack) still multiplies by 1.5 first and is doubled
 on top of that. The multiplier is `ageOfEnlightenment.meleeDamageMultiplier` in `MaledictConfig`, default 2.0.
 
+### Cancelled events never reach `@SubscribeEvent` handlers unless the annotation opts in
+
+`ASMEventHandler#invoke` checks `if (!event.isCanceled() || subInfo.receiveCanceled())` before calling the method, and
+`SubscribeEvent#receiveCanceled` defaults to `false`. An annotated handler is therefore **skipped entirely** once an
+earlier listener cancels the event, and priority cannot save it: `EventPriority.LOWEST` with a default annotation means
+any "look at the already-cancelled event" branch is unreachable against cancels from NORMAL/HIGH. Programmatic
+`IEventBus#addListener` reaches the same conclusion by a different route (the `checkCancelled` filter in `EventBus`).
+A handler that wants to react to a cancellation must declare `receiveCanceled = true`; `BlissRuneEvents` needed it on all
+three handlers, where the forced-hit path had been dead code.
+
 ### Working agreement for mechanics with more than one reading
 
 When a mechanic can be read in more than one way (window/eviction order, "record then judge" vs "judge then record",
