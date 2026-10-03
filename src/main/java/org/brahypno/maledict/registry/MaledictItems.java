@@ -94,6 +94,16 @@ public final class MaledictItems {
                            () -> new RuneOfMelancholiaItem(new Item.Properties().stacksTo(1),
                                                            SpiritTypeRegistry.UMBRAL_SPIRIT));
 
+    /**
+     * 无忧符文：抑郁符文的另一半，虚空石符板 + 32 幽影精魂。把自己的命运和对手绑在一起 ——
+     * 血量比例差多少这一击就重多少、双方都躲不掉，佩戴者手里的神侵恶刃还整体抬一档。
+     * 见 {@link RuneOfBlissItem}、{@code BlissRuneEvents} 与 {@code IncursusBladeItem.DamageTier}。
+     */
+    public static final RegistryObject<Item> RUNE_OF_BLISS =
+            ITEMS.register("rune_of_bliss",
+                           () -> new RuneOfBlissItem(new Item.Properties().stacksTo(1),
+                                                     SpiritTypeRegistry.UMBRAL_SPIRIT));
+
     public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.MNEMONIC_OBELISK.get(), new Item.Properties(), MnemonicObeliskBlockEntity.STRUCTURE));
     public static final RegistryObject<Item> SOULWOOD_OBELISK = ITEMS.register("soulwood_obelisk", () ->

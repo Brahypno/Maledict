@@ -156,6 +156,14 @@ public final class MaledictRecipes extends RecipeProvider {
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(
                         Maledict.MODID, "runeworking/rune_of_melancholia"));
 
+        // 虚空石符板 + 32 幽影精魂：Malum 虚空档的模子（那一档都是 16 枚基础精魂），翻倍的精魂
+        // 换的是「幽影精魂比基础精魂稀有得多」，与抑郁符文同档、同为这一档里最贵的一枚。
+        new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_BLISS.get(), 1)
+                .setPrimaryInput(ItemRegistry.VOID_TABLET.get(), 1)
+                .setSecondaryInput(SpiritTypeRegistry.UMBRAL_SPIRIT.spiritShard.get(), 32)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "runeworking/rune_of_bliss"));
+
         new SpiritRepairRecipeBuilder(1.0f, Ingredient.of(ItemRegistry.NULL_SLATE.get()), 1)
                 .addItem(MaledictItems.ELEGY_BOW.get())
                 .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 11)

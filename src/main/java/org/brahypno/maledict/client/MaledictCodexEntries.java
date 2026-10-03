@@ -66,6 +66,7 @@ public final class MaledictCodexEntries {
     private static final String RUNE_OF_ROTTEN_BONE_ENTRY = "void.maledict.rune_of_rotten_bone";
     private static final String UMBRAL_EXPERIMENT_ENTRY = "void.maledict.umbral_experiment";
     private static final String RUNE_OF_MELANCHOLIA_ENTRY = "void.maledict.rune_of_melancholia";
+    private static final String RUNE_OF_BLISS_ENTRY = "void.maledict.rune_of_bliss";
 
     /**
      * 接在「虚空符文工艺：拾遗」(6,10) 与「神侵恶刃」(6,11) 下面，凑成 x=6 的一列。
@@ -149,7 +150,7 @@ public final class MaledictCodexEntries {
         PlacedBookEntryBuilder builder = BookEntry.build(VOID_RUNEWORKING_ENTRY, VOID_RUNEWORKING_X, VOID_RUNEWORKING_Y);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.MALIGNANT_PEWTER_TABLET)
-                .setStyle(BookWidgetStyle.DARK_SOULWOOD));
+                .setStyle(BookWidgetStyle.SOULWOOD));
         builder.addPage(new HeadlineTextItemPage(
                 VOID_RUNEWORKING_ENTRY,
                 VOID_RUNEWORKING_ENTRY + ".1",
@@ -163,10 +164,12 @@ public final class MaledictCodexEntries {
 
     /**
      * 「幽影精魂的实验」：幽影精魂没有对应的仪式，所以这一页不讲仪式，只讲拿已经验证过的符板
-     * 做自由创作；目前只有抑郁符文一件成品，用选择页挂上去。
+     * 做自由创作；两枚成品（抑郁、无忧）用同一个选择页挂上去，页内各自「标题正文 + 符文工艺配方」，
+     * 与抑郁符文当初的写法一模一样。
      */
     private static void addUmbralExperimentEntry() {
         EntryReference melancholia = voidRuneEntry(RUNE_OF_MELANCHOLIA_ENTRY, MaledictItems.RUNE_OF_MELANCHOLIA);
+        EntryReference bliss = voidRuneEntry(RUNE_OF_BLISS_ENTRY, MaledictItems.RUNE_OF_BLISS);
 
         if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, UMBRAL_EXPERIMENT_ENTRY)){
             return;
@@ -181,7 +184,7 @@ public final class MaledictCodexEntries {
         builder.addPage(new HeadlineTextPage(
                 UMBRAL_EXPERIMENT_ENTRY,
                 UMBRAL_EXPERIMENT_ENTRY + ".1"));
-        builder.addPage(new EntrySelectorPage(List.of(melancholia)));
+        builder.addPage(new EntrySelectorPage(List.of(melancholia, bliss)));
         builder.afterUmbralCrystal();
 
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
@@ -328,7 +331,7 @@ public final class MaledictCodexEntries {
                 ELEGY_BOW_ENTRY, REMEMBRANCE_BOW_X, REMEMBRANCE_BOW_Y);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.ELEGY_BOW)
-                .setStyle(BookWidgetStyle.DARK_SOULWOOD));
+                .setStyle(BookWidgetStyle.SOULWOOD));
         builder.addPage(new HeadlineTextItemPage(
                 ELEGY_BOW_ENTRY,
                 ELEGY_BOW_ENTRY + ".1",

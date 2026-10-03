@@ -35,11 +35,13 @@ import net.minecraft.world.item.Tier;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
+import org.brahypno.changelib.DamageHelper.DamageProbeResult;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.combat.IncursusBladeAttack;
 import org.brahypno.maledict.common.combat.IncursusBladeEnchantments;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
+import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 import team.lodestar.lodestone.registry.common.tag.LodestoneDamageTypeTags;
 
@@ -274,16 +276,68 @@ public final class IncursusBladeItem extends MagicScytheItem {
         return true;
     }
 
+    /**
+     * 神侵恶刃的三档伤害：轻 → 中 → 终。随喂进去的精魂成长，见 {@link #MEDIUM_DAMAGE_LEVEL}
+     * 与 {@link #FINAL_DAMAGE_LEVEL}（提示语就是「精魂之力到达神圣之数会解锁更本征的力量」）。
+     */
+    public enum DamageTier {
+        /** 未满 {@link #MEDIUM_DAMAGE_LEVEL}：探针只试必要的那几步，拿到真实掉血就收手。 */
+        LIGHT,
+        /** 满 {@link #MEDIUM_DAMAGE_LEVEL}：会为凑够数值继续往下找路。 */
+        MEDIUM,
+        /** 满 {@link #FINAL_DAMAGE_LEVEL}：终结档。 */
+        FINAL;
+
+        /** 抬一档；已经在顶就还是顶。无忧符文抬的就是这一档。 */
+        public DamageTier raised() {
+            return switch (this) {
+                case LIGHT -> MEDIUM;
+                case MEDIUM, FINAL -> FINAL;
+            };
+        }
+
+        /** 按本档打一记。 */
+        public DamageProbeResult deal(Entity target, DamageSource source, float damage) {
+            return switch (this) {
+                case FINAL -> DamageProbe.finalDamageMethod(target, source, damage);
+                case MEDIUM -> DamageProbe.mediumDamageMethod(target, source, damage);
+                case LIGHT -> DamageProbe.lighterDamageMethod(target, source, damage);
+            };
+        }
+    }
+
+    /**
+     * 这一记实际走的档：先看刀自己的精魂档，攻击者戴着无忧符文再抬一档。
+     *
+     * <p>符文认的是**攻击者**：一把没喂饱的刀戴上符文就能立刻用中档，已经到终档的不会再高。
+     */
+    public static DamageTier damageTier(ItemStack stack, DamageSource source) {
+        DamageTier tier = hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL) ? DamageTier.FINAL
+                        : hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL) ? DamageTier.MEDIUM
+                        : DamageTier.LIGHT;
+        return raisedByBliss(tier, source.getEntity());
+    }
+
+    /**
+     * 无忧符文的抬升：佩戴者以神侵恶刃名义打出的每一记都抬一档。
+     *
+     * <p>固定档位的那几记（投掷返程撞人、飞升横扫，都写死 medium）也走这里，所以「这把刀的伤害」
+     * 只有一个口径。
+     */
+    public static DamageTier raisedByBliss(DamageTier tier, @Nullable Entity attacker) {
+        return RuneOfBlissItem.isEquipped(attacker) ? tier.raised() : tier;
+    }
+
+    /** 按当前档位打一记，需要知道走了哪一档的调用方用这个。 */
+    public static DamageProbeResult dealTieredDamage(ItemStack stack, Entity target, DamageSource source, float damage) {
+        return damageTier(stack, source).deal(target, source, damage);
+    }
+
     /** 镰刀伤害的唯一出口：按档位结算，探针进来先清无敌帧，否则同一次挥砍的后几条通道会被吃掉。 */
     public static void applyTieredDamage(ItemStack stack, Entity target, DamageSource source, float damage) {
         if (damage <= 0.0f || !canTakeDamage(target))
             return;
-        if (hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL))
-            DamageProbe.finalDamageMethod(target, source, damage);
-        else if (hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL))
-            DamageProbe.mediumDamageMethod(target, source, damage);
-        else
-            DamageProbe.lighterDamageMethod(target, source, damage);
+        dealTieredDamage(stack, target, source, damage);
     }
 
     private static boolean canTakeDamage(Entity target) {

@@ -40,7 +40,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + ELEGY_BOW_ENTRY + ".description", "停不下的思念");
             add("malum.gui.book.entry.page.headline." + ELEGY_BOW_ENTRY, "哀歌弓");
             add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".1",
-                "我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。 我走不出来。 我将我不止息的哀歌灌注到弓 中，使之具有了满蓄力自动发 射的能力。");
+                "我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我将我不止息的哀歌灌注到弓 中，使之具有了满蓄力自动发 射的能力。");
             add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY, "图腾符文：续");
             add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".description", "重复实验直至推翻");
             add("malum.gui.book.entry.page.headline." + TOTEMIC_RUNES_CONTINUED_ENTRY, "图腾符文：续");
@@ -90,7 +90,12 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + RUNE_OF_MELANCHOLIA_ENTRY + ".description", "谵妄的幻想，终归");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_MELANCHOLIA_ENTRY, "抑郁符文");
             add("malum.gui.book.entry.page.text." + RUNE_OF_MELANCHOLIA_ENTRY + ".1",
-                "我好忧愁。 我好忧愁。 我好忧愁。 我好忧愁。");
+                "我好忧愁。  我好忧愁。  我好忧愁。  我好忧愁。");
+            add("malum.gui.book.entry." + RUNE_OF_BLISS_ENTRY, "无忧符文");
+            add("malum.gui.book.entry." + RUNE_OF_BLISS_ENTRY + ".description", "无爱亦无忧愁");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_BLISS_ENTRY, "无忧符文");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_BLISS_ENTRY + ".1",
+                "可是，有什么办法呢？  谁在爱，  谁就应该与他所爱的人分担命运  永恒的坠落，无爱亦无忧愁，  即是最终的虚无。");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "回忆方尖碑");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "灵魂木方尖碑");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "神圣精魂箭");
@@ -115,6 +120,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.RUNE_OF_STAGNANT_EVOLUTION, "演进凝滞符文");
             addItem(MaledictItems.RUNE_OF_ROTTEN_BONE, "朽骨符文");
             addItem(MaledictItems.RUNE_OF_MELANCHOLIA, "抑郁符文");
+            addItem(MaledictItems.RUNE_OF_BLISS, "无忧符文");
             add("effect.maledict.age_of_enlightenment", "启蒙之年");
             add("effect.maledict.age_of_darkness", "黑暗时代");
             add("effect.maledict.age_of_enlightenment.description",
@@ -148,6 +154,10 @@ public final class MaledictLanguage extends LanguageProvider {
                 "若生命上限大于1点，则死亡时以25%最大生命值为代价逃离死亡");
             add("malum.gui.curio.effect.maledict.melancholia",
                 "会逐渐获得同类伤害的抗性。治疗和伤害对你来说都很麻木。");
+            add("malum.gui.curio.effect.maledict.bliss.damage",
+                "增加对血量比例不同的造成、受到的伤害。");
+            add("malum.gui.curio.effect.maledict.bliss.forced_hit",
+                "强制使双方的攻击可以命中。");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "按住 Shift 追问一个不该问的问题");
             add("tooltip.maledict.age_of_enlightenment.shift", "黑暗的时代曾经存在过吗");
             add("tooltip.maledict.age_of_enlightenment.shift.enlightened", "那无穷，无限，永动的启蒙之年啊");
@@ -326,6 +336,12 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.headline." + RUNE_OF_MELANCHOLIA_ENTRY, "Rune of Melancholia");
             add("malum.gui.book.entry.page.text." + RUNE_OF_MELANCHOLIA_ENTRY + ".1",
                 "I am so sorrowful. I am so sorrowful. I am so sorrowful. I am so sorrowful.");
+            add("malum.gui.book.entry." + RUNE_OF_BLISS_ENTRY, "Rune of Bliss");
+            add("malum.gui.book.entry." + RUNE_OF_BLISS_ENTRY + ".description", "Untouched by Love or Sorrow");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_BLISS_ENTRY, "Rune of Bliss");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_BLISS_ENTRY + ".1",
+                "But what's to be done? Whomsoever loves should share the burden of destiny with the ones he "
+                + "loves. Permanent falling, untouched by love or sorrow, the ultimate Nihility.");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "Mnemonic Obelisk");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "Soulwood Obelisk");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "Sacred Spirit Arrow");
@@ -350,6 +366,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.RUNE_OF_STAGNANT_EVOLUTION, "Rune of Stagnant Evolution");
             addItem(MaledictItems.RUNE_OF_ROTTEN_BONE, "Rune of Rotten Bone");
             addItem(MaledictItems.RUNE_OF_MELANCHOLIA, "Rune of Melancholia");
+            addItem(MaledictItems.RUNE_OF_BLISS, "Rune of Bliss");
             add("effect.maledict.age_of_enlightenment", "Age of Enlightenment");
             add("effect.maledict.age_of_darkness", "Age of Darkness");
             add("effect.maledict.age_of_enlightenment.description",
@@ -397,6 +414,10 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.curio.effect.maledict.melancholia",
                 "You gradually become resistant to repeated damage of the same kind. Healing and harm alike leave you "
                 + "numb.");
+            add("malum.gui.curio.effect.maledict.bliss.damage",
+                "Increases the damage dealt to and taken from those whose proportion of health differs from yours.");
+            add("malum.gui.curio.effect.maledict.bliss.forced_hit",
+                "Forces both sides' attacks to be able to land.");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "Hold Shift to ask a question better left unasked");
             add("tooltip.maledict.age_of_enlightenment.shift",
                 "Did an age of darkness ever exist?");
@@ -528,6 +549,7 @@ public final class MaledictLanguage extends LanguageProvider {
     private static final String RUNE_OF_ROTTEN_BONE_ENTRY = "void.maledict.rune_of_rotten_bone";
     private static final String UMBRAL_EXPERIMENT_ENTRY = "void.maledict.umbral_experiment";
     private static final String RUNE_OF_MELANCHOLIA_ENTRY = "void.maledict.rune_of_melancholia";
+    private static final String RUNE_OF_BLISS_ENTRY = "void.maledict.rune_of_bliss";
     private static final String VICISSITUDE_RITE_ID = "vicissitude_rite";
     private static final String SACRIFICE_RITE_ID = "sacrifice_rite";
     private static final String GREATER_RITE_ID = "greater_vicissitude_rite";

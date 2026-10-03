@@ -1,0 +1,14 @@
+{
+  "type": "malum:runeworking",
+  "output": {
+    "item": "maledict:rune_of_bliss"
+  },
+  "primaryInput": {
+    "count": 1,
+    "item": "malum:void_tablet"
+  },
+  "secondaryInput": {
+    "count": 32,
+    "item": "malum:umbral_spirit"
+  }
+}

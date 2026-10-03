@@ -23,7 +23,6 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.common.entity.IncursusScytheBoomerangEntity;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
 import org.brahypno.maledict.registry.MaledictSounds;
@@ -115,10 +114,12 @@ public final class IncursusBladeEnchantments {
 
         boolean hitAnything = false;
         for (Entity target : level.getEntities(player, area, entity -> canHitEntity(player, entity))) {
-            boolean hit = DamageProbe.mediumDamageMethod(
-                    target,
-                    DamageTypeHelper.create(level, DamageTypeRegistry.SCYTHE_SWEEP, player),
-                    channels.attack()).success();
+            // 飞升横扫写死 medium（不随精魂成长），无忧符文同样按「这把刀的伤害」抬一档。
+            boolean hit = IncursusBladeItem.raisedByBliss(IncursusBladeItem.DamageTier.MEDIUM, player)
+                                           .deal(target,
+                                                 DamageTypeHelper.create(level, DamageTypeRegistry.SCYTHE_SWEEP, player),
+                                                 channels.attack())
+                                           .success();
             if (hit){
                 ItemHelper.applyEnchantments(player, target, stack);
                 int fireAspect = stack.getEnchantmentLevel(Enchantments.FIRE_ASPECT);

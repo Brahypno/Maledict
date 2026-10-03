@@ -12,7 +12,6 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
-import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
 import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
@@ -67,10 +66,12 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
             ItemStack scythe = getItem();
             owner.setItemInHand(InteractionHand.MAIN_HAND, scythe);
             
-            boolean hit = DamageProbe.mediumDamageMethod(
-                    target,
-                    DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, owner),
-                    damage).success();
+            // 这一记写死 medium（不随精魂成长），但无忧符文对「这把刀打出的伤害」是一个口径，照抬一档。
+            boolean hit = IncursusBladeItem.raisedByBliss(IncursusBladeItem.DamageTier.MEDIUM, owner)
+                                           .deal(target,
+                                                 DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, owner),
+                                                 damage)
+                                           .success();
             if (hit){
                 ItemHelper.applyEnchantments(owner, target, scythe);
                 int fireAspect = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FIRE_ASPECT, scythe);

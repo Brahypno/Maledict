@@ -66,7 +66,8 @@ public final class MaledictItemTags extends ItemTagsProvider {
                              MaledictItems.RUNE_OF_RIPENING.get(),
                              MaledictItems.RUNE_OF_STAGNANT_EVOLUTION.get(),
                              MaledictItems.RUNE_OF_ROTTEN_BONE.get(),
-                             MaledictItems.RUNE_OF_MELANCHOLIA.get());
+                             MaledictItems.RUNE_OF_MELANCHOLIA.get(),
+                             MaledictItems.RUNE_OF_BLISS.get());
         tag(MaledictTags.VICISSITUDE_CONFISCATION_IMMUNE)
                 .addOptional(ResourceLocation.fromNamespaceAndPath("sophisticatedbackpacks", "backpack"));
     }
