@@ -1,7 +1,9 @@
 # Credits — bundled assets
 
-Maledict's **code** is licensed under [LGPL-3.0-only](../LICENSE). The audio and image assets listed
-below carry their own licences, recorded here so the two are not confused.
+Maledict's **code** is licensed under **LGPL-3.0-only** (the full text is the `LICENSE` file in the
+[repository](https://github.com/Brahypno/Maledict); it is deliberately not bundled, so this file never
+links to it). The audio and image assets listed below carry their own licences, recorded here so the
+two are not confused.
 
 This file ships inside the jar on purpose: it is the copy that travels with every download.
 

@@ -415,8 +415,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.fallen", "Fallen");
             add("effect.maledict.fallen.description",
                 "Healing decays into wounds.");
-            add("curios.identifier.delusion",
-                "Eye");
+            add("curios.identifier.delusion", "Vision");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown",
                 "Cooldowns recover twice as fast while worn");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void",

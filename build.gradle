@@ -212,6 +212,11 @@ tasks.named('processResources', ProcessResources).configure {
 
     inputs.properties replaceProperties
 
+    // Datagen leaves an incremental cache in src/generated/resources/.cache. It is not mod
+    // content, it is named after content hashes, and it changes on every runData — shipping it
+    // would make identical sources build into different jars.
+    exclude '.cache/**'
+
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
         expand replaceProperties + [project: project]
     }
