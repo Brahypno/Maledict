@@ -4,8 +4,8 @@ Each strip is longitudinal, with independently painted front/back/side/end faces
 Digits index the palette; transverse seals and fractures have explicit positions.
 """
 
-COLORS = ('201d2b', '373040', '57485f', '727a91',
-          '9ba9bf', 'bdccdb', 'e0e5e8', '84678f')
+COLORS = ('120a1d', '2c163f', '572568', '79648d',
+          'b1a0c7', 'e0d7ed', 'fff1f5', 'b851cf')
 RINGS = {
     'ring_socket': dict(length=40,width=8,depth=4,
                         front='23565321',back='12343210',
@@ -63,8 +63,8 @@ def paint_ring(atlas, region, role, face):
             atlas.emission[i:i+4]=[0,0,0,0]
             if role=='ring_halo':
                 # Violet carrier and interrupted luminous script replace silver bands.
-                halo=('21192f','34253f','4c365e','715283',
-                      '9472aa','b999ce','e4d7ef','b68ccf')
+                halo=('10051d','2b0a40','4e126e','8624b0',
+                      'bc47df','e492f0','ffebfa','d461e5')
                 rgb=[int(halo[ink][k:k+2],16)/255 for k in (0,2,4)]
                 lit=False
                 if face in ('front','back'):
@@ -72,6 +72,6 @@ def paint_ring(atlas, region, role, face):
                     rune=any((x-seal,y) in ((-2,3),(-1,2),(0,1),(1,2),(2,3),
                                            (1,6),(0,7),(-1,8),(0,9)) for seal in design['seals'])
                     lit=rail or rune
-                    if lit: rgb=[.80,.64,.95] if rune else [.63,.43,.83]
+                    if lit: rgb=[.98,.58,.93] if rune else [.72,.20,.93]
                 atlas.base[i:i+4]=rgb+[1]
                 if lit: atlas.emission[i:i+4]=rgb+[1]

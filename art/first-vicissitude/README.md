@@ -21,8 +21,9 @@ Blender 导出器输出。旧 `RigArtGenerator.java` 是早期方块预览工具
 - `tools/body_surfaces.py`、`tools/wing_surfaces.py`、`tools/ring_surfaces.py`、`tools/relic_surfaces.py`、
   `tools/surface_sample.py`：逐表面图稿的编排与样稿生成；`tools/atlas16.py` 只生成样稿范围以外的旧占位。
 - `tools/lower_surfaces.py`：下腹与祭衣的高密度表面绘制及 UV 分配；旧图集原密度保留，新增区域独立绘制。
+- `tools/head_surfaces.py`：八片晶壳各 96×96 的独立原生图稿，分别编排主曲线、层叠环线、菱形符印、分枝与卷纹，保留不同的留白和金紫比例；所有纹饰均为 1 像素宽。
 - [preview/index.html](preview/index.html)：唯一预览入口，仅四张图：一阶段整体、二阶段整体、
-  胸腔水晶试装前、试装后近景。均为离线渲染，**不是游戏截图**。
+  头部复合纹饰调整前、调整后近景。均为离线渲染，**不是游戏截图**。
 - `build/first-vicissitude-review/`（仓库根目录下）：技术检查产物，包括其他视角、无灯光图、
   UV 线稿、图集布局和验证报告。由工具重建，不放进用户预览目录。
 - `../../src/main/resources/assets/maledict/models/entity/first_vicissitude.mesh.json`：游戏实际加载的网格。
@@ -81,8 +82,18 @@ java -cp build/rig-tool RigMeshCheck
 `review_optimization.py -- before/after` 生成同机位对照，`check_optimization.py` 检查保存的基线与当前导出。
 头环中心由 `(0,-28,9)` 移至 `(0,-32,16)`；椭圆半径由 14.1/15 缩至 11.5/12，
 截面半宽 1.2→0.65、半厚 0.85→0.32，保留四段断片与旋转。正背发光刻纹使用已有自发光渲染层。
-图集仍为 512×512，共 293 个区域；前胸活动环、双臂、下腹与祭衣的形体保持。
-当前同机位水晶试装对照见 `preview/index.html`；其他视角和无灯光技术图输出到 `build/first-vicissitude-review/`。
+减面时图集为 512×512、293 个区域；前胸活动环、双臂、下腹与祭衣的形体保持。
+2026-10-04 仅修改逐表面绘制源码的色阶：黑紫暗部、浓紫矿物、低饱和浅骨甲及少量暖金刺绣。
+两张 512×512 PNG、Blender 内嵌贴图与 Blockbench 内嵌贴图已同步；几何、UV、包围盒、透明像素和图案位置不变。
+当前头部为原生单像素紫红/淡金流动纹饰；八片壳面各有独立的 96×96 图稿，采用卷枝、长曲线、
+弯月、暗色分枝、细卷纹串、斜向交织、蕨纹和尾线；叠加各自的多层环线、菱形符印与内卷分枝，
+纹线像素数从每片 347–525 增至 1,067–1,222，原生线宽仍为 1 像素。
+图集仍为 512×512，共 301 个区域。本轮 UV 不变（此前八片壳面的 UV 已改用独立图稿）；几何、法线、关节、
+其他部位的像素与 UV、翼部包围盒及自发光层不变。实际 PNG 的纹饰掩码均无实心 2×2 块。
+当前同机位头部纹饰对照见 `preview/index.html`；本轮技术对照输出到
+`build/first-vicissitude-review/comparison/sigil-before/` 与 `sigil-after/`；
+八片图稿技术总览为 `build/first-vicissitude-review/head-sigil-eight-panels.png`。上一轮配色对照保留在
+`build/first-vicissitude-review/comparison/palette-before/` 与 `palette-after/`。
 
 游戏实机光照、资源重载、三类武器握持和实战性能尚未在客户端验收；所有 `preview/` 图都是离线正交预览，
 不能代替游戏截图。逐轮验证记录见 `docs/design/first-vicissitude/03_ENGINEERING_AND_VERIFICATION.md`。

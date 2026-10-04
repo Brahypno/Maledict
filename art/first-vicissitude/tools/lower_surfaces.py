@@ -41,19 +41,19 @@ def paint(kind,face,material,u,v):
         fold=.35+.26*math.cos((u-.23)*math.tau*2)
         fold-=.22*(1-smooth(0,.055,v))
         fold-=.08*v
-        rgb=mix((32,27,43),(111,92,126),fold)
+        rgb=mix((11,5,19),(87,26,113),fold)
         border=min(abs(u-.10),abs(u-.91))
         thread=(1-smooth(.006,.018,border))*smooth(.045,.07,v)*(1-smooth(.86,.94,v))
         shadow=1-smooth(.007,.021,min(abs(u-.12),abs(u-.93)))
-        rgb=mix(rgb,(35,28,46),shadow*.42)
-        rgb=mix(rgb,(158,139,175),thread*.7)
+        rgb=mix(rgb,(17,6,29),shadow*.42)
+        rgb=mix(rgb,(225,182,108),thread*.7)
         emblem=((.51,.20),(.66,.29),(.51,.39),(.37,.29),(.51,.20))
         emblem2=((.51,.39),(.61,.47),(.51,.58),(.41,.47),(.51,.39),(.51,.66))
         d=min(stroke(u,v,emblem),stroke(u,v,emblem2))
         # Deliberate small gap in the upper ring, plus an inset dark thread.
         motif=(1-smooth(.004,.014,d))*(0 if u>.60 and .25<v<.28 else 1)
-        rgb=mix(rgb,(156,137,175),motif*.72)
-        rgb=mix(rgb,(27,23,37),(1-smooth(.001,.012,abs(v-.027)))*.4)
+        rgb=mix(rgb,(225,182,108),motif*.72)
+        rgb=mix(rgb,(9,4,16),(1-smooth(.001,.012,abs(v-.027)))*.4)
         hems=(24,27,29,26,30,31,27,23,26,29,25,28,30,26,23,25)
         p=u*15; k=min(14,int(p)); f=p-k
         hem=(hems[k]*(1-f)+hems[k+1]*f)/32
@@ -68,7 +68,7 @@ def paint(kind,face,material,u,v):
     if face in ('back','lane2','lane3'): body-=.10
     if face in ('inner','lane4','lane5','bottom','cap0'): body-=.20
     bone=material in (2,3,14)
-    rgb=mix((49,43,62),(175,180,192) if bone else (128,114,145),body)
+    rgb=mix((25,9,39),(224,213,235) if bone else (178,59,215),body)
     if face in ('front','back') and kind in ('plate','bridge','dorsal','pelvic'):
         arch=.19+.22*(1-abs(2*u-1))
         arc=math.exp(-((v-arch)/.038)**2)
@@ -76,14 +76,14 @@ def paint(kind,face,material,u,v):
         # The main keel and paired swept arms are continuous forms, not tiles.
         keel=math.exp(-((u-.48)/(.055+.025*(1-v)))**2)*smooth(.04,.14,v)*(1-smooth(.83,.96,v))
         flank=math.exp(-((u-.565)/.029)**2)*smooth(.17,.3,v)*(1-smooth(.8,.94,v))
-        rgb=mix(rgb,(41,34,54),root*.55+flank*.42)
-        rgb=mix(rgb,(188,191,202),max(keel*.69,arc*.49))
+        rgb=mix(rgb,(25,8,39),root*.55+flank*.42)
+        rgb=mix(rgb,(244,232,246) if bone else (223,140,239),max(keel*.69,arc*.49))
         # A fine recessed chevron fits inside the lower part of the plate.
         engraving=stroke(u,v,((.28,.59),(.48,.72),(.72,.57)))
-        rgb=mix(rgb,(54,43,68),(1-smooth(.003,.013,engraving))*.65)
+        rgb=mix(rgb,(42,10,58),(1-smooth(.003,.013,engraving))*.65)
     elif face.startswith('cap') or face in ('top','bottom'):
         rim=min(u,1-u,v,1-v)
-        rgb=mix(rgb,(155,151,173),(1-smooth(.025,.095,rim))*.3)
+        rgb=mix(rgb,(196,174,213) if bone else (196,85,224),(1-smooth(.025,.095,rim))*.3)
     return rgb,1
 
 

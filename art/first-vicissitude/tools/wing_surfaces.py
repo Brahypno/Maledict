@@ -3,8 +3,8 @@
 Ridge stations describe a tapering bone inlay, not extra mesh relief.
 Cracks and shallow branches are intentionally sparse and individually placed.
 """
-PALETTE = ('282334','403348','58415f','75547c','96749b',
-           '74798e','9da9b9','c7d1da','e5e8e6')
+PALETTE = ('150820','300d46','501567','80259e','b951d1',
+           '70617f','b9abc9','e3d9e9','fff1f6')
 PLANS = {
     'wing': dict(ridge=((0,5),(9,5),(19,3),(32,4),(49,2),(65,2),(79,1)),
                  seams=(((16,11),(20,9),(25,8),(29,5)),

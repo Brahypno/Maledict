@@ -41,22 +41,22 @@ def jv(v): return BASIS.transposed() @ Vector(v)
 def mix(a,b,t): return Vector(a).lerp(Vector(b),t)
 
 PALETTE = [
-    ('Obsidian ritual shell', '272032', 0),
-    ('Bruised violet ceramic', '624974', 0),
-    ('Cold relic bone', 'CED3DF', 0),
-    ('Recessed bone', '78839E', 0),
-    ('Broken silver order', 'ABBCCE', 0),
-    ('Cold star core', 'E6EDF5', .85),
-    ('Muted fate seam', '7960A5', .55),
-    ('Charcoal vestment', '211C2D', 0),
-    ('Painted ossuary wing', '776185', 0),
-    ('Umbral primary feather', '51485F', 0),
-    ('Slate overlapping feather', '8794AC', 0),
-    ('Broken slate feather', '8794AC', 0),
-    ('Pale shoulder covert', 'B6C0CF', 0),
-    ('Load bearing violet armor', '554262', 0),
-    ('Ivory armor facing', 'C4CCDA', 0),
-    ('Inscribed violet halo', '59436C', .65),
+    ('Obsidian ritual shell', '160921', 0),
+    ('Bruised violet ceramic', '7929A6', 0),
+    ('Cold relic bone', 'E5DFEB', 0),
+    ('Recessed bone', '706282', 0),
+    ('Broken silver order', 'CBC2DE', 0),
+    ('Cold star core', 'FFF0FC', .85),
+    ('Muted fate seam', 'BD43E3', .55),
+    ('Charcoal vestment', '10071B', 0),
+    ('Painted ossuary wing', '8B30B4', 0),
+    ('Umbral primary feather', '3B125B', 0),
+    ('Slate overlapping feather', 'B39ACF', 0),
+    ('Broken slate feather', 'B39ACF', 0),
+    ('Pale shoulder covert', 'E6DCE9', 0),
+    ('Load bearing violet armor', '611C89', 0),
+    ('Ivory armor facing', 'DDD5E4', 0),
+    ('Inscribed violet halo', '8824B4', .65),
 ]
 
 sys.path.insert(0,str(Path(__file__).parent))
@@ -506,6 +506,8 @@ def set_pose(name):
 # Finish the atlas only after every part has allocated its own UV region.
 from lower_surfaces import refine_lower_surfaces
 refine_lower_surfaces(part_atlas,meshes)
+from head_surfaces import refine_head_surfaces
+refine_head_surfaces(part_atlas,meshes)
 bpy.context.scene['atlas_size']=part_atlas.size
 for original,pixels,name in [(base,part_atlas.base,'first_vicissitude'),
                               (emission,part_atlas.emission,'first_vicissitude_emissive')]:

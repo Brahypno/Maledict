@@ -39,8 +39,8 @@ class PartAtlas:
         base = tuple(int(color[k:k+2], 16)/255 for k in (0, 2, 4))
         glow = self.palette[material][2]
         height = region['height']
-        bone = (.77, .80, .85)
-        recess = (.23, .20, .29)
+        bone = (.91, .86, .94)
+        recess = (.15, .04, .23)
         for y in range(height):
             for x in range(16):
                 rgb, alpha = base, 1

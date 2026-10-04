@@ -10,8 +10,8 @@ from wing_surfaces import PLANS, primary_pixels
 from body_surfaces import FRONTS as BODY_PLANS, color as body_color
 
 # 12-pixel wide structural drawings: recess, shade, body, lit plane, edge.
-INK = ('302b40', '595269', '9397ad', 'c3ccda', 'e1e3e6')
-VIOLET = ('211d30', '393048', '594665', '80668e', 'b2a0bc')
+INK = ('21112f', '534065', 'a295b4', 'ddd3e6', 'f7eef4')
+VIOLET = ('13071f', '350c4c', '65178e', 'a33bc3', 'e0a0ee')
 DRAWINGS = {
  'pectoral': '''111111000000
 233332211100
@@ -329,7 +329,7 @@ BACK_DRAWINGS = {
 }
 
 # Cross-width pixel profiles placed at explicit lengths along each short blade.
-SPUR_PALETTE=('302739','53405f','796083','9299af','c2ccd9','e1e6e8')
+SPUR_PALETTE=('1c0a2b','4b1365','932faf','a394b8','e0d5e8','fff0f6')
 SPUR_PROFILES={
  'wing_hook': ((0,'00122100'),(3,'13443210'),(7,'34543210'),
                (14,'34533210'),(23,'23433210')),

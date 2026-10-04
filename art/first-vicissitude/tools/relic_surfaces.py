@@ -1,6 +1,6 @@
 """Original crystal and vestment drawings in the existing per-part atlas."""
-COLORS=('211c2d','393047','54435f','776183','9b8eaa','bac7d7','e0e7ea')
-CLOTH_COLORS=('211c2b','2c2537','393044','493c54','5b4c66','6e5d79','85748f')
+COLORS=('12061f','320a49','5c157c','9931ba','d276df','efc3f5','fff0fa')
+CLOTH_COLORS=('0c0515','1c092b','320f47','4d185f','6c237f','a27967','deb97d')
 # Fine woven border and one elongated broken-ring emblem per cloth panel.
 # Empty field between these marks preserves the long folds underneath.
 VESTMENT_EMBLEM={

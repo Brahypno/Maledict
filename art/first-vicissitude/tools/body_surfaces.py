@@ -247,10 +247,11 @@ VOLUME = {
         '123566543211', '123565432211', '123454322110', '123454322110',
         '012343221100', '012232211000', '001122110000', '000111100000'),
 }
-BONE_TONES = ('343040','494354','605969','797383','92909e',
-              'aaaab5','bfc2cb','d1d6dd','e0e5e9')
-RELIC_TONES = ('292333','393042','4a3e52','5c4f64','706477',
-               '867c90','9d95a7','b4afbe','cbc9d3')
+# Bone stays quiet; saturated mineral shadows make its pale planes stand apart.
+BONE_TONES = ('21112f','3d294d','5b486b','796789','9b8fa6',
+              'b8aec1','d0c8d7','e6dfeb','f5eff2')
+RELIC_TONES = ('140820','2b0e40','451460','621d85','812bab',
+               'a346c6','bd67db','dea9ed','f3d8f7')
 
 # A branching axial relief, drawn as one connected motif rather than islands
 # of highlights. The adjacent recessed edge supplies thickness at native UVs.
