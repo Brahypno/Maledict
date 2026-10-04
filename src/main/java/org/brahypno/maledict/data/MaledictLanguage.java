@@ -96,6 +96,11 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.headline." + RUNE_OF_BLISS_ENTRY, "无忧符文");
             add("malum.gui.book.entry.page.text." + RUNE_OF_BLISS_ENTRY + ".1",
                 "可是，有什么办法呢？  谁在爱，  谁就应该与他所爱的人分担命运  永恒的坠落，无爱亦无忧愁，  即是最终的虚无。");
+            add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY, "堕落符文");
+            add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY + ".description", "选择，或是未被选择");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_THE_FALLEN_ENTRY, "堕落符文");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_THE_FALLEN_ENTRY + ".1",
+                "由金中的金，究极的神圣堕落 为原始而沉重的铅。所谓的恶 意即是这种痛苦的具现化。我 精制了这份恶念，制作成了这 一份符文。它会将这份恶念施 加在对方身上，使每一次回复 生命堕化为一次苦痛。");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "回忆方尖碑");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "灵魂木方尖碑");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "神圣精魂箭");
@@ -121,6 +126,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.RUNE_OF_ROTTEN_BONE, "朽骨符文");
             addItem(MaledictItems.RUNE_OF_MELANCHOLIA, "抑郁符文");
             addItem(MaledictItems.RUNE_OF_BLISS, "无忧符文");
+            addItem(MaledictItems.RUNE_OF_THE_FALLEN, "堕落符文");
             add("effect.maledict.age_of_enlightenment", "启蒙之年");
             add("effect.maledict.age_of_darkness", "黑暗时代");
             add("effect.maledict.age_of_enlightenment.description",
@@ -142,6 +148,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.sacrifice", "献祭");
             add("effect.maledict.sacrifice.description",
                 "贤者献祭生命，因而获取智慧。然而并非每一次牺牲都会带来智慧，只有模仿先贤的仪式，才有可能获得先贤的智慧");
+            add("effect.maledict.fallen", "堕落");
+            add("effect.maledict.fallen.description",
+                "生命回复会堕落成伤口");
             add("curios.identifier.delusion", "视界");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "佩戴时冷却速度加倍");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "攻击半生命值目标时触发收获精魂时的效果");
@@ -158,6 +167,8 @@ public final class MaledictLanguage extends LanguageProvider {
                 "增加对血量比例不同的造成、受到的伤害。");
             add("malum.gui.curio.effect.maledict.bliss.forced_hit",
                 "强制使双方的攻击可以命中。");
+            add("malum.gui.curio.effect.maledict.fallen",
+                "使对方的生命回复堕落成伤口");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "按住 Shift 追问一个不该问的问题");
             add("tooltip.maledict.age_of_enlightenment.shift", "黑暗的时代曾经存在过吗");
             add("tooltip.maledict.age_of_enlightenment.shift.enlightened", "那无穷，无限，永动的启蒙之年啊");
@@ -342,6 +353,13 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text." + RUNE_OF_BLISS_ENTRY + ".1",
                 "But what's to be done? Whomsoever loves should share the burden of destiny with the ones he "
                 + "loves. Permanent falling, untouched by love or sorrow, the ultimate Nihility.");
+            add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY, "Rune of the Fallen");
+            add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY + ".description", "Chosen, or Unchosen");
+            add("malum.gui.book.entry.page.headline." + RUNE_OF_THE_FALLEN_ENTRY, "Rune of the Fallen");
+            add("malum.gui.book.entry.page.text." + RUNE_OF_THE_FALLEN_ENTRY + ".1",
+                "The gold of golds, the ultimate holy thing, falls into base and heavy lead. So-called malice is the "
+                + "embodiment of that pain. I refined that malice and made this rune of it. It lays the malice upon "
+                + "the other, so that every recovery of life decays into a pang of pain.");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "Mnemonic Obelisk");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "Soulwood Obelisk");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "Sacred Spirit Arrow");
@@ -367,6 +385,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.RUNE_OF_ROTTEN_BONE, "Rune of Rotten Bone");
             addItem(MaledictItems.RUNE_OF_MELANCHOLIA, "Rune of Melancholia");
             addItem(MaledictItems.RUNE_OF_BLISS, "Rune of Bliss");
+            addItem(MaledictItems.RUNE_OF_THE_FALLEN, "Rune of the Fallen");
             add("effect.maledict.age_of_enlightenment", "Age of Enlightenment");
             add("effect.maledict.age_of_darkness", "Age of Darkness");
             add("effect.maledict.age_of_enlightenment.description",
@@ -393,6 +412,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.sacrifice.description",
                 "Sages gave their lives in sacrifice, and thereby gained wisdom. Yet not every sacrifice "
                 + "brings wisdom: only by imitating the rites of the sages might one gain a sage's wisdom.");
+            add("effect.maledict.fallen", "Fallen");
+            add("effect.maledict.fallen.description",
+                "Healing decays into wounds.");
             add("curios.identifier.delusion",
                 "Eye");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown",
@@ -418,6 +440,8 @@ public final class MaledictLanguage extends LanguageProvider {
                 "Increases the damage dealt to and taken from those whose proportion of health differs from yours.");
             add("malum.gui.curio.effect.maledict.bliss.forced_hit",
                 "Forces both sides' attacks to be able to land.");
+            add("malum.gui.curio.effect.maledict.fallen",
+                "Makes the target's healing decay into wounds.");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "Hold Shift to ask a question better left unasked");
             add("tooltip.maledict.age_of_enlightenment.shift",
                 "Did an age of darkness ever exist?");
@@ -550,6 +574,7 @@ public final class MaledictLanguage extends LanguageProvider {
     private static final String UMBRAL_EXPERIMENT_ENTRY = "void.maledict.umbral_experiment";
     private static final String RUNE_OF_MELANCHOLIA_ENTRY = "void.maledict.rune_of_melancholia";
     private static final String RUNE_OF_BLISS_ENTRY = "void.maledict.rune_of_bliss";
+    private static final String RUNE_OF_THE_FALLEN_ENTRY = "void.maledict.rune_of_the_fallen";
     private static final String VICISSITUDE_RITE_ID = "vicissitude_rite";
     private static final String SACRIFICE_RITE_ID = "sacrifice_rite";
     private static final String GREATER_RITE_ID = "greater_vicissitude_rite";

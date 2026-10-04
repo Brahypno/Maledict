@@ -67,6 +67,7 @@ public final class MaledictCodexEntries {
     private static final String UMBRAL_EXPERIMENT_ENTRY = "void.maledict.umbral_experiment";
     private static final String RUNE_OF_MELANCHOLIA_ENTRY = "void.maledict.rune_of_melancholia";
     private static final String RUNE_OF_BLISS_ENTRY = "void.maledict.rune_of_bliss";
+    private static final String RUNE_OF_THE_FALLEN_ENTRY = "void.maledict.rune_of_the_fallen";
 
     /**
      * 接在「虚空符文工艺：拾遗」(6,10) 与「神侵恶刃」(6,11) 下面，凑成 x=6 的一列。
@@ -142,6 +143,8 @@ public final class MaledictCodexEntries {
                 RUNE_OF_STAGNANT_EVOLUTION_ENTRY, MaledictItems.RUNE_OF_STAGNANT_EVOLUTION);
         EntryReference rottenBone = voidRuneEntry(
                 RUNE_OF_ROTTEN_BONE_ENTRY, MaledictItems.RUNE_OF_ROTTEN_BONE);
+        EntryReference fallen = voidRuneEntry(
+                RUNE_OF_THE_FALLEN_ENTRY, MaledictItems.RUNE_OF_THE_FALLEN);
 
         if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, VOID_RUNEWORKING_ENTRY)){
             return;
@@ -156,7 +159,7 @@ public final class MaledictCodexEntries {
                 VOID_RUNEWORKING_ENTRY + ".1",
                 MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
-        builder.addPage(new EntrySelectorPage(List.of(stagnantEvolution, rottenBone)));
+        builder.addPage(new EntrySelectorPage(List.of(stagnantEvolution, rottenBone, fallen)));
         builder.afterUmbralCrystal();
 
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());

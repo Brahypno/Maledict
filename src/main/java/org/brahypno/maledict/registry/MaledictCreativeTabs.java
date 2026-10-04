@@ -39,6 +39,7 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.RUNE_OF_ROTTEN_BONE.get());
                                output.accept(MaledictItems.RUNE_OF_MELANCHOLIA.get());
                                output.accept(MaledictItems.RUNE_OF_BLISS.get());
+                               output.accept(MaledictItems.RUNE_OF_THE_FALLEN.get());
                            })
                            .build());
 

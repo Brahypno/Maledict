@@ -103,6 +103,25 @@ any "look at the already-cancelled event" branch is unreachable against cancels 
 A handler that wants to react to a cancellation must declare `receiveCanceled = true`; `BlissRuneEvents` needed it on all
 three handlers, where the forced-hit path had been dead code.
 
+### Registry events: attribute fires before mob_effect, but a `RegistryObject` is still dead until its own event
+
+`GameData#postRegisterEvents` walks `MappedRegistry.getKnownRegistries()`, and Forge feeds that set from
+`markKnown()` — called on the **first `register(...)` into a registry**, not from the registry's constructor. So the
+order is "which vanilla bootstrap step first puts a value in", measured (temporary probe, datagen, 47.4.23) as:
+`sound_event, fluid, block, attribute, mob_effect, particle_type, item, entity_type, …` — **attribute before
+mob_effect**, so `AttributeRegistry.MALIGNANT_CONVERSION.get()` does resolve inside a `MobEffect` constructor.
+Do not read that order out of `BuiltInRegistries`' source line numbers: they are declaration order and say nothing
+(`MOB_EFFECT` is declared at line 123, `ATTRIBUTE` at 172, yet attributes register first because
+`Bootstrap#bootStrap` → `DefaultAttributes#validate` forces `Attributes` to class-init early).
+
+The rule that still holds regardless of order: a `RegistryObject` is null until its own registry event runs, and
+`RegistryObject#get()` is `Objects.requireNonNull` — an NPE ("Registry Object not present"), not a null return.
+Before reverse-engineering whether a foreign handle is usable at registry time, grep the repo for precedent:
+`AgeOfDarknessEffect` has always read Malum's and Lodestone's attributes from its constructor, and `fallen`
+(`MaledictMobEffects`, an anonymous subclass whose instance block adds the modifier) does the same for
+`malum:malignant_conversion`. Level-ups go through Lodestone's `EntityHelper#amplifyEffect`/`extendEffect`, whose
+`syncEffect` calls `onEffectUpdated` and therefore re-applies the modifier at the new level.
+
 ### Working agreement for mechanics with more than one reading
 
 When a mechanic can be read in more than one way (window/eviction order, "record then judge" vs "judge then record",

@@ -104,6 +104,17 @@ public final class MaledictItems {
                            () -> new RuneOfBlissItem(new Item.Properties().stacksTo(1),
                                                      SpiritTypeRegistry.UMBRAL_SPIRIT));
 
+    /**
+     * 堕落符文：白镴档（恶念白镴符板）的第三枚，与演进凝滞、朽骨同一档。命中给目标落下 {@code Fallen}
+     * （堕落窗口），窗口里目标每回复一次生命就积攒休眠腐败（每次把旧的一半转成活性），再次命中时把活性
+     * 腐败收走 —— 收永远不致死，致命的那一下仍旧由这一记普通攻击完成。
+     * 见 {@link RuneOfTheFallenItem} 与 {@code CorruptionRuneEvents}。
+     */
+    public static final RegistryObject<Item> RUNE_OF_THE_FALLEN =
+            ITEMS.register("rune_of_the_fallen",
+                           () -> new RuneOfTheFallenItem(new Item.Properties().stacksTo(1),
+                                                         SpiritTypeRegistry.ELDRITCH_SPIRIT));
+
     public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.MNEMONIC_OBELISK.get(), new Item.Properties(), MnemonicObeliskBlockEntity.STRUCTURE));
     public static final RegistryObject<Item> SOULWOOD_OBELISK = ITEMS.register("soulwood_obelisk", () ->

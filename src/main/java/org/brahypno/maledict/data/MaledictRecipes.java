@@ -164,6 +164,12 @@ public final class MaledictRecipes extends RecipeProvider {
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(
                         Maledict.MODID, "runeworking/rune_of_bliss"));
 
+        new RunicWorkbenchRecipeBuilder(MaledictItems.RUNE_OF_THE_FALLEN.get(), 1)
+                .setPrimaryInput(MaledictItems.MALIGNANT_PEWTER_TABLET.get(), 1)
+                .setSecondaryInput(ItemRegistry.AURIC_EMBERS.get(), 64)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "runeworking/rune_of_the_fallen"));
+
         new SpiritRepairRecipeBuilder(1.0f, Ingredient.of(ItemRegistry.NULL_SLATE.get()), 1)
                 .addItem(MaledictItems.ELEGY_BOW.get())
                 .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 11)

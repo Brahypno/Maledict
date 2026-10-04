@@ -1,11 +1,14 @@
 package org.brahypno.maledict.registry;
 
+import com.sammy.malum.registry.common.AttributeRegistry;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.corruption.CorruptionRuneEvents;
 import org.brahypno.maledict.common.effect.AgeOfDarknessEffect;
 import org.brahypno.maledict.common.effect.AgeOfEnlightenmentEffect;
 import org.brahypno.maledict.common.effect.DecayEffect;
@@ -59,6 +62,25 @@ public final class MaledictMobEffects {
      */
     public static final RegistryObject<MobEffect> RIPENING =
             MOB_EFFECTS.register("ripening", () -> new MobEffect(MobEffectCategory.BENEFICIAL, RIPENING_COLOR) {});
+
+    /**
+     * 堕落：堕落符文落在目标身上的窗口标记。本身没有行为，只在 {@code CorruptionRuneEvents} 里被问一句
+     * {@code hasEffect}；唯一的数值作用是**按等级给目标加恶念转化**（每级 +0.02，最多 10 级）——
+     * 等级由符文命中推高，量由原版按 {@code 基础值 × (amplifier + 1)} 缩放。
+     *
+     * <p>它没有自己的逻辑，所以不留单独的类：预设值在 {@code CorruptionRuneEvents}，这里用匿名子类注册。
+     * 实例初始化块省不掉 —— {@code addAttributeModifier} 是 {@code protected}，跨包只有子类体里能调；
+     * 属性在构造期取是安全的（见 {@code AGENTS.md}：注册事件里 attribute 先于 mob_effect）。
+     */
+    public static final RegistryObject<MobEffect> FALLEN = MOB_EFFECTS.register("fallen", () -> new MobEffect(
+            MobEffectCategory.HARMFUL, CorruptionRuneEvents.FALLEN_COLOR) {
+        {
+            addAttributeModifier(AttributeRegistry.MALIGNANT_CONVERSION.get(),
+                                 CorruptionRuneEvents.FALLEN_MODIFIER_ID.toString(),
+                                 CorruptionRuneEvents.FALLEN_CONVERSION_PER_LEVEL,
+                                 AttributeModifier.Operation.ADDITION);
+        }
+    });
 
     private MaledictMobEffects() {
     }

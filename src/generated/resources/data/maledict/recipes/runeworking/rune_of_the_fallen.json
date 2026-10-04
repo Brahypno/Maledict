@@ -1,0 +1,14 @@
+{
+  "type": "malum:runeworking",
+  "output": {
+    "item": "maledict:rune_of_the_fallen"
+  },
+  "primaryInput": {
+    "count": 1,
+    "item": "maledict:malignant_pewter_tablet"
+  },
+  "secondaryInput": {
+    "count": 64,
+    "item": "malum:auric_embers"
+  }
+}
