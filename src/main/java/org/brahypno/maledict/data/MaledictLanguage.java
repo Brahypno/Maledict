@@ -35,17 +35,23 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.maledict.remembrance_bow.description", "穿越阻隔的思念");
             add("malum.gui.book.entry.page.headline.maledict.remembrance_bow", "思念弓");
             add("malum.gui.book.entry.page.text.maledict.remembrance_bow.1",
-                "若能汇集末影人的魔法并以星 灵织物承载，就能使灵魂木产 生奇妙的性质。拉动这种材质 的弓只需要一般弓一半的时间 ，射出的箭矢不仅更快，还可 以有限度的穿过方块。");
+                "若能汇集末影人的魔法并以星 灵织物承载，就能使灵魂木产 生奇妙的性质。");
+            add("malum.gui.book.entry.page.text.maledict.remembrance_bow.2",
+                "拉动这种材质的弓只需要一般 弓一半的时间，射出的箭矢不 仅更快，还可以有限度的穿过 方块。");
             add("malum.gui.book.entry." + ELEGY_BOW_ENTRY, "哀歌弓");
             add("malum.gui.book.entry." + ELEGY_BOW_ENTRY + ".description", "停不下的思念");
             add("malum.gui.book.entry.page.headline." + ELEGY_BOW_ENTRY, "哀歌弓");
             add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".1",
-                "我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我将我不止息的哀歌灌注到弓 中，使之具有了满蓄力自动发 射的能力。");
+                "我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。  我走不出来。");
+            add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".2",
+                "我走不出来。  我走不出来。  我走不出来。  我走不出来。  我将我不止息的哀歌灌注到弓 中，使之具有了满蓄力自动发 射的能力。");
             add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY, "图腾符文：续");
             add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".description", "重复实验直至推翻");
             add("malum.gui.book.entry.page.headline." + TOTEMIC_RUNES_CONTINUED_ENTRY, "图腾符文：续");
             add("malum.gui.book.entry.page.text." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".1",
-                "在适当调整符文仪式的画法后 ，我又成功刻印了其他灵气仪 式在符板上。看来之前得出的 只有基本元素对应的仪式才能 起效是不完全正确的。原因是 这些脉动更加的单纯，因而效 果与完整的仪式有些区别。");
+                "在适当调整符文仪式的画法后 ，我又成功刻印了其他灵气仪 式在符板上。");
+            add("malum.gui.book.entry.page.text." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".2",
+                "看来之前得出的只有基本元素 对应的仪式才能起效是不完 全正确的。原因是这些脉动更 加的单纯，因而效果与完整的 仪式有些区别。");
             add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY, "饱食符文");
             add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY + ".description", "饱足里的第二份");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_SATIATION_ENTRY, "饱食符文");
@@ -70,7 +76,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + VOID_RUNEWORKING_ENTRY + ".description", "拗转白镴");
             add("malum.gui.book.entry.page.headline." + VOID_RUNEWORKING_ENTRY, "虚空符文工艺：拾遗");
             add("malum.gui.book.entry.page.text." + VOID_RUNEWORKING_ENTRY + ".1",
-                "作为与这本书原作者不同的魔 法施行者，将恶念白镴这一反 魔法金属拗转到能为魔法所用 是我一直以来的研究。基于虚 空符文的工艺，我引入了一些 变量来突出白镴的一面而拒绝 其另一面。用白镴施行魔法既 不实用又不安全，但这就是我 想要的。");
+                "作为与这本书原作者不同的魔 法施行者，将恶念白镴这一反 魔法金属拗转到能为魔法所用 是我一直以来的研究。");
+            add("malum.gui.book.entry.page.text." + VOID_RUNEWORKING_ENTRY + ".2",
+                "基于虚空符文的工艺，我引入 了一些变量来突出白镴的一面 而拒绝其另一面。用白镴施行 魔法既不实用又不安全，但这 就是我想要的。");
             add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY, "演进凝滞符文");
             add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY + ".description", "阻止演进");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY, "演进凝滞符文");
@@ -95,7 +103,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + RUNE_OF_BLISS_ENTRY + ".description", "无爱亦无忧愁");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_BLISS_ENTRY, "无忧符文");
             add("malum.gui.book.entry.page.text." + RUNE_OF_BLISS_ENTRY + ".1",
-                "可是，有什么办法呢？  谁在爱，  谁就应该与他所爱的人分担命运  永恒的坠落，无爱亦无忧愁，  即是最终的虚无。");
+                "可是，有什么办法呢？  谁在爱，  谁就应该与他所爱的人 分担命运  永恒的坠落，无爱亦无忧愁，  即是最终的虚无。");
             add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY, "堕落符文");
             add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY + ".description", "选择，或是未被选择");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_THE_FALLEN_ENTRY, "堕落符文");
@@ -264,22 +272,26 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.maledict.remembrance_bow.description", "Longing Beyond Barriers");
             add("malum.gui.book.entry.page.headline.maledict.remembrance_bow", "Remembrance Bow");
             add("malum.gui.book.entry.page.text.maledict.remembrance_bow.1",
-                "Gathering the magic of endermen into astral weave can give soulwood wondrous properties. A bow made from "
-                + "this wood takes half as long to draw as an ordinary bow. Its arrows fly faster and can pass through "
-                + "blocks to a limited depth.");
+                "Gathering the magic of endermen into Astral Weave can give Soulwood wondrous properties.");
+            add("malum.gui.book.entry.page.text.maledict.remembrance_bow.2",
+                "A bow made from this wood takes half as long to draw as an ordinary bow. Its arrows fly faster and can "
+                + "pass through blocks to a limited depth.");
             add("malum.gui.book.entry." + ELEGY_BOW_ENTRY, "Elegy Bow");
             add("malum.gui.book.entry." + ELEGY_BOW_ENTRY + ".description", "Remembrance Without Respite");
             add("malum.gui.book.entry.page.headline." + ELEGY_BOW_ENTRY, "Elegy Bow");
             add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".1",
                 "I cannot move on. I cannot move on. I cannot move on. I cannot move on. I cannot move on. I cannot move "
-                + "on. I cannot move on. I cannot move on. I cannot move on. I cannot move on. I cannot move on. I poured my "
-                + "unceasing elegy into the bow, allowing it to fire automatically at full draw.");
+                + "on. I cannot move on.");
+            add("malum.gui.book.entry.page.text." + ELEGY_BOW_ENTRY + ".2",
+                "I cannot move on. I cannot move on. I cannot move on. I cannot move on. I poured my unceasing elegy "
+                + "into the bow, allowing it to fire automatically at full draw.");
             add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY, "Totemic Runes: Continued");
             add("malum.gui.book.entry." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".description", "Repeated Until Disproven");
             add("malum.gui.book.entry.page.headline." + TOTEMIC_RUNES_CONTINUED_ENTRY, "Totemic Runes: Continued");
             add("malum.gui.book.entry.page.text." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".1",
-                "After adjusting the pattern of the runic rite, I succeeded in inscribing other aura rites onto tablets. "
-                + "My earlier conclusion that only rites of the basic elements would work was not entirely correct. These "
+                "After adjusting the pattern of the runic rite, I succeeded in inscribing other aura rites onto tablets.");
+            add("malum.gui.book.entry.page.text." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".2",
+                "My earlier conclusion that only rites of the basic elements would work was not entirely correct. These "
                 + "pulses are simpler, so their effects differ somewhat from those of the full rites.");
             add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY, "Rune of Satiation");
             add("malum.gui.book.entry." + RUNE_OF_SATIATION_ENTRY + ".description", "A Second Share of Fullness");
@@ -315,9 +327,10 @@ public final class MaledictLanguage extends LanguageProvider {
                 "Voidish Runecraft: Addenda");
             add("malum.gui.book.entry.page.text." + VOID_RUNEWORKING_ENTRY + ".1",
                 "My practice differs from that of this book's original author. I have long sought to bend Malignant "
-                + "Pewter, an anti-magic metal, to magical use. Building on Voidish Runecraft, I introduced variables to "
-                + "emphasize one aspect of the pewter while suppressing the other. Working magic through pewter is neither "
-                + "practical nor safe, but it is what I want.");
+                + "Pewter, an anti-magic metal, to magical use.");
+            add("malum.gui.book.entry.page.text." + VOID_RUNEWORKING_ENTRY + ".2",
+                "Building on Voidish Runecraft, I introduced variables to emphasize one aspect of the pewter while "
+                + "suppressing the other. Working magic through pewter is neither practical nor safe, but it is what I want.");
             add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY, "Rune of Stagnant Evolution");
             add("malum.gui.book.entry." + RUNE_OF_STAGNANT_EVOLUTION_ENTRY + ".description",
                 "To Halt Evolution");
@@ -351,8 +364,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + RUNE_OF_BLISS_ENTRY + ".description", "Untouched by Love or Sorrow");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_BLISS_ENTRY, "Rune of Bliss");
             add("malum.gui.book.entry.page.text." + RUNE_OF_BLISS_ENTRY + ".1",
-                "But what's to be done? Whomsoever loves should share the burden of destiny with the ones he "
-                + "loves. Permanent falling, untouched by love or sorrow, the ultimate Nihility.");
+                "But what is to be done? Whoever loves must share the fate of the one he loves. The eternal fall, "
+                + "without love and so without sorrow, is the final nothingness.");
             add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY, "Rune of the Fallen");
             add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY + ".description", "Chosen, or Unchosen");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_THE_FALLEN_ENTRY, "Rune of the Fallen");
@@ -392,7 +405,7 @@ public final class MaledictLanguage extends LanguageProvider {
                 "People mistake ignorance and darkness for the sacred. Your melee attacks deal double "
                 + "damage; each level also grants 1 additional Reserve Staff Charge.");
             add("effect.maledict.age_of_darkness.description",
-                "O dark age that lets barbarism burn civilization to ashes: each level reduces magic resistance, Soul Ward "
+                "O dark age that lets barbarism burn civilization: each level reduces magic resistance, Soul Ward "
                 + "capacity and Soul Ward integrity by 20%.");
             add("effect.maledict.blessing_of_life", "Blessing of Life");
             add("effect.maledict.blessing_of_life.description",
@@ -472,7 +485,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("tooltip.maledict.incursus_blade.description",
                 "A sinister scythe that grows by devouring spirits and sweeps its blade around the wielder.");
             add("tooltip.maledict.incursus_blade.medium_unlock_hint",
-                "When spirit power reaches the sacred number, a deeper power awakens.");
+                "When spirit power reaches the sacred number, a more intrinsic power is unlocked.");
             add("tooltip.maledict.incursus_blade.hold_shift", "Hold Shift for spirit details");
             add("tooltip.maledict.incursus_blade.infusion", "Right-click this item with spirits in the inventory to infuse them permanently:");
             add("tooltip.maledict.incursus_blade.spirit.earthen", "Earthen %s (%s/%s): Attack damage");
@@ -492,7 +505,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.headline.void.maledict.incursus_blade", "The Incursus Blade");
             add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.1",
                 "Perhaps falling into the well shattered my fear of the forbidden. "
-                + "Malignant pewter's hunger for the erosion of knowledge forged the Edge of Deliverance.");
+                + "Malignant Pewter's hunger for the erosion of knowledge forged the Edge of Deliverance.");
             add("malum.gui.book.entry.page.text.void.maledict.incursus_blade.2",
                 "Could that rejection be transformed into an overt magical property? My earlier research reminded me "
                 + "that, if I could construct a dynamically stable environment, the pulses of the eight spirits "
@@ -508,12 +521,12 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + OBELISKS_ENTRY + ".description", "Rejection and remembrance");
             add("malum.gui.book.entry.page.headline." + SOULWOOD_OBELISK_PAGE, "Soulwood Obelisk");
             add("malum.gui.book.entry.page.text." + SOULWOOD_OBELISK_PAGE + ".1",
-                "By exploiting malignant metal's rejection of magic, I can focus the power of hallowed gold more "
-                + "intensely, providing a 50% acceleration effect.");
+                "By exploiting malignant metal's rejection of magic, I can focus the power of Hallowed Gold more "
+                + "intensely, yielding an acceleration of one half.");
             add("malum.gui.book.entry.page.headline." + MNEMONIC_OBELISK_PAGE, "Mnemonic Obelisk");
             add("malum.gui.book.entry.page.text." + MNEMONIC_OBELISK_PAGE + ".1",
-                "Experience crystals have already proven their worth. Adding more of the power condensed in mnemonic "
-                + "fragments makes their enchanting power shine brighter still, reaching the astonishing strength of ten "
+                "Brilliance has already proven its worth. Adding more of the power condensed in Mnemonic Fragments "
+                + "makes their enchanting power shine brighter still, reaching the astonishing strength of ten "
                 + "bookshelves.");
             add("malum.gui.rite." + VICISSITUDE_RITE_ID, "Rite of Vicissitude");
             add("malum.gui.rite.corrupted_" + VICISSITUDE_RITE_ID, "Rite of Vicissitude");
@@ -536,7 +549,7 @@ public final class MaledictLanguage extends LanguageProvider {
                 + "aspect still.");
             add("malum.gui.rite.corrupted_" + SACRIFICE_RITE_ID, "Rite of Sacrifice");
             add("malum.gui.book.entry.page.text.corrupt_" + SACRIFICE_RITE_ID + ".hover",
-                "Survive the sacrifice to gain an additional rune slot and an vision slot.");
+                "Survive the sacrifice to gain an additional rune slot and a vision slot.");
             add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY, "Rite of Sacrifice");
             add("malum.gui.book.entry." + SACRIFICE_RITE_ENTRY + ".description", "The Price of Wisdom");
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE,
@@ -545,7 +558,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE + ".2",
                 "Through nine days and nine nights of torment I did see something, and came to know something "
                 + "as well. My body has gained another place where runes may be carved, and my eyes have "
-                + "become a doorway. With such vision, I have a better view.");
+                + "become a doorway. Through this sacrificial vision, I can see the world more clearly.");
         }
     }
 

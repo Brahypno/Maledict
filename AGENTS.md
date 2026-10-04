@@ -13,6 +13,12 @@
 - Chinese text for Malum codex body pages must contain a literal space after every 13 visible characters. Punctuation
   counts toward the 13-character limit; the inserted layout spaces do not.
 - Write the Chinese codex copy first, then derive the English localization from its meaning.
+- English codex body copy needs roughly twice the lines of its Chinese source, and a page never clips: too many lines
+  are drawn straight over the book frame. Page capacities are TextPage 16, HeadlineTextPage 14, HeadlineTextItemPage 9,
+  SpiritRiteTextPage 9 lines. When the English does not fit the page its Chinese source is happy with, add a `TextPage`
+  continuation key rather than trimming the translation, and re-split the Chinese across the same two pages (words
+  unchanged). `node tools/lang-layout/check-lang-layout.mjs` measures both languages against the real layout, see
+  `tools/lang-layout/README.md`.
 
 ## Confirmed mechanics
 

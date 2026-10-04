@@ -158,6 +158,8 @@ public final class MaledictCodexEntries {
                 VOID_RUNEWORKING_ENTRY,
                 VOID_RUNEWORKING_ENTRY + ".1",
                 MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
+        // 续页：英文十六行，首页放不下，故与中文同一处分段。
+        builder.addPage(new TextPage(VOID_RUNEWORKING_ENTRY + ".2"));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
         builder.addPage(new EntrySelectorPage(List.of(stagnantEvolution, rottenBone, fallen)));
         builder.afterUmbralCrystal();
@@ -301,6 +303,8 @@ public final class MaledictCodexEntries {
                 TOTEMIC_RUNES_CONTINUED_ENTRY,
                 TOTEMIC_RUNES_CONTINUED_ENTRY + ".1",
                 MaledictItems.RUNE_OF_SATIATION.get()));
+        // 续页：英文正文的行数差不多是中文的两倍，首页的九行只够放下第一句。
+        builder.addPage(new TextPage(TOTEMIC_RUNES_CONTINUED_ENTRY + ".2"));
         builder.addPage(new EntrySelectorPage(runes));
 
         ArcanaProgressionScreen.ENTRIES.add(builder.build());
@@ -320,6 +324,8 @@ public final class MaledictCodexEntries {
                 REMEMBRANCE_BOW_ENTRY,
                 REMEMBRANCE_BOW_ENTRY + ".1",
                 MaledictItems.REMEMBRANCE_BOW.get()));
+        // 正文分两页：英文比中文长一倍（同样的意思，英文就是占更宽），一页放不下。
+        builder.addPage(new TextPage(REMEMBRANCE_BOW_ENTRY + ".2"));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.REMEMBRANCE_BOW.get()));
 
         ArcanaProgressionScreen.ENTRIES.add(builder.build());
@@ -339,6 +345,8 @@ public final class MaledictCodexEntries {
                 ELEGY_BOW_ENTRY,
                 ELEGY_BOW_ENTRY + ".1",
                 MaledictItems.ELEGY_BOW.get()));
+        // 「我走不出来。」的重复分成七次与四次：十一行英文独白塞不进首页的九行。
+        builder.addPage(new TextPage(ELEGY_BOW_ENTRY + ".2"));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.ELEGY_BOW.get()));
         builder.afterUmbralCrystal();
 
