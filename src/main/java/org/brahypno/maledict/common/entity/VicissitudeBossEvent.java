@@ -16,9 +16,9 @@ import org.brahypno.maledict.network.MaledictNetwork;
  * <p>三处发同步：入队补发（玩家可能是二阶段才第一次看见这条血条）、切阶段、离队时清掉映射。
  */
 public final class VicissitudeBossEvent extends ServerBossEvent {
-    /** 一阶段：当前生成的这套紫。 */
+    /** 一阶段：覆羽隐藏血槽。 */
     public static final int STYLE_PHASE_ONE = 0;
-    /** 二阶段：断口更宽、卡扣开裂。 */
+    /** 二阶段：脱羽骨翼，血槽外露。 */
     public static final int STYLE_PHASE_TWO = 1;
 
     private int style;

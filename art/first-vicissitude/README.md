@@ -18,6 +18,8 @@ Blender 导出器输出。旧 `RigArtGenerator.java` 是早期方块预览工具
   采用真实收尖、曲面残环和羽片缺口，故从仅支持 cube 的 modded_entity 格式改为 free mesh。
   运行时仍使用原版 HierarchicalModel/ModelPart 动画，不增加 GeckoLib。
 - `tools/build_blender.py`、`tools/export_blender.py`、`tools/review_blender.py`：重建造型、导出资产、生成检查图。
+- `boss-bar/`：独立制作的晶体头肩甲血条图稿、完整提示词与尺寸约定；
+  `tools/make_boss_bar.py` 打包两阶段 256×16 底条与 256×32 装饰层，检查图输出到 `build/`。
 - `tools/body_surfaces.py`、`tools/wing_surfaces.py`、`tools/ring_surfaces.py`、`tools/relic_surfaces.py`、
   `tools/surface_sample.py`：逐表面图稿的编排与样稿生成；`tools/atlas16.py` 只生成样稿范围以外的旧占位。
 - `tools/lower_surfaces.py`：下腹与祭衣的高密度表面绘制及 UV 分配；旧图集原密度保留，新增区域独立绘制。

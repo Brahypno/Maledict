@@ -12,6 +12,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.entity.VicissitudeBossEvent;
 import org.brahypno.maledict.network.BossBarStylePacket;
 
 import javax.annotation.Nullable;
@@ -26,16 +27,14 @@ import java.util.UUID;
  * 皮肤号由 {@link BossBarStylePacket} 从服务端镜像过来，见 {@code VicissitudeBossEvent}。
  *
  * <p><b>几何必须和 {@code art/first-vicissitude/tools/make_boss_bar.py} 里的常量一致。</b>
- * 贴图是脚本生成的，改那边就得改这边：
+ * 图稿源在 {@code art/first-vicissitude/boss-bar}，脚本负责打包到游戏尺寸：
  * <ul>
  *   <li>base 256×16：v0–5 空槽、v5–10 填充，各是 182×5 的实心条</li>
- *   <li>overlay 256×32：上下两条贯通轨夹出一条槽，血条走槽里，卡扣和挂件横穿而过</li>
+ *   <li>overlay 256×32：居中的晶体头、断环和肩甲；一阶段覆羽，二阶段骨翼与外露血槽</li>
  * </ul>
  *
- * <p><b>overlay 是"骨架"，不是美术。</b>当前这批是脚本画的程序员美术（直角、斜切、渐变）。
- * 想换成手绘版只要覆盖
- * {@code assets/maledict/textures/gui/boss_bar/first_vicissitude_bar_phase_*_frame.png}，
- * 尺寸保持 256×32、并按 {@link #BAR_IN_OVERLAY_Y} 那条槽的位置留透即可，这个类一行都不用改。
+ * <p>一阶段不绘制底条和血量填充，覆羽间的负空间不会泄露血量。
+ * 二阶段按原有进度绘制填充，中央图标和两端护甲盖在血槽之上。
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE,
         value = Dist.CLIENT)
@@ -43,7 +42,7 @@ public final class VicissitudeBossBarOverlay {
 
     // ---------------------------------------------------------------- 几何（对齐 make_boss_bar.py）
 
-    /** 原版血条本体就是 182×5，不能改。 */
+    /** 沿用原版血条的 182×5 本体。 */
     private static final int BAR_WIDTH = 182;
     private static final int BAR_HEIGHT = 5;
     /** base 贴图的声明尺寸，UV 归一化用它。 */
@@ -54,11 +53,11 @@ public final class VicissitudeBossBarOverlay {
     private static final int OVERLAY_HEIGHT = 32;
 
     /** 血条本体相对 {@code event.getX()/getY()}。 */
-    private static final int BAR_OFFSET_X = 1;
-    private static final int BAR_OFFSET_Y = 7;
+    private static final int BAR_OFFSET_X = 0;
+    private static final int BAR_OFFSET_Y = 19;
     /** overlay 相对 {@code event.getX()/getY()}。 */
-    private static final int OVERLAY_OFFSET_X = -6;
-    private static final int OVERLAY_OFFSET_Y = -9;
+    private static final int OVERLAY_OFFSET_X = -(OVERLAY_WIDTH - BAR_WIDTH) / 2;
+    private static final int OVERLAY_OFFSET_Y = 0;
 
     /** 血条在 overlay 画布里的位置，由上面两组偏移量推出来，脚本画轨道时绕开它。 */
     private static final int BAR_IN_OVERLAY_X = BAR_OFFSET_X - OVERLAY_OFFSET_X;
@@ -67,15 +66,9 @@ public final class VicissitudeBossBarOverlay {
     /**
      * 下一条血条往下挪多少。
      *
-     * <p><b>必须 ≥ overlay 高度（32）。</b> 原版每画完一条就 {@code y += increment}，
-     * 而每条的实际占位是 {@code [y - 9, y + 23)}——名字在 {@code y - 9}，overlay 有 32 高。
-     * increment 小于 32 时，下一条的名字会落进上一条 overlay 的底部（中央挂件正好在那儿）。
-     *
-     * <p>同类模组用的是 25，看着没出事，是因为它们的 overlay 在中间那几行基本是空的；
-     * 我们中央挂件的下尖会顶到，所以取满高。原版默认值是 {@code 10 + 字高} = 19。
-     * 屏幕高 {@code guiHeight / 3} 以外不再画后续血条，按常见的 240 高算这里能站 3 条。
+     * <p>每条占 {@code [y - 9, y + 32)}；下一条名字须避开当前图稿，另留 2px 间隙。
      */
-    private static final int INCREMENT = OVERLAY_HEIGHT;
+    private static final int INCREMENT = OVERLAY_HEIGHT + 11;
 
     /** 名字跟着 01_SPEC 的冷白走。 */
     private static final int NAME_COLOUR = 0xE6EDF5;
@@ -132,16 +125,15 @@ public final class VicissitudeBossBarOverlay {
         int barX = event.getX() + BAR_OFFSET_X;
         int barY = event.getY() + BAR_OFFSET_Y;
 
-        // 1) 空槽
-        gui.blit(BASE[style], barX, barY, 0, 0, BAR_WIDTH, BAR_HEIGHT,
-                 BASE_TEX_WIDTH, BASE_TEX_HEIGHT);
-
-        // 2) 按血量截断的填充。getProgress() 在 LerpingBossEvent 上已经是插值过的，
-        //    掉血动画白送，不用自己做。
-        int filled = Mth.floor(Mth.clamp(event.getBossEvent().getProgress(), 0.0F, 1.0F) * BAR_WIDTH);
-        if (filled > 0) {
-            gui.blit(BASE[style], barX, barY, 0, BAR_HEIGHT, filled, BAR_HEIGHT,
+        // 一阶段由覆羽遮住血量；二阶段才暴露血槽，使用原有插值进度。
+        if (style == VicissitudeBossEvent.STYLE_PHASE_TWO) {
+            gui.blit(BASE[style], barX, barY, 0, 0, BAR_WIDTH, BAR_HEIGHT,
                      BASE_TEX_WIDTH, BASE_TEX_HEIGHT);
+            int filled = Mth.floor(Mth.clamp(event.getBossEvent().getProgress(), 0.0F, 1.0F) * BAR_WIDTH);
+            if (filled > 0) {
+                gui.blit(BASE[style], barX, barY, 0, BAR_HEIGHT, filled, BAR_HEIGHT,
+                         BASE_TEX_WIDTH, BASE_TEX_HEIGHT);
+            }
         }
 
         // 3) 名字。原版画在 y-9（居中、带阴影），照抄才和别的 BOSS 血条对齐。
@@ -149,7 +141,7 @@ public final class VicissitudeBossBarOverlay {
         int nameX = gui.guiWidth() / 2 - minecraft.font.width(name) / 2;
         gui.drawString(minecraft.font, name, nameX, event.getY() - 9, NAME_COLOUR);
 
-        // 4) overlay 最后画，盖住血条两端和名字两侧——所以 overlay 在这些位置必须是透明的。
+        // 4) 晶体头、肩甲与羽翼在填充上层；名字位于整个图稿上方。
         gui.blit(OVERLAY[style],
                  event.getX() + OVERLAY_OFFSET_X, event.getY() + OVERLAY_OFFSET_Y,
                  0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_WIDTH, OVERLAY_HEIGHT);
