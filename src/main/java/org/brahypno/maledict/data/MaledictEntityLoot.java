@@ -10,6 +10,7 @@ import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.registry.MaledictEntities;
 
 import java.util.function.BiConsumer;
 
@@ -28,6 +29,7 @@ public final class MaledictEntityLoot implements LootTableSubProvider {
 
     @Override
     public void generate(BiConsumer<ResourceLocation, LootTable.Builder> output) {
+        output.accept(MaledictEntities.RAVEN.get().getDefaultLootTable(), LootTable.lootTable());
         for (BossDifficulty difficulty : BossDifficulty.values()) {
             output.accept(difficulty.lootTable(), table());
         }

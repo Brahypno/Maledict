@@ -88,6 +88,7 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .texture("0", modLoc("block/runewood_obelisk"));
 
         registerSpawnEggModel("first_vicissitude_phase_one_spawn_egg");
+        registerSpawnEggModel("raven_spawn_egg");
         registerSpawnEggModel("first_vicissitude_phase_two_spawn_egg");
     }
 

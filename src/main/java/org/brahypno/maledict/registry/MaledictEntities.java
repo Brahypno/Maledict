@@ -6,10 +6,14 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
+import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
+import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.entity.RavenEntity;
 import org.brahypno.maledict.common.entity.SpiritArrowEntity;
 import org.brahypno.maledict.common.entity.VicissitudeLightOrbEntity;
 import org.brahypno.maledict.common.entity.VicissitudeScytheProjectileEntity;
@@ -35,6 +39,14 @@ public final class MaledictEntities {
                     .clientTrackingRange(12)
                     .fireImmune()
                     .build("first_vicissitude"));
+
+    public static final RegistryObject<EntityType<RavenEntity>> RAVEN =
+            ENTITY_TYPES.register("raven", () -> EntityType.Builder
+                    .of(RavenEntity::new, MobCategory.CREATURE)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(10)
+                    .updateInterval(1)
+                    .build("raven"));
 
     public static final RegistryObject<EntityType<VicissitudeSpiritBoltEntity>> VICISSITUDE_SPIRIT_BOLT =
             ENTITY_TYPES.register("vicissitude_spirit_bolt", () -> EntityType.Builder
@@ -67,6 +79,14 @@ public final class MaledictEntities {
     @SubscribeEvent
     public static void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(FIRST_VICISSITUDE.get(), FirstVicissitudeBossEntity.createAttributes().build());
+        event.put(RAVEN.get(), RavenEntity.createAttributes().build());
+    }
+
+    @SubscribeEvent
+    public static void registerSpawnPlacements(SpawnPlacementRegisterEvent event) {
+        event.register(RAVEN.get(), SpawnPlacements.Type.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, RavenEntity::checkRavenSpawnRules,
+                SpawnPlacementRegisterEvent.Operation.REPLACE);
     }
 
     private MaledictEntities() {

@@ -18,6 +18,8 @@ public final class MaledictLanguage extends LanguageProvider {
     protected void addTranslations() {
         if ("zh_cn".equals(locale)){
             add("itemGroup.maledict", "咒邪");
+            add("entity.maledict.raven", "渡鸦");
+            addItem(MaledictItems.RAVEN_SPAWN_EGG, "渡鸦刷怪蛋");
             add("enchantment.maledict.ectoplasm", "灵质");
             add("enchantment.maledict.reminiscence", "追忆");
             add("enchantment.maledict.aftertaste", "回味");
@@ -389,6 +391,8 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "Custody Token");
             addItem(MaledictItems.MALIGNANT_PEWTER_TABLET, "Malignant Pewter Tablet");
             addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG, "Vicissitude Spawn Egg (Phase One)");
+            add("entity.maledict.raven", "The Raven");
+            addItem(MaledictItems.RAVEN_SPAWN_EGG, "The Raven Spawn Egg");
             addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_TWO_SPAWN_EGG, "Vicissitude Spawn Egg (Phase Two)");
             addItem(MaledictItems.RUNE_OF_SATIATION, "Rune of Satiation");
             addItem(MaledictItems.RUNE_OF_DECAY, "Rune of Decay");

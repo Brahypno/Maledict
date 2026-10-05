@@ -21,6 +21,7 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.ELEGY_BOW.get());
                                output.accept(MaledictItems.MNEMONIC_OBELISK.get());
                                output.accept(MaledictItems.SOULWOOD_OBELISK.get());
+                               output.accept(MaledictItems.RAVEN_SPAWN_EGG.get());
                                output.accept(MaledictItems.SACRED_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.WICKED_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.ARCANE_SPIRIT_ARROW.get());

@@ -27,6 +27,7 @@ public final class MaledictDataGenerators {
         generator.addProvider(event.includeClient(), new MaledictLanguage(output, "zh_cn"));
 
         generator.addProvider(event.includeServer(), new MaledictRecipes(output));
+        generator.addProvider(event.includeServer(), new MaledictBiomeModifiers(output));
         generator.addProvider(event.includeServer(), new LootTableProvider(
                 output,
                 Set.of(),

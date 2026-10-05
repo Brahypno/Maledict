@@ -1,0 +1,21 @@
+// gradle -I art/raven/tools/preview.init.gradle ravenPreview --offline
+gradle.projectsEvaluated {
+    def project = gradle.rootProject
+    def previewClasses = project.layout.buildDirectory.dir('raven-preview/classes')
+    def compilePreview = project.tasks.register('compileRavenPreview', JavaCompile) {
+        dependsOn project.tasks.named('classes')
+        source = project.files('art/raven/tools/RavenModelPreview.java')
+        classpath = project.sourceSets.main.runtimeClasspath
+        destinationDirectory = previewClasses
+        options.encoding = 'UTF-8'
+        javaCompiler = project.javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(17) }
+    }
+    project.tasks.register('ravenPreview', JavaExec) {
+        dependsOn compilePreview
+        classpath = project.files(previewClasses) + project.sourceSets.main.runtimeClasspath
+        mainClass = 'RavenModelPreview'
+        workingDir = project.layout.buildDirectory.dir('raven-preview').get().asFile
+        args project.projectDir.absolutePath
+        javaLauncher = project.javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(17) }
+    }
+}
