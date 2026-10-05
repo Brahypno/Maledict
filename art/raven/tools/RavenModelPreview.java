@@ -53,17 +53,34 @@ public final class RavenModelPreview {
         Path output = workspace.resolve("art/raven/preview/raven.png");
         Files.createDirectories(output.getParent());
         ImageIO.write(result, "png", output.toFile());
+
+        BufferedImage hover = new BufferedImage(1280, 620, BufferedImage.TYPE_INT_RGB);
+        Graphics2D hoverGraphics = hover.createGraphics();
+        hoverGraphics.setColor(new Color(222, 225, 232));
+        hoverGraphics.fillRect(0, 0, 1280, 620);
+        hoverGraphics.setColor(new Color(33, 38, 48));
+        hoverGraphics.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 24));
+        hoverGraphics.drawString("RAVEN  /  HOVERING WINGBEATS", 32, 40);
+        hoverGraphics.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 17));
+        hoverGraphics.drawString("Downstroke / legs tucked", 190, 90);
+        hoverGraphics.drawString("Upstroke / legs tucked", 830, 90);
+        hoverGraphics.drawString("Actual model animation poses. Software preview, not an in-game capture.", 32, 593);
+        hoverGraphics.dispose();
+        render(hover, texture, 0, 1.0F, 1.0F, 1.0F);
+        render(hover, texture, 640, 1.0F, 1.0F, 3.0F);
+        ImageIO.write(hover, "png", output.resolveSibling("raven-hover.png").toFile());
     }
 
     static void render(BufferedImage output, BufferedImage texture, int offset, float flight) throws Exception {
+        render(output, texture, offset, flight, 0.0F, 0.0F);
+    }
+
+    static void render(BufferedImage output, BufferedImage texture, int offset,
+                       float flight, float hover, float age) throws Exception {
         ModelPart root = RavenModel.createBodyLayer().bakeRoot();
-        ModelPart body = root.getChild("body");
-        Method fold = RavenModel.class.getDeclaredMethod("foldWing", ModelPart.class, int.class, float.class, float.class);
-        fold.setAccessible(true);
-        fold.invoke(null, body.getChild("left_wing"), 1, flight, 0.0F);
-        fold.invoke(null, body.getChild("right_wing"), -1, flight, 0.0F);
-        body.getChild("left_leg").xRot = -flight * 0.85F;
-        body.getChild("right_leg").xRot = -flight * 0.85F;
+        Method animate = RavenModel.class.getDeclaredMethod("applyFlightPose", float.class, float.class, float.class);
+        animate.setAccessible(true);
+        animate.invoke(new RavenModel(root), flight, hover, age);
         Collector consumer = new Collector();
         root.render(new PoseStack(), consumer, 0xF000F0, 0);
         double[] depthBuffer = new double[output.getWidth()*output.getHeight()];
@@ -82,7 +99,8 @@ public final class RavenModelPreview {
         }
         String bounds=String.format(java.util.Locale.ROOT,"Bounds: %.2f wide x %.2f long x %.2f high",max[0]-min[0],max[2]-min[2],max[1]-min[1]);
         System.out.println((flight==0 ? "Ground: " : "Flight: ")+bounds+", cubes="+consumer.vertices.size()/24);
-        if (max[0]-min[0] > (flight==0 ? 1.01 : 3.01) || max[2]-min[2] > 2.01 || max[1]-min[1] > 1.01) {
+        if (hover == 0 && (max[0]-min[0] > (flight==0 ? 1.01 : 3.01)
+                || max[2]-min[2] > 2.01 || max[1]-min[1] > 1.01)) {
             throw new IllegalStateException("Raven model exceeds requested dimensions");
         }
         Graphics2D graphics=output.createGraphics();

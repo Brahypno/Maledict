@@ -9,6 +9,8 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.Mth;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -41,12 +43,17 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.level.pathfinder.Path;
 
 import javax.annotation.Nullable;
 import java.util.Comparator;
@@ -62,13 +69,18 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     private static final float GROUND_JUMP_POWER = 0.50F;
     private static final EntityDataAccessor<Boolean> FLYING =
             SynchedEntityData.defineId(RavenEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> HOVERING =
+            SynchedEntityData.defineId(RavenEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> PECK_TICKS =
             SynchedEntityData.defineId(RavenEntity.class, EntityDataSerializers.INT);
     @Nullable
     private RavenEntity companion;
     @Nullable
     private Vec3 landingTarget;
+    @Nullable
+    private Vec3 hoverAnchor;
     private boolean landingRequested;
+    private final RavenDangerEscape dangerEscape = new RavenDangerEscape();
     private int hopCooldown;
     private int perchCooldown = 100;
     private final List<UUID> trustedPlayers = new ArrayList<>(2);
@@ -76,6 +88,8 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     private UUID breedingPlayer;
     public float previousFlightProgress;
     public float flightProgress;
+    public float previousHoverProgress;
+    public float hoverProgress;
 
     public RavenEntity(EntityType<? extends RavenEntity> type, Level level) {
         super(type, level);
@@ -84,6 +98,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         setPathfindingMalus(BlockPathTypes.LAVA, -1.0F);
         setPathfindingMalus(BlockPathTypes.DANGER_FIRE, -1.0F);
         setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, -1.0F);
+        setPathfindingMalus(BlockPathTypes.DAMAGE_OTHER, -1.0F);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -100,23 +115,38 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     protected void defineSynchedData() {
         super.defineSynchedData();
         entityData.define(FLYING, false);
+        entityData.define(HOVERING, false);
         entityData.define(PECK_TICKS, 0);
     }
 
     @Override
     protected void registerGoals() {
+        goalSelector.addGoal(0, new EscapeDangerGoal());
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new AttackGoal());
         goalSelector.addGoal(2, new LandingGoal());
         goalSelector.addGoal(3, new EatFleshGoal());
         goalSelector.addGoal(4, new BreedGoal(this, 1.0D) {
             @Override
-            public boolean canUse() {
-                return !isFlying() && super.canUse();
+            public void tick() {
+                if (partner != null) {
+                    moveToGroundTarget(partner.position(), 1.0D);
+                    if (!isFlying() && !landingRequested && !((RavenEntity) partner).isFlying()) {
+                        super.tick();
+                    } else {
+                        getLookControl().setLookAt(partner, 20.0F, 20.0F);
+                    }
+                }
+            }
+
+            @Override
+            public void stop() {
+                finishGroundTravel(partner == null ? null : partner.position());
+                super.stop();
             }
         });
         goalSelector.addGoal(5, new FollowTrustedPlayerGoal());
-        goalSelector.addGoal(6, new FollowParentGoal(this, 1.0D));
+        goalSelector.addGoal(6, new FollowRavenParentGoal());
         goalSelector.addGoal(7, new IdleGoal());
         goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         goalSelector.addGoal(9, new RandomLookAroundGoal(this));
@@ -150,6 +180,15 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         return entityData.get(FLYING);
     }
 
+    public boolean isHovering() {
+        return entityData.get(HOVERING);
+    }
+
+    private void setHovering(@Nullable Vec3 anchor) {
+        hoverAnchor = anchor;
+        entityData.set(HOVERING, anchor != null);
+    }
+
     private void setFlying(boolean flying) {
         if (isFlying() == flying) {
             return;
@@ -169,6 +208,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
                 setDeltaMovement(getDeltaMovement().add(0.0D, 0.35D, 0.0D));
             }
         } else {
+            setHovering(null);
             landingRequested = false;
             landingTarget = null;
             navigation = new GroundPathNavigation(this, level());
@@ -182,7 +222,10 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         previousFlightProgress = flightProgress;
         flightProgress = Math.max(0.0F, Math.min(1.0F,
                 flightProgress + (isFlying() ? 0.15F : -0.15F)));
+        previousHoverProgress = hoverProgress;
+        hoverProgress = Mth.clamp(hoverProgress + (isHovering() ? 0.2F : -0.2F), 0.0F, 1.0F);
         if (!level().isClientSide) {
+            dangerEscape.updateBurning(isOnFire());
             if (perchCooldown > 0) {
                 perchCooldown--;
             }
@@ -201,6 +244,17 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     }
 
     @Override
+    protected float getBlockSpeedFactor() {
+        BlockState feet = level().getBlockState(blockPosition());
+        if (feet.is(Blocks.SOUL_SAND) || (feet.getBlock().getSpeedFactor() == 1.0F
+                && !feet.is(Blocks.WATER) && !feet.is(Blocks.BUBBLE_COLUMN)
+                && level().getBlockState(getBlockPosBelowThatAffectsMyMovement()).is(Blocks.SOUL_SAND))) {
+            return 1.0F;
+        }
+        return super.getBlockSpeedFactor();
+    }
+
+    @Override
     protected void jumpFromGround() {
         super.jumpFromGround();
         hopCooldown = 10;
@@ -214,7 +268,13 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     public void travel(Vec3 input) {
         if (isFlying() && !isInWater() && !isInLava()) {
             if (isEffectiveAi()) {
-                if (landingRequested && landingTarget != null
+                if (isHovering() && hoverAnchor != null) {
+                    Vec3 correction = hoverAnchor.subtract(position()).scale(0.35D);
+                    if (correction.lengthSqr() > 0.0144D) {
+                        correction = correction.normalize().scale(0.12D);
+                    }
+                    setDeltaMovement(correction);
+                } else if (landingRequested && landingTarget != null
                         && position().subtract(landingTarget).horizontalDistanceSqr() < 1.0D
                         && Math.abs(getY() - landingTarget.y) < 1.5D) {
                     // Brake over the actual landing point, then descend; do not carry cruise drift down.
@@ -231,7 +291,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
                     moveRelative(getSpeed() * 0.12F, input);
                 }
                 move(MoverType.SELF, getDeltaMovement());
-                setDeltaMovement(getDeltaMovement().scale(0.88D));
+                setDeltaMovement(isHovering() ? Vec3.ZERO : getDeltaMovement().scale(0.88D));
             }
             calculateEntityAnimation(false);
         } else {
@@ -256,11 +316,75 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         return hit;
     }
 
+    public void onFeatherHit(LivingEntity target) {
+        doEnchantDamageEffects(this, target);
+        setLastHurtMob(target);
+    }
+
+    private void shootFeather(LivingEntity target) {
+        if (!hasClearFeatherShot(position(), target)) {
+            return;
+        }
+        Vec3 origin = getEyePosition();
+        level().addFreshEntity(new RavenFeatherEntity(this, origin, target));
+        entityData.set(PECK_TICKS, 6);
+        playSound(SoundEvents.ARROW_SHOOT, 0.7F, 1.4F);
+    }
+
+    private boolean hasClearFeatherShot(Vec3 feet, LivingEntity target) {
+        Vec3 origin = feet.add(0.0D, getEyeHeight(), 0.0D);
+        Vec3 aim = target.getBoundingBox().getCenter();
+        if (level().clip(new ClipContext(origin, aim, ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE, this)).getType() != HitResult.Type.MISS) {
+            return false;
+        }
+        return level().getEntitiesOfClass(LivingEntity.class, new AABB(origin, aim).inflate(0.3D),
+                        bystander -> bystander != this && bystander != target && bystander.isAlive()
+                                && bystander.getMobType() != MobType.UNDEAD)
+                .stream().noneMatch(bystander -> RavenShotSafety.crossesBody(bystander.getBoundingBox(), origin, aim));
+    }
+
+    @Nullable
+    private Vec3 findFeatherPosition(LivingEntity target) {
+        List<Vec3> positions = new ArrayList<>();
+        for (int height = 0; height < 3; height++) {
+            for (int radius : new int[]{4, 7, 10}) {
+                for (int direction = 0; direction < 8; direction++) {
+                    double angle = direction * Math.PI / 4.0D;
+                    Vec3 point = target.position().add(Math.cos(angle) * radius,
+                            1.5D + height * 2.0D, Math.sin(angle) * radius);
+                    if (RavenRangedAttackCycle.canHover(point.distanceToSqr(target.position()), true)
+                            && level().getFluidState(BlockPos.containing(point)).isEmpty()
+                            && level().getFluidState(BlockPos.containing(point).above()).isEmpty()
+                            && level().noCollision(this, getBoundingBox().move(point.subtract(position())))
+                            && !isDangerousAt(point)
+                            && hasClearFeatherShot(point, target)) {
+                        positions.add(point);
+                    }
+                }
+            }
+        }
+        positions.sort(Comparator.comparingDouble(this::distanceToSqr));
+        for (Vec3 point : positions) {
+            Path path = navigation.createPath(BlockPos.containing(point), 0);
+            if (path != null && path.canReach()) {
+                return point;
+            }
+        }
+        return null;
+    }
+
     @Override
     public boolean hurt(DamageSource source, float amount) {
         boolean undead = source.getEntity() instanceof LivingEntity attacker
                 && attacker.getMobType() == MobType.UNDEAD;
-        return super.hurt(source, RavenCombat.incomingDamage(amount, undead));
+        boolean hit = super.hurt(source, RavenCombat.incomingDamage(amount, undead));
+        if (hit && !level().isClientSide) {
+            boolean environmental = source.getEntity() == null && (source.is(DamageTypeTags.IS_FIRE)
+                    || source.is(DamageTypes.CACTUS) || source.is(DamageTypes.SWEET_BERRY_BUSH));
+            dangerEscape.onDamage(environmental, isOnFire());
+        }
+        return hit;
     }
 
     @Override
@@ -310,6 +434,10 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
 
     public boolean trusts(UUID player) {
         return trustedPlayers.contains(player);
+    }
+
+    public List<UUID> getTrustedPlayers() {
+        return List.copyOf(trustedPlayers);
     }
 
     @Override
@@ -417,6 +545,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         setFlying(tag.getBoolean("Flying"));
+        setHovering(null);
         setNoGravity(isFlying());
         landingRequested = isFlying();
         perchCooldown = tag.contains("PerchCooldown") ? tag.getInt("PerchCooldown") : 100;
@@ -441,6 +570,56 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         } else {
             landingRequested = true;
             landingTarget = preferred == null ? null : landingPointAt(BlockPos.containing(preferred));
+            if (landingTarget == null && preferred != null) {
+                landingTarget = landingPointAt(BlockPos.containing(preferred).above());
+            }
+        }
+    }
+
+    private void moveToGroundTarget(Vec3 destination, double speed) {
+        if (landingRequested) {
+            return;
+        }
+        double distanceSquared = position().subtract(destination).horizontalDistanceSqr();
+        RavenGroundTravel.Action action = RavenGroundTravel.next(isFlying(), distanceSquared);
+        if (action == RavenGroundTravel.Action.TAKE_OFF) {
+            setFlying(true);
+        }
+        if (action == RavenGroundTravel.Action.LAND) {
+            Vec3 point = findLandingPointNear(destination);
+            requestLanding(point == null ? destination : point);
+        } else if (isFlying()) {
+            navigation.moveTo(destination.x, destination.y + 1.5D, destination.z, speed);
+        } else {
+            navigation.moveTo(destination.x, destination.y, destination.z, speed);
+        }
+    }
+
+    @Nullable
+    private Vec3 findLandingPointNear(Vec3 destination) {
+        BlockPos origin = BlockPos.containing(destination);
+        for (int radius = 0; radius <= 2; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                        continue;
+                    }
+                    for (int dy = 1; dy >= -3; dy--) {
+                        Vec3 point = landingPointAt(origin.offset(dx, dy, dz));
+                        if (point != null && point.subtract(destination).horizontalDistanceSqr() <= 4.0D) {
+                            return point;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private void finishGroundTravel(@Nullable Vec3 destination) {
+        navigation.stop();
+        if (isFlying() && getTarget() == null && !landingRequested) {
+            requestLanding(destination);
         }
     }
 
@@ -455,8 +634,130 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
                 WalkNodeEvaluator.getFloorLevel(level(), feet), feet.getZ() + 0.5D);
         BlockPos body = BlockPos.containing(point);
         return level().getFluidState(body).isEmpty() && level().getFluidState(body.above()).isEmpty()
+                && !isDangerousAt(point)
                 && level().noCollision(this, getBoundingBox().move(point.subtract(position())))
                 ? point : null;
+    }
+
+    private boolean isDangerousAt(Vec3 feet) {
+        AABB body = getBoundingBox().move(feet.subtract(position())).deflate(0.001D);
+        for (BlockPos pos : BlockPos.betweenClosed(BlockPos.containing(body.minX, body.minY - 0.08D, body.minZ),
+                BlockPos.containing(body.maxX, body.maxY, body.maxZ))) {
+            BlockState state = level().getBlockState(pos);
+            BlockPathTypes type = state.getBlockPathType(level(), pos, this);
+            if (WalkNodeEvaluator.isBurningBlock(state) || state.is(Blocks.CACTUS)
+                    || state.is(Blocks.SWEET_BERRY_BUSH) || type == BlockPathTypes.DAMAGE_FIRE
+                    || type == BlockPathTypes.DAMAGE_OTHER || type == BlockPathTypes.LAVA) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Emergency steering must leave a fire node even when ordinary navigation rejects its neighbors. */
+    private final class EscapeDangerGoal extends Goal {
+        private Vec3 dangerOrigin = Vec3.ZERO;
+        @Nullable
+        private Vec3 destination;
+        private int searchCooldown;
+
+        private EscapeDangerGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            return dangerEscape.shouldEscape(isDangerousAt(position()), isOnFire());
+        }
+
+        @Override
+        public void start() {
+            dangerOrigin = position();
+            dangerEscape.begin(isOnFire());
+            releaseCompanion();
+            navigation.stop();
+            setHovering(null);
+            landingRequested = false;
+            landingTarget = null;
+            setDeltaMovement(Vec3.ZERO);
+            setFlying(true);
+            moveControl = new FlyingMoveControl(RavenEntity.this, 20, true);
+            destination = null;
+            searchCooldown = 0;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return !RavenDangerEscape.reachedSafety(isDangerousAt(position()), position().distanceToSqr(dangerOrigin));
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Nullable
+        private Vec3 findDestination() {
+            Vec3 best = null;
+            double nearest = Double.MAX_VALUE;
+            for (int radius = 0; radius <= 6; radius++) {
+                for (int dx = -radius; dx <= radius; dx++) {
+                    for (int dz = -radius; dz <= radius; dz++) {
+                        if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                            continue;
+                        }
+                        for (int dy = 0; dy <= 4; dy++) {
+                            Vec3 point = position().add(dx, dy, dz);
+                            Vec3 offset = point.subtract(position());
+                            double distance = offset.lengthSqr();
+                            if (distance >= nearest || !RavenDangerEscape.reachedSafety(false, point.distanceToSqr(dangerOrigin))) {
+                                continue;
+                            }
+                            if (!level().getFluidState(BlockPos.containing(point)).isEmpty()
+                                    || !level().getFluidState(BlockPos.containing(point).above()).isEmpty()
+                                    || isDangerousAt(point)
+                                    || !level().noCollision(RavenEntity.this, getBoundingBox().expandTowards(offset))) {
+                                continue;
+                            }
+                            best = point;
+                            nearest = distance;
+                        }
+                    }
+                }
+            }
+            return best;
+        }
+
+        @Override
+        public void tick() {
+            dangerEscape.whileEscaping(isOnFire());
+            if (--searchCooldown <= 0 || (destination != null && isDangerousAt(destination))) {
+                destination = findDestination();
+                searchCooldown = 10;
+            }
+            if (destination != null) {
+                // A short, collision-checked escape bypasses the dangerous start node, not world collision.
+                navigation.stop();
+                moveControl.setWantedPosition(destination.x, destination.y, destination.z, 1.3D);
+                getLookControl().setLookAt(destination.x, destination.y, destination.z);
+                if (isInLava()) {
+                    setDeltaMovement(getDeltaMovement().x, Math.max(0.35D, getDeltaMovement().y), getDeltaMovement().z);
+                }
+            } else if (isDangerousAt(position()) && level().noCollision(RavenEntity.this,
+                    getBoundingBox().expandTowards(0.0D, 0.5D, 0.0D))) {
+                setDeltaMovement(getDeltaMovement().x, Math.max(0.35D, getDeltaMovement().y), getDeltaMovement().z);
+            }
+        }
+
+        @Override
+        public void stop() {
+            dangerEscape.finish();
+            navigation.stop();
+            destination = null;
+            if (getTarget() == null) {
+                requestLanding(null);
+            }
+        }
     }
 
     @Nullable
@@ -532,7 +833,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         @Override
         public boolean canContinueToUse() {
             return food != null && food.isAlive() && isFood(food.getItem())
-                    && getHealth() < getMaxHealth() && getTarget() == null && !isFlying() && remaining > 0;
+                    && getHealth() < getMaxHealth() && getTarget() == null && remaining > 0;
         }
 
         @Override
@@ -554,7 +855,8 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
             }
             remaining--;
             getLookControl().setLookAt(food, 20.0F, 20.0F);
-            if (distanceToSqr(food) <= 2.25D && getSensing().hasLineOfSight(food)) {
+            if (!isFlying() && onGround() && distanceToSqr(food) <= 2.25D
+                    && getSensing().hasLineOfSight(food)) {
                 ItemStack stack = food.getItem();
                 stack.shrink(1);
                 if (stack.isEmpty()) {
@@ -566,15 +868,71 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
                 showEating();
                 remaining = 0;
             } else if (--pathCooldown <= 0) {
-                navigation.moveTo(food, 1.0D);
+                moveToGroundTarget(food.position(), 1.0D);
                 pathCooldown = 10;
             }
         }
 
         @Override
         public void stop() {
-            navigation.stop();
+            finishGroundTravel(food == null ? null : food.position());
             food = null;
+        }
+    }
+
+    private final class FollowRavenParentGoal extends Goal {
+        @Nullable
+        private RavenEntity parent;
+        private int pathCooldown;
+
+        private FollowRavenParentGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!isBaby() || getTarget() != null) {
+                return false;
+            }
+            parent = level().getEntitiesOfClass(RavenEntity.class, getBoundingBox().inflate(8.0D, 4.0D, 8.0D),
+                            bird -> bird.isAlive() && !bird.isBaby())
+                    .stream().min(Comparator.comparingDouble(RavenEntity.this::distanceToSqr)).orElse(null);
+            return parent != null && distanceToSqr(parent) >= 9.0D;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return isBaby() && getTarget() == null && parent != null && parent.isAlive()
+                    && distanceToSqr(parent) <= 256.0D
+                    && (isFlying() || position().subtract(parent.position()).horizontalDistanceSqr() > 4.0D);
+        }
+
+        @Override
+        public void start() {
+            releaseCompanion();
+            pathCooldown = 0;
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            if (parent != null) {
+                getLookControl().setLookAt(parent, 20.0F, 20.0F);
+                if (--pathCooldown <= 0) {
+                    moveToGroundTarget(parent.position(), 1.0D);
+                    pathCooldown = 10;
+                }
+            }
+        }
+
+        @Override
+        public void stop() {
+            finishGroundTravel(parent == null ? null : parent.position());
+            parent = null;
         }
     }
 
@@ -680,6 +1038,12 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     private final class AttackGoal extends Goal {
         private int attackCooldown;
         private int pathCooldown;
+        private final RavenRangedAttackCycle rangedCycle = new RavenRangedAttackCycle();
+        @Nullable
+        private Vec3 hoverPoint;
+        @Nullable
+        private Vec3 shootingPosition;
+        private int positionSearchCooldown;
 
         private AttackGoal() {
             setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
@@ -696,6 +1060,11 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
             landingRequested = false;
             landingTarget = null;
             setFlying(true);
+            setHovering(null);
+            hoverPoint = null;
+            shootingPosition = null;
+            positionSearchCooldown = 0;
+            rangedCycle.cancelCharge();
             pathCooldown = 0;
         }
 
@@ -711,16 +1080,69 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
                 return;
             }
             getLookControl().setLookAt(target, 30.0F, 30.0F);
+            if (attackCooldown > 0) {
+                attackCooldown--;
+            }
+            boolean visible = getSensing().hasLineOfSight(target);
+            double distanceSquared = distanceToSqr(target);
+            if (RavenRangedAttackCycle.canHover(distanceSquared, true) && !isInWater() && !isInLava()
+                    && hasClearFeatherShot(position(), target)) {
+                shootingPosition = null;
+                positionSearchCooldown = 0;
+                if (hoverPoint == null) {
+                    Vec3 point = position().add(0.0D, onGround() ? 1.25D : 0.0D, 0.0D);
+                    if (!isDangerousAt(point) && level().noCollision(RavenEntity.this,
+                            getBoundingBox().move(point.subtract(position())))) {
+                        hoverPoint = point;
+                    }
+                }
+                if (hoverPoint != null) {
+                    if (!isHovering()) {
+                        navigation.stop();
+                        if (onGround() || position().distanceToSqr(hoverPoint) > 0.0625D) {
+                            moveControl.setWantedPosition(hoverPoint.x, hoverPoint.y, hoverPoint.z, 0.65D);
+                            rangedCycle.tick(false, level().getGameTime());
+                            return;
+                        }
+                        setHovering(hoverPoint);
+                    }
+                    Vec3 facing = target.position().subtract(position());
+                    float yaw = (float) (Mth.atan2(facing.z, facing.x) * Mth.RAD_TO_DEG) - 90.0F;
+                    setYRot(yaw);
+                    yBodyRot = yaw;
+                    if (rangedCycle.tick(true, level().getGameTime())) {
+                        shootFeather(target);
+                    }
+                    return;
+                }
+            }
+            setHovering(null);
+            hoverPoint = null;
+            rangedCycle.tick(false, level().getGameTime());
+            if (distanceSquared >= 9.0D && !isInWater() && !isInLava()) {
+                if (--positionSearchCooldown <= 0) {
+                    shootingPosition = findFeatherPosition(target);
+                    positionSearchCooldown = 20;
+                    pathCooldown = 0;
+                }
+                if (shootingPosition != null) {
+                    if (--pathCooldown <= 0) {
+                        navigation.moveTo(shootingPosition.x, shootingPosition.y, shootingPosition.z, 1.0D);
+                        pathCooldown = 8;
+                    }
+                    if (navigation.isDone() && position().distanceToSqr(shootingPosition) < 2.25D) {
+                        moveControl.setWantedPosition(shootingPosition.x, shootingPosition.y, shootingPosition.z, 0.65D);
+                    }
+                    return;
+                }
+            }
             if (--pathCooldown <= 0) {
                 navigation.moveTo(target.getX(), target.getY() + 0.3D, target.getZ(), 1.2D);
                 pathCooldown = 8;
             }
-            if (attackCooldown > 0) {
-                attackCooldown--;
-            }
             double reach = 1.0D + target.getBbWidth() * 0.5D;
             if (attackCooldown == 0 && distanceToSqr(target) <= reach * reach
-                    && getSensing().hasLineOfSight(target)) {
+                    && visible) {
                 doHurtTarget(target);
                 attackCooldown = 20;
             }
@@ -728,6 +1150,10 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
 
         @Override
         public void stop() {
+            setHovering(null);
+            hoverPoint = null;
+            shootingPosition = null;
+            rangedCycle.cancelCharge();
             navigation.stop();
             requestLanding(null);
         }
@@ -859,23 +1285,24 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
             if (mate != null) {
                 getLookControl().setLookAt(mate, 20.0F, 20.0F);
                 destination = mate.position();
-                if (distanceToSqr(mate) < 4.0D) {
-                    navigation.stop();
+                if (position().subtract(mate.position()).horizontalDistanceSqr() <= 4.0D) {
+                    finishGroundTravel(mate.position());
                     return;
                 }
             }
             if (--pathCooldown <= 0 && destination != null) {
-                navigation.moveTo(destination.x, destination.y, destination.z, 1.0D);
+                if (flight) {
+                    navigation.moveTo(destination.x, destination.y, destination.z, 1.0D);
+                } else {
+                    moveToGroundTarget(destination, 1.0D);
+                }
                 pathCooldown = 20;
             }
         }
 
         @Override
         public void stop() {
-            navigation.stop();
-            if (isFlying() && getTarget() == null) {
-                requestLanding(groundDestination);
-            }
+            finishGroundTravel(mate == null ? groundDestination : mate.position());
             releaseCompanion();
             mate = null;
         }

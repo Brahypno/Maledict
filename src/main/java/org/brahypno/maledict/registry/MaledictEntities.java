@@ -14,6 +14,7 @@ import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.entity.RavenEntity;
+import org.brahypno.maledict.common.entity.RavenFeatherEntity;
 import org.brahypno.maledict.common.entity.SpiritArrowEntity;
 import org.brahypno.maledict.common.entity.VicissitudeLightOrbEntity;
 import org.brahypno.maledict.common.entity.VicissitudeScytheProjectileEntity;
@@ -47,6 +48,14 @@ public final class MaledictEntities {
                     .clientTrackingRange(10)
                     .updateInterval(1)
                     .build("raven"));
+
+    public static final RegistryObject<EntityType<RavenFeatherEntity>> RAVEN_FEATHER =
+            ENTITY_TYPES.register("raven_feather", () -> EntityType.Builder
+                    .<RavenFeatherEntity>of(RavenFeatherEntity::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(8)
+                    .updateInterval(1)
+                    .build("raven_feather"));
 
     public static final RegistryObject<EntityType<VicissitudeSpiritBoltEntity>> VICISSITUDE_SPIRIT_BOLT =
             ENTITY_TYPES.register("vicissitude_spirit_bolt", () -> EntityType.Builder

@@ -19,6 +19,7 @@ public final class MaledictEntityRenderers {
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(MaledictEntities.SPIRIT_ARROW.get(), SpiritArrowRenderer::new);
         event.registerEntityRenderer(MaledictEntities.RAVEN.get(), RavenRenderer::new);
+        event.registerEntityRenderer(MaledictEntities.RAVEN_FEATHER.get(), RavenFeatherRenderer::new);
         event.registerEntityRenderer(MaledictEntities.FIRST_VICISSITUDE.get(), FirstVicissitudeBossRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_LIGHT_ORB.get(), VicissitudeLightOrbRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SPIRIT_BOLT.get(), VicissitudeSpiritBoltRenderer::new);

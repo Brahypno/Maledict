@@ -108,16 +108,26 @@ public final class RavenModel extends HierarchicalModel<RavenEntity> {
         root.getAllParts().forEach(ModelPart::resetPose);
         float partialTick = Mth.clamp(ageInTicks - entity.tickCount, 0, 1);
         float flight = Mth.lerp(partialTick, entity.previousFlightProgress, entity.flightProgress);
-        float flap = Mth.sin(ageInTicks * 0.9F) * 0.32F * flight;
-        foldWing(leftWing, 1, flight, flap);
-        foldWing(rightWing, -1, flight, flap);
+        float hover = Mth.lerp(partialTick, entity.previousHoverProgress, entity.hoverProgress);
+        applyFlightPose(flight, hover, ageInTicks);
         head.yRot = netHeadYaw * Mth.DEG_TO_RAD;
         head.xRot = headPitch * Mth.DEG_TO_RAD
                 + (entity.getPeckTicks() > 0 ? 0.45F : 0.0F);
         float hop = Mth.sin(limbSwing * 1.4F) * limbSwingAmount * (1 - flight);
-        leftLeg.xRot = -flight * 0.85F + hop * 0.35F;
+        leftLeg.xRot += hop * 0.35F;
         rightLeg.xRot = leftLeg.xRot;
-        tail.xRot = Mth.sin(ageInTicks * 0.12F) * 0.025F;
+    }
+
+    private void applyFlightPose(float flight, float hover, float ageInTicks) {
+        float flap = Mth.lerp(hover, Mth.sin(ageInTicks * 0.9F) * 0.32F,
+                Mth.sin(ageInTicks * 1.55F) * 0.6F) * flight;
+        body.y -= Mth.sin(ageInTicks * 0.3F) * hover * 0.35F;
+        body.xRot -= hover * 0.1F;
+        foldWing(leftWing, 1, flight, flap);
+        foldWing(rightWing, -1, flight, flap);
+        leftLeg.xRot = -flight * (0.85F + hover * 0.2F);
+        rightLeg.xRot = leftLeg.xRot;
+        tail.xRot = hover * 0.12F + Mth.sin(ageInTicks * 0.12F) * 0.025F;
     }
 
     private static void foldWing(ModelPart wing, int side, float flight, float flap) {
