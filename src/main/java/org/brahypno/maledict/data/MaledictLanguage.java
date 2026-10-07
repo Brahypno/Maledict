@@ -192,6 +192,11 @@ public final class MaledictLanguage extends LanguageProvider {
             add("message.maledict.first_vicissitude.attack", "命运总是会将人逼上悬崖，犹如恶客造访");
             add("message.maledict.first_vicissitude.phase_two",
                 "所谓无常，就是圣人行走在正道上，依然会遇见的命运");
+            add("sounds.maledict.entity.raven.ambient", "渡鸦鸣叫");
+            add("sounds.maledict.entity.raven.hurt", "渡鸦受伤");
+            add("sounds.maledict.entity.raven.death", "渡鸦死亡");
+            add("sounds.maledict.entity.raven.step", "渡鸦脚步声");
+            add("sounds.maledict.entity.raven.fly", "渡鸦振翅");
             add("sounds.maledict.music.vicissitude.phase_one", "无常：恶客造访");
             add("sounds.maledict.music.vicissitude.phase_two", "无常：不得已");
             add("sounds.maledict.item.incursus_blade.throw", "神侵恶刃：清脆的鸣叫 回旋而去");
@@ -479,6 +484,11 @@ public final class MaledictLanguage extends LanguageProvider {
                 "Fate always drives people to the edge of a cliff, like an unwelcome guest calling.");
             add("message.maledict.first_vicissitude.phase_two",
                 "Vicissitude is the fate even sages meet while walking the righteous path.");
+            add("sounds.maledict.entity.raven.ambient", "Raven calls");
+            add("sounds.maledict.entity.raven.hurt", "Raven hurts");
+            add("sounds.maledict.entity.raven.death", "Raven dies");
+            add("sounds.maledict.entity.raven.step", "Raven steps");
+            add("sounds.maledict.entity.raven.fly", "Raven flaps");
             add("sounds.maledict.music.vicissitude.phase_one",
                 "Vicissitude: An Unwelcome Guest");
             add("sounds.maledict.music.vicissitude.phase_two",

@@ -1,4 +1,28 @@
 {
+  "entity.raven.ambient": {
+    "subtitle": "sounds.maledict.entity.raven.ambient",
+    "sounds": [
+      "maledict:entity/raven/call_1",
+      "maledict:entity/raven/call_2",
+      "maledict:entity/raven/call_3"
+    ]
+  },
+  "entity.raven.hurt": {
+    "subtitle": "sounds.maledict.entity.raven.hurt",
+    "sounds": ["maledict:entity/raven/hurt_1", "maledict:entity/raven/hurt_2"]
+  },
+  "entity.raven.death": {
+    "subtitle": "sounds.maledict.entity.raven.death",
+    "sounds": ["maledict:entity/raven/death_1", "maledict:entity/raven/death_2"]
+  },
+  "entity.raven.step": {
+    "subtitle": "sounds.maledict.entity.raven.step",
+    "sounds": ["maledict:entity/raven/step_1", "maledict:entity/raven/step_2"]
+  },
+  "entity.raven.fly": {
+    "subtitle": "sounds.maledict.entity.raven.fly",
+    "sounds": ["maledict:entity/raven/fly_1", "maledict:entity/raven/fly_2"]
+  },
   "music.vicissitude.phase_one": {
     "subtitle": "sounds.maledict.music.vicissitude.phase_one",
     "sounds": [

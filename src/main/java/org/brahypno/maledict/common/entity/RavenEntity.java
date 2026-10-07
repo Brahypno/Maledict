@@ -16,6 +16,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -38,6 +39,7 @@ import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -62,6 +64,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.brahypno.maledict.registry.MaledictEntities;
+import org.brahypno.maledict.registry.MaledictSounds;
 
 /** A neutral Vicissitude bird; trust is earned through breeding, never by taming adults. */
 public final class RavenEntity extends Animal implements FlyingAnimal {
@@ -83,6 +86,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     private final RavenDangerEscape dangerEscape = new RavenDangerEscape();
     private final RavenAerialDodge aerialDodge = new RavenAerialDodge();
     private int hopCooldown;
+    private int flapSoundCooldown;
     private int perchCooldown = 100;
     private final List<UUID> trustedPlayers = new ArrayList<>(2);
     @Nullable
@@ -124,10 +128,11 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     protected void registerGoals() {
         goalSelector.addGoal(0, new EscapeDangerGoal());
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(1, new AttackGoal());
-        goalSelector.addGoal(2, new LandingGoal());
-        goalSelector.addGoal(3, new EatFleshGoal());
-        goalSelector.addGoal(4, new BreedGoal(this, 1.0D) {
+        goalSelector.addGoal(1, new AerialDodgeGoal());
+        goalSelector.addGoal(2, new AttackGoal());
+        goalSelector.addGoal(3, new LandingGoal());
+        goalSelector.addGoal(4, new EatFleshGoal());
+        goalSelector.addGoal(5, new BreedGoal(this, 1.0D) {
             @Override
             public void tick() {
                 if (partner != null) {
@@ -146,11 +151,11 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
                 super.stop();
             }
         });
-        goalSelector.addGoal(5, new FollowTrustedPlayerGoal());
-        goalSelector.addGoal(6, new FollowRavenParentGoal());
-        goalSelector.addGoal(7, new IdleGoal());
-        goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        goalSelector.addGoal(9, new RandomLookAroundGoal(this));
+        goalSelector.addGoal(6, new FollowTrustedPlayerGoal());
+        goalSelector.addGoal(7, new FollowRavenParentGoal());
+        goalSelector.addGoal(8, new IdleGoal());
+        goalSelector.addGoal(9, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        goalSelector.addGoal(10, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this, RavenEntity.class));
         targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class,
                 10, true, false, target -> target.getMobType() == MobType.UNDEAD));
@@ -167,13 +172,48 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     }
 
     @Override
+    protected SoundEvent getAmbientSound() {
+        return MaledictSounds.RAVEN_AMBIENT.get();
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return MaledictSounds.RAVEN_HURT.get();
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return MaledictSounds.RAVEN_DEATH.get();
+    }
+
+    @Override
+    protected void playStepSound(BlockPos pos, BlockState state) {
+        if (!isFlying()) {
+            playSound(MaledictSounds.RAVEN_STEP.get(), 0.15F, 1.0F);
+        }
+    }
+
+    @Override
+    public int getAmbientSoundInterval() {
+        // A flock of four to six birds should leave pauses between calls.
+        return 240;
+    }
+
+    @Override
+    protected float getSoundVolume() {
+        return 0.7F;
+    }
+
+    @Override
     public boolean canAttack(LivingEntity target) {
-        return !(target instanceof RavenEntity) && !trusts(target.getUUID()) && super.canAttack(target);
+        return !(target instanceof RavenEntity) && !trusts(target.getUUID())
+                && !(target instanceof Player player && (player.isCreative() || player.isSpectator()))
+                && super.canAttack(target);
     }
 
     @Override
     public void setTarget(@Nullable LivingEntity target) {
-        super.setTarget(target != null && (target instanceof RavenEntity || trusts(target.getUUID())) ? null : target);
+        super.setTarget(target != null && !canAttack(target) ? null : target);
     }
 
     @Override
@@ -227,8 +267,16 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         previousHoverProgress = hoverProgress;
         hoverProgress = Mth.clamp(hoverProgress + (isHovering() ? 0.2F : -0.2F), 0.0F, 1.0F);
         if (!level().isClientSide) {
+            if (isAlive() && isFlying() && !onGround() && !isInWater() && !isInLava()
+                    && (isHovering() || getDeltaMovement().lengthSqr() > 0.0025D)) {
+                if (--flapSoundCooldown <= 0) {
+                    playSound(MaledictSounds.RAVEN_FLY.get(), 0.15F, 0.95F + random.nextFloat() * 0.1F);
+                    flapSoundCooldown = isHovering() ? 8 : 12;
+                }
+            } else {
+                flapSoundCooldown = 0;
+            }
             dangerEscape.updateBurning(isOnFire());
-            aerialDodge.tick(getY());
             if (perchCooldown > 0) {
                 perchCooldown--;
             }
@@ -271,12 +319,19 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     public void travel(Vec3 input) {
         if (isFlying() && !isInWater() && !isInLava()) {
             if (isEffectiveAi()) {
-                boolean climbing = aerialDodge.active() && !aerialDodge.reached(getY());
-                if (climbing) {
-                    // A hit buys altitude first: rise out of reach, then hovering, landing and cruise resume.
-                    Vec3 velocity = getDeltaMovement();
-                    setDeltaMovement(velocity.x * 0.6D,
-                            RavenFlightAltitude.climbSpeed(getY(), aerialDodge.targetY()), velocity.z * 0.6D);
+                boolean dodging = aerialDodge.active();
+                if (dodging) {
+                    Vec3 offset = new Vec3(aerialDodge.targetX(), aerialDodge.targetY(), aerialDodge.targetZ())
+                            .subtract(position());
+                    Vec3 velocity = offset.scale(0.3D);
+                    if (velocity.lengthSqr() > 0.1024D) {
+                        velocity = velocity.normalize().scale(0.32D);
+                    }
+                    if (!level().noCollision(this, getBoundingBox().expandTowards(velocity))) {
+                        aerialDodge.finish();
+                        velocity = Vec3.ZERO;
+                    }
+                    setDeltaMovement(velocity);
                 } else if (isHovering() && hoverAnchor != null) {
                     Vec3 correction = hoverAnchor.subtract(position()).scale(0.35D);
                     if (correction.lengthSqr() > 0.0144D) {
@@ -300,7 +355,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
                     moveRelative(getSpeed() * 0.12F, input);
                 }
                 move(MoverType.SELF, getDeltaMovement());
-                setDeltaMovement(isHovering() && !climbing ? Vec3.ZERO : getDeltaMovement().scale(0.88D));
+                setDeltaMovement(isHovering() && !dodging ? Vec3.ZERO : getDeltaMovement().scale(0.88D));
             }
             calculateEntityAnimation(false);
         } else {
@@ -395,25 +450,84 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         boolean undead = source.getEntity() instanceof LivingEntity attacker
                 && attacker.getMobType() == MobType.UNDEAD;
         boolean hit = super.hurt(source, RavenCombat.incomingDamage(amount, undead));
-        if (hit && !level().isClientSide) {
+        if (hit && isAlive() && !level().isClientSide) {
             boolean environmental = source.getEntity() == null && (source.is(DamageTypeTags.IS_FIRE)
                     || source.is(DamageTypes.CACTUS) || source.is(DamageTypes.SWEET_BERRY_BUSH));
             dangerEscape.onDamage(environmental, isOnFire());
-            if (source.getEntity() instanceof LivingEntity attacker) {
-                startAerialDodge(attacker);
+            if (source.getEntity() instanceof LivingEntity) {
+                startAerialDodge(source);
             }
         }
         return hit;
     }
 
-    /** Being hit interrupts hovering, landing and ground travel only to gain height; retaliation is untouched. */
-    private void startAerialDodge(LivingEntity attacker) {
-        aerialDodge.onHit(getY(), attacker.getY());
+    private void startAerialDodge(DamageSource source) {
+        Vec3 origin = source.getSourcePosition();
+        if (source.sourcePositionRaw() == null && source.getDirectEntity() instanceof Projectile projectile
+                && projectile.getDeltaMovement().lengthSqr() > 1.0E-6D) {
+            // Reconstruct the incoming side, rather than dodging away from the distant shooter.
+            origin = projectile.position().subtract(projectile.getDeltaMovement().normalize().scale(2.0D));
+        }
+        if (origin == null && source.getEntity() != null) {
+            origin = source.getEntity().position();
+        }
+        Vec3 away = origin == null ? getLookAngle().scale(-1.0D) : position().subtract(origin);
+        if (away.horizontalDistanceSqr() < 1.0E-6D) {
+            away = getLookAngle().scale(-1.0D);
+        }
+        if (!aerialDodge.onHit(getX(), getY(), getZ(), away.x, away.z,
+                origin != null && RavenAerialDodge.fromBelow(getY(), origin.y), random.nextBoolean())) {
+            return;
+        }
         landingRequested = false;
         landingTarget = null;
         setHovering(null);
         setFlying(true);
         navigation.stop();
+    }
+
+    /** Own the movement goal during the dodge, then always hand off to combat or a real landing. */
+    private final class AerialDodgeGoal extends Goal {
+        private AerialDodgeGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            return aerialDodge.active();
+        }
+
+        @Override
+        public void start() {
+            releaseCompanion();
+            landingRequested = false;
+            landingTarget = null;
+            setHovering(null);
+            setFlying(true);
+            navigation.stop();
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            aerialDodge.tick(getX(), getY(), getZ());
+            getLookControl().setLookAt(aerialDodge.targetX(), aerialDodge.targetY(), aerialDodge.targetZ());
+        }
+
+        @Override
+        public void stop() {
+            aerialDodge.finish();
+            navigation.stop();
+            setDeltaMovement(Vec3.ZERO);
+            if (getTarget() == null || !getTarget().isAlive() || !canAttack(getTarget())) {
+                setTarget(null);
+                requestLanding(null);
+            }
+        }
     }
 
     @Override
@@ -593,6 +707,10 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     }
 
     private void requestLanding(@Nullable Vec3 preferred) {
+        if (aerialDodge.active()) {
+            // A preempted idle/follow/attack goal must not cancel the dodge during its stop callback.
+            return;
+        }
         if (onGround()) {
             setDeltaMovement(Vec3.ZERO);
             setFlying(false);

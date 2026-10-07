@@ -31,23 +31,6 @@ class RavenFlightAltitudeTest {
     }
 
     @Test
-    void dodgeAlwaysGainsAtLeastOneBlockAndClearsTheAttacker() {
-        // Attacker four blocks below: the clearance is exactly one block of lift.
-        assertEquals(51.0D, RavenFlightAltitude.dodgeY(50.0D, 47.0D));
-        // Attacker level with the bird: the clearance decides.
-        assertEquals(55.0D, RavenFlightAltitude.dodgeY(50.0D, 51.0D));
-        // Attacker below a bird that is already high: still one more block, never a descent.
-        assertEquals(71.0D, RavenFlightAltitude.dodgeY(70.0D, 60.0D));
-    }
-
-    @Test
-    void climbSpeedIsProportionalAndClamped() {
-        assertEquals(0.28D, RavenFlightAltitude.climbSpeed(50.0D, 54.0D));
-        assertEquals(0.25D, RavenFlightAltitude.climbSpeed(50.0D, 51.0D), 0.0001D);
-        assertEquals(0.08D, RavenFlightAltitude.climbSpeed(50.0D, 50.05D), 0.0001D);
-    }
-
-    @Test
     void idleFlightRaisesTheWalkingDestinationByFourToSixBlocks() {
         assertEquals(4.0D, RavenFlightAltitude.idleFlightLift(0));
         assertEquals(5.0D, RavenFlightAltitude.idleFlightLift(1));

@@ -80,6 +80,34 @@ The `.ogg` names were chosen to match the sound events in `MaledictSounds`, so
 
 ---
 
+## Sound effects — the Raven
+
+`assets/maledict/sounds/entity/raven/call_1.ogg` through `call_3.ogg`,
+`hurt_1.ogg`, `hurt_2.ogg`, `death_1.ogg` and `death_2.ogg` are
+adapted from **Common Raven.ogg**, recorded by **G. McGrane** in Acadia National Park,
+Maine, in 1996. The author dedicated this recording to the **public domain worldwide**
+through Wikimedia Commons' **PD-self** declaration. Where a public-domain dedication
+is not legally possible, the author grants anyone use for any purpose without conditions,
+except conditions required by law. No attribution is required.
+
+- Source and author's permission: <https://commons.wikimedia.org/wiki/File:Common_Raven.ogg>
+- Verified source revision: <https://commons.wikimedia.org/w/index.php?title=File:Common_Raven.ogg&oldid=866605535>
+- Retrieved: 2026-10-05. Original SHA-1: `5510722e428280528775b45c28f6f38c281fc761`.
+- Modifications: three excerpts (0.30–1.05 s, 2.05–2.80 s, 12.15–13.05 s), 120 Hz
+  high-pass, −3 dBFS peak normalisation, 10 ms fade-in and 60 ms fade-out, converted
+  to mono 44.1 kHz Ogg Vorbis (q5). No other sound sources were mixed in.
+- Hurt variants resample the first two excerpts at 1.12 / 1.08 times speed, with
+  45 ms fade-outs. Death variants resample the first and third excerpts at
+  0.78 / 0.82 times speed, with 220 / 250 ms fade-outs and −4 dBFS peaks.
+  These are edited game voices, not recordings of an injured or dying animal.
+- `step_1.ogg`, `step_2.ogg`, `fly_1.ogg` and `fly_2.ogg` are original procedural
+  foley made by this mod's script: filtered noise with claw taps or feather-brush
+  envelopes. No external source recording is used for those four files.
+- Original and reproducible processing: `art/raven/audio/` and
+  `art/raven/tools/make_raven_sfx.py` in the repository.
+
+---
+
 ## Fonts, sounds and textures
 
 Everything else under `assets/maledict/` is original to this mod. Some procedural textures are

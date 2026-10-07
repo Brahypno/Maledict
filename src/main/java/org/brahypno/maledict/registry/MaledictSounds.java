@@ -30,6 +30,17 @@ public final class MaledictSounds {
     public static final RegistryObject<SoundEvent> VICISSITUDE_MUSIC_PHASE_TWO =
             register("music.vicissitude.phase_two");
 
+    public static final RegistryObject<SoundEvent> RAVEN_AMBIENT =
+            register("entity.raven.ambient");
+    public static final RegistryObject<SoundEvent> RAVEN_HURT =
+            register("entity.raven.hurt");
+    public static final RegistryObject<SoundEvent> RAVEN_DEATH =
+            register("entity.raven.death");
+    public static final RegistryObject<SoundEvent> RAVEN_STEP =
+            register("entity.raven.step");
+    public static final RegistryObject<SoundEvent> RAVEN_FLY =
+            register("entity.raven.fly");
+
     /** 神侵恶刃：脱手（Rebound 投掷）。 */
     public static final RegistryObject<SoundEvent> INCURSUS_BLADE_THROW =
             register("item.incursus_blade.throw");
