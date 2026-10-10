@@ -3,12 +3,13 @@ import bpy
 import json
 import uuid
 import base64
+import sys
 from pathlib import Path
 from mathutils import Vector, Matrix
 BASIS = Matrix(((1,0,0),(0,0,1),(0,-1,0)))
 def jv(v): return BASIS.transposed() @ Vector(v)
 
-def export(root):
+def export(root, bounds_only=False):
 
     ROOT = Path(root)
     ART = ROOT / 'art/first-vicissitude'
@@ -37,7 +38,9 @@ def export(root):
             local = local @ Matrix.Diagonal((1/obj.scale.x,1/obj.scale.y,1/obj.scale.z,1))
         verts = [[round(c,5) for c in jv(local @ v.co)] for v in data.vertices]
         if joint.startswith('wing_'):
-            wing_bounds.setdefault(joint,[]).extend(verts)
+            # Phase-one collision must not include the concealed phase-two bone blades.
+            if 'deploy_scale' not in obj:
+                wing_bounds.setdefault(joint,[]).extend(verts)
             if 'shed_delay' not in obj:
                 bone_bounds.setdefault(joint,[]).extend(verts)
         faces = []
@@ -64,7 +67,8 @@ def export(root):
                       for v,l in zip(tri.vertices,tri.loops)},'texture':0}
         elements.append({'name':obj.name,'uuid':uid,'type':'mesh','origin':[0,0,0],
                          'vertices':bbverts,'faces':bbfaces,'visibility':True,'color':obj['material_index']})
-    (MESH/'first_vicissitude.mesh.json').write_text(json.dumps(result,separators=(',',':')))
+    if not bounds_only:
+        (MESH/'first_vicissitude.mesh.json').write_text(json.dumps(result,separators=(',',':')))
     bounds = []
     for joint,points in wing_bounds.items():
         values = [min(p[k] for p in points) for k in range(3)] + [max(p[k] for p in points) for k in range(3)]
@@ -90,6 +94,9 @@ public final class VicissitudeMeshGeometry {
 }
 '''
     (ROOT/'src/main/java/org/brahypno/maledict/rig/VicissitudeMeshGeometry.java').write_text(java)
+    if bounds_only:
+        print('Updated phase-specific wing bounds', flush=True)
+        return
     def group(data):
         name = data['name']
         p = pivots[name]
@@ -114,4 +121,4 @@ public final class VicissitudeMeshGeometry {
     print('MESH_REPORT',json.dumps(report),flush=True)
 
 if __name__ == '__main__':
-    export(Path(__file__).resolve().parents[3])
+    export(Path(__file__).resolve().parents[3], bounds_only='--bounds-only' in sys.argv)

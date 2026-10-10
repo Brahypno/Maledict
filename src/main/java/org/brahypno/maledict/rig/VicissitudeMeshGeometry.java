@@ -16,12 +16,12 @@ public final class VicissitudeMeshGeometry {
             new Bounds(Joint.WING_RIGHT_FEATHER_2, -14.39080F, -2.83826F, -2.00000F, 6.47401F, 31.16188F, 4.33344F),
             new Bounds(Joint.WING_RIGHT_FEATHER_3, -11.97753F, -3.94630F, -2.00000F, 6.90341F, 27.19744F, 4.65000F),
             new Bounds(Joint.WING_RIGHT_FEATHER_4, -12.06657F, -5.05004F, -2.00000F, 4.86451F, 14.28055F, 4.65000F),
-            new Bounds(Joint.WING_LEFT_UPPER, -1.14366F, -33.00303F, -1.98235F, 75.00356F, 45.00636F, 7.68133F),
-            new Bounds(Joint.WING_RIGHT_UPPER, -75.00356F, -33.00303F, -1.98235F, 1.14366F, 45.00636F, 7.68133F),
+            new Bounds(Joint.WING_LEFT_UPPER, -1.14366F, -4.23329F, -1.98235F, 16.00521F, 22.04742F, 7.00000F),
             new Bounds(Joint.WING_LEFT_OUTER, -7.05332F, 1.81233F, 3.00000F, 4.81119F, 27.04182F, 5.00000F),
+            new Bounds(Joint.WING_RIGHT_UPPER, -16.00521F, -4.23329F, -1.98235F, 1.14366F, 22.04742F, 7.00000F),
             new Bounds(Joint.WING_RIGHT_OUTER, -4.81119F, 1.81233F, 3.00000F, 7.05332F, 27.04182F, 5.00000F));
     public static final List<Bounds> BONE_WINGS = List.of(
-            new Bounds(Joint.WING_LEFT_UPPER, -1.14366F, -33.00303F, -1.98235F, 75.00356F, 45.00636F, 7.68133F),
-            new Bounds(Joint.WING_RIGHT_UPPER, -75.00356F, -33.00303F, -1.98235F, 1.14366F, 45.00636F, 7.68133F));
+            new Bounds(Joint.WING_LEFT_UPPER, -1.14366F, -39.60363F, -1.98235F, 90.00426F, 54.00763F, 7.68133F),
+            new Bounds(Joint.WING_RIGHT_UPPER, -90.00426F, -39.60363F, -1.98235F, 1.14366F, 54.00763F, 7.68133F));
     private VicissitudeMeshGeometry() {}
 }

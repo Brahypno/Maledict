@@ -18,6 +18,7 @@ import net.minecraft.world.item.ItemStack;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.model.FirstVicissitudeBossModel;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.rite.VicissitudeSummoning;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.rig.VicissitudeRigData;
 
@@ -33,13 +34,21 @@ public final class FirstVicissitudeBossRenderer
     public static final ResourceLocation EMISSIVE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "textures/entity/first_vicissitude_emissive.png");
     /** 视锥剔除的放宽量：最大翼展的一半加上环，免得大翅膀在屏幕边缘被剔掉。 */
-    private static final double CULL_INFLATE = 4.5D;
+    private static final double CULL_INFLATE = 6.0D;
 
     public FirstVicissitudeBossRenderer(EntityRendererProvider.Context context) {
         super(context, new FirstVicissitudeBossModel(context.bakeLayer(LAYER)), 1.6F);
         addLayer(new EmissiveLayer(this));
         addLayer(new FirstVicissitudeChestCrystalLayer(this, context));
         addLayer(new WeaponLayer(this));
+    }
+
+    @Override
+    public void render(FirstVicissitudeBossEntity entity, float yaw, float partialTick,
+                       PoseStack poseStack, MultiBufferSource buffers, int light) {
+        if (entity.isRiteSummoning()
+                && entity.getSummoningTicks(partialTick) < VicissitudeSummoning.OPEN_TICKS) return;
+        super.render(entity, yaw, partialTick, poseStack, buffers, light);
     }
 
     @Override

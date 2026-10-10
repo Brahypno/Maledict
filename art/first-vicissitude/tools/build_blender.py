@@ -8,9 +8,11 @@ import bmesh
 import json
 import math
 import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).parent))
 from preview_paths import DIAGNOSTICS, image_target
+from enlarge_bone_wings import BONE_REACH_SCALE, expanded_local
 from mathutils import Vector, Matrix, Euler
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -416,6 +418,10 @@ for s,label in [(1,'left'),(-1,'right')]:
             verts=[verts[i] for i in used]
             topology=('spur_sheet',used)
         obj=mesh(name+' '+label,prefix+'upper',verts,faces,8,uvs,topology)
+        for vertex in obj.data.vertices:
+            vertex.co = expanded_local(vertex.co)
+        obj.data.update()
+        obj['bone_reach_scale'] = BONE_REACH_SCALE
         if short: obj['thin_spur']=True
         obj['deploy_scale']=.45
         return obj
@@ -545,6 +551,10 @@ for frame,name in [(1,'phase_one'),(41,'phase_two'),(81,'death_reveal')]:
             scale=obj['deploy_scale'] if name=='phase_one' else 1
             obj.scale=(scale,scale,scale)
             obj.keyframe_insert('scale',frame=frame)
+            obj.hide_render=name=='phase_one'
+            obj.hide_viewport=name=='phase_one'
+            obj.keyframe_insert('hide_render',frame=frame)
+            obj.keyframe_insert('hide_viewport',frame=frame)
         if 'shed_delay' in obj:
             obj.hide_render=name!='phase_one'
             obj.hide_viewport=name!='phase_one'

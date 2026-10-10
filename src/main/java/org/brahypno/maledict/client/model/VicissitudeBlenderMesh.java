@@ -103,6 +103,9 @@ final class VicissitudeBlenderMesh {
         for (var part : parts) {
             List<Triangle> triangles = emissivePass ? part.emissive : part.triangles;
             if (triangles.isEmpty()) continue;
+            float deployment = part.deployScale < 1
+                    ? VicissitudeFeatherShed.deployment(model.sheddingTicks()) : 1;
+            if (deployment <= 0) continue;
             float elapsed = part.delay < 0 ? 0 : VicissitudeFeatherShed.elapsed(model.sheddingTicks(),part.delay);
             if (elapsed >= VicissitudeFeatherShed.FALL_TICKS) continue;
             stack.pushPose();
@@ -119,10 +122,7 @@ final class VicissitudeBlenderMesh {
                 stack.translate(-part.center.x,-part.center.y,-part.center.z);
             } else model.poseStackTo(part.joint, stack);
             if (part.deployScale < 1) {
-                float progress = Math.max(0, Math.min(1, (model.sheddingTicks()-8)/36F));
-                progress = progress*progress*(3-2*progress);
-                float scale = part.deployScale+(1-part.deployScale)*progress;
-                stack.scale(scale,scale,scale);
+                stack.scale(deployment, deployment, deployment);
             }
             var pose = stack.last();
             for (Triangle triangle : triangles) {

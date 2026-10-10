@@ -1,6 +1,7 @@
 package org.brahypno.maledict.common.entity;
 
 import com.sammy.malum.core.helpers.ParticleHelper;
+import com.sammy.malum.common.block.curiosities.totem.TotemBaseBlockEntity;
 import com.sammy.malum.registry.common.DamageTypeRegistry;
 import com.sammy.malum.registry.common.ParticleEffectTypeRegistry;
 import com.sammy.malum.registry.common.SoundRegistry;
@@ -46,6 +47,8 @@ import org.brahypno.maledict.common.curio.VicissitudeCurioLedger;
 import org.brahypno.maledict.common.curio.VicissitudeCurioReturns;
 import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
+import org.brahypno.maledict.common.rite.VicissitudeSummoning;
+import org.brahypno.maledict.common.rite.VicissitudeTotemConsumption;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.network.VicissitudeEffectPacket;
@@ -109,6 +112,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private static final EntityDataAccessor<Byte> DATA_STAGE =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Long> DATA_SUMMON_START =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<BlockPos> DATA_SUMMON_LANDING =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BLOCK_POS);
+    private static final EntityDataAccessor<Float> DATA_SUMMON_RISE =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Byte> DATA_ACTION =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> DATA_ACTIVE_SIDE =
@@ -199,6 +208,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private float committedPitch;
     private boolean scytheRecoveryPending;
     private int actionSequence;
+    @Nullable
+    private VicissitudeTotemConsumption summoningTotem;
     private int hurtTicks;
     private int transitionTicks;
     private int phaseOneTicks;
@@ -335,6 +346,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     protected void defineSynchedData() {
         super.defineSynchedData();
         entityData.define(DATA_STAGE, (byte) VicissitudeBossStage.DORMANT.ordinal());
+        entityData.define(DATA_SUMMON_START, -1L);
+        entityData.define(DATA_SUMMON_LANDING, BlockPos.ZERO);
+        entityData.define(DATA_SUMMON_RISE, 0.0F);
         entityData.define(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
         entityData.define(DATA_ACTIVE_SIDE, (byte) 0);
         entityData.define(DATA_WEAPON_STATE, (byte) 0);
@@ -434,6 +448,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     public float getWingFold() {
         return entityData.get(DATA_WING_FOLD);
+    }
+
+    public float getWingFold(float partialTick) {
+        return isRiteSummoning() ? VicissitudeSummoning.wingFold(getSummoningTicks(partialTick))
+                : getWingFold();
     }
 
     public float getDeathTicks() {
@@ -567,6 +586,14 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     public void tick() {
         setNoGravity(true);
+        if (!level().isClientSide && getHealth() > 0.0F
+                && entityData.get(DATA_SUMMON_START) >= 0L && !isRiteSummoning()) {
+            // Finish at the destination before AI resumes, also after an unloaded chunk returns.
+            tickRiteSummoning();
+            idleHoverY = getY();
+            entityData.set(DATA_SUMMON_START, -1L);
+            summoningTotem = null;
+        }
         super.tick();
         if (level().isClientSide){
             return;
@@ -575,6 +602,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         bossEvent.setName(getDisplayName());
         bossEvent.setProgress(Mth.clamp(getHealth() / getMaxHealth(), 0.0F, 1.0F));
         if (getHealth() <= 0.0F){
+            return;
+        }
+        if (isRiteSummoning()) {
+            tickRiteSummoning();
             return;
         }
         tickFacing();
@@ -592,6 +623,74 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         refreshPose();
         tickWingCollision();
         tickUnstick();
+    }
+
+    /** The existing free spawn position is the destination; check the entire vertical entrance. */
+    public void beginRiteSummoning(TotemBaseBlockEntity totem) {
+        summoningTotem = VicissitudeTotemConsumption.capture(totem);
+        BlockPos landing = blockPosition();
+        float rise = 0.0F;
+        for (int candidate = 9; candidate >= 1; candidate--) {
+            if (getY() + candidate + getBbHeight() >= level().getMaxBuildHeight()) continue;
+            if (level().noCollision(this, getBoundingBox().expandTowards(0, candidate, 0))) {
+                rise = candidate;
+                break;
+            }
+        }
+        entityData.set(DATA_SUMMON_LANDING, landing);
+        entityData.set(DATA_SUMMON_RISE, rise);
+        entityData.set(DATA_SUMMON_START, level().getGameTime());
+        setPos(getX(), landing.getY() + rise, getZ());
+        setDeltaMovement(Vec3.ZERO);
+        wingFold = 1.0F;
+        entityData.set(DATA_WING_FOLD, wingFold);
+    }
+
+    public boolean isRiteSummoning() {
+        return entityData.get(DATA_SUMMON_START) >= 0L
+                && getSummoningTicks(0) < VicissitudeSummoning.DURATION;
+    }
+
+    public float getSummoningTicks(float partialTick) {
+        long start = entityData.get(DATA_SUMMON_START);
+        return start < 0 ? VicissitudeSummoning.DURATION
+                : Math.max(0, level().getGameTime() - start + partialTick);
+    }
+
+    public Vec3 getSummoningPortal() {
+        BlockPos landing = entityData.get(DATA_SUMMON_LANDING);
+        float rise = entityData.get(DATA_SUMMON_RISE);
+        // A low ceiling keeps the portal above the head instead of cutting across the body.
+        return new Vec3(landing.getX() + 0.5D,
+                landing.getY() + Math.max(rise, getBbHeight() + 0.3D), landing.getZ() + 0.5D);
+    }
+
+    private void tickRiteSummoning() {
+        float ticks = getSummoningTicks(0);
+        if (summoningTotem != null && level() instanceof ServerLevel serverLevel) {
+            summoningTotem.tick(serverLevel, ticks, (index, position) ->
+                    sendEvent(VicissitudeEffectPacket.EVENT_SUMMON_CONSUME, index, position));
+        }
+        BlockPos landing = entityData.get(DATA_SUMMON_LANDING);
+        setPos(landing.getX() + 0.5D,
+                landing.getY() + entityData.get(DATA_SUMMON_RISE)
+                        * (1.0F - VicissitudeSummoning.descent(ticks)), landing.getZ() + 0.5D);
+        setDeltaMovement(Vec3.ZERO);
+        getNavigation().stop();
+        wingFold = VicissitudeSummoning.wingFold(ticks);
+        entityData.set(DATA_WING_FOLD, wingFold);
+        refreshPose();
+        if (ticks == 1) {
+            sendEvent(VicissitudeEffectPacket.EVENT_SUMMON_OPEN, getSummoningPortal());
+            playSound(SoundRegistry.SOUL_SHATTER.get(), 1.8F, 0.45F);
+        } else if (ticks == VicissitudeSummoning.OPEN_TICKS) {
+            sendEvent(VicissitudeEffectPacket.EVENT_SUMMON_EMERGE, getSummoningPortal());
+            playSound(net.minecraft.sounds.SoundEvents.END_PORTAL_SPAWN, 1.4F, 0.6F);
+        } else if (ticks == VicissitudeSummoning.ARRIVAL_TICK) {
+            sendEvent(VicissitudeEffectPacket.EVENT_SUMMON_ARRIVE, position());
+            playSound(SoundRegistry.SOUL_SHATTER.get(), 2.0F, 0.65F);
+            idleHoverY = getY();
+        }
     }
 
     private record FacingAim(Vec3 point, double eyeY) {
@@ -1835,7 +1934,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         float ticks = Math.max(0.0F, getActionTicks(partialTick));
         VicissitudeRig.compute(renderPose, isPhaseTwoVisual(),
                                getPhaseTwoBlend(), getRenderAction(), ticks, isActionLeft(), getHurtTicks(),
-                               level().getGameTime() + partialTick, getWingFold(), death);
+                               level().getGameTime() + partialTick, getWingFold(partialTick), death);
         applyHeadLook(renderPose, getRenderAction(), death,
                       Mth.rotLerp(partialTick, yHeadRotO, yHeadRot)
                       - Mth.rotLerp(partialTick, yBodyRotO, yBodyRot),
@@ -2216,6 +2315,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Override
     protected boolean isDamageImmune(DamageSource source) {
+        if (isRiteSummoning()) return true;
         if (stage == VicissitudeBossStage.TRANSITION || getHealth() <= 0.0F){
             return true;
         }
@@ -2236,6 +2336,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     /** Vanilla-style aggro, no line of sight needed; hitting the DORMANT idol starts phase one. */
     @Override
     protected void onIncomingAttack(DamageSource source, float amount) {
+        if (isRiteSummoning()) return;
         LivingEntity attacker = resolveLivingAttacker(source);
         if (isPhaseTwo()){
             LivingEntity owner = ownerOf(attacker);
@@ -2347,11 +2448,15 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void sendEvent(int eventId, Vec3 position) {
+        sendEvent(eventId, actionSequence, position);
+    }
+
+    private void sendEvent(int eventId, int sequence, Vec3 position) {
         if (!(level() instanceof ServerLevel serverLevel)){
             return;
         }
         VicissitudeEffectPacket packet = new VicissitudeEffectPacket(getId(), eventId,
-                                                                     actionSequence, position);
+                                                                     sequence, position);
         for (ServerPlayer player : serverLevel.players()) {
             if (player.distanceToSqr(position) < 96.0D * 96.0D){
                 MaledictNetwork.sendEffect(player, packet);
@@ -2717,6 +2822,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        if (entityData.get(DATA_SUMMON_START) >= 0L) {
+            tag.putLong("RiteSummonStart", entityData.get(DATA_SUMMON_START));
+            tag.put("RiteSummonLanding", NbtUtils.writeBlockPos(entityData.get(DATA_SUMMON_LANDING)));
+            tag.putFloat("RiteSummonRise", entityData.get(DATA_SUMMON_RISE));
+            if (summoningTotem != null) tag.put("RiteSummonTotem", summoningTotem.save());
+        }
         tag.putByte("VicissitudeStage", (byte) stage.ordinal());
         tag.putBoolean("PhaseTwoReached", phaseTwoReached);
         tag.putInt("PhaseOneTicks", phaseOneTicks);
@@ -2752,6 +2863,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        if (tag.contains("RiteSummonStart", Tag.TAG_LONG)) {
+            entityData.set(DATA_SUMMON_START, tag.getLong("RiteSummonStart"));
+            entityData.set(DATA_SUMMON_LANDING, NbtUtils.readBlockPos(tag.getCompound("RiteSummonLanding")));
+            entityData.set(DATA_SUMMON_RISE, tag.getFloat("RiteSummonRise"));
+            if (tag.contains("RiteSummonTotem", Tag.TAG_COMPOUND)
+                    && level() instanceof ServerLevel serverLevel) {
+                summoningTotem = VicissitudeTotemConsumption.load(serverLevel,
+                        tag.getCompound("RiteSummonTotem"));
+            }
+        }
         boolean hasStage = tag.contains("VicissitudeStage", Tag.TAG_BYTE);
         String savedDifficulty = tag.contains("VicissitudeDifficulty", Tag.TAG_STRING)
                                  ? tag.getString("VicissitudeDifficulty")
@@ -3030,6 +3151,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
         @Override
         public void tick() {
+            if (boss.isRiteSummoning()) {
+                boss.setDeltaMovement(Vec3.ZERO);
+                boss.getNavigation().stop();
+                return;
+            }
             boss.tickBarrageWaves();
             boss.tickGroundMarkerWindup();
             switch (boss.stage) {

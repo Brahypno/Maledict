@@ -15,9 +15,9 @@ Both tracks are used under licences that require **no attribution**. They are cr
 because a CC0 badge is only as strong as the uploader's right to apply it, and because anyone
 auditing this mod later should be able to trace where the audio came from without guessing.
 
-| In-game | File | Source work | Author / performer | Licence | Retrieved |
-| --- | --- | --- | --- | --- | --- |
-| Phase one | `assets/maledict/sounds/music/vicissitude_phase_one.ogg` | *Fantasy Choir* (track 2 of 3) | cesisco / César da Rocha — <https://opengameart.org/content/fantasy-choir-3-orchestral-pieces> | **CC0 1.0** | 2026-09-27 |
+| In-game   | File                                                     | Source work                                          | Author / performer                                                                                                                                                    | Licence                                        | Retrieved  |
+|-----------|----------------------------------------------------------|------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------|------------|
+| Phase one | `assets/maledict/sounds/music/vicissitude_phase_one.ogg` | *Fantasy Choir* (track 2 of 3)                       | cesisco / César da Rocha — <https://opengameart.org/content/fantasy-choir-3-orchestral-pieces>                                                                        | **CC0 1.0**                                    | 2026-09-27 |
 | Phase two | `assets/maledict/sounds/music/vicissitude_phase_two.ogg` | *Danse macabre*, Op. 40 — Camille Saint-Saëns (1874) | Philadelphia Symphony Orchestra, cond. Leopold Stokowski, rec. 29 Apr 1925 — <https://commons.wikimedia.org/wiki/File:PhiladelphiaSymphonyOrchestra-DanseMacabre.ogg> | **Public domain** (`{{PD-US-record-expired}}`) | 2026-09-27 |
 
 ### Modifications made
@@ -46,13 +46,13 @@ waiver, not a licence with conditions; `Dull thud` is public domain); they are c
 the same reason as the music: so anyone auditing this mod can trace every byte back to its source.
 Every source page was read on 2026-09-27.
 
-| In-game | File | Source work | Author | Licence | Source |
-| --- | --- | --- | --- | --- | --- |
-| Throw | `sounds/item/incursus_blade/throw.ogg` | *megaswosh1*, *bing1* | qubodup (Iwan Gabovitch); BMacZero (Brian MacIntosh) | **CC0 1.0** | [wind-hit-time-morph](https://opengameart.org/content/wind-hit-time-morph), [metal-impact-sounds](https://opengameart.org/content/metal-impact-sounds) |
-| Recall | `sounds/item/incursus_blade/recall.ogg` | *slomo1*, *bing1* | qubodup (Iwan Gabovitch); BMacZero (Brian MacIntosh) | **CC0 1.0** | [wind-hit-time-morph](https://opengameart.org/content/wind-hit-time-morph), [metal-impact-sounds](https://opengameart.org/content/metal-impact-sounds) |
-| Ascension | `sounds/item/incursus_blade/ascension.ogg` | *teleport*, *short wind sound*, *magical_7* | Ogrebane; remaxim; JaggedStone | **CC0 1.0** | [teleport-spell](https://opengameart.org/content/teleport-spell), [short-wind-sound](https://opengameart.org/content/short-wind-sound), [magic-spell-sfx](https://opengameart.org/content/magic-spell-sfx) |
-| Attack | `sounds/item/incursus_blade/slash.ogg` | *sword sound*, *swish-13*, *knifeSlice* | remaxim; artisticdude; Kenney.nl | **CC0 1.0** | [3-melee-sounds](https://opengameart.org/content/3-melee-sounds), [swishes-sound-pack](https://opengameart.org/content/swishes-sound-pack), [50 RPG sound effects](https://opengameart.org/content/50-rpg-sound-effects) |
-| Critical hit | `sounds/item/incursus_blade/crit.ogg` | *sword_clash.1*, *sword-knife-clash-07*, *bong1*, *Dull thud* | StarNinjas; Vehicle (Jan Schupke); BMacZero (Brian MacIntosh); gregoryweir | **CC0 1.0** / **Public domain** | [20 sword SFX](https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes), [Fantasy Weapons and Apparel SFX Library](https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library), [metal-impact-sounds](https://opengameart.org/content/metal-impact-sounds), [Dull thud](https://commons.wikimedia.org/wiki/File:Dull_thud.ogg) |
+| In-game      | File                                       | Source work                                                   | Author                                                                     | Licence                         | Source                                                                                                                                                                                                                                                                                                                                                         |
+|--------------|--------------------------------------------|---------------------------------------------------------------|----------------------------------------------------------------------------|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Throw        | `sounds/item/incursus_blade/throw.ogg`     | *megaswosh1*, *bing1*                                         | qubodup (Iwan Gabovitch); BMacZero (Brian MacIntosh)                       | **CC0 1.0**                     | [wind-hit-time-morph](https://opengameart.org/content/wind-hit-time-morph), [metal-impact-sounds](https://opengameart.org/content/metal-impact-sounds)                                                                                                                                                                                                         |
+| Recall       | `sounds/item/incursus_blade/recall.ogg`    | *slomo1*, *bing1*                                             | qubodup (Iwan Gabovitch); BMacZero (Brian MacIntosh)                       | **CC0 1.0**                     | [wind-hit-time-morph](https://opengameart.org/content/wind-hit-time-morph), [metal-impact-sounds](https://opengameart.org/content/metal-impact-sounds)                                                                                                                                                                                                         |
+| Ascension    | `sounds/item/incursus_blade/ascension.ogg` | *teleport*, *short wind sound*, *magical_7*                   | Ogrebane; remaxim; JaggedStone                                             | **CC0 1.0**                     | [teleport-spell](https://opengameart.org/content/teleport-spell), [short-wind-sound](https://opengameart.org/content/short-wind-sound), [magic-spell-sfx](https://opengameart.org/content/magic-spell-sfx)                                                                                                                                                     |
+| Attack       | `sounds/item/incursus_blade/slash.ogg`     | *sword sound*, *swish-13*, *knifeSlice*                       | remaxim; artisticdude; Kenney.nl                                           | **CC0 1.0**                     | [3-melee-sounds](https://opengameart.org/content/3-melee-sounds), [swishes-sound-pack](https://opengameart.org/content/swishes-sound-pack), [50 RPG sound effects](https://opengameart.org/content/50-rpg-sound-effects)                                                                                                                                       |
+| Critical hit | `sounds/item/incursus_blade/crit.ogg`      | *sword_clash.1*, *sword-knife-clash-07*, *bong1*, *Dull thud* | StarNinjas; Vehicle (Jan Schupke); BMacZero (Brian MacIntosh); gregoryweir | **CC0 1.0** / **Public domain** | [20 sword SFX](https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes), [Fantasy Weapons and Apparel SFX Library](https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library), [metal-impact-sounds](https://opengameart.org/content/metal-impact-sounds), [Dull thud](https://commons.wikimedia.org/wiki/File:Dull_thud.ogg) |
 
 ### Modifications made
 
@@ -107,11 +107,3 @@ except conditions required by law. No attribution is required.
   `art/raven/tools/make_raven_sfx.py` in the repository.
 
 ---
-
-## Fonts, sounds and textures
-
-Everything else under `assets/maledict/` is original to this mod. Some procedural textures are
-produced by scripts kept in `art/`; those scripts and their output are original work.
-
-Boss bar textures are generated by `art/first-vicissitude/tools/make_boss_bar.py`. The current set is
-placeholder "programmer art"; replacing it does not change any licence recorded here.

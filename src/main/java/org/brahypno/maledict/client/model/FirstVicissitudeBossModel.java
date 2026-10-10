@@ -117,7 +117,7 @@ public final class FirstVicissitudeBossModel
         // 与特效锚点采同一个时钟和姿势，不随渲染频率变化。
         float partialTick = net.minecraft.util.Mth.clamp(ageInTicks - entity.tickCount, 0.0F, 1.0F);
         renderAge = entity.level().getGameTime() + partialTick;
-        renderWingFold = entity.getWingFold();
+        renderWingFold = entity.getWingFold(partialTick);
         float blend = entity.getPhaseTwoBlend();
         sheddingTicks = blend * FirstVicissitudeBossEntity.TRANSITION_TICKS;
         if (blend > 0 && blend < 1) sheddingTicks += partialTick;

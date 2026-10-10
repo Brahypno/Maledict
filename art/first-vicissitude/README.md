@@ -18,6 +18,8 @@ Blender 导出器输出。旧 `RigArtGenerator.java` 是早期方块预览工具
   采用真实收尖、曲面残环和羽片缺口，故从仅支持 cube 的 modded_entity 格式改为 free mesh。
   运行时仍使用原版 HierarchicalModel/ModelPart 动画，不增加 GeckoLib。
 - `tools/build_blender.py`、`tools/export_blender.py`、`tools/review_blender.py`：重建造型、导出资产、生成检查图。
+- `tools/enlarge_bone_wings.py`：二阶段骨翼外段增加 20% 伸展幅度，翼根附近 8 模型单位保留。
+  重建器共用同一变形函数；保存工程、运行时网格、Blockbench 与二阶段碰撞范围已同步。
 - `boss-bar/`：独立制作的晶体头肩甲血条图稿、完整提示词与尺寸约定；
   `tools/make_boss_bar.py` 打包两阶段 256×16 底条与 256×32 装饰层，检查图输出到 `build/`。
 - `tools/body_surfaces.py`、`tools/wing_surfaces.py`、`tools/ring_surfaces.py`、`tools/relic_surfaces.py`、
@@ -25,7 +27,7 @@ Blender 导出器输出。旧 `RigArtGenerator.java` 是早期方块预览工具
 - `tools/lower_surfaces.py`：下腹与祭衣的高密度表面绘制及 UV 分配；旧图集原密度保留，新增区域独立绘制。
 - `tools/head_surfaces.py`：八片晶壳各 96×96 的独立原生图稿，分别编排主曲线、层叠环线、菱形符印、分枝与卷纹，保留不同的留白和金紫比例；所有纹饰均为 1 像素宽。
 - [preview/index.html](preview/index.html)：唯一预览入口，仅四张图：一阶段整体、二阶段整体、
-  头部复合纹饰调整前、调整后近景。均为离线渲染，**不是游戏截图**。
+  骨翼加大前、加大后同机位对照。均为离线渲染，**不是游戏截图**。
 - `build/first-vicissitude-review/`（仓库根目录下）：技术检查产物，包括其他视角、无灯光图、
   UV 线稿、图集布局和验证报告。由工具重建，不放进用户预览目录。
 - `../../src/main/resources/assets/maledict/models/entity/first_vicissitude.mesh.json`：游戏实际加载的网格。

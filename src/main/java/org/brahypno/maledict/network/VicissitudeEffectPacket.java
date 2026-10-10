@@ -21,6 +21,10 @@ public record VicissitudeEffectPacket(int entityId, int eventId, int actionSeque
     public static final int EVENT_SCYTHE_CATCH = 4;
     public static final int EVENT_HEAVY_IMPACT = 5;
     public static final int EVENT_DEATH_EXTINGUISH = 6;
+    public static final int EVENT_SUMMON_OPEN = 7;
+    public static final int EVENT_SUMMON_EMERGE = 8;
+    public static final int EVENT_SUMMON_ARRIVE = 9;
+    public static final int EVENT_SUMMON_CONSUME = 10;
 
     public static void encode(VicissitudeEffectPacket packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.entityId);

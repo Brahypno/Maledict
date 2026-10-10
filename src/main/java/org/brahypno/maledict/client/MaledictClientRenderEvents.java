@@ -10,6 +10,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.vfx.FirstVicissitudeEffects;
+import org.brahypno.maledict.client.vfx.VicissitudeSummoningEffects;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public final class MaledictClientRenderEvents {
         ClientLevel level = Minecraft.getInstance().level;
         LocalPlayer player = Minecraft.getInstance().player;
         if (level == null || player == null || Minecraft.getInstance().isPaused()) {
+            if (level == null || player == null) VicissitudeSummoningEffects.clear();
             // 空表 = 这一 tick 没有正在打的无常，音乐随之淡出（暂停、读盘、退世界都走这里）。
             VicissitudeBossMusic.tick(BOSSES);
             return;
@@ -55,6 +57,7 @@ public final class MaledictClientRenderEvents {
             }
         }
         VicissitudeBossMusic.tick(BOSSES);
+        VicissitudeSummoningEffects.tick(BOSSES);
         FirstVicissitudeEffects.tickGroundMarkers(MARKERS);
     }
 

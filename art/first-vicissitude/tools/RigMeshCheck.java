@@ -44,9 +44,9 @@ public final class RigMeshCheck {
                         var volumes = VicissitudeRig.segmentVolumes(pose, 10, 64, -23, yaw);
                         for (Sample sample : points) {
                             if (phase == 1 && sample.feather) continue;
-                            float scale=phase==0 ? sample.deployScale : 1;
-                            var p = VicissitudeRig.worldPoint(pose, sample.joint, sample.x*scale, sample.y*scale,
-                                    sample.z*scale, 10, 64, -23, yaw);
+                            if (phase == 0 && sample.deployScale < 1) continue;
+                            var p = VicissitudeRig.worldPoint(pose, sample.joint, sample.x, sample.y,
+                                    sample.z, 10, 64, -23, yaw);
                             boolean inside = volumes.stream().anyMatch(v -> v.segment().isWing()
                                     && v.box().inflate(.00002).contains(p.x(), p.y(), p.z()));
                             if (!inside) throw new AssertionError("Mesh outside wing collision: "

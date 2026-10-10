@@ -13,4 +13,9 @@ public final class VicissitudeFeatherShed {
     public static float drop(float elapsed) {
         return .028F * elapsed * elapsed;
     }
+    /** Bone blades belong to the transition and phase two, never the feathered idle silhouette. */
+    public static float deployment(float transitionTick) {
+        float t = Math.max(0, Math.min(1, (transitionTick - 8) / 36.0F));
+        return t * t * (3 - 2 * t);
+    }
 }

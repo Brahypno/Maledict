@@ -123,7 +123,7 @@ public final class SummoningRite {
         return null;
     }
 
-    /** Creates the configured entity above the totem, in the same tick the rite resolves. */
+    /** Creates the configured entity; Vicissitude enters through a suspended rift. */
     static void summon(TotemBaseBlockEntity totem, ServerLevel level, BossDifficulty difficulty) {
         if (!MaledictConfig.SUMMONING_RITE.get()) {
             return;
@@ -152,6 +152,11 @@ public final class SummoningRite {
             // Every candidate was blocked; a rite that promises uncontrolled creation must not
             // quietly do nothing, and the encounter brings its own unstick search.
             created.moveTo(x, base.getY() + SUMMON_HEIGHTS[0], z, yaw, 0.0F);
+        }
+        if (created instanceof FirstVicissitudeBossEntity boss) {
+            boss.beginRiteSummoning(totem);
+            level.addFreshEntity(boss);
+            return;
         }
         level.addFreshEntity(created);
         level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, created.getX(),

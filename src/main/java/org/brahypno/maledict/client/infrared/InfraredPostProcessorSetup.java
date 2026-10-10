@@ -5,6 +5,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.client.vfx.VicissitudeSummoningPostProcessor;
 import team.lodestar.lodestone.systems.postprocess.PostProcessHandler;
 
 /**
@@ -15,7 +16,10 @@ import team.lodestar.lodestone.systems.postprocess.PostProcessHandler;
 public final class InfraredPostProcessorSetup {
     @SubscribeEvent
     public static void registerPostProcessor(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> PostProcessHandler.addInstance(InfraredPostProcessor.INSTANCE));
+        event.enqueueWork(() -> {
+            PostProcessHandler.addInstance(InfraredPostProcessor.INSTANCE);
+            PostProcessHandler.addInstance(VicissitudeSummoningPostProcessor.INSTANCE);
+        });
     }
 
     private InfraredPostProcessorSetup() {
