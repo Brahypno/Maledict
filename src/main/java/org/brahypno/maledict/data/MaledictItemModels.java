@@ -34,6 +34,8 @@ public final class MaledictItemModels extends ItemModelProvider {
 
         registerAgeOfEnlightenmentModel();
 
+        basicItem(MaledictItems.BLEEDING_EYE.get());
+
         getBuilder("curio_return_token")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", modLoc("item/curio_return_token"));

@@ -1,4 +1,9 @@
 {
+  "rewards": {
+    "loot": [
+      "maledict:rewards/wisdom_sacrifice"
+    ]
+  },
   "criteria": {
     "impossible": {
       "trigger": "minecraft:impossible"

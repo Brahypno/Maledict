@@ -125,6 +125,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
             add("entity.maledict.first_vicissitude", "无常(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "启蒙之年");
+            addItem(MaledictItems.BLEEDING_EYE, "流血之眼");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "保管凭证");
             addItem(MaledictItems.MALIGNANT_PEWTER_TABLET, "恶念白镴符板");
             addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG, "无常刷怪蛋（一阶段）");
@@ -394,6 +395,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("attribute.name.maledict.powder_snow_damage", "Freezing Damage");
             add("entity.maledict.first_vicissitude", "Vicissitude(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "Age of Enlightenment");
+            addItem(MaledictItems.BLEEDING_EYE, "Bleeding Eye");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "Custody Token");
             addItem(MaledictItems.MALIGNANT_PEWTER_TABLET, "Malignant Pewter Tablet");
             addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG, "Vicissitude Spawn Egg (Phase One)");
