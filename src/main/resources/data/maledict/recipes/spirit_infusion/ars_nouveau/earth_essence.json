@@ -1,0 +1,23 @@
+{
+  "type": "malum:spirit_infusion",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "ars_nouveau"
+    }
+  ],
+  "extra_items": [],
+  "input": {
+    "count": 1,
+    "item": "ars_nouveau:source_gem"
+  },
+  "output": {
+    "item": "ars_nouveau:earth_essence"
+  },
+  "spirits": [
+    {
+      "type": "earthen",
+      "count": 3
+    }
+  ]
+}
