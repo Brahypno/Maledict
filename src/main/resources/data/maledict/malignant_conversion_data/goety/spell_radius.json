@@ -1,0 +1,11 @@
+{
+  "source_attribute": "goety:spell_radius",
+  "ratio": 0.5,
+  "ignore_base_value": true,
+  "target_attributes": [
+    {
+      "attribute": "minecraft:generic.armor",
+      "ratio": 3
+    }
+  ]
+}

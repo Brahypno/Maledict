@@ -1,0 +1,11 @@
+{
+  "source_attribute": "goety:void_potency",
+  "ratio": 0.5,
+  "ignore_base_value": true,
+  "target_attributes": [
+    {
+      "attribute": "minecraft:generic.movement_speed",
+      "ratio": 0.025
+    }
+  ]
+}

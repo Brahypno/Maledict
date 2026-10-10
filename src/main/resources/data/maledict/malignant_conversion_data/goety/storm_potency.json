@@ -1,0 +1,11 @@
+{
+  "source_attribute": "goety:storm_potency",
+  "ratio": 0.5,
+  "ignore_base_value": true,
+  "target_attributes": [
+    {
+      "attribute": "minecraft:generic.attack_speed",
+      "ratio": 0.25
+    }
+  ]
+}

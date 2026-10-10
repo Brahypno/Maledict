@@ -1,0 +1,11 @@
+{
+  "source_attribute": "goety:nether_potency",
+  "ratio": 0.5,
+  "ignore_base_value": true,
+  "target_attributes": [
+    {
+      "attribute": "minecraft:generic.attack_damage",
+      "ratio": 2
+    }
+  ]
+}

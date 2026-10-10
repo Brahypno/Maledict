@@ -1,0 +1,11 @@
+{
+  "source_attribute": "goety:spell_duration",
+  "ratio": 0.5,
+  "ignore_base_value": true,
+  "target_attributes": [
+    {
+      "attribute": "minecraft:generic.max_health",
+      "ratio": 2
+    }
+  ]
+}
