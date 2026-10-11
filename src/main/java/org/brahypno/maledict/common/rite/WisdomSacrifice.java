@@ -10,6 +10,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.MobEffectEvent;
+import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
@@ -24,7 +25,7 @@ import java.util.UUID;
 /**
  * 「智慧的牺牲」：没有图标、不进进度树的那一枚成就，同时兼任两个凭据——仪式不再选中你，以及那两枚
  * 额外栏位。数据在 {@code data/maledict/advancements/wisdom_sacrifice.json}，判据是 {@code impossible}，
- * 只能由这里发。
+ * 仪式由这里发放成就；额外栏位在获得成就时发放，包括指令授予。
  *
  * <h2>发放条件：印记得是仪式按的，而且真的自然到期</h2>
  * 只认「{@code maledict:sacrifice} 到期」是不够的：{@code /effect give}、别的模组的随机效果、清洗与
@@ -118,7 +119,7 @@ public final class WisdomSacrifice {
         return advancement != null && player.getAdvancements().getOrStartProgress(advancement).isDone();
     }
 
-    /** 发成就与两枚栏位；重复调用只会发一次。 */
+    /** 发成就；栏位由获得成就的事件发放。 */
     private static void award(ServerPlayer player) {
         if (hasEarned(player)) {
             return;
@@ -129,6 +130,14 @@ public final class WisdomSacrifice {
             return;
         }
         player.getAdvancements().award(advancement, CRITERION);
+    }
+
+    /** 获得「智慧的牺牲」即永久增加两枚栏位，无论是仪式完成还是指令授予。 */
+    @SubscribeEvent
+    public static void onAdvancementEarned(AdvancementEvent.AdvancementEarnEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || !ID.equals(event.getAdvancement().getId())) {
+            return;
+        }
         CuriosApi.getCuriosInventory(player).ifPresent(handler -> {
             handler.addPermanentSlotModifier(RUNE_SLOT, RUNE_SLOT_MODIFIER, MODIFIER_NAME, 1.0D,
                                              AttributeModifier.Operation.ADDITION);
