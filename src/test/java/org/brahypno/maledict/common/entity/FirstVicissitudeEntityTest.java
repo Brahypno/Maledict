@@ -6,7 +6,11 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.server.level.ServerBossEvent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.PlayerList;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -22,6 +26,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayerFactory;
+import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
@@ -40,6 +45,124 @@ import java.util.Map;
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
 public final class FirstVicissitudeEntityTest {
+    @GameTest(template = "test_empty", batch = "vicissitude_regressions")
+    public static void closeTargetDoesNotPullPhaseOneDownButPhaseTwoStillDives(GameTestHelper helper) throws Exception {
+        CompoundTag setup = new CompoundTag();
+        setup.putByte("VicissitudeStage", (byte) VicissitudeBossStage.PHASE_ONE.ordinal());
+        FirstVicissitudeBossEntity boss = spawn(helper, setup);
+        boss.setNoAi(true);
+        LivingEntity target = helper.spawn(EntityType.PIG, new BlockPos(1, 2, 3));
+        target.setPos(boss.position().add(0, -1, 2));
+        boss.setDeltaMovement(Vec3.ZERO);
+        invoke(boss, "updatePhaseOneMovement", new Class<?>[]{LivingEntity.class}, new Object[]{target});
+        helper.assertTrue(boss.getDeltaMovement().y > 0,
+                "A nearby target must make phase one ascend to its ranged hover height, never dive for melee");
+        boss.setDeltaMovement(Vec3.ZERO);
+        invoke(boss, "updatePhaseTwoMovement", new Class<?>[]{LivingEntity.class}, new Object[]{target});
+        helper.assertTrue(boss.getDeltaMovement().y < 0, "Phase two must retain its blade-height melee approach");
+        boss.discard();
+        target.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty", batch = "vicissitude_regressions")
+    public static void offlineAggroSurvivesResetWindowReloadAndLoginInBothPhases(GameTestHelper helper) throws Exception {
+        Map<UUID, ServerPlayer> online = onlinePlayers(helper);
+        boolean forgive = helper.getLevel().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_FORGIVE_DEAD_PLAYERS);
+        helper.getLevel().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_FORGIVE_DEAD_PLAYERS)
+                .set(true, helper.getLevel().getServer());
+        try {
+            for (boolean phaseTwo : new boolean[]{false, true}) {
+                UUID identity = UUID.randomUUID();
+                String rosterKey = phaseTwo ? "PhaseTwoPlayers" : "PhaseOneTargets";
+                String deathsKey = phaseTwo ? "PhaseTwoPlayerDeaths" : "PhaseOneTargetDeaths";
+                CompoundTag setup = phaseTwo ? phaseTwoTag() : new CompoundTag();
+                if (!phaseTwo) setup.putByte("VicissitudeStage", (byte) VicissitudeBossStage.PHASE_ONE.ordinal());
+                setup.putInt("PhaseOneDuration", 1800);
+                setup.putInt("PhaseOneTicks", 45);
+                ListTag roster = new ListTag(); roster.add(NbtUtils.createUUID(identity)); setup.put(rosterKey, roster);
+                CompoundTag death = new CompoundTag(); death.putUUID("Player", identity); death.putInt("Deaths", 0);
+                ListTag deaths = new ListTag(); deaths.add(death); setup.put(deathsKey, deaths);
+                FirstVicissitudeBossEntity boss = spawn(helper, setup);
+                boss.setNoAi(true);
+                FakePlayer oldPlayer = new FakePlayer(helper.getLevel(), new GameProfile(identity, "AggroTest"));
+                oldPlayer.setPos(boss.position().add(0, 0, 3));
+                online.put(identity, oldPlayer);
+                boss.setTarget(oldPlayer);
+                // Logout removes the old player object; its replacement on login has the same UUID.
+                online.remove(identity);
+                oldPlayer.setRemoved(Entity.RemovalReason.UNLOADED_WITH_PLAYER);
+                invoke(boss, "forgetDeadParticipants", new Class<?>[0], new Object[0]);
+                helper.assertTrue(boss.getTarget() == null, "Offline players must stop being active attack targets");
+                for (int tick = 0; tick <= FirstVicissitudeBossEntity.EMPTY_ENCOUNTER_RESET_TICKS; tick++)
+                    invoke(boss, "tickStage", new Class<?>[0], new Object[0]);
+                CompoundTag saved = boss.saveWithoutId(new CompoundTag());
+                helper.assertTrue(saved.getList(rosterKey, Tag.TAG_INT_ARRAY).size() == 1,
+                        "Logout must preserve aggro past the empty-encounter reset window in both phases");
+                if (!phaseTwo) helper.assertTrue(saved.getInt("PhaseOneTicks") == 45
+                                && boss.getStage() == VicissitudeBossStage.PHASE_ONE,
+                        "An encounter whose opponents are all offline must pause phase one");
+                boss.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+                FirstVicissitudeBossEntity loaded = MaledictEntities.FIRST_VICISSITUDE.get().create(helper.getLevel());
+                loaded.load(saved);
+                loaded.setNoAi(true);
+                helper.assertTrue(helper.getLevel().addFreshEntity(loaded), "Saved encounter must reload");
+                invoke(loaded, "forgetDeadParticipants", new Class<?>[0], new Object[0]);
+                helper.assertTrue(loaded.saveWithoutId(new CompoundTag()).getList(rosterKey, Tag.TAG_INT_ARRAY).size() == 1,
+                        "Loading the boss before player login must retain the saved UUID");
+                FakePlayer returned = new FakePlayer(helper.getLevel(), new GameProfile(identity, "AggroTest"));
+                returned.setPos(loaded.position().add(0, 0, 3));
+                online.put(identity, returned);
+                try {
+                    invoke(loaded, "forgetDeadParticipants", new Class<?>[0], new Object[0]);
+                    LivingEntity selected = (LivingEntity) invoke(loaded,
+                            phaseTwo ? "selectBalancedPhaseTwoTarget" : "currentPhaseOneTarget", new Class<?>[0], new Object[0]);
+                    helper.assertTrue(selected == returned, "Login must reacquire the new player object without another attack");
+                    if (!phaseTwo) {
+                        invoke(loaded, "tickStage", new Class<?>[0], new Object[0]);
+                        helper.assertTrue(loaded.saveWithoutId(new CompoundTag()).getInt("PhaseOneTicks") == 46,
+                                "Phase one must resume counting when the player returns");
+                    }
+                    returned.getStats().setValue(returned, Stats.CUSTOM.get(Stats.DEATHS), 1);
+                    invoke(loaded, "forgetDeadParticipants", new Class<?>[0], new Object[0]);
+                    helper.assertTrue(loaded.saveWithoutId(new CompoundTag()).getList(rosterKey, Tag.TAG_INT_ARRAY).isEmpty(),
+                            "Death forgiveness must still clear the remembered player in both phases");
+                } finally {
+                    online.remove(identity);
+                    loaded.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+                }
+            }
+        } finally {
+            helper.getLevel().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_FORGIVE_DEAD_PLAYERS)
+                    .set(forgive, helper.getLevel().getServer());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty", batch = "vicissitude_regressions")
+    public static void transitionCarriesOfflineAggroIntoPhaseTwo(GameTestHelper helper) throws Exception {
+        UUID identity = UUID.randomUUID();
+        CompoundTag setup = new CompoundTag();
+        ListTag roster = new ListTag(); roster.add(NbtUtils.createUUID(identity)); setup.put("PhaseOneTargets", roster);
+        CompoundTag death = new CompoundTag(); death.putUUID("Player", identity); death.putInt("Deaths", 2);
+        ListTag deaths = new ListTag(); deaths.add(death); setup.put("PhaseOneTargetDeaths", deaths);
+        FirstVicissitudeBossEntity boss = spawn(helper, setup);
+        invoke(boss, "completeTransition", new Class<?>[0], new Object[0]);
+        CompoundTag saved = boss.saveWithoutId(new CompoundTag());
+        helper.assertTrue(saved.getList("PhaseTwoPlayers", Tag.TAG_INT_ARRAY).size() == 1
+                        && saved.getList("PhaseTwoPlayerDeaths", Tag.TAG_COMPOUND).getCompound(0).getInt("Deaths") == 2,
+                "A player offline during the transition must keep aggro and their recorded death count");
+        boss.discard();
+        helper.succeed();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<UUID, ServerPlayer> onlinePlayers(GameTestHelper helper) throws Exception {
+        var field = PlayerList.class.getDeclaredField("playersByUUID");
+        field.setAccessible(true);
+        return (Map<UUID, ServerPlayer>) field.get(helper.getLevel().getServer().getPlayerList());
+    }
+
     @GameTest(template = "test_empty", batch = "vitality_pool", timeoutTicks = 20)
     public static void newExtremeHas1500HealthButExistingLedgerKeepsItsCapturedPool(GameTestHelper helper) throws Exception {
         CompoundTag setup = phaseTwoTag();

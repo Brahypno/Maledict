@@ -40,10 +40,13 @@ public final class MaledictClientRenderEvents {
         BOSSES.clear();
         ClientLevel level = Minecraft.getInstance().level;
         LocalPlayer player = Minecraft.getInstance().player;
-        if (level == null || player == null || Minecraft.getInstance().isPaused()) {
-            if (level == null || player == null) VicissitudeSummoningEffects.clear();
-            // 空表 = 这一 tick 没有正在打的无常，音乐随之淡出（暂停、读盘、退世界都走这里）。
+        if (level == null || player == null) {
+            VicissitudeSummoningEffects.clear();
+            // 退世界时结束音乐；暂停时保留原实例，由原版音频引擎暂停和恢复。
             VicissitudeBossMusic.tick(BOSSES);
+            return;
+        }
+        if (Minecraft.getInstance().isPaused()) {
             return;
         }
         AABB area = player.getBoundingBox().inflate(MARKER_SEARCH_RADIUS);

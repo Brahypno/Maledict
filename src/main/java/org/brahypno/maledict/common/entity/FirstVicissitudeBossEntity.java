@@ -809,7 +809,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     /**
-     * Drops anyone not present (unresolvable, wrong dimension, dead) from the rosters.
+     * Keeps offline players in the saved rosters; death forgiveness and dimension changes still remove them.
      */
     private void forgetDeadParticipants() {
         if (!(level() instanceof ServerLevel serverLevel)){
@@ -836,6 +836,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             @Nullable ServerPlayer player, UUID identity, boolean forgive,
             Map<UUID, Integer> deathRecords, ServerLevel serverLevel) {
         if (player == null){
+            if (deathRecords.containsKey(identity)){
+                // A recorded player can be offline, including while the world loads before login.
+                clearTargetIf(identity);
+                return false;
+            }
             return dropAbsentParticipant(identity, serverLevel, deathRecords);
         }
         if (player.level() != level()){
@@ -974,6 +979,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 if (!isPhaseOneStarted()){
                     break;
                 }
+                if (!hasPossibleOpponent() && hasOfflinePlayerOpponent()){
+                    // Wait for login without advancing the encounter or its empty-roster reset.
+                    emptyEncounterTicks = 0;
+                    break;
+                }
                 if (tickEmptyEncounter()){
                     break;
                 }
@@ -1036,13 +1046,22 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return true;
         }
         for (UUID identity : phaseOneTargets) {
-            Entity entity = serverLevel.getEntity(identity);
+            Entity entity = resolveParticipant(serverLevel, identity);
             if (entity instanceof LivingEntity living && living.isAlive()
                 && living.level() == level() && !isIgnoredPlayer(living)){
                 return true;
             }
         }
         return false;
+    }
+
+    private boolean hasOfflinePlayerOpponent() {
+        if (!(level() instanceof ServerLevel serverLevel)){
+            return false;
+        }
+        var playerList = serverLevel.getServer().getPlayerList();
+        return phaseOneTargets.stream().anyMatch(identity -> targetPlayerDeaths.containsKey(identity)
+                                                             && playerList.getPlayer(identity) == null);
     }
 
     private void tickTransitionEffects() {
@@ -1101,6 +1120,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         phaseTwoParticipants.clear();
         for (UUID identity : phaseOneTargets) {
             LivingEntity member = resolveParticipant(serverLevel, identity);
+            if (member == null && targetPlayerDeaths.containsKey(identity)){
+                // Other participants can finish phase one while this player is offline.
+                phaseTwoParticipants.add(identity);
+                phaseTwoPlayerDeaths.put(identity, targetPlayerDeaths.get(identity));
+                continue;
+            }
             if (member == null || member.level() != level() || !member.isAlive()){
                 continue;
             }
@@ -2556,7 +2581,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         for (int offset = 0; offset < size; offset++) {
             int index = (start + offset) % size;
             UUID identity = targets.get(index);
-            Entity candidate = serverLevel.getEntity(identity);
+            Entity candidate = resolveParticipant(serverLevel, identity);
             if (candidate instanceof LivingEntity living && isValidPhaseOneTarget(living)){
                 targetCursor = advance ? index + 1 : index;
                 setTarget(living);
@@ -2699,18 +2724,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         if (action != VicissitudeRig.Action.NONE){
-            if (isDivingMelee()){
-                steerToward(meleeStancePosition(target, meleeDiveY(target, action), action), MAX_FLIGHT_SPEED);
-                return;
-            }
             setDeltaMovement(getDeltaMovement().scale(0.5D));
             hasImpulse = true;
             return;
         }
-        if (isApproachingMelee(target)){
-            steerToward(meleeStancePosition(target, meleeDiveY(target, null), null), MAX_FLIGHT_SPEED);
-            return;
-        }
+        // Phase one only uses ranged skills; nearby targets must not trigger the phase-two melee descent.
         Vec3 away = position().subtract(target.position()).multiply(1.0D, 0.0D, 1.0D);
         if (away.lengthSqr() < 0.01D){
             double angle = phaseOneTicks * ORBIT_STEP;
