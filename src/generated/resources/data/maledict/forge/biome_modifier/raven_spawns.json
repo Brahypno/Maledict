@@ -9,7 +9,7 @@
       "type": "maledict:raven",
       "maxCount": 6,
       "minCount": 4,
-      "weight": 12
+      "weight": 80
     }
   ]
 }

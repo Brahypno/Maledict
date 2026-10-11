@@ -29,7 +29,7 @@ public final class MaledictBiomeModifiers implements DataProvider {
         JsonArray spawns = new JsonArray();
         JsonObject raven = new JsonObject();
         raven.addProperty("type", "maledict:raven");
-        raven.addProperty("weight", 12);
+        raven.addProperty("weight", 80);
         raven.addProperty("minCount", 4);
         raven.addProperty("maxCount", 6);
         spawns.add(raven);
