@@ -27,12 +27,12 @@ import javax.annotation.Nullable;
 
 /**
  * The boss' own boomerang scythe: Malum's projectile is bound to player slots, so the boss uses
- * this dedicated entity, whose item stack never leaves it.
+ * this dedicated entity carrying only the weapon's visual tier and attack strength.
  */
 public final class VicissitudeScytheProjectileEntity extends Projectile {
-    private static final EntityDataAccessor<ItemStack> DATA_ITEM =
+    private static final EntityDataAccessor<Byte> DATA_WEAPON_TIER =
             SynchedEntityData.defineId(VicissitudeScytheProjectileEntity.class,
-                    EntityDataSerializers.ITEM_STACK);
+                    EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> DATA_RETURNING =
             SynchedEntityData.defineId(VicissitudeScytheProjectileEntity.class,
                     EntityDataSerializers.BOOLEAN);
@@ -59,27 +59,24 @@ public final class VicissitudeScytheProjectileEntity extends Projectile {
     }
 
     public VicissitudeScytheProjectileEntity(ServerLevel level, LivingEntity owner, Vec3 position,
-                                             Vec3 direction, ItemStack stack, float damage) {
+                                             Vec3 direction, FirstVicissitudeBossEntity.BossDifficulty difficulty, float damage) {
         this(MaledictEntities.VICISSITUDE_SCYTHE.get(), level);
         setOwner(owner);
         setPos(position);
-        setItem(stack);
+        entityData.set(DATA_WEAPON_TIER, (byte) difficulty.ordinal());
         this.damage = damage;
         setDeltaMovement(direction.normalize().scale(OUTBOUND_SPEED));
     }
 
     @Override
     protected void defineSynchedData() {
-        entityData.define(DATA_ITEM, ItemStack.EMPTY);
+        entityData.define(DATA_WEAPON_TIER, (byte) 0);
         entityData.define(DATA_RETURNING, false);
     }
 
     public ItemStack getItem() {
-        return entityData.get(DATA_ITEM);
-    }
-
-    public void setItem(ItemStack stack) {
-        entityData.set(DATA_ITEM, stack.copy());
+        return FirstVicissitudeBossEntity.createWeaponForDifficulty(
+                FirstVicissitudeBossEntity.BossDifficulty.byId(entityData.get(DATA_WEAPON_TIER)));
     }
 
     public boolean isReturning() {
@@ -111,8 +108,9 @@ public final class VicissitudeScytheProjectileEntity extends Projectile {
             return;
         }
         Entity owner = getOwner();
-        if (!(owner instanceof FirstVicissitudeBossEntity boss) || !boss.isAlive()) {
-            // Boss gone: the dedicated weapon copy is destroyed, never dropped.
+        if (!(owner instanceof FirstVicissitudeBossEntity boss) || !boss.isAlive()
+            || !boss.ownsFlyingScythe(getUUID())) {
+            // An invalid owner/token ends the visual projectile without dropping a weapon.
             discard();
             return;
         }
@@ -184,9 +182,7 @@ public final class VicissitudeScytheProjectileEntity extends Projectile {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        CompoundTag item = new CompoundTag();
-        getItem().save(item);
-        tag.put("Scythe", item);
+        tag.putByte("WeaponTier", entityData.get(DATA_WEAPON_TIER));
         tag.putFloat("ScytheDamage", damage);
         tag.putInt("OutboundTicks", outboundTicks);
         tag.putDouble("Travelled", travelled);
@@ -198,7 +194,11 @@ public final class VicissitudeScytheProjectileEntity extends Projectile {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        setItem(ItemStack.of(tag.getCompound("Scythe")));
+        if (tag.contains("WeaponTier")) {
+            entityData.set(DATA_WEAPON_TIER, tag.getByte("WeaponTier"));
+        } else if (getOwner() instanceof FirstVicissitudeBossEntity boss) {
+            entityData.set(DATA_WEAPON_TIER, (byte) boss.getBossDifficulty().ordinal());
+        }
         damage = tag.getFloat("ScytheDamage");
         outboundTicks = tag.getInt("OutboundTicks");
         travelled = tag.getDouble("Travelled");

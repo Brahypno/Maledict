@@ -24,6 +24,11 @@ record VicissitudeVitality(float current, float maximum, long gateOpensAt,
         return new VicissitudeVitality(value, maximum, gateOpensAt, killAttempts, lastKillTick);
     }
 
+    VicissitudeVitality afterCanceledDeath() {
+        return new VicissitudeVitality(Math.min(1.0F, maximum), maximum,
+                gateOpensAt, 0, Long.MIN_VALUE);
+    }
+
     /** 扣血只动血量，不动门；门只由 {@link #afterAcceptedHit} 关。 */
     VicissitudeVitality afterDamage(float amount) {
         return new VicissitudeVitality(Math.max(0.0F, current - amount), maximum,

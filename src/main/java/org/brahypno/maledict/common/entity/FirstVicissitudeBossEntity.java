@@ -34,6 +34,7 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
@@ -41,6 +42,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.common.ForgeMod;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.curio.VicissitudeCurioLedger;
@@ -182,8 +184,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private static final int STUCK_WINDOW_TICKS = 40;
     private static final double STUCK_MIN_TRAVEL = 0.25D;
     private static final int UNSTICK_SUCCESS_COOLDOWN = 100;
-    private static final int UNSTICK_MAX_CANDIDATES = 64;
-    private static final int[] UNSTICK_RADII = {4, 8, 12, 16};
     /**
      * Fixed id so the difficulty health modifier is rewritten instead of stacking.
      */
@@ -240,6 +240,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private int baseSlotIndex;
     private int targetCursor;
     private int curioReturnCursor;
+    private long curioReturnedAt = Long.MIN_VALUE;
     private int barrageCooldown;
     private int chestCooldown;
     private int haloCooldown;
@@ -281,7 +282,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private int dashTicks;
     private final Set<UUID> dashHitTargets = new HashSet<>();
     private UUID scytheToken;
-    private ItemStack stashedWeapon = ItemStack.EMPTY;
     private int pendingWeaponTier = -1;
     private BossDifficulty bossDifficulty = BossDifficulty.SIMPLE;
     /**
@@ -638,7 +638,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         syncDerivedState();
         bossEvent.setName(getDisplayName());
-        bossEvent.setProgress(Mth.clamp(getHealth() / getMaxHealth(), 0.0F, 1.0F));
+        bossEvent.setProgress(Mth.clamp(getHealth() / getVitalityMaximum(), 0.0F, 1.0F));
         if (getHealth() <= 0.0F){
             return;
         }
@@ -1531,7 +1531,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         double sweep = Math.max(blade.length(), reach) + VicissitudeRig.SWING_HALF_WIDTH;
         float damage = attackDamage() * meleeMultiplier();
         for (Entity entity : level().getEntities(this,
-                                                 getBoundingBox().inflate(sweep, sweep, sweep))) {
+                new AABB(getX() - sweep, blade.minimumHitY(getY()), getZ() - sweep,
+                         getX() + sweep, blade.maximumHitY(getY()), getZ() + sweep))) {
             if (!(entity instanceof LivingEntity living)){
                 continue;
             }
@@ -1540,6 +1541,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             double lateral = VicissitudeRig.SwingBand.lateral(yaw, startX, startZ,
                                                               living.getX(), living.getZ());
             if (!isValidCombatParticipant(living) || !hasLineOfSight(living)
+                || !blade.overlapsHeight(getY(), living.getBoundingBox().minY, living.getBoundingBox().maxY)
                 || !swing.contains(forward, lateral)){
                 continue;
             }
@@ -1682,26 +1684,20 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private boolean hasWeaponInHand() {
-        return !getMainHandItem().isEmpty();
+        return entityData.get(DATA_WEAPON_STATE) == 1;
     }
 
     private void throwScythe(@Nullable LivingEntity target) {
         if (!(level() instanceof ServerLevel serverLevel) || scytheToken != null){
             return;
         }
-        ItemStack weapon = getMainHandItem();
-        if (weapon.isEmpty()){
-            weapon = createWeaponForDifficulty(bossDifficulty);
-        }
         Vec3 direction = committedAim.subtract(handAnchorWorldPosition()).normalize();
         VicissitudeScytheProjectileEntity scythe = new VicissitudeScytheProjectileEntity(
-                serverLevel, this, handAnchorWorldPosition(), direction, weapon, attackDamage());
+                serverLevel, this, handAnchorWorldPosition(), direction, bossDifficulty, attackDamage());
         if (!serverLevel.addFreshEntity(scythe)){
-            // Only a successful spawn may empty the hand.
+            // Only a successful spawn may switch the virtual weapon into flight.
             return;
         }
-        stashedWeapon = weapon.copy();
-        setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         scytheToken = scythe.getUUID();
         setWeaponState(2);
         SoundHelper.playSound(this, SoundRegistry.SCYTHE_THROW.get(), 1.1F,
@@ -1716,11 +1712,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         scytheToken = null;
-        ItemStack stack = stashedWeapon.isEmpty() ? projectile.getItem() : stashedWeapon;
-        stashedWeapon = ItemStack.EMPTY;
-        if (!stack.isEmpty()){
-            setItemSlot(EquipmentSlot.MAINHAND, stack.copy());
-        }
         setWeaponState(1);
         // A catch must not erase a ground tell or truncate a volley already in progress.
         scytheRecoveryPending = true;
@@ -1741,15 +1732,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             entity.discard();
         }
         scytheToken = null;
-        // The stash is the authoritative copy; if it is gone the weapon is re-issued from code.
-        ItemStack restored = stashedWeapon.isEmpty()
-                             ? (getHealth() > 0.0F ? createWeaponForDifficulty(bossDifficulty)
-                                                   : ItemStack.EMPTY)
-                             : stashedWeapon.copy();
-        stashedWeapon = ItemStack.EMPTY;
-        setItemSlot(EquipmentSlot.MAINHAND, restored);
         setWeaponTier(bossDifficulty);
-        setWeaponState(restored.isEmpty() ? 0 : 1);
+        setWeaponState(getHealth() > 0.0F ? 1 : 0);
+        applyDeferredWeaponTier();
     }
 
     /**
@@ -1779,19 +1764,26 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     protected void onFinalDeath(DamageSource source) {
         cancelFlyingScythe();
-        // Everything still held goes to the world ledger; nothing is deleted or dropped here.
+        settleConfiscatedCurios();
+        setWeaponState(0);
+    }
+
+    @Override
+    public void onRemovedFromWorld() {
+        // Unload/transfer keeps boss ownership in its saved NBT; genuine deletion settles it.
+        if (getRemovalReason() != null && getRemovalReason().shouldDestroy()) settleConfiscatedCurios();
+        super.onRemovedFromWorld();
+    }
+
+    private void settleConfiscatedCurios() {
         if (level() instanceof ServerLevel serverLevel){
             for (Map.Entry<UUID, Deque<VicissitudeCurioLedger.Entry>> entry : confiscated.entrySet()) {
                 VicissitudeCurioReturns.retain(serverLevel, entry.getKey(),
-                                               new ArrayList<>(entry.getValue()));
-                ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(entry.getKey());
-                if (player != null){
-                    VicissitudeCurioReturns.deliverAll(player);
-                }
+                                               new ArrayList<>(entry.getValue()), getUUID());
             }
             confiscated.clear();
+            VicissitudeCurioReturns.finishEncounter(serverLevel, getUUID(), blockPosition());
         }
-        setWeaponState(0);
     }
 
     @Override
@@ -1832,7 +1824,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             adaptationBlunted = false;
             announceAdaptation(attacker);
         }
-        if (isPhaseTwo() && bossDifficulty.confiscatesCurios()){
+        long now = level().getGameTime();
+        if (isPhaseTwo() && bossDifficulty.confiscatesCurios() && curioReturnedAt != now){
+            // Reserve the batch before Curios validation can trigger another nested hit.
+            curioReturnedAt = now;
             returnOneCurio(attacker);
         }
     }
@@ -1863,14 +1858,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         // Hand the stack to the ledger first, then deliver: ownership moves exactly once.
         VicissitudeCurioLedger.Entry entry = held.removeFirst();
-        VicissitudeCurioReturns.retain(player.serverLevel(), player.getUUID(), List.of(entry));
-        if (!VicissitudeCurioReturns.deliverAll(player)){
-            VicissitudeCurioReturns.retain(player.serverLevel(), player.getUUID(),
-                                           new ArrayList<>(held));
-            held.clear();
-            confiscated.remove(player.getUUID());
-            return true;
-        }
+        VicissitudeCurioReturns.retain(player.serverLevel(), player.getUUID(), List.of(entry), getUUID());
+        VicissitudeCurioReturns.deliverAll(player);
         if (held.isEmpty()){
             confiscated.remove(player.getUUID());
         }
@@ -1937,15 +1926,24 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private VicissitudeRig.Segment nearestHitSegment(DamageSource source) {
         List<VicissitudeRig.SegmentVolume> volumes = segmentVolumes();
-        Vec3 hit = source.getSourcePosition();
-        if (hit != null){
-            return VicissitudeRig.nearestSegment(volumes, hit.x, hit.y, hit.z);
+        if (source.getDirectEntity() instanceof Player player) {
+            Vec3 from = player.getEyePosition();
+            double reach = player.getAttributeValue(ForgeMod.ENTITY_REACH.get());
+            Vec3 to = from.add(player.getLookAngle().scale(reach));
+            return VicissitudeRig.firstSegmentAlongRay(volumes, rigPoint(from), rigPoint(to));
         }
-        LivingEntity attacker = resolveLivingAttacker(source);
-        return attacker == null
-               ? VicissitudeRig.Segment.BODY
-               : VicissitudeRig.nearestSegment(volumes, attacker.getX(),
-                                               attacker.getEyeY(), attacker.getZ());
+        if (source.getDirectEntity() instanceof Projectile projectile) {
+            Vec3 impact = VicissitudeHitLocation.point(projectile, this);
+            if (impact != null) return VicissitudeRig.nearestSegment(volumes, impact.x, impact.y, impact.z);
+            Vec3 from = projectile.position();
+            Vec3 to = from.add(projectile.getDeltaMovement());
+            return VicissitudeRig.firstSegmentAlongRay(volumes, rigPoint(from), rigPoint(to));
+        }
+        return VicissitudeRig.Segment.BODY;
+    }
+
+    private static VicissitudeRig.V3 rigPoint(Vec3 point) {
+        return new VicissitudeRig.V3((float) point.x, (float) point.y, (float) point.z);
     }
 
     private float distanceDamageScale(DamageSource source) {
@@ -2170,33 +2168,18 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private boolean tryUnstickTeleport(ServerLevel serverLevel) {
-        int checked = 0;
-        for (int radius : UNSTICK_RADII) {
-            for (int dx = -radius; dx <= radius && checked < UNSTICK_MAX_CANDIDATES; dx += 2) {
-                for (int dz = -radius; dz <= radius && checked < UNSTICK_MAX_CANDIDATES; dz += 2) {
-                    for (int dy = -8; dy <= 8 && checked < UNSTICK_MAX_CANDIDATES; dy += 2) {
-                        checked++;
-                        double x = getX() + dx;
-                        double y = getY() + dy;
-                        double z = getZ() + dz;
-                        if (y < level().getMinBuildHeight() + 1
-                            || y > level().getMaxBuildHeight() - getBbHeight() - 1){
-                            continue;
-                        }
-                        BlockPos pos = BlockPos.containing(x, y, z);
-                        if (!level().hasChunkAt(pos) || !level().isLoaded(pos)){
-                            // Never force load chunks while searching.
-                            continue;
-                        }
-                        if (isSpaceUsable(serverLevel, x, y, z)){
-                            unstickTeleport(x, y, z);
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+        VicissitudeUnstickSearch.Offset found = VicissitudeUnstickSearch.find(offset -> {
+            double x = getX() + offset.x();
+            double y = getY() + offset.y();
+            double z = getZ() + offset.z();
+            if (y < level().getMinBuildHeight() + 1
+                || y > level().getMaxBuildHeight() - getBbHeight() - 1) return false;
+            BlockPos pos = BlockPos.containing(x, y, z);
+            return level().hasChunkAt(pos) && level().isLoaded(pos) && isSpaceUsable(serverLevel, x, y, z);
+        });
+        if (found == null) return false;
+        unstickTeleport(getX() + found.x(), getY() + found.y(), getZ() + found.z());
+        return true;
     }
 
     private boolean isSpaceUsable(ServerLevel serverLevel, double x, double y, double z) {
@@ -2380,6 +2363,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     /**
      * Base cap ratio for a body hit; segment {@code capWeight} scales it (head 1.25x, outer wing 0.5x).
      */
+    @Override
+    protected float initialVitalityMaximum() {
+        return (float) bossDifficulty.maxHealth();
+    }
+
     @Override
     protected float getVitalityDamageLimit() {
         float ratio = switch (bossDifficulty) {
@@ -2846,7 +2834,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void equipPhaseTwoWeapon() {
-        setItemSlot(EquipmentSlot.MAINHAND, createWeaponForDifficulty(bossDifficulty));
+        setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         setDropChance(EquipmentSlot.MAINHAND, 0.0F);
         applyWeaponAttributes();
         setWeaponTier(bossDifficulty);
@@ -2854,21 +2842,28 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     /**
-     * Keeps the hand matching the encounter while the weapon is meant to be held; a weapon in flight is left alone.
+     * Repairs virtual weapon state; a missing projectile gives the weapon back immediately.
      */
     private void tickWeaponGuard(boolean fullCheck) {
-        if (scytheToken != null || entityData.get(DATA_WEAPON_STATE) != 1){
+        if (!isPhaseTwo()) return;
+        if (scytheToken != null && level() instanceof ServerLevel serverLevel) {
+            Entity flying = serverLevel.getEntity(scytheToken);
+            if (flying instanceof VicissitudeScytheProjectileEntity scythe
+                && !scythe.isRemoved() && scythe.getOwner() == this) return;
+            cancelFlyingScythe();
+            scytheRecoveryPending = true;
+        }
+        if (scytheToken != null){
             return;
         }
-        ItemStack held = getMainHandItem();
-        if (!held.isEmpty() && (!fullCheck || held.is(createWeaponForDifficulty(bossDifficulty)
-                                                              .getItem()))){
-            return;
+        if (!getMainHandItem().isEmpty()) {
+            suppressHeldItemAttributes();
+            setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         }
-        equipPhaseTwoWeapon();
+        if (entityData.get(DATA_WEAPON_STATE) != 1 || fullCheck) equipPhaseTwoWeapon();
     }
 
-    private ItemStack createWeaponForDifficulty(BossDifficulty difficulty) {
+    static ItemStack createWeaponForDifficulty(BossDifficulty difficulty) {
         if (difficulty == BossDifficulty.SIMPLE){
             return new ItemStack(ItemRegistry.SOUL_STAINED_STEEL_SCYTHE.get());
         }
@@ -2930,6 +2925,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         tag.putBoolean("PhaseOneDurationLocked", phaseOneDurationLocked);
         tag.putInt("PhaseOneTargetCursor", targetCursor);
         tag.putInt("CurioReturnCursor", curioReturnCursor);
+        tag.putLong("CurioReturnedAt", curioReturnedAt);
         tag.putInt("BaseSlotIndex", baseSlotIndex);
         tag.putInt("SpecialRotator", specialRotator);
         tag.putInt("ActionSequence", actionSequence);
@@ -2943,16 +2939,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (scytheToken != null){
             tag.putUUID("ScytheToken", scytheToken);
         }
-        if (!stashedWeapon.isEmpty()){
-            tag.put("StashedWeapon", stashedWeapon.save(new CompoundTag()));
-        }
         tag.put("PhaseOneTargets", saveUuidSet(phaseOneTargets));
         tag.put("PhaseTwoPlayers", saveUuidSet(phaseTwoParticipants));
         tag.put("PhaseOneTargetDeaths", savePlayerDeathMap(targetPlayerDeaths));
         tag.put("PhaseOneAnnouncements", savePlayerDeathMap(announcedPlayerDeaths));
         tag.put("PhaseTwoPlayerDeaths", savePlayerDeathMap(phaseTwoPlayerDeaths));
         tag.put("ConfiscatedCurios", saveConfiscatedCurios());
-        tag.put("DamageAdaptation", saveAdaptation());
+        tag.put("DamageAdaptation", DamageAdaptationStorage.save(damageAdaptation));
     }
 
     @Override
@@ -3001,6 +2994,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         targetCursor = Math.max(0, tag.getInt("PhaseOneTargetCursor"));
         curioReturnCursor = Math.max(0, tag.getInt("CurioReturnCursor"));
+        curioReturnedAt = tag.contains("CurioReturnedAt", Tag.TAG_LONG)
+                ? tag.getLong("CurioReturnedAt") : Long.MIN_VALUE;
         baseSlotIndex = Math.max(0, tag.getInt("BaseSlotIndex"));
         specialRotator = Math.max(0, tag.getInt("SpecialRotator"));
         actionSequence = tag.getInt("ActionSequence");
@@ -3010,23 +3005,28 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (tag.contains("PhaseOneHoverY", Tag.TAG_DOUBLE)){
             idleHoverY = tag.getDouble("PhaseOneHoverY");
         }
-        if (tag.hasUUID("ScytheToken")){
-            scytheToken = tag.getUUID("ScytheToken");
-        }
-        stashedWeapon = ItemStack.of(tag.getCompound("StashedWeapon"));
+        scytheToken = tag.hasUUID("ScytheToken") ? tag.getUUID("ScytheToken") : null;
+        // Old held/stashed weapons are migration input only; combat uses the difficulty attributes.
+        suppressHeldItemAttributes();
+        setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         loadUuidSet(tag.getList("PhaseOneTargets", Tag.TAG_INT_ARRAY), phaseOneTargets);
         loadUuidSet(tag.getList("PhaseTwoPlayers", Tag.TAG_INT_ARRAY), phaseTwoParticipants);
         loadPlayerDeathMap(tag.getList("PhaseOneTargetDeaths", Tag.TAG_COMPOUND), targetPlayerDeaths);
         loadPlayerDeathMap(tag.getList("PhaseOneAnnouncements", Tag.TAG_COMPOUND), announcedPlayerDeaths);
         loadPlayerDeathMap(tag.getList("PhaseTwoPlayerDeaths", Tag.TAG_COMPOUND), phaseTwoPlayerDeaths);
         loadConfiscatedCurios(tag.getList("ConfiscatedCurios", Tag.TAG_COMPOUND));
-        loadAdaptation(tag.getList("DamageAdaptation", Tag.TAG_COMPOUND));
+        DamageAdaptationStorage.load(damageAdaptation, tag.getList("DamageAdaptation", Tag.TAG_COMPOUND));
         entityData.set(DATA_STAGE, (byte) stage.ordinal());
         entityData.set(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
         action = VicissitudeRig.Action.NONE;
         if (stage == VicissitudeBossStage.PHASE_TWO){
-            setWeaponState(hasWeaponInHand() ? 1 : scytheToken != null ? 2 : 0);
+            applyWeaponAttributes();
+            setWeaponState(scytheToken != null ? 2 : 1);
         }
+    }
+
+    public boolean ownsFlyingScythe(UUID identity) {
+        return identity.equals(scytheToken);
     }
 
     private static ListTag saveUuidSet(Set<UUID> values) {
@@ -3063,29 +3063,6 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 values.put(value.getUUID("Player"), value.getInt("Deaths"));
             }
         }
-    }
-
-    /**
-     * One record per damage message, list order is newest-first.
-     */
-    private ListTag saveAdaptation() {
-        ListTag entries = new ListTag();
-        for (String message : damageAdaptation.snapshot()) {
-            CompoundTag value = new CompoundTag();
-            value.putString("Message", message);
-            entries.add(value);
-        }
-        return entries;
-    }
-
-    private void loadAdaptation(ListTag entries) {
-        List<String> saved = new ArrayList<>();
-        for (Tag entry : entries) {
-            if (entry instanceof CompoundTag value){
-                saved.add(value.getString("Message"));
-            }
-        }
-        damageAdaptation.restore(saved);
     }
 
     private ListTag saveConfiscatedCurios() {
@@ -3204,7 +3181,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return name().toLowerCase(Locale.ROOT);
         }
 
-        private static BossDifficulty byId(int id) {
+        static BossDifficulty byId(int id) {
             BossDifficulty[] values = values();
             return id >= 0 && id < values.length ? values[id] : SIMPLE;
         }

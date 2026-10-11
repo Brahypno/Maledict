@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.curio.EnlightenmentLevel;
@@ -65,6 +66,7 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     public void addExtraTooltipLines(Consumer<Component> tooltip) {
         tooltip.accept(positiveEffect(EFFECT_PREFIX + "cooldown"));
         tooltip.accept(positiveEffect(EFFECT_PREFIX + "spirit_void"));
@@ -79,6 +81,7 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
     }
 
     /** 刻意只看本地玩家；服务端永远返回 false，所以 tooltip 逻辑不会去碰客户端类。 */
+    @OnlyIn(Dist.CLIENT)
     private static boolean hasEnlightenment() {
         if (FMLEnvironment.dist != Dist.CLIENT){
             return false;

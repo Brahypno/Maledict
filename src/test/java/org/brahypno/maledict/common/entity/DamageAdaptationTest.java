@@ -9,7 +9,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** 无常的适应：窗口容量就是「适应几」，同一 tick 内也按调用顺序逐条记账。 */
+/** Tests the adaptation state machine; boss event delivery and entity persistence require game verification. */
 class DamageAdaptationTest {
 
     private static final double DELTA = 1.0E-6D;
@@ -45,7 +45,7 @@ class DamageAdaptationTest {
     }
 
     @Test
-    void adaptationThreeIsImmuneFromTheSecondRoundOn() {
+    void adaptationThreeReducesFromTheSecondRoundOn() {
         DamageAdaptation adaptation = new DamageAdaptation();
         for (String message : new String[] {"A", "B", "C"}) {
             assertEquals(1.0D, adaptation.adapt(message, 3), DELTA);
@@ -82,7 +82,7 @@ class DamageAdaptationTest {
     }
 
     @Test
-    void orderMattersEvenWithinASingleTick() {
+    void orderMattersForUnbatchedCalls() {
         DamageAdaptation adaptation = new DamageAdaptation();
         assertEquals(1.0D, adaptation.adapt("player", 2), DELTA);
         assertEquals(Math.exp(-1.0D), adaptation.adapt("player", 2), DELTA);
@@ -119,7 +119,7 @@ class DamageAdaptationTest {
     }
 
     @Test
-    void snapshotAndRestoreKeepTheWindowOrder() {
+    void legacyWindowOnlyRestoreStartsEachCounterAtOne() {
         DamageAdaptation adaptation = new DamageAdaptation();
         adaptation.adapt("player", 2);
         adaptation.adapt("player", 2);
@@ -164,7 +164,7 @@ class DamageAdaptationTest {
         assertEquals(Math.exp(-1.0D), adaptation.adapt("player", 2), DELTA);
     }
 
-    /** 新存档连次数一起存：读回来之后该多钝还是多钝，不会因为重登退回第一下。 */
+    /** Only the restore overload is exercised here; this does not test the boss' NBT save/load path. */
     @Test
     void restoreKeepsTheHitCountsWhenTheyAreSaved() {
         DamageAdaptation adaptation = new DamageAdaptation();
@@ -204,7 +204,7 @@ class DamageAdaptationTest {
         assertEquals(Map.of("scythe_sweep", 2), adaptation.hitCounts());
     }
 
-    /** 一批里的三条通道各记一记，轮换照旧成立：三种以上伤害类型永远是全额。 */
+    /** A repeated A/B/C rotation at capacity two stays full; the order is part of this example. */
     @Test
     void aThreeChannelSwingStaysAtFullDamageAcrossTicks() {
         DamageAdaptation adaptation = new DamageAdaptation();

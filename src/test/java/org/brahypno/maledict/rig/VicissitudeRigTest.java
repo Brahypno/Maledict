@@ -3,6 +3,7 @@ package org.brahypno.maledict.rig;
 import org.junit.jupiter.api.Test;
 import org.brahypno.maledict.rig.VicissitudeRig.Action;
 import org.brahypno.maledict.rig.VicissitudeRigData.Joint;
+import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -10,9 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class VicissitudeRigTest {
-    /** Mirrors the entity's {@code MELEE_REACH}; duplicated to keep this test free of Minecraft types. */
-    private static final double DESIGN_MELEE_REACH = 5.0D;
-    private static final double COMMIT_RANGE = 5.75D;
+    private static final double DESIGN_MELEE_REACH = FirstVicissitudeBossEntity.MELEE_REACH;
+    private static final double COMMIT_RANGE = FirstVicissitudeBossEntity.MELEE_COMMIT_RANGE;
     /** A standing target's torso centre above its own feet: half of a player's 1.8 block hitbox. */
     private static final double STANDING_TARGET_CENTRE_Y = 0.9D;
 
@@ -146,7 +146,7 @@ class VicissitudeRigTest {
 
     /** Measured on the lowest edge point across the hit window, against a standing target's torso centre. */
     @Test
-    void aMeleeSwingCanReachATargetStandingOnTheSameFloor() {
+    void sampledBladeEdgeReachesStandingTorsoHeight() {
         for (Action action : Action.values()) {
             if (!action.isMelee()) {
                 continue;
@@ -209,7 +209,7 @@ class VicissitudeRigTest {
         }
     }
 
-    /** Distance to the blade is clamped to the segment, which is what makes the melee test a capsule test. */
+    /** Diagnostic distance is clamped to the segment; the entity's melee test uses its forward band. */
     @Test
     void bladeDistanceClampsToTheSegmentEnds() {
         VicissitudeRig.BladeSegment blade = new VicissitudeRig.BladeSegment(

@@ -632,29 +632,40 @@ NBT 写 `DamageAdaptation` 列表（`Message` + `Hits`，顺序即最新在前�
 
 实现要点：
 
-1. 返还顺序是**原合法空槽 → 其他合法空 Curios 槽 → 背包**；不挤掉现有装备
-   （要求槽位为空且 `isItemValid`），不跳过 Curios 验证，完整保留附魔与自定义 NBT。
-2. 背包不足的部分留在服务端持久记录，不丢地上、不删除，并向玩家显示剩余件数。
+1. 装备返还严格使用**原栏位标识符 + 原索引**，不挤掉现有装备、不改放其他 Curios 槽。
+   先处理所有可恢复的条目；提供额外栏位的饰品恢复后，等待实际 Curios 装备 tick 再重试依赖项。
+   用 `LivingTickEvent` 的 LOWEST 处理器观察后续装备更新，仅推进世界时间不会提前进行背包回退。
+   原槽位必须为空且通过 `isItemValid`，完整保留附魔与自定义 NBT；校验事件返回后再次检查槽位。
+2. 栏位更新后仍无法归位的条目进入背包。战斗期间背包不足的部分留在服务端持久记录并持续重试。
+   Boss 真死或被实际删除时，仍先尝试原位，再进背包，剩余物品放入 Boss 最终位置附近的新箱子。
+   多人分别装箱、超过 27 格继续建箱；周围无可用空位置或区块未加载时保留账本等待重试。
+   普通区块卸载、维度转移不结算。已转入账本的条目记录 Boss UUID 和最终维度、位置，离线和重启后仍有效。
 3. 只按 UUID 定向检查：登录、重生、克隆、死亡四个事件，另有一条只含在线待返还 UUID 的
    低频队列，每 20 tick（`QUEUE_INTERVAL_TICKS`）检查一次，
-   同一 owner 两次尝试至少间隔 100 tick（`ATTEMPT_COOLDOWN_TICKS`）。无人待返还时不扫描。
+   同一 owner 的自动尝试至少间隔 20 tick；事件、领取和新释放物品立即尝试。无人待返还时不扫描。
 4. 成功后只从持久记录扣除已交付条目（`VicissitudeCurioLedger#replace`），
    部分交付不会复制或删除整叠。
 5. 同一 stack 要么在活着的 Boss 手里、要么在账本里，绝不两边都可返还；
-   Boss 真死时队列整体转入世界账本。
-6. 防止返还自身触发槽位事件递归重入：同一玩家一次处理中只合并下一次检查。
+   同一 tick 的整批有效伤害只释放一件，即使后续通道提高批次最大扣血量，也不额外释放；取消或最终扣血为零的通道不触发返还。
+   例如最终伤害为 6、14、14 时整批扣 14 血、返还一件；下一批有效伤害再返还一件。
+   暂时无法交付不提前释放其余物品；Boss 结算时将余下物品整体转入世界账本。
+
+新 Boss 的真实血量账本按难度表初始化（极难 1500），不从会截断到 1024 的原版最大生命属性读取；
+血条比例、百分比限伤与治疗上限使用账本最大血量。已有 Boss 保持原账本，不迁移其当前或最大血量。
+6. 防止装备校验事件递归领取：同一玩家一次处理中拒绝嵌套交付，新增债务仍保留供后续检查。
 
 兜底凭证 `maledict:curio_return_token` 只在主人 UUID 上关联世界级记录，
-不把饰品 NBT 塞进可复制物品；**全部交付完成才消耗凭证**。
+不把饰品 NBT 塞进可复制物品；全部交付完成后消耗凭证。
+背包回退前也暂时收回凭证，避免凭证占用最后一个可归还位置；仍有余额时重新补发。
 发放时保证持有者最多一枚；连凭证都放不下时账本保留余额、之后重试。
 
 | 类 / 文件 | 作用 |
 | --- | --- |
 | `common/MaledictTags.java` | 免没收标签 |
-| `common/curio/VicissitudeCurioReturns.java` | `confiscate` / `retain` / `deliverAll` / `deliver` / `equip` / `claim` / `issueToken` / `consumeTokens` + 四个事件订阅 + 20 tick 队列 |
+| `common/curio/VicissitudeCurioReturns.java` | 没收、原位恢复、等待栏位更新、背包回退、最终箱子交付 + 四个事件订阅 + 20 tick 队列 |
 | `common/curio/VicissitudeCurioLedger.java` | 世界级 `SavedData`，`FILE_ID = "maledict_vicissitude_curios"` |
 | `common/item/CurioReturnTokenItem.java` | 凭证物品，右键调用 `VicissitudeCurioReturns.claim` |
-| `common/entity/FirstVicissitudeBossEntity.java` | 持有 `confiscated`，Boss 真死时把剩余饰品移交账本 |
+| `common/entity/FirstVicissitudeBossEntity.java` | 持有 `confiscated`，真死或实际删除时移交账本并记录最终交付位置 |
 
 **没有配置键**：饰品没收与返还不可通过配置开关，唯一可调项是数据包标签。
 
@@ -668,16 +679,15 @@ NBT 写 `DamageAdaptation` 列表（`Message` + `Hits`，顺序即最新在前�
   **禁止把飞出去的镰刀藏在 Boss 模型里用 visibility 假装弹体。**
   所有纯视觉代码只在客户端运行（`@OnlyIn(Dist.CLIENT)`），不能被 common 静态初始化引用。
 - **投掷物所有权**：持握 → 去程 → 回程 → 接住 → 持握；同一 Boss 最多一个有效投掷 token。
-  只在二阶段、主手有武器、当前没有飞行镰刀且看见有效目标时选择；6–24 格优先投掷，冷却 120 tick。
+  只在二阶段、虚拟武器处于持握状态、当前没有飞行镰刀且看见有效目标时选择；6–24 格优先投掷，冷却 120 tick。
   初速 0.8 格/tick；出行最多 20 tick 或 16 格，命中方块即开始返回；总寿命最多 100 tick。
   去程只对当前锁定目标命中一次，伤害取 Boss 攻击属性、使用 `SCYTHE_SWEEP`，
   不自动附加玩家 Incursus 的整套主动技能；回程无伤害。
-  返回距离手部小于 1 格则归还武器并进入 recover。
-  Boss 死亡则取消并销毁 Boss 专用武器副本，不掉落；Boss 武器不让玩家捡取。
-- **渲染与实际手持分离**（D11）：右手画的是按同步难度档位在客户端重建的 ItemStack
-  （`getDisplayWeapon` / `DATA_WEAPON_TIER`），缴械、换装或删除手上物品都不会让 Boss 看起来空手。
-  手上仍维持一把同档武器（空手立即补、类型不符每 20 tick 纠正一次），
-  飞行镰刀状态不被该纠正触碰。三种武器分别校准握持与飞行显示尺寸。
+  返回距离手部小于 1 格则恢复持握状态并进入 recover；找不到有效飞镰时立即恢复、清除 token，
+  旧飞镰之后加载时自行消失。Boss 死亡则取消并销毁飞镰实体，不产生可拾取武器。
+- **虚拟武器**（D11）：Boss 不持有或暂存真实 ItemStack；右手按同步档位在客户端重建显示用
+  ItemStack（`getDisplayWeapon` / `DATA_WEAPON_TIER`），攻击属性按同档武器属性表烘焙到实体，
+  保持各难度原有强度。飞镰只保存显示档位、攻击强度与飞行状态。三种武器分别校准握持与飞行显示尺寸。
 - **预留稳定语义事件**：战斗开始、阶段转换开始/完成、攻击蓄力/释放、投掷/返回、受伤、
   死亡开始/完成、结束跟踪。客户端的声音/音乐/屏幕表现消费同一 stage/action 信息，
   以 Boss UUID 区分实例，不从 renderer 每帧反复播放。

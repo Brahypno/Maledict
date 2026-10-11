@@ -198,8 +198,8 @@ UV/法线、胸洞 12 条射线和环内缘 32 条射线检查通过；报告在
 
 | 类 | 覆盖 | `@Test` |
 | --- | --- | ---: |
-| `common/entity/VicissitudeVitalityTest` | 真生命、击杀计数与世界存档 | 5 |
-| `common/entity/DamageAdaptationTest` | 适应效果：按 damage message 记账与自然指数递减 | 15 |
+| `common/entity/VicissitudeVitalityTest` | 真生命、击杀计数与世界存档 | 6 |
+| `common/entity/DamageAdaptationTest` | 适应效果：按 damage message 记账与自然指数递减 | 19 |
 | `common/curio/HalfHealthTest` | 启蒙之年的半血判定 | 7 |
 | `common/curio/EnlightenmentLevelTest` | 护符 NBT 上的等级读取 | 6 |
 | `common/effect/BlessedRegenerationTest` | 生命祝福的额外自然回血量 | 7 |
@@ -236,6 +236,9 @@ UV/法线、胸洞 12 条射线和环内缘 32 条射线检查通过；报告在
 ```
 
 首次运行需要下载测试依赖，缓存齐全后可加 `--offline`。
+`test` 先在真实 Forge 服务端运行 `src/test` 中的实体场景，再执行 JUnit；
+`--tests` 只过滤后者。事件、嵌套伤害、死亡取消、实体读档、飞镰、脱困、饰品交接与图腾消耗
+均有服务端场景，覆盖边界见 [测试说明](../../../src/test/README.md)。
 HTML 报告在 `build/reports/tests/test/index.html`，日志在 `build/tests`。
 临时存档由 JUnit `@TempDir` 创建和清理。
 **本项目已取消 `check` 对 `test` 的依赖**：`check` 与 `build` 不会自动跑测试，必须显式执行 `test`。
@@ -322,8 +325,8 @@ HTML 报告在 `build/reports/tests/test/index.html`，日志在 `build/tests`�
     `ItemInHandLayer` 再补 Rx(−90)·Ry(180)；其 translate 0.625 是肩到手心的距离，
     本模型锚点已在手上，不重复位移。三个客户端旋转旋钮已删除。
 12. **渲染与实际手持分离**（D11）：新增同步字段 `DATA_WEAPON_TIER`，
-    `getDisplayWeapon` 在客户端按档位重建 ItemStack；手上仍维持同档武器
-    （空手立即补、类型不符每 20 tick 纠正、飞行镰刀不被触碰）。
+    `getDisplayWeapon` 在客户端按档位重建 ItemStack；Boss 的武器为虚拟状态，不保存真实手持或暂存物品。
+    飞镰失联立即恢复持握状态，失效 token 对应的旧飞镰自行消失。
     `applyWeaponAttributes()` 从武器自身属性表读出并烘焙成固定修饰符，
     `suppressHeldItemAttributes()` 每 tick 清掉手上临时修饰符。
 13. **区块加载崩溃**（`Modifier is already applied on this attribute!`）：

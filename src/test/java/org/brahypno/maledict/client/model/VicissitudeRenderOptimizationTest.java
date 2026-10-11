@@ -25,7 +25,7 @@ class VicissitudeRenderOptimizationTest {
         assertFalse(new VicissitudeEmissiveMask(40, 40, new int[1600]).touches(.3F, .3F, .6F, .6F));
     }
 
-    @Test void cachedTransformsMatchOriginalAncestorWalkAcrossActionsAndBothLayers() {
+    @Test void cachedTransformsMatchAncestorWalkAcrossActions() {
         var cache = new VicissitudePoseMatrices();
         var pose = VicissitudeRig.newPose();
         var incoming = new Matrix4f().translation(3, -2, 7).rotateY(.71F).scale(-1, -1, 1);
@@ -46,12 +46,10 @@ class VicissitudeRenderOptimizationTest {
                                     (j.localY() + pose.offY(j)) / 16F, (j.localZ() + pose.offZ(j)) / 16F).rotate(rotation);
                             expectedNormal.rotate(rotation);
                         }
-                        for (int layer = 0; layer < 2; layer++) {
-                            var actual = new Matrix4f(incoming).mul(cache.position(joint));
-                            var actualNormal = new Matrix3f(incoming).mul(cache.normal(joint));
-                            assertTrue(expected.equals(actual, .00005F), action + "/" + joint);
-                            assertTrue(expectedNormal.equals(actualNormal, .00005F), action + "/normal/" + joint);
-                        }
+                        var actual = new Matrix4f(incoming).mul(cache.position(joint));
+                        var actualNormal = new Matrix3f(incoming).mul(cache.normal(joint));
+                        assertTrue(expected.equals(actual, .00005F), action + "/" + joint);
+                        assertTrue(expectedNormal.equals(actualNormal, .00005F), action + "/normal/" + joint);
                     }
                 }
             }

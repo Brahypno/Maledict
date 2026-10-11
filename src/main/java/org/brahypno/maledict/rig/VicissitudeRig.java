@@ -825,6 +825,14 @@ public final class VicissitudeRig {
      * resolves its damage volume from this rather than from a typed-in radius.
      */
     public record BladeSegment(V3 grip, V3 tip) {
+        /** One-block vertical slack, tested against the victim's whole box rather than its feet. */
+        public boolean overlapsHeight(double bossY, double victimMinY, double victimMaxY) {
+            return victimMaxY >= minimumHitY(bossY) && victimMinY <= maximumHitY(bossY);
+        }
+
+        public double minimumHitY(double bossY) { return bossY + Math.min(grip.y(), tip.y()) - 1.0D; }
+        public double maximumHitY(double bossY) { return bossY + Math.max(grip.y(), tip.y()) + 1.0D; }
+
         public double length() {
             double dx = tip.x() - grip.x();
             double dy = tip.y() - grip.y();
@@ -1075,6 +1083,36 @@ public final class VicissitudeRig {
 
     public static float capWeightAt(List<SegmentVolume> volumes, Box area) {
         return highestCapWeightSegment(volumes, area).capWeight();
+    }
+
+    /** First actual intersection along an attack ray; a miss supplies no head/wing bonus. */
+    public static Segment firstSegmentAlongRay(List<SegmentVolume> volumes, V3 from, V3 to) {
+        double closest = Double.POSITIVE_INFINITY;
+        Segment best = Segment.BODY;
+        for (SegmentVolume volume : volumes) {
+            Box box = volume.box();
+            double enter = 0.0D, exit = 1.0D;
+            double[] starts = {from.x(), from.y(), from.z()};
+            double[] ends = {to.x(), to.y(), to.z()};
+            double[] minima = {box.minX(), box.minY(), box.minZ()};
+            double[] maxima = {box.maxX(), box.maxY(), box.maxZ()};
+            for (int axis = 0; axis < 3; axis++) {
+                double direction = ends[axis] - starts[axis];
+                if (Math.abs(direction) < 1.0E-9D) {
+                    if (starts[axis] < minima[axis] || starts[axis] > maxima[axis]) { exit = -1; break; }
+                } else {
+                    double a = (minima[axis] - starts[axis]) / direction;
+                    double b = (maxima[axis] - starts[axis]) / direction;
+                    enter = Math.max(enter, Math.min(a, b));
+                    exit = Math.min(exit, Math.max(a, b));
+                }
+            }
+            if (enter <= exit && enter < closest) {
+                closest = enter;
+                best = volume.segment();
+            }
+        }
+        return best;
     }
 
     private static float clamp(float value) {

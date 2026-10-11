@@ -3,6 +3,8 @@ package org.brahypno.maledict.common.curio;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -12,7 +14,10 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -26,8 +31,22 @@ public final class VicissitudeCurioLedger extends SavedData {
 
     private final Map<UUID, List<Entry>> pending = new LinkedHashMap<>();
     private final Map<UUID, Long> lastAttempt = new LinkedHashMap<>();
+    private final Map<UUID, Long> awaitingEquipment = new LinkedHashMap<>();
+    private final Set<UUID> delivering = new HashSet<>();
 
-    public record Entry(String slotIdentifier, int slotIndex, ItemStack stack) {
+    /** A final return site survives the boss, chunk unloads and server restarts. */
+    public record ReturnSite(ResourceLocation dimension, BlockPos position) {
+    }
+
+    public record Entry(String slotIdentifier, int slotIndex, ItemStack stack,
+                        @Nullable UUID encounter, @Nullable ReturnSite returnSite) {
+        public Entry(String slotIdentifier, int slotIndex, ItemStack stack) {
+            this(slotIdentifier, slotIndex, stack, null, null);
+        }
+
+        public Entry withStack(ItemStack remainder) {
+            return new Entry(slotIdentifier, slotIndex, remainder, encounter, returnSite);
+        }
     }
 
     public static VicissitudeCurioLedger get(@Nullable ServerLevel level) {
@@ -51,7 +70,13 @@ public final class VicissitudeCurioLedger extends SavedData {
                 CompoundTag item = (CompoundTag) itemTag;
                 ItemStack stack = ItemStack.of(item.getCompound("Stack"));
                 if (!stack.isEmpty()) {
-                    entries.add(new Entry(item.getString("Slot"), item.getInt("Index"), stack));
+                    ResourceLocation dimension = item.contains("ReturnDimension", Tag.TAG_STRING)
+                            ? ResourceLocation.tryParse(item.getString("ReturnDimension")) : null;
+                    ReturnSite site = dimension != null
+                            ? new ReturnSite(dimension,
+                                    BlockPos.of(item.getLong("ReturnPosition"))) : null;
+                    entries.add(new Entry(item.getString("Slot"), item.getInt("Index"), stack,
+                            item.hasUUID("Encounter") ? item.getUUID("Encounter") : null, site));
                 }
             }
             if (!entries.isEmpty()) {
@@ -76,6 +101,11 @@ public final class VicissitudeCurioLedger extends SavedData {
                 item.putString("Slot", curio.slotIdentifier());
                 item.putInt("Index", curio.slotIndex());
                 item.put("Stack", curio.stack().save(new CompoundTag()));
+                if (curio.encounter() != null) item.putUUID("Encounter", curio.encounter());
+                if (curio.returnSite() != null) {
+                    item.putString("ReturnDimension", curio.returnSite().dimension().toString());
+                    item.putLong("ReturnPosition", curio.returnSite().position().asLong());
+                }
                 items.add(item);
             }
             player.put("Items", items);
@@ -93,7 +123,7 @@ public final class VicissitudeCurioLedger extends SavedData {
         List<Entry> target = pending.computeIfAbsent(owner, ignored -> new ArrayList<>());
         for (Entry entry : entries) {
             if (!entry.stack().isEmpty()) {
-                target.add(new Entry(entry.slotIdentifier(), entry.slotIndex(), entry.stack().copy()));
+                target.add(entry.withStack(entry.stack().copy()));
             }
         }
         setDirty();
@@ -116,6 +146,8 @@ public final class VicissitudeCurioLedger extends SavedData {
     public void replace(UUID owner, List<Entry> remaining) {
         if (remaining.isEmpty()) {
             pending.remove(owner);
+            lastAttempt.remove(owner);
+            awaitingEquipment.remove(owner);
         } else {
             pending.put(owner, new ArrayList<>(remaining));
         }
@@ -128,5 +160,36 @@ public final class VicissitudeCurioLedger extends SavedData {
 
     public void markAttempt(UUID owner, long gameTime) {
         lastAttempt.put(owner, gameTime);
+    }
+
+    public void equipmentChanged(UUID owner, long gameTime) {
+        awaitingEquipment.put(owner, gameTime);
+    }
+
+    public void equipmentUpdated(UUID owner, long gameTime) {
+        Long changedAt = awaitingEquipment.get(owner);
+        // A Curios callback may restore more equipment within this very tick; it needs a later pass.
+        if (changedAt != null && gameTime > changedAt) awaitingEquipment.remove(owner);
+    }
+
+    public boolean equipmentHasSettled(UUID owner) {
+        return !awaitingEquipment.containsKey(owner);
+    }
+
+    public boolean beginDelivery(UUID owner) {
+        return delivering.add(owner);
+    }
+
+    public void endDelivery(UUID owner) {
+        delivering.remove(owner);
+    }
+
+    /** Only this encounter's released items become eligible for overflow chests. */
+    public void finishEncounter(UUID encounter, ReturnSite site) {
+        pending.replaceAll((owner, entries) -> entries.stream().map(entry ->
+                encounter.equals(entry.encounter()) && entry.returnSite() == null
+                        ? new Entry(entry.slotIdentifier(), entry.slotIndex(), entry.stack(), encounter, site)
+                        : entry).collect(Collectors.toCollection(ArrayList::new)));
+        setDirty();
     }
 }

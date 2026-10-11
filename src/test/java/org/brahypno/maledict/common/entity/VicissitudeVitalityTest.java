@@ -3,16 +3,41 @@ package org.brahypno.maledict.common.entity;
 import net.minecraft.SharedConstants;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.CombatRules;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import org.brahypno.maledict.registry.MaledictEntities;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.engine.JupiterTestEngine;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.core.LauncherConfig;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@GameTestHolder("maledict")
+@PrefixGameTestTemplate(false)
 public final class VicissitudeVitalityTest {
     @BeforeAll
     static void initializeMinecraftVersion() {
@@ -78,7 +103,7 @@ public final class VicissitudeVitalityTest {
     }
 
     @Test
-    void entityNbtCannotRewriteTheLedgerOrBoundCapability() {
+    void boundCapabilityMirrorRejectsNbtUntilReboundToAuthority() {
         UUID identity = UUID.randomUUID();
         VicissitudeVitality authority = VicissitudeVitality.initial(1000.0F)
                 .afterDamage(10.0F);
@@ -91,12 +116,263 @@ public final class VicissitudeVitalityTest {
         forged.putInt("KillAttempts", 3);
         capability.deserializeNBT(forged);
         assertTrue(capability.snapshot().current() == 990.0F && capability.snapshot().killAttempts() == 0,
-                "Live ForgeCaps mutation must not change vitality or spend bypass attempts");
-        assertTrue(authority.equals(ledger.find(identity)), "Entity-side mutation must leave world authority intact");
+                "Bound mirror deserialization must not change its value or spend bypass attempts");
 
         VicissitudeVitalityCapability.Mirror loaded = new VicissitudeVitalityCapability.Mirror();
         loaded.deserializeNBT(forged);
         loaded.synchronize(ledger.find(identity));
-        assertTrue(loaded.snapshot().current() == 990.0F, "On join the world record must replace even valid forged entity NBT");
+        assertTrue(loaded.snapshot().current() == 990.0F, "Explicit synchronization must replace the unbound mirror value");
+    }
+
+    @Test
+    void canceledDeathRestoresOneHealthAndRestartsForcedKillCounting() {
+        VicissitudeVitality revived = VicissitudeVitality.initial(1000)
+                .killAttempt(1, 100).killAttempt(2, 100).killAttempt(3, 100).afterCanceledDeath();
+        assertTrue(revived.current() == 1 && revived.killAttempts() == 0);
+        assertTrue(revived.killAttempt(4, 100).killAttempts() == 1);
+    }
+
+    @GameTest(template = "test_empty", timeoutTicks = 30)
+    public static void canceledLargerChannelNeverReturnsNextTick(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        float initial = boss.getHealth();
+        Events listener = new Events(boss);
+        listener.hurt = event -> { if (event.getAmount() > 8) event.setCanceled(true); };
+        withListener(listener, () -> {
+            boss.hurt(boss.damageSources().generic(), 6);
+            boss.hurt(boss.damageSources().generic(), 14);
+        });
+        equal(helper, initial - 6, boss.getHealth(), "Canceled channel must not debit");
+        helper.runAtTickTime(2, () -> {
+            equal(helper, initial - 6, boss.getHealth(), "No deferred canceled damage");
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "test_empty")
+    public static void finalEventLossIsTheBatchMaximum(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        float initial = boss.getHealth();
+        Events listener = new Events(boss);
+        listener.damage = event -> event.setAmount(event.getAmount() / 2);
+        withListener(listener, () -> {
+            boss.hurt(boss.damageSources().generic(), 12);
+            boss.hurt(boss.damageSources().generic(), 28);
+        });
+        equal(helper, initial - 14, boss.getHealth(), "Final losses 6 and 14 must total 14");
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty")
+    public static void nestedLargerChannelRestoresOuterTransaction(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        float initial = boss.getHealth();
+        Events listener = new Events(boss);
+        listener.hurt = event -> {
+            if (event.getAmount() == 2) boss.hurt(boss.damageSources().magic(), 10);
+        };
+        withListener(listener, () -> boss.hurt(boss.damageSources().generic(), 2));
+        equal(helper, initial - 10, boss.getHealth(), "Outer 2 and nested 10 must total 10");
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty")
+    public static void nestedSmallerChannelCannotSpendOuterBudget(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        float initial = boss.getHealth();
+        Events listener = new Events(boss);
+        listener.damage = event -> {
+            if (event.getAmount() == 10) boss.hurt(boss.damageSources().magic(), 2);
+        };
+        withListener(listener, () -> boss.hurt(boss.damageSources().generic(), 10));
+        equal(helper, initial - 10, boss.getHealth(), "Outer 10 and nested 2 must total 10");
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty")
+    public static void canceledFinalDamageCannotReplaceNestedLoss(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        float initial = boss.getHealth();
+        Events listener = new Events(boss);
+        listener.damage = event -> {
+            if (event.getAmount() == 20) {
+                boss.hurt(boss.damageSources().magic(), 6);
+                event.setCanceled(true);
+            }
+        };
+        withListener(listener, () -> boss.hurt(boss.damageSources().generic(), 20));
+        equal(helper, initial - 6, boss.getHealth(), "Only the uncanceled nested channel debits");
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty")
+    public static void callbacksCannotWriteHealthOrExpandTheCap(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        float initial = boss.getHealth();
+        Events listener = new Events(boss);
+        listener.hurt = event -> boss.setHealth(0);
+        listener.damage = event -> event.setAmount(5000);
+        withListener(listener, () -> boss.hurt(boss.damageSources().generic(), 2));
+        equal(helper, initial - 100, boss.getHealth(), "Final write must enforce the 100-health cap");
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty", timeoutTicks = 30)
+    public static void canceledDeathRevivesAndNeverFinalizes(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        VicissitudeVitalityLedger.get(helper.getLevel()).commit(boss.getUUID(),
+                VicissitudeVitality.initial(boss.getMaxHealth()).withCurrent(5));
+        Events listener = new Events(boss);
+        listener.death = event -> event.setCanceled(true);
+        withListener(listener, () -> boss.hurt(boss.damageSources().generic(), 10));
+        equal(helper, 1, boss.getHealth(), "Canceled death must restore one health");
+        helper.runAtTickTime(25, () -> {
+            helper.assertTrue(!boss.isRemoved() && boss.isAlive(), "Canceled death must survive removal deadline");
+            helper.assertTrue(boss.finalDeaths == 0 && boss.lootDrops == 0, "No death callbacks or rewards");
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "test_empty", timeoutTicks = 30)
+    public static void lethalLargerChannelFinalizesExactlyOnce(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        VicissitudeVitalityLedger.get(helper.getLevel()).commit(boss.getUUID(),
+                VicissitudeVitality.initial(boss.getMaxHealth()).withCurrent(12));
+        boss.hurt(boss.damageSources().generic(), 6);
+        boss.hurt(boss.damageSources().generic(), 14);
+        boss.die(boss.damageSources().generic());
+        helper.assertTrue(boss.finalDeaths == 1 && boss.lootDrops == 1, "Exactly one real death and reward transaction");
+        helper.runAtTickTime(25, () -> {
+            helper.assertTrue(boss.isRemoved(), "Completed death sequence must remove entity");
+            helper.assertTrue(boss.finalDeaths == 1 && boss.lootDrops == 1, "No repeated finalization");
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "test_empty")
+    public static void forgedEntityNbtAndReloadCannotHealOrKill(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        boss.hurt(boss.damageSources().generic(), 6);
+        float wounded = boss.getHealth();
+        UUID identity = boss.getUUID();
+        CompoundTag tag = boss.saveWithoutId(new CompoundTag());
+        tag.putFloat("Health", 0);
+        tag.putUUID("UUID", UUID.randomUUID());
+        boss.load(tag);
+        equal(helper, wounded, boss.getHealth(), "Live entity NBT cannot debit vitality");
+        helper.assertTrue(identity.equals(boss.getUUID()), "Live entity cannot change its ledger identity");
+        boss.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+        tag.putUUID("UUID", identity);
+        tag.putFloat("Health", 1000);
+        TestBoss loaded = new TestBoss(helper.getLevel());
+        loaded.load(tag);
+        helper.assertTrue(helper.getLevel().addFreshEntity(loaded), "Reloaded entity must join");
+        equal(helper, wounded, loaded.getHealth(), "Reload must bind to wounded world record");
+        equal(helper, wounded, loaded.getCapability(VicissitudeVitalityCapability.CAPABILITY)
+                .orElseThrow(() -> new IllegalStateException("Missing attached capability")).current(),
+                "Real attached capability must synchronize to authority");
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty", timeoutTicks = 30)
+    public static void thirdDistinctKillStartsTheRealDeathTransaction(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        float initial = boss.getHealth();
+        for (int call = 0; call < 20; call++) boss.kill();
+        equal(helper, initial, boss.getHealth(), "One tick of kill calls counts once");
+        helper.runAtTickTime(2, () -> {
+            boss.kill();
+            equal(helper, initial, boss.getHealth(), "Second tick must survive");
+        });
+        helper.runAtTickTime(3, () -> {
+            boss.kill();
+            helper.assertTrue(boss.finalDeaths == 1 && boss.lootDrops == 1, "Third tick must start normal death");
+        });
+        helper.runAtTickTime(25, () -> {
+            helper.assertTrue(boss.isRemoved(), "Third kill must finish removal");
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "test_empty")
+    public static void batchMaximumUsesArmorAndAbsorptionResults(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        boss.getAttribute(Attributes.ARMOR).setBaseValue(20);
+        boss.setAbsorptionAmount(4);
+        float initial = boss.getHealth();
+        float first = CombatRules.getDamageAfterAbsorb(20, 20, 0) - 4;
+        float second = CombatRules.getDamageAfterAbsorb(28, 20, 0);
+        boss.hurt(boss.damageSources().mobAttack(boss), 20);
+        equal(helper, initial - first, boss.getHealth(), "First channel must consume absorption after armor");
+        boss.hurt(boss.damageSources().mobAttack(boss), 28);
+        equal(helper, initial - Math.max(first, second), boss.getHealth(), "Batch must maximize reduced health loss");
+        equal(helper, 0, boss.getAbsorptionAmount(), "Absorption must be consumed once available");
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty")
+    public static void existingVicissitudeRulesAlsoRunInLoadedGame(GameTestHelper helper) throws ClassNotFoundException {
+        String[] suites = {
+                "common.entity.DamageAdaptationTest", "common.entity.DamageAdaptationStorageTest",
+                "common.entity.VicissitudeVitalityTest", "common.entity.VicissitudeUnstickSearchTest",
+                "common.rite.VicissitudeSummoningTest", "common.rite.VicissitudeTotemConsumptionTest",
+                "rig.VicissitudeRigTest", "rig.VicissitudeSwingBandTest", "rig.VicissitudeHitGeometryTest",
+                "rig.VicissitudeFeatherShedTest", "client.VicissitudeThemeTest",
+                "client.model.VicissitudeRenderOptimizationTest", "data.FirstVicissitudeSpiritDataTest"};
+        var request = LauncherDiscoveryRequestBuilder.request();
+        for (String suite : suites) request.selectors(DiscoverySelectors.selectClass(Class.forName("org.brahypno.maledict." + suite)));
+        var listener = new SummaryGeneratingListener();
+        // Forge's module layers do not expose the engine through the launcher's default ServiceLoader.
+        var launcher = LauncherFactory.create(LauncherConfig.builder().enableTestEngineAutoRegistration(false)
+                .addTestEngines(new JupiterTestEngine()).build());
+        launcher.registerTestExecutionListeners(listener);
+        launcher.execute(request.build());
+        var summary = listener.getSummary();
+        helper.assertTrue(summary.getTestsFoundCount() > 0, "JUnit suites must actually be discovered in Forge");
+        helper.assertTrue(summary.getTotalFailureCount() == 0,
+                "Existing tests failed in loaded game: " + summary.getFailures());
+        helper.succeed();
+    }
+
+    private static TestBoss spawn(GameTestHelper helper) {
+        TestBoss boss = new TestBoss(helper.getLevel());
+        boss.setPos(helper.absolutePos(new BlockPos(1, 2, 1)).getCenter());
+        boss.setNoGravity(true);
+        helper.assertTrue(helper.getLevel().addFreshEntity(boss), "Test boss must join the real level");
+        return boss;
+    }
+
+    private static void equal(GameTestHelper helper, float expected, float actual, String message) {
+        helper.assertTrue(Math.abs(expected - actual) < 0.001F, message + ": expected " + expected + ", actual " + actual);
+    }
+
+    private static void withListener(Events listener, Runnable action) {
+        MinecraftForge.EVENT_BUS.register(listener);
+        try { action.run(); } finally { MinecraftForge.EVENT_BUS.unregister(listener); }
+    }
+
+    public static final class Events {
+        private final TestBoss boss;
+        Consumer<LivingHurtEvent> hurt = event -> {};
+        Consumer<LivingDamageEvent> damage = event -> {};
+        Consumer<LivingDeathEvent> death = event -> {};
+        Events(TestBoss boss) { this.boss = boss; }
+        @SubscribeEvent public void hurt(LivingHurtEvent event) { if (event.getEntity() == boss) hurt.accept(event); }
+        @SubscribeEvent public void damage(LivingDamageEvent event) { if (event.getEntity() == boss) damage.accept(event); }
+        @SubscribeEvent public void death(LivingDeathEvent event) { if (event.getEntity() == boss) death.accept(event); }
+    }
+
+    private static final class TestBoss extends VicissitudeBossEntity {
+        int finalDeaths;
+        int lootDrops;
+        TestBoss(ServerLevel level) {
+            super(MaledictEntities.FIRST_VICISSITUDE.get(), level);
+            getAttribute(Attributes.ARMOR).setBaseValue(0);
+            getAttribute(Attributes.ARMOR_TOUGHNESS).setBaseValue(0);
+        }
+        @Override protected void registerGoals() {}
+        @Override protected float getVitalityDamageLimit() { return 100; }
+        @Override protected void onFinalDeath(DamageSource source) { finalDeaths++; }
+        @Override protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) { lootDrops++; }
     }
 }

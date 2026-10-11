@@ -109,6 +109,18 @@ minecraft {
         // The gametest system is also enabled by default for other run configs under the /test command.
         gameTestServer {
             property 'forge.enabledGameTestNamespaces', mod_id
+            workingDirectory project.file('build/tests')
+            // Forge uses the main classpath; add only the JUnit libraries needed by these tests.
+            lazyToken 'minecraft_classpath', {
+                configurations.testRuntimeClasspath.resolvedConfiguration.resolvedArtifacts
+                        .findAll { it.moduleVersion.id.group in ['org.junit.platform', 'org.junit.jupiter', 'org.opentest4j', 'org.apiguardian'] }
+                        .collect { it.file.absolutePath }.join(File.pathSeparator)
+            }
+            mods {
+                "${mod_id}" {
+                    source sourceSets.test
+                }
+            }
         }
 
         data {
@@ -179,7 +191,10 @@ dependencies {
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
     // at runtime, use the full JEI jar
     runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
-    runtimeOnly fg.deobf("curse.maven:just-enough-characters-250702:8771525")
+    // Client search integration cannot load on a dedicated server.
+    if (!gradle.startParameter.taskNames.any { it.tokenize(':').last() in ['test', 'runGameTestServer', 'runServer'] }) {
+        runtimeOnly fg.deobf("curse.maven:just-enough-characters-250702:8771525")
+    }
     runtimeOnly fg.deobf("curse.maven:MoonlightLib-499980:6000197")
     runtimeOnly fg.deobf("curse.maven:MmmMmmMmmMmm-225738:5737040")
     runtimeOnly fg.deobf("curse.maven:jade-324717:6855440")
@@ -195,7 +210,8 @@ dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.3'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.10.3'
+    testImplementation 'org.junit.platform:junit-platform-launcher:1.10.3'
 
 }
 
@@ -252,10 +268,23 @@ tasks.named('build').configure {
 }
 
 tasks.named('test', Test) {
+    dependsOn 'runGameTestServer'
     useJUnitPlatform()
     workingDir = layout.buildDirectory.dir('tests').get().asFile
     doFirst {
         workingDir.mkdirs()
+    }
+}
+
+// Forge can exit normally after a mod-loading failure; require a completed test report as well.
+tasks.matching { it.name == 'runGameTestServer' }.configureEach {
+    doLast {
+        def report = file('build/tests/logs/latest.log')
+        if (!report.exists() || !(report.getText('UTF-8') =~ /All \d+ required tests passed/).find()) {
+            throw new GradleException('Game environment tests did not pass; see build/tests/logs/latest.log')
+        }
+        // JUnit initializes Minecraft logging too; preserve the server report before it runs.
+        file('build/tests/game-environment.log').bytes = report.bytes
     }
 }
 

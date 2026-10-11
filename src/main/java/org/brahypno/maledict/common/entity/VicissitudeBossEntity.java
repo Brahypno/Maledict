@@ -5,6 +5,8 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
@@ -13,10 +15,16 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.ForgeEventFactory;
+import org.brahypno.changelib.HealthHelper.HealthProtectionLevel;
+import org.brahypno.changelib.HealthHelper.SetHealthProtection;
 
 import java.util.Objects;
 import java.util.UUID;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * Base for Vicissitude bosses; concrete entities supply registration, AI and visuals.
@@ -30,9 +38,8 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
     private static final EntityDataAccessor<Float> DISPLAY_VITALITY =
             SynchedEntityData.defineId(VicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
     private final VitalityState vitality = new VitalityState();
-    // 同一 tick 的一批命中只取最大的一刀，见 #hurt 与 #flushPendingHit。
-    private float tickLargestHit;
-    private float tickAppliedDamage;
+    // Each channel resolves completely; only the increase in the final maximum is debited.
+    private float tickLargestLoss;
     private long tickHitAt = Long.MIN_VALUE;
 
     protected VicissitudeBossEntity(EntityType<? extends PathfinderMob> type, Level level) {
@@ -68,14 +75,19 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
             VicissitudeVitality saved = vitality.ledger.find(vitality.identity);
             if (saved == null) {
                 // Captured once per UUID; reloading must not heal wounds or recapture attributes.
-                float maximum = getMaxHealth();
+                float maximum = initialVitalityMaximum();
                 saved = VicissitudeVitality.initial(
                         Float.isFinite(maximum) && maximum > 0.0F ? maximum : 1000.0F);
             }
             vitality.joined = true;
-            vitality.deathHandled = saved.current() <= 0.0F;
             commitVitality(saved);
+            SetHealthProtection.protect(this, HealthProtectionLevel.DEFENSE_STATE);
         }
+    }
+
+    /** Initial authoritative pool; vanilla's ranged attribute may cap a larger authored pool. */
+    protected float initialVitalityMaximum() {
+        return getMaxHealth();
     }
 
     @Override
@@ -95,15 +107,6 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
     public final void setHealth(float value) {
         if (vitality == null) {
             super.setHealth(value);
-        } else if (!level().isClientSide && vitality.joined && !Float.isNaN(value)) {
-            if (vitality.writing > 0) {
-                VicissitudeVitality state = verifiedVitality();
-                float loss = Math.min(vitality.budget, Math.max(0.0F, state.current() - value));
-                if (loss > 0.0F) {
-                    vitality.budget -= loss;
-                    commitVitality(state.afterDamage(loss));
-                }
-            }
         }
     }
 
@@ -154,7 +157,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
         return amount;
     }
 
-    /** 两扇门串联，谁都能单独拦下；同一 tick 的追加伤害算同一批，批内只算最大的一刀（差额下一 tick 开头由 {@link #flushPendingHit()} 补齐）。 */
+    /** Two serial gates; nested/same-tick channels share the maximum final health loss. */
     @Override
     public final boolean hurt(DamageSource source, float amount) {
         if (level().isClientSide || !vitality.joined
@@ -192,83 +195,70 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
         if (!Float.isFinite(cappedAmount) || cappedAmount <= 0.0F) {
             return false;
         }
-        float appliedAmount = sameTickBatch
-                              ? Math.max(0.0F, cappedAmount - tickAppliedDamage)
-                              : cappedAmount;
-        if (sameTickBatch && appliedAmount <= 0.0F) {
-            return false;
+        if (!sameTickBatch) {
+            tickHitAt = now;
+            tickLargestLoss = 0.0F;
         }
-        tickHitAt = now;
-        tickLargestHit = sameTickBatch ? Math.max(tickLargestHit, cappedAmount) : cappedAmount;
-        tickAppliedDamage += appliedAmount;
-        // super.hurt 会触发 LivingHurtEvent，追加伤害会再进一次 hurt()，所以这里是深度计数而不是布尔。
-        vitality.receiving++;
-        vitality.budget = appliedAmount;
+        DamageFrame frame = new DamageFrame(limit);
+        vitality.frames.push(frame);
         boolean accepted;
         // 清零让 super.hurt 全额落地，而不是只算超出上一击的差额。
         invulnerableTime = 0;
         lastHurt = 0.0F;
         try {
-            accepted = super.hurt(source, appliedAmount);
+            accepted = super.hurt(source, cappedAmount);
         } finally {
-            if (--vitality.receiving <= 0) {
-                vitality.receiving = 0;
-                vitality.writing = 0;
-                vitality.budget = 0.0F;
-                publishVitality();
-            }
+            vitality.frames.pop();
+            publishVitality();
         }
+        // Vanilla hurt() can return true even when LivingHurtEvent/LivingDamageEvent was canceled.
+        accepted = accepted && frame.finalLoss > 0.0F;
         if (accepted) {
             commitVitality(verifiedVitality().afterAcceptedHit(now, getVitalityHitInterval()));
-            onDamageAccepted(source, appliedAmount);
-        } else {
-            tickAppliedDamage -= appliedAmount;
-            if (tickAppliedDamage <= 0.0F) {
-                tickHitAt = Long.MIN_VALUE;
-                tickLargestHit = 0.0F;
-            }
+            onDamageAccepted(source, frame.finalLoss);
         }
         return accepted;
     }
 
-    /** 把上一 tick 那一批补齐到最大的一刀，在 tick 开头调用，使"同一 tick"有统一边界。 */
-    private void flushPendingHit() {
-        if (tickHitAt == Long.MIN_VALUE) {
-            return;
-        }
-        float pending = tickLargestHit - tickAppliedDamage;
-        tickHitAt = Long.MIN_VALUE;
-        tickLargestHit = 0.0F;
-        tickAppliedDamage = 0.0F;
-        if (pending <= 0.0F) {
-            return;
-        }
-        VicissitudeVitality state = verifiedVitality();
-        float loss = Math.min(pending, state.current());
-        if (loss > 0.0F) {
-            commitVitality(state.afterDamage(loss));
-        }
-    }
-
     @Override
     protected final void actuallyHurt(DamageSource source, float amount) {
-        // Reflectively invoking actuallyHurt outside an accepted transaction cannot deduct vitality;
-        // nesting inside one is legitimate.
-        if (vitality.receiving <= 0) {
+        DamageFrame frame = vitality.frames.peek();
+        if (frame == null || frame.resolved || isInvulnerableTo(source) || getHealth() <= 0.0F) {
             return;
         }
-        vitality.writing++;
-        try {
-            super.actuallyHurt(source, amount);
-        } finally {
-            vitality.writing--;
+        frame.resolved = true;
+        // Forge 1.20.1 LivingEntity#actuallyHurt order, with the health write committed to our ledger.
+        // No setter transaction is opened around mod callbacks; a callback's setHealth cannot spend it.
+        amount = ForgeHooks.onLivingHurt(this, source, amount);
+        if (!Float.isFinite(amount) || amount <= 0.0F) return;
+        amount = getDamageAfterArmorAbsorb(source, amount);
+        amount = getDamageAfterMagicAbsorb(source, amount);
+        float finalAmount = Math.max(amount - getAbsorptionAmount(), 0.0F);
+        setAbsorptionAmount(getAbsorptionAmount() - (amount - finalAmount));
+        float absorbed = amount - finalAmount;
+        if (absorbed > 0.0F && absorbed < 3.4028235E37F && source.getEntity() instanceof ServerPlayer player) {
+            player.awardStat(Stats.DAMAGE_DEALT_ABSORBED, Math.round(absorbed * 10.0F));
+        }
+        finalAmount = ForgeHooks.onLivingDamage(this, source, finalAmount);
+        if (!Float.isFinite(finalAmount) || finalAmount <= 0.0F) return;
+        frame.finalLoss = Math.min(frame.limit, finalAmount);
+        float additionalLoss = Math.max(0.0F, frame.finalLoss - tickLargestLoss);
+        tickLargestLoss = Math.max(tickLargestLoss, frame.finalLoss);
+        if (additionalLoss > 0.0F) {
+            float loss = Math.min(getHealth(), additionalLoss);
+            if (loss > 0.0F) {
+                getCombatTracker().recordDamage(source, loss);
+                commitVitality(verifiedVitality().afterDamage(loss));
+                setAbsorptionAmount(getAbsorptionAmount() - loss);
+                gameEvent(GameEvent.ENTITY_DAMAGE);
+            }
         }
     }
 
     @Override
     public final void heal(float amount) {
         if (level().isClientSide || !vitality.joined || getHealth() <= 0.0F
-                || vitality.receiving > 0 || !Float.isFinite(amount) || amount <= 0.0F) {
+                || !vitality.frames.isEmpty() || !Float.isFinite(amount) || amount <= 0.0F) {
             return;
         }
         amount = ForgeEventFactory.onLivingHeal(this, amount);
@@ -295,6 +285,9 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
                 vitality.deathHandled = dead;
                 if (dead) {
                     onFinalDeath(source);
+                } else {
+                    commitVitality(verifiedVitality().afterCanceledDeath());
+                    deathTime = 0;
                 }
             } finally {
                 vitality.finishing = false;
@@ -317,7 +310,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
 
     @Override
     protected final void tickDeath() {
-        if (getHealth() > 0.0F) {
+        if (getHealth() > 0.0F || (!level().isClientSide && !vitality.deathHandled)) {
             return;
         }
         deathTime++;
@@ -346,6 +339,11 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
 
     @Override
     public void remove(RemovalReason reason) {
+        if (!level().isClientSide && vitality.joined && getHealth() <= 0.0F
+            && !vitality.deathHandled && (reason == RemovalReason.KILLED || reason == RemovalReason.DISCARDED)) {
+            die(lastKillSource());
+            return;
+        }
         if (!level().isClientSide && getHealth() > 0.0F
                 && (reason == RemovalReason.KILLED || reason == RemovalReason.DISCARDED)) {
             if (reason == RemovalReason.KILLED) {
@@ -367,10 +365,11 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
             ejectPassengers();
         }
         if (!level().isClientSide && vitality.joined) {
-            flushPendingHit();
             if (getHealth() > 0.0F) {
                 dead = false;
                 deathTime = 0;
+            } else if (!vitality.deathHandled) {
+                die(lastKillSource());
             }
             publishVitality();
         }
@@ -480,12 +479,16 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         if (vitality.joined) {
-            // Keep live NBT loading outside the active damage setter transaction as well.
+            // Live NBT loading cannot replace the bound identity or health mirror.
             tag = tag.copy();
             tag.putFloat("Health", Math.max(1.0F, getHealth()));
             super.setUUID(vitality.identity);
         }
         super.readAdditionalSaveData(tag);
+        if (!vitality.joined) {
+            vitality.deathHandled = tag.getBoolean("VicissitudeDeathHandled");
+            vitality.lootHandled = tag.getBoolean("VicissitudeLootHandled");
+        }
         if (vitality.joined) {
             if (getHealth() > 0.0F) {
                 dead = false;
@@ -495,16 +498,30 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
         }
     }
 
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putBoolean("VicissitudeDeathHandled", vitality.deathHandled);
+        tag.putBoolean("VicissitudeLootHandled", vitality.lootHandled);
+    }
+
+    private static final class DamageFrame {
+        private final float limit;
+        private float finalLoss;
+        private boolean resolved;
+
+        private DamageFrame(float limit) {
+            this.limit = limit;
+        }
+    }
+
     private static final class VitalityState {
         private UUID identity;
         private VicissitudeVitalityLedger ledger;
         private VicissitudeVitalityCapability capability;
         private VicissitudeVitality snapshot;
-        private float budget;
         private boolean joined;
-        /** 事务深度：主刀里还会发 voodoo，所以是嵌套计数而不是布尔。 */
-        private int receiving;
-        private int writing;
+        private final Deque<DamageFrame> frames = new ArrayDeque<>();
         private boolean finishing;
         private boolean deathHandled;
         private boolean lootHandled;
