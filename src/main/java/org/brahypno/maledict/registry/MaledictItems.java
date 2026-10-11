@@ -1,21 +1,28 @@
 package org.brahypno.maledict.registry;
 
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import net.minecraftforge.common.ForgeSpawnEggItem;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossSpawnPhase;
 import org.brahypno.maledict.common.item.*;
+import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 import team.lodestar.lodestone.systems.multiblock.MultiBlockItem;
+
+import java.util.List;
 
 public final class MaledictItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Maledict.MODID);
@@ -30,26 +37,44 @@ public final class MaledictItems {
     public static final RegistryObject<Item> ELEGY_BOW = ITEMS.register("elegy_bow", () ->
             new RemembranceBowItem(new Item.Properties().durability(1111).rarity(Rarity.RARE), true));
 
-    /** Curio amulet (charm slot) that renders a skull mask over the wearer's face. */
+    /**
+     * Curio amulet (charm slot) that renders a skull mask over the wearer's face.
+     */
     public static final RegistryObject<Item> AGE_OF_ENLIGHTENMENT = ITEMS.register("age_of_enlightenment", AgeOfEnlightenmentItem::new);
 
     public static final RegistryObject<Item> BLEEDING_EYE = ITEMS.register("bleeding_eye", () ->
-            new Item(new Item.Properties()));
+            new Item(new Item.Properties()) {
+                @Override
+                public Component getName(ItemStack stack) {
+                    return super.getName(stack).copy().withStyle(style -> style.withColor(0xCF210A));
+                }
 
-    /** Claim ticket for confiscated curios that could not be delivered automatically. */
+                @Override
+                public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+                    tooltip.add(Component.translatable("tooltip.maledict.bleeding_eye").withStyle(style -> style.withColor(0xCF210A)));
+                }
+            });
+
+    /**
+     * Claim ticket for confiscated curios that could not be delivered automatically.
+     */
     public static final RegistryObject<Item> CURIO_RETURN_TOKEN = ITEMS.register("curio_return_token", CurioReturnTokenItem::new);
 
     public static final RegistryObject<Item> MALIGNANT_PEWTER_TABLET = ITEMS.register("malignant_pewter_tablet",
                                                                                       () -> new Item(new Item.Properties()));
 
-    /** Curio rune (rune slot) that keeps the Blessing of Life on its wearer. */
+    /**
+     * Curio rune (rune slot) that keeps the Blessing of Life on its wearer.
+     */
     public static final RegistryObject<Item> RUNE_OF_SATIATION = ITEMS.register("rune_of_satiation",
                                                                                 () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
                                                                                                         SpiritTypeRegistry.SACRED_SPIRIT,
                                                                                                         MaledictMobEffects.BLESSING_OF_LIFE,
                                                                                                         "maledict.blessing_of_life"));
 
-    /** Curio rune (rune slot): level I pulse that grinds nearby hostiles down but never kills them. */
+    /**
+     * Curio rune (rune slot): level I pulse that grinds nearby hostiles down but never kills them.
+     */
     public static final RegistryObject<Item> RUNE_OF_DECAY = ITEMS.register("rune_of_decay",
                                                                             () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
                                                                                                     SpiritTypeRegistry.WICKED_SPIRIT,
@@ -64,7 +89,9 @@ public final class MaledictItems {
                                                                                                       SpiritTypeRegistry.WICKED_SPIRIT,
                                                                                                       "maledict.pack_boon"));
 
-    /** Curio rune (rune slot) raising every share of experience the wearer earns by a quarter. */
+    /**
+     * Curio rune (rune slot) raising every share of experience the wearer earns by a quarter.
+     */
     public static final RegistryObject<Item> RUNE_OF_RIPENING = ITEMS.register("rune_of_ripening",
                                                                                () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
                                                                                                        SpiritTypeRegistry.SACRED_SPIRIT,
@@ -127,7 +154,9 @@ public final class MaledictItems {
     public static final RegistryObject<Item> SOULWOOD_OBELISK = ITEMS.register("soulwood_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.SOULWOOD_OBELISK.get(), new Item.Properties(), SoulwoodObeliskBlockEntity.STRUCTURE));
 
-    /** 调试用刷怪蛋：只做简单档（换难度请用祭坛），一颗直接开始一阶段、一颗直接落到二阶段。 */
+    /**
+     * 调试用刷怪蛋：只做简单档（换难度请用祭坛），一颗直接开始一阶段、一颗直接落到二阶段。
+     */
     public static final RegistryObject<Item> FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG =
             ITEMS.register("first_vicissitude_phase_one_spawn_egg", () ->
                     new VicissitudeSpawnEggItem(MaledictEntities.FIRST_VICISSITUDE,
