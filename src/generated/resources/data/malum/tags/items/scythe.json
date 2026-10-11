@@ -1,5 +1,21 @@
 {
   "values": [
-    "maledict:incursus_blade"
+    "maledict:incursus_blade",
+    {
+      "id": "#goety:grave_glove_boost",
+      "required": false
+    },
+    {
+      "id": "goety:death_scythe",
+      "required": false
+    },
+    {
+      "id": "goety:dark_metal_scythe",
+      "required": false
+    },
+    {
+      "id": "goety:dark_scythe",
+      "required": false
+    }
   ]
 }

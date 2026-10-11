@@ -31,7 +31,9 @@ public final class MaledictItemTags extends ItemTagsProvider {
     private static final TagKey<Item> CURIOS_CHARM =
             ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "charm"));
 
-    /** Curios 的符文槽；同名 tag 与 Malum 自带的合并，不会被我们顶掉。 */
+    /**
+     * Curios 的符文槽；同名 tag 与 Malum 自带的合并，不会被我们顶掉。
+     */
     private static final TagKey<Item> CURIOS_RUNE =
             ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "rune"));
 
@@ -51,7 +53,12 @@ public final class MaledictItemTags extends ItemTagsProvider {
                 .add(MaledictItems.EARTHEN_SPIRIT_ARROW.get())
                 .add(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
         tag(FORGE_SCYTHE).add(MaledictItems.INCURSUS_BLADE.get());
-        tag(ItemTagRegistry.SCYTHE).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(ItemTagRegistry.SCYTHE)
+                .add(MaledictItems.INCURSUS_BLADE.get())
+                .addOptionalTag(GOETY_GRAVE_GLOVE)
+                .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "death_scythe"))
+                .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "dark_metal_scythe"))
+                .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "dark_scythe"));
         tag(ItemTagRegistry.SOUL_HUNTER_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());
         tag(ItemTagRegistry.MAGIC_CAPABLE_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.INCURSUS_BLADE.get());
