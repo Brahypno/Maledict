@@ -101,7 +101,7 @@ const PAGE_TYPES = {
   spiritRite: { y0: 78, capacity: capacity(78) },
 };
 
-// page text key -> page type, as wired up in client/MaledictCodexEntries.java
+// page text key -> page type, as wired up in client/codex/MaledictCodexEntries.java
 const PAGES = {
   "malum.gui.book.entry.page.text.maledict.remembrance_bow.1": "headlineItem",
   "malum.gui.book.entry.page.text.maledict.remembrance_bow.2": "text",

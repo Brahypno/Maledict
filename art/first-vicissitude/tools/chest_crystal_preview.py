@@ -17,7 +17,7 @@ BASIS=Matrix(((1,0,0),(0,0,1),(0,-1,0)))
 def add_preview():
     for obj in list(bpy.data.objects):
         if obj.get('render_layer_preview'): bpy.data.objects.remove(obj,do_unlink=True)
-    source=(ROOT/'src/main/java/org/brahypno/maledict/client/FirstVicissitudeChestCrystalLayer.java').read_text()
+    source=(ROOT/'src/main/java/org/brahypno/maledict/client/vicissitude/render/FirstVicissitudeChestCrystalLayer.java').read_text()
     scale=float(re.search(r'SCALE = ([\d.]+)F',source)[1])
     depth=float(re.search(r'DEPTH = (-?[\d.]+)F',source)[1])
     vertical=float(re.search(r'VERTICAL_OFFSET = (-?[\d.]+)F',source)[1])

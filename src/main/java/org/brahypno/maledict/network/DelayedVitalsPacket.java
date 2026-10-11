@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import org.brahypno.maledict.client.DelayedVitalsClient;
+import org.brahypno.maledict.client.vitals.DelayedVitalsClient;
 
 import java.util.function.Supplier;
 

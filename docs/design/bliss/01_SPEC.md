@@ -168,7 +168,7 @@ tooltip 两行（`positiveEffect`，键前缀 `malum.gui.curio.effect.`）：
 | `common/combat/IncursusBladeEnchantments.java` | 飞升横扫那一记走抬档 |
 | `registry/MaledictItems.java`、`registry/MaledictCreativeTabs.java` | 注册与创造栏 |
 | `data/MaledictRecipes.java`、`MaledictItemTags.java`、`MaledictItemModels.java`、`MaledictLanguage.java` | 配方 / `curios:rune` 标签 / 模型 / 中英文案 |
-| `client/MaledictCodexEntries.java` | 「幽影精魂的实验」选择页加上第二枚 |
+| `client/codex/MaledictCodexEntries.java` | 「幽影精魂的实验」选择页加上第二枚 |
 | 测试 | `SharedFateTest`（倍率与对称性）、`IncursusBladeTierTest`（抬档一级一级、到顶不回绕） |
 
 ## 9. 进游戏要看的

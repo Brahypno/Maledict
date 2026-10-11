@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import org.brahypno.maledict.client.VicissitudeBossBarOverlay;
+import org.brahypno.maledict.client.vicissitude.VicissitudeBossBarOverlay;
 
 import java.util.UUID;
 import java.util.function.Supplier;

@@ -5,13 +5,14 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.EffectInstance;
 import net.minecraft.resources.ResourceLocation;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.client.MaledictClientSetup;
 import team.lodestar.lodestone.systems.postprocess.PostProcessHandler;
 import team.lodestar.lodestone.systems.postprocess.PostProcessor;
 
 /**
  * 微光视觉的后处理通道：把画面压成提亮过的灰度，用 {@code Strength} 做淡入淡出。
  *
- * <p>只建一个常驻实例（{@link #INSTANCE}），由 {@link InfraredPostProcessorSetup} 登记给
+ * <p>只建一个常驻实例（{@link #INSTANCE}），由 {@link MaledictClientSetup} 登记给
  * {@link PostProcessHandler}；开关靠 {@code setActive}，强弱靠 uniform，不反复创建销毁链。
  *
  * <p>着色器里的曲线参数都从这里传：调外观改下面几个常量即可，改完重进游戏就生效。

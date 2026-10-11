@@ -255,18 +255,18 @@ HTML 报告在 `build/reports/tests/test/index.html`，日志在 `build/tests`�
 `common/entity/VicissitudeScytheProjectileEntity.java`、`common/entity/VicissitudeLightOrbEntity.java`；
 `common/curio/VicissitudeCurioLedger.java`、`common/curio/VicissitudeCurioReturns.java`、
 `common/item/CurioReturnTokenItem.java`、`common/MaledictTags.java`；
-`client/model/FirstVicissitudeBossModel.java`、`client/model/VicissitudeBlenderMesh.java`、
-`client/FirstVicissitudeBossRenderer.java`、`client/vfx/FirstVicissitudeEffects.java`、
-`client/vfx/FirstVicissitudeClientEvents.java`、`client/VicissitudeSpiritBoltRenderer.java`、
-`client/VicissitudeScytheRenderer.java`、`client/VicissitudeLightOrbRenderer.java`；
+`client/vicissitude/model/FirstVicissitudeBossModel.java`、`client/vicissitude/model/VicissitudeBlenderMesh.java`、
+`client/vicissitude/render/FirstVicissitudeBossRenderer.java`、`client/vicissitude/vfx/FirstVicissitudeEffects.java`、
+`client/vicissitude/vfx/FirstVicissitudeClientEvents.java`、`client/vicissitude/render/VicissitudeSpiritBoltRenderer.java`、
+`client/vicissitude/render/VicissitudeScytheRenderer.java`、`client/vicissitude/render/VicissitudeLightOrbRenderer.java`；
 `network/VicissitudeEffectPacket.java`；`common/rite/VicissitudeRiteType.java`、`common/rite/SummoningRite.java`；
 资产 `assets/maledict/textures/entity/first_vicissitude.png`、`_emissive.png`、
 `assets/maledict/textures/item/curio_return_token.png`、`models/entity/first_vicissitude.mesh.json`。
 
 修改：`registry/MaledictEntities.java`、`registry/MaledictItems.java`、`registry/MaledictCreativeTabs.java`、
-`client/MaledictEntityRenderers.java`、`config/MaledictConfig.java`、`data/MaledictItemTags.java`、
+`client/MaledictClientSetup.java`、`config/MaledictConfig.java`、`data/MaledictItemTags.java`、
 `data/MaledictItemModels.java`、`data/MaledictEntityLoot.java`、`data/MaledictLanguage.java`、
-`client/MaledictCodexEntries.java`、`network/MaledictNetwork.java`、`Maledict.java`。
+`client/codex/MaledictCodexEntries.java`、`network/MaledictNetwork.java`、`Maledict.java`。
 
 ### 用户反馈修正（按主题归并，同一主题只留结论）
 

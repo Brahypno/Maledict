@@ -317,8 +317,8 @@ public final class VicissitudeVitalityTest {
                 "common.entity.VicissitudeVitalityTest", "common.entity.VicissitudeUnstickSearchTest",
                 "common.rite.VicissitudeSummoningTest", "common.rite.VicissitudeTotemConsumptionTest",
                 "rig.VicissitudeRigTest", "rig.VicissitudeSwingBandTest", "rig.VicissitudeHitGeometryTest",
-                "rig.VicissitudeFeatherShedTest", "client.VicissitudeThemeTest",
-                "client.model.VicissitudeRenderOptimizationTest", "data.FirstVicissitudeSpiritDataTest"};
+                "rig.VicissitudeFeatherShedTest", "client.vicissitude.music.VicissitudeThemeTest",
+                "client.vicissitude.model.VicissitudeRenderOptimizationTest", "data.FirstVicissitudeSpiritDataTest"};
         var request = LauncherDiscoveryRequestBuilder.request();
         for (String suite : suites) request.selectors(DiscoverySelectors.selectClass(Class.forName("org.brahypno.maledict." + suite)));
         var listener = new SummaryGeneratingListener();

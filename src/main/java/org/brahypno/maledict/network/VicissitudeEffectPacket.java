@@ -5,7 +5,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import org.brahypno.maledict.client.vfx.FirstVicissitudeClientEvents;
+import org.brahypno.maledict.client.vicissitude.vfx.FirstVicissitudeClientEvents;
 
 import java.util.function.Supplier;
 
