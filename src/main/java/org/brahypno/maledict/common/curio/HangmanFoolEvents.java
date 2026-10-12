@@ -7,8 +7,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
-import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.minecraftforge.event.entity.living.LivingUseTotemEvent;
+import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -24,47 +24,47 @@ public final class HangmanFoolEvents {
     @SuppressWarnings("removal")
     public static void onImpact(ProjectileImpactEvent event) {
         Projectile projectile = event.getProjectile();
-        if (projectile.level().isClientSide) {
+        if (projectile.level().isClientSide){
             return;
         }
         if (event.getRayTraceResult() instanceof EntityHitResult hit
-                && hit.getEntity() instanceof LivingEntity wearer
-                && projectile.getOwner() != wearer && HangmanFoolItem.equippedStage(wearer) >= 2
-                && projectile.getDeltaMovement().lengthSqr() > 1.0E-12D
-                && wearer.getRandom().nextDouble() < HangmanFoolProjectiles.reflectionChance(
-                        wearer.getHealth(), wearer.getMaxHealth(), MaledictConfig.HANGMAN_REFLECTION_BASE.get())) {
+            && hit.getEntity() instanceof LivingEntity wearer
+            && projectile.getOwner() != wearer && HangmanFoolItem.equippedStage(wearer) >= 2
+            && projectile.getDeltaMovement().lengthSqr() > 1.0E-12D
+            && wearer.getRandom().nextDouble() < HangmanFoolProjectiles.reflectionChance(
+                wearer.getHealth(), wearer.getMaxHealth(), MaledictConfig.HANGMAN_REFLECTION_BASE.get())){
             HangmanFoolProjectiles.reflect(projectile, wearer, hit.getLocation());
             event.setCanceled(true);
             MaledictNetwork.sendProjectileReflection(projectile);
             return;
         }
         if (event.getRayTraceResult() instanceof BlockHitResult hit
-                && projectile.getOwner() instanceof LivingEntity shooter
-                && HangmanFoolItem.equippedStage(shooter) >= 1
-                && HangmanTrapEntity.capture(projectile, hit)) {
+            && projectile.getOwner() instanceof LivingEntity shooter
+            && HangmanFoolItem.equippedStage(shooter) >= 1
+            && HangmanTrapEntity.capture(projectile, hit)){
             event.setCanceled(true);
-            projectile.discard();
+            //projectile.discard(); TODO：See if its good to discard or not
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onStartUsingItem(LivingEntityUseItemEvent.Start event) {
         if (event.getItem().getUseAnimation() == UseAnim.BLOCK
-                && HangmanFoolItem.equippedStage(event.getEntity()) >= 2) {
+            && HangmanFoolItem.equippedStage(event.getEntity()) >= 2){
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onShieldBlock(ShieldBlockEvent event) {
-        if (HangmanFoolItem.equippedStage(event.getEntity()) >= 2) {
+        if (HangmanFoolItem.equippedStage(event.getEntity()) >= 2){
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onUseTotem(LivingUseTotemEvent event) {
-        if (HangmanFoolItem.equippedStage(event.getEntity()) >= 2) {
+        if (HangmanFoolItem.equippedStage(event.getEntity()) >= 2){
             event.setCanceled(true);
         }
     }
