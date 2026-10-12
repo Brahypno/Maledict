@@ -3,6 +3,7 @@ package org.brahypno.maledict.data;
 import com.sammy.malum.data.recipe.builder.RunicWorkbenchRecipeBuilder;
 import com.sammy.malum.data.recipe.builder.SpiritInfusionRecipeBuilder;
 import com.sammy.malum.data.recipe.builder.SpiritRepairRecipeBuilder;
+import com.sammy.malum.data.recipe.builder.VoidFavorRecipeBuilder;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.data.PackOutput;
@@ -12,8 +13,11 @@ import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraftforge.common.crafting.StrictNBTIngredient;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.item.HangmanFoolItem;
 import org.brahypno.maledict.common.item.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
 
@@ -37,6 +41,16 @@ public final class MaledictRecipes extends RecipeProvider {
                                .unlockedBy("has_spirit", has(arrowType.getSpiritType().spiritShard.get()))
                                .save(recipes);
         }
+
+        new SpiritInfusionRecipeBuilder(MaledictItems.BLEEDING_EYE.get(), 1, MaledictItems.HANGMAN_FOOL.get(), 1)
+                .addExtraItem(ItemRegistry.HEX_ASH.get(), 4)
+                .addExtraItem(ItemRegistry.FUSED_CONSCIOUSNESS.get(), 3)
+                .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 6)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/hangman_fool"));
+
+        new VoidFavorRecipeBuilder(
+                StrictNBTIngredient.of(new ItemStack(MaledictItems.HANGMAN_FOOL.get())), HangmanFoolItem.create(1))
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "void_favor/hangman_fool_stage_1"));
 
         new SpiritInfusionRecipeBuilder(ItemRegistry.EDGE_OF_DELIVERANCE.get(), 1, MaledictItems.INCURSUS_BLADE.get(), 1)
                 .addExtraItem(Items.NETHER_STAR, 6)

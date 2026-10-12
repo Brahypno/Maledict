@@ -51,7 +51,7 @@ public final class HangmanFoolItem extends MalumCurioItem {
         return stage;
     }
 
-    /** Adds the next marker without replacing names, enchantments, or other item NBT. Recipes are deferred. */
+    /** Adds the next marker without replacing names, enchantments, or other item NBT. */
     public static boolean advance(ItemStack stack) {
         int stage = stage(stack);
         if (!(stack.getItem() instanceof HangmanFoolItem) || stage == MAX_STAGE) {

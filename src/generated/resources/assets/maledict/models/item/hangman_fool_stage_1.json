@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "minecraft:item/prismarine_shard"
+    "layer0": "maledict:item/hangman_fool_stage_1"
   }
 }

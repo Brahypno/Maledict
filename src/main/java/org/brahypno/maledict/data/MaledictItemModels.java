@@ -97,16 +97,16 @@ public final class MaledictItemModels extends ItemModelProvider {
     }
 
     private void registerHangmanFoolModels() {
-        // Distinct vanilla placeholders; replace these texture paths when the first three designs are ready.
+        // Stages zero and one have their own textures; stage two still uses a vanilla placeholder.
         ItemModelBuilder second = getBuilder("hangman_fool_stage_1")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
-                .texture("layer0", mcLoc("item/prismarine_shard"));
+                .texture("layer0", modLoc("item/hangman_fool_stage_1"));
         ItemModelBuilder third = getBuilder("hangman_fool_stage_2")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", mcLoc("item/echo_shard"));
         getBuilder("hangman_fool")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
-                .texture("layer0", mcLoc("item/amethyst_shard"))
+                .texture("layer0", modLoc("item/hangman_fool"))
                 .override().predicate(HangmanFoolItem.STAGE_PROPERTY, 0.5F).model(second).end()
                 .override().predicate(HangmanFoolItem.STAGE_PROPERTY, 1.0F).model(third).end();
     }

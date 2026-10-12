@@ -15,6 +15,6 @@
     }
   ],
   "textures": {
-    "layer0": "minecraft:item/amethyst_shard"
+    "layer0": "maledict:item/hangman_fool"
   }
 }

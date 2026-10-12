@@ -1,0 +1,12 @@
+{
+  "type": "malum:favor_of_the_void",
+  "input": {
+    "type": "forge:nbt",
+    "count": 1,
+    "item": "maledict:hangman_fool"
+  },
+  "output": {
+    "item": "maledict:hangman_fool",
+    "nbt": "{HangmanFoolStages:{stage_1:1b}}"
+  }
+}

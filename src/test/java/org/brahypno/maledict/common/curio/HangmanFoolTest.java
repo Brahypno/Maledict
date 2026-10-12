@@ -1,6 +1,9 @@
 package org.brahypno.maledict.common.curio;
 
 import com.mojang.authlib.GameProfile;
+import com.sammy.malum.common.block.curiosities.weeping_well.VoidConduitBlockEntity;
+import com.sammy.malum.common.recipe.FavorOfTheVoidRecipe;
+import com.sammy.malum.registry.common.block.BlockRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -9,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.projectile.Arrow;
@@ -16,6 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
@@ -39,6 +44,48 @@ import java.util.UUID;
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
 public final class HangmanFoolTest {
+    @GameTest(template = "test_empty", batch = "hangman_fool")
+    public static void weepingWellUpgradesOnlyUntaggedStageZero(GameTestHelper helper) {
+        var level = helper.getLevel();
+        ItemStack input = new ItemStack(MaledictItems.HANGMAN_FOOL.get());
+        var recipe = FavorOfTheVoidRecipe.getRecipe(level, input);
+        helper.assertTrue(recipe != null && recipe.getId().toString().equals(
+                "maledict:void_favor/hangman_fool_stage_1"), "The loaded well recipe must accept an untagged stage zero");
+        helper.assertTrue(HangmanFoolItem.stage(recipe.output) == 1 && recipe.output.getCount() == 1,
+                "The loaded recipe must keep its stage-one output NBT");
+        for (int stage = 1; stage <= HangmanFoolItem.MAX_STAGE; stage++) {
+            helper.assertTrue(FavorOfTheVoidRecipe.getRecipe(level, HangmanFoolItem.create(stage)) == null,
+                    "An existing stage " + stage + " must not be converted again or downgraded");
+        }
+        ItemStack named = input.copy();
+        named.setHoverName(Component.literal("named stage zero"));
+        helper.assertTrue(FavorOfTheVoidRecipe.getRecipe(level, named) == null,
+                "A named stage zero must not match the strict input");
+        ItemStack enchanted = input.copy();
+        enchanted.enchant(Enchantments.UNBREAKING, 2);
+        helper.assertTrue(FavorOfTheVoidRecipe.getRecipe(level, enchanted) == null,
+                "An enchanted stage zero must not match the strict input");
+
+        BlockPos pos = helper.absolutePos(new BlockPos(1, 2, 1));
+        var well = new VoidConduitBlockEntity(pos, BlockRegistry.VOID_CONDUIT.get().defaultBlockState());
+        well.setLevel(level);
+        well.spitOutItem(input);
+        var outputs = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(1),
+                entity -> entity.getItem().is(MaledictItems.HANGMAN_FOOL.get()));
+        helper.assertTrue(outputs.size() == 1 && outputs.get(0).getItem().getCount() == 1
+                && HangmanFoolItem.stage(outputs.get(0).getItem()) == 1,
+                "The actual well conversion must emit one stage-one curio with its NBT");
+        outputs.get(0).getItem().setHoverName(Component.literal("my upgraded curio"));
+        helper.assertTrue(!recipe.output.hasCustomHoverName(),
+                "Changing an output's NBT must not mutate the recipe template");
+        well.spitOutItem(input.copy());
+        var nextOutputs = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(1),
+                entity -> entity.getItem().is(MaledictItems.HANGMAN_FOOL.get()) && !entity.getItem().hasCustomHoverName());
+        helper.assertTrue(nextOutputs.size() == 1 && HangmanFoolItem.stage(nextOutputs.get(0).getItem()) == 1,
+                "The next conversion must emit an independent, unnamed stage-one curio");
+        helper.succeed();
+    }
+
     @GameTest(template = "test_empty", batch = "hangman_fool")
     public static void stageSequencePreservesNbtAndRequiresEveryPreviousMarker(GameTestHelper helper) {
         ItemStack stack = new ItemStack(MaledictItems.HANGMAN_FOOL.get());
