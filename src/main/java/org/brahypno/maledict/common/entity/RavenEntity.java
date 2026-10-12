@@ -83,6 +83,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     @Nullable
     private Vec3 hoverAnchor;
     private boolean landingRequested;
+    private int landingPathCooldown;
     private final RavenDangerEscape dangerEscape = new RavenDangerEscape();
     private final RavenAerialDodge aerialDodge = new RavenAerialDodge();
     private int hopCooldown;
@@ -130,17 +131,57 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new AerialDodgeGoal());
         goalSelector.addGoal(2, new AttackGoal());
-        goalSelector.addGoal(3, new LandingGoal());
-        goalSelector.addGoal(4, new EatFleshGoal());
-        goalSelector.addGoal(5, new BreedGoal(this, 1.0D) {
+        goalSelector.addGoal(3, new BreedGoal(this, 1.0D) {
+            private int courtshipTicks;
+            private int pathCooldown;
+
+            @Override
+            public boolean canUse() {
+                return getTarget() == null && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return getTarget() == null && partner != null && partner.isAlive()
+                        && isInLove() && canMate(partner);
+            }
+
+            @Override
+            public boolean requiresUpdateEveryTick() {
+                return true;
+            }
+
+            @Override
+            public void start() {
+                releaseCompanion();
+                setHovering(null);
+                courtshipTicks = 0;
+                pathCooldown = 0;
+                landingPathCooldown = 0;
+            }
+
             @Override
             public void tick() {
-                if (partner != null) {
-                    moveToGroundTarget(partner.position(), 1.0D);
-                    if (!isFlying() && !landingRequested && !((RavenEntity) partner).isFlying()) {
-                        super.tick();
+                if (partner != null && isInLove() && canMate(partner)) {
+                    getLookControl().setLookAt(partner, 20.0F, 20.0F);
+                    if (landingRequested) {
+                        tickLanding();
+                    } else if (!isFlying() && (((RavenEntity) partner).isFlying()
+                            || distanceToSqr(partner) < 9.0D)) {
+                        // Let the airborne partner approach a stationary landing place. Once close,
+                        // stop hopping so both birds can settle for courtship.
+                        navigation.stop();
+                    } else if (--pathCooldown <= 0) {
+                        moveToGroundTarget(partner.position(), 1.0D);
+                        pathCooldown = 10;
+                    }
+                    if (!isFlying() && onGround() && !((RavenEntity) partner).isFlying()
+                            && partner.onGround() && distanceToSqr(partner) < 9.0D) {
+                        if (++courtshipTicks >= 60) {
+                            breed();
+                        }
                     } else {
-                        getLookControl().setLookAt(partner, 20.0F, 20.0F);
+                        courtshipTicks = 0;
                     }
                 }
             }
@@ -151,6 +192,8 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
                 super.stop();
             }
         });
+        goalSelector.addGoal(4, new LandingGoal());
+        goalSelector.addGoal(5, new EatFleshGoal());
         goalSelector.addGoal(6, new FollowTrustedPlayerGoal());
         goalSelector.addGoal(7, new FollowRavenParentGoal());
         goalSelector.addGoal(8, new IdleGoal());
@@ -716,6 +759,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
             setFlying(false);
         } else {
             landingRequested = true;
+            landingPathCooldown = 0;
             landingTarget = preferred == null ? null : landingPointAt(BlockPos.containing(preferred));
             if (landingTarget == null && preferred != null) {
                 landingTarget = landingPointAt(BlockPos.containing(preferred).above());
@@ -729,6 +773,18 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         }
         double distanceSquared = position().subtract(destination).horizontalDistanceSqr();
         RavenGroundTravel.Action action = RavenGroundTravel.next(isFlying(), distanceSquared);
+        if (action == RavenGroundTravel.Action.HOP) {
+            Path groundPath = navigation.createPath(BlockPos.containing(destination), 0);
+            if (groundPath != null && groundPath.canReach()) {
+                navigation.moveTo(groundPath, speed);
+                return;
+            }
+            if (!onGround()) {
+                return;
+            }
+            // Horizontal proximity does not make a ledge or a gap reachable by hopping.
+            action = RavenGroundTravel.Action.TAKE_OFF;
+        }
         if (action == RavenGroundTravel.Action.TAKE_OFF) {
             setFlying(true);
         }
@@ -801,11 +857,13 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         return false;
     }
 
-    /** Emergency steering must leave a fire node even when ordinary navigation rejects its neighbors. */
+    /** Leave the dangerous start node, then navigate to a safe landing rather than stopping in the air. */
     private final class EscapeDangerGoal extends Goal {
         private Vec3 dangerOrigin = Vec3.ZERO;
         @Nullable
         private Vec3 destination;
+        @Nullable
+        private Path escapePath;
         private int searchCooldown;
 
         private EscapeDangerGoal() {
@@ -831,12 +889,14 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
             setFlying(true);
             moveControl = new FlyingMoveControl(RavenEntity.this, 20, true);
             destination = null;
+            escapePath = null;
             searchCooldown = 0;
         }
 
         @Override
         public boolean canContinueToUse() {
-            return !RavenDangerEscape.reachedSafety(isDangerousAt(position()), position().distanceToSqr(dangerOrigin));
+            return isFlying() || !onGround()
+                    || !RavenDangerEscape.reachedSafety(isDangerousAt(position()), position().distanceToSqr(dangerOrigin));
         }
 
         @Override
@@ -847,6 +907,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         @Nullable
         private Vec3 findDestination() {
             Vec3 best = null;
+            escapePath = null;
             double nearest = Double.MAX_VALUE;
             for (int radius = 0; radius <= 6; radius++) {
                 for (int dx = -radius; dx <= radius; dx++) {
@@ -854,20 +915,21 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
                         if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
                             continue;
                         }
-                        for (int dy = 0; dy <= 4; dy++) {
-                            Vec3 point = position().add(dx, dy, dz);
-                            Vec3 offset = point.subtract(position());
-                            double distance = offset.lengthSqr();
+                        for (int dy = 2; dy >= -8; dy--) {
+                            Vec3 point = landingPointAt(blockPosition().offset(dx, dy, dz));
+                            if (point == null) {
+                                continue;
+                            }
+                            double distance = point.distanceToSqr(position());
                             if (distance >= nearest || !RavenDangerEscape.reachedSafety(false, point.distanceToSqr(dangerOrigin))) {
                                 continue;
                             }
-                            if (!level().getFluidState(BlockPos.containing(point)).isEmpty()
-                                    || !level().getFluidState(BlockPos.containing(point).above()).isEmpty()
-                                    || isDangerousAt(point)
-                                    || !level().noCollision(RavenEntity.this, getBoundingBox().expandTowards(offset))) {
+                            Path path = navigation.createPath(BlockPos.containing(point), 0);
+                            if (path == null || !path.canReach()) {
                                 continue;
                             }
                             best = point;
+                            escapePath = path;
                             nearest = distance;
                         }
                     }
@@ -880,20 +942,40 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         public void tick() {
             dangerEscape.whileEscaping(isOnFire());
             aerialDodge.finish();
+            if (onGround() && RavenDangerEscape.reachedSafety(isDangerousAt(position()),
+                    position().distanceToSqr(dangerOrigin))) {
+                setDeltaMovement(Vec3.ZERO);
+                setFlying(false);
+                return;
+            }
+            if (destination != null && !isDangerousAt(destination)
+                    && position().subtract(destination).horizontalDistanceSqr() < 1.0D
+                    && Math.abs(getY() - destination.y) < 1.5D) {
+                landingTarget = destination;
+                landingRequested = true;
+                navigation.stop();
+                return;
+            }
             if (--searchCooldown <= 0 || (destination != null && isDangerousAt(destination))) {
+                landingRequested = false;
+                landingTarget = null;
                 destination = findDestination();
                 searchCooldown = 10;
+                if (escapePath != null) {
+                    navigation.moveTo(escapePath, 1.3D);
+                } else {
+                    navigation.stop();
+                }
             }
             if (destination != null) {
-                // A short, collision-checked escape bypasses the dangerous start node, not world collision.
-                navigation.stop();
-                moveControl.setWantedPosition(destination.x, destination.y, destination.z, 1.3D);
                 getLookControl().setLookAt(destination.x, destination.y, destination.z);
                 if (isInLava()) {
                     setDeltaMovement(getDeltaMovement().x, Math.max(0.35D, getDeltaMovement().y), getDeltaMovement().z);
                 }
-            } else if (isDangerousAt(position()) && level().noCollision(RavenEntity.this,
+            } else if (level().noCollision(RavenEntity.this,
                     getBoundingBox().expandTowards(0.0D, 0.5D, 0.0D))) {
+                // Clear the pathfinder's rejected start cell as well as the bird's actual body;
+                // those need different clearances above a fire block.
                 setDeltaMovement(getDeltaMovement().x, Math.max(0.35D, getDeltaMovement().y), getDeltaMovement().z);
             }
         }
@@ -903,6 +985,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
             dangerEscape.finish();
             navigation.stop();
             destination = null;
+            escapePath = null;
             if (getTarget() == null) {
                 requestLanding(null);
             }
@@ -1327,8 +1410,39 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         }
     }
 
+    private void tickLanding() {
+        if (landingTarget != null && onGround()
+                && position().subtract(landingTarget).horizontalDistanceSqr() <= 0.0225D
+                && Math.abs(getY() - landingTarget.y) < 0.1D) {
+            setDeltaMovement(Vec3.ZERO);
+            setFlying(false);
+            return;
+        }
+        if (--landingPathCooldown <= 0) {
+            Vec3 checked = landingTarget == null ? null
+                    : landingPointAt(BlockPos.containing(landingTarget));
+            if (checked == null && landingTarget != null) {
+                checked = landingPointAt(BlockPos.containing(landingTarget).above());
+            }
+            if (checked == null || checked.distanceToSqr(landingTarget) > 0.0001D) {
+                landingTarget = findLandingPoint();
+            }
+            if (landingTarget != null) {
+                navigation.moveTo(landingTarget.x, landingTarget.y, landingTarget.z, 0.55D);
+            }
+            landingPathCooldown = 20;
+        }
+        if (landingTarget != null && navigation.isDone()
+                && position().subtract(landingTarget).horizontalDistanceSqr() < 4.0D
+                && Math.abs(getY() - landingTarget.y) < 2.0D
+                && level().noCollision(this, getBoundingBox().expandTowards(landingTarget.subtract(position())))) {
+            // Flight path nodes are offset by the bird's width and may finish outside the landing
+            // brake radius. Complete that short, unobstructed approach to the actual perch.
+            moveControl.setWantedPosition(landingTarget.x, landingTarget.y + 0.4D, landingTarget.z, 0.55D);
+        }
+    }
+
     private final class LandingGoal extends Goal {
-        private int pathCooldown;
 
         private LandingGoal() {
             setFlags(EnumSet.of(Flag.MOVE));
@@ -1342,7 +1456,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         @Override
         public void start() {
             navigation.stop();
-            pathCooldown = 0;
+            landingPathCooldown = 0;
         }
 
         @Override
@@ -1352,27 +1466,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
 
         @Override
         public void tick() {
-            if (landingTarget != null && onGround()
-                    && position().subtract(landingTarget).horizontalDistanceSqr() <= 0.0225D
-                    && Math.abs(getY() - landingTarget.y) < 0.1D) {
-                setDeltaMovement(Vec3.ZERO);
-                setFlying(false);
-                return;
-            }
-            if (--pathCooldown <= 0) {
-                Vec3 checked = landingTarget == null ? null
-                        : landingPointAt(BlockPos.containing(landingTarget));
-                if (checked == null && landingTarget != null) {
-                    checked = landingPointAt(BlockPos.containing(landingTarget).above());
-                }
-                if (checked == null || checked.distanceToSqr(landingTarget) > 0.0001D) {
-                    landingTarget = findLandingPoint();
-                }
-                if (landingTarget != null) {
-                    navigation.moveTo(landingTarget.x, landingTarget.y, landingTarget.z, 0.55D);
-                }
-                pathCooldown = 20;
-            }
+            tickLanding();
         }
 
         @Override
