@@ -169,19 +169,16 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
                     } else if (!isFlying() && (((RavenEntity) partner).isFlying()
                             || distanceToSqr(partner) < 9.0D)) {
                         // Let the airborne partner approach a stationary landing place. Once close,
-                        // stop hopping so both birds can settle for courtship.
+                        // wait for courtship instead of continuing to hop.
                         navigation.stop();
                     } else if (--pathCooldown <= 0) {
                         moveToGroundTarget(partner.position(), 1.0D);
                         pathCooldown = 10;
                     }
-                    if (!isFlying() && onGround() && !((RavenEntity) partner).isFlying()
-                            && partner.onGround() && distanceToSqr(partner) < 9.0D) {
-                        if (++courtshipTicks >= 60) {
-                            breed();
-                        }
-                    } else {
-                        courtshipTicks = 0;
+                    // Like vanilla, courtship advances while approaching; only the final
+                    // breeding check needs proximity, regardless of flight or ground contact.
+                    if (++courtshipTicks >= 60 && distanceToSqr(partner) < 9.0D) {
+                        breed();
                     }
                 }
             }

@@ -50,5 +50,5 @@
 /give @s maledict:hangman_fool{HangmanFoolStages:{stage_1:1b,stage_2:1b}}
 ```
 
-`HangmanFoolTest` 固定阶段序列、属性与禁用行为、反弹速度和箭头方向、穿透旧射线终止、
-法阵单次触发和存读档，并检查附魔箭、药水箭、光灵箭、药水、法杖、精魂箭、火球、烟花和三叉戟的原有命中分支。
+`HangmanFoolTest` 保留阶段序列、属性与禁用行为、穿透箭反弹后终止旧射线、反弹概率边界，
+以及非视界槽位装备不产生效果的测试。

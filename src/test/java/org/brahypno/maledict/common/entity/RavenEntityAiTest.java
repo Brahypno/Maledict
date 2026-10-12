@@ -32,7 +32,6 @@ public final class RavenEntityAiTest {
             helper.assertTrue(helper.getLevel().getEntitiesOfClass(RavenEntity.class, bounds,
                     RavenEntity::isBaby).size() == 1, "Loving parents must meet across the saved Nether terrain's step: "
                     + describe(first) + "; " + describe(second));
-            helper.assertTrue(!first.isFlying() && !second.isFlying(), "Parents must land before breeding");
         });
     }
 
@@ -56,12 +55,11 @@ public final class RavenEntityAiTest {
             helper.assertTrue(helper.getLevel().getEntitiesOfClass(RavenEntity.class, bounds,
                     RavenEntity::isBaby).size() == 1, "Nearby parents separated by a ledge must fly to meet and breed: "
                     + describe(first) + "; " + describe(second));
-            helper.assertTrue(!first.isFlying() && !second.isFlying(), "Parents must land before breeding");
         });
     }
 
     @GameTest(template = "raven_ai_empty", batch = "raven_ai", timeoutTicks = 300)
-    public static void lovingAdultsSixBlocksApartApproachLandAndBreed(GameTestHelper helper) {
+    public static void lovingAdultsSixBlocksApartApproachAndBreed(GameTestHelper helper) {
         prepareFloor(helper);
         RavenEntity first = spawn(helper, 5, 1, 8);
         RavenEntity second = spawn(helper, 11, 1, 8);
@@ -75,10 +73,48 @@ public final class RavenEntityAiTest {
             helper.assertTrue(helper.getLevel().getEntitiesOfClass(RavenEntity.class, bounds,
                     RavenEntity::isBaby).size() == 1, "Loving adults must approach and produce one chick: "
                     + describe(first) + "; " + describe(second));
-            helper.assertTrue(!first.isFlying() && !second.isFlying(), "Both parents must land to breed");
             helper.assertTrue(first.getAge() > 0 && second.getAge() > 0,
                     "Successful breeding must put both parents on cooldown");
         });
+    }
+
+    @GameTest(template = "raven_ai_empty", batch = "raven_ai", timeoutTicks = 100)
+    public static void courtshipContinuesWhileAirborneAndOutOfBreedingRange(GameTestHelper helper) {
+        prepareFloor(helper);
+        RavenEntity first = spawn(helper, 5, 4, 8);
+        RavenEntity second = spawn(helper, 11, 4, 8);
+        first.setInLove(null);
+        second.setInLove(null);
+        AABB bounds = new AABB(helper.absolutePos(BlockPos.ZERO),
+                helper.absolutePos(new BlockPos(17, 10, 17)));
+        helper.onEachTick(() -> {
+            // Keep both airborne and six blocks apart for the first 40 ticks, then
+            // bring them within breeding range without giving them time to land.
+            if (first.getAge() == 0 && second.getAge() == 0) {
+                holdAirborne(helper, first, 5);
+                holdAirborne(helper, second, helper.getTick() < 40 ? 11 : 7);
+            }
+        });
+        helper.runAtTickTime(55, () -> helper.assertTrue(
+                helper.getLevel().getEntitiesOfClass(RavenEntity.class, bounds, RavenEntity::isBaby).isEmpty(),
+                "Proximity must not skip the courtship wait"));
+        helper.runAtTickTime(85, () -> {
+            helper.assertTrue(helper.getLevel().getEntitiesOfClass(RavenEntity.class, bounds,
+                    RavenEntity::isBaby).size() == 1,
+                    "Airborne courtship must count time spent outside breeding range: "
+                            + describe(first) + "; " + describe(second));
+            helper.assertTrue(first.getAge() > 0 && second.getAge() > 0,
+                    "Successful airborne breeding must put both parents on cooldown");
+            helper.succeed();
+        });
+    }
+
+    private static void holdAirborne(GameTestHelper helper, RavenEntity raven, int x) {
+        BlockPos pos = helper.absolutePos(new BlockPos(x, 4, 8));
+        raven.setPos(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
+        raven.setNoGravity(true);
+        raven.setOnGround(false);
+        raven.setDeltaMovement(Vec3.ZERO);
     }
 
     @GameTest(template = "raven_ai_empty", batch = "raven_ai", timeoutTicks = 250)
