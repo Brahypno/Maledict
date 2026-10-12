@@ -6,7 +6,8 @@
   "refmap": "maledict.refmap.json",
   "mixins": [
     "FoodDataMixin",
-    "PlayerRavenShoulderMixin"
+    "PlayerRavenShoulderMixin",
+    "ProjectileAccess"
   ],
   "client": [
     "HiddenTagRegistryMixin"

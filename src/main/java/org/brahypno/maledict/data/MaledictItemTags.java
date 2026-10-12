@@ -30,6 +30,8 @@ public final class MaledictItemTags extends ItemTagsProvider {
 
     private static final TagKey<Item> CURIOS_CHARM =
             ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "charm"));
+    private static final TagKey<Item> CURIOS_DELUSION =
+            ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "delusion"));
 
     /**
      * Curios 的符文槽；同名 tag 与 Malum 自带的合并，不会被我们顶掉。
@@ -67,6 +69,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(GOETY_GRAVE_GLOVE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(L2_NO_SEAL).add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
         tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+        tag(CURIOS_DELUSION).add(MaledictItems.HANGMAN_FOOL.get());
         tag(CURIOS_RUNE).add(MaledictItems.RUNE_OF_SATIATION.get(),
                              MaledictItems.RUNE_OF_DECAY.get(),
                              MaledictItems.RUNE_OF_THE_PACK.get(),

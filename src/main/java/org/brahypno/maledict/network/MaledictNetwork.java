@@ -56,11 +56,19 @@ public final class MaledictNetwork {
                 BossBarStylePacket::decode,
                 BossBarStylePacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(5, ProjectileReflectionPacket.class,
+                ProjectileReflectionPacket::encode, ProjectileReflectionPacket::decode,
+                ProjectileReflectionPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendRadialAttack() {
         CHANNEL.sendToServer(new RadialAttackPacket());
     }
+
+    public static void sendProjectileReflection(net.minecraft.world.entity.projectile.Projectile projectile) {
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> projectile), ProjectileReflectionPacket.of(projectile));
+    }
+
 
     public static void sendInfuseSpirit(int containerId, int inventorySlot, ItemStack spiritStack) {
         CHANNEL.sendToServer(new InfuseSpiritPacket(containerId, inventorySlot, spiritStack));

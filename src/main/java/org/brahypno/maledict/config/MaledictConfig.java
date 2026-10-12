@@ -28,9 +28,20 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue INFRARED_INTENSITY;
     public static final ForgeConfigSpec.DoubleValue INFRARED_GRAYSCALE_THRESHOLD;
     public static final ForgeConfigSpec.DoubleValue INFRARED_GRAYSCALE_SOFTNESS;
+    public static final ForgeConfigSpec.DoubleValue HANGMAN_REFLECTION_BASE;
+    public static final ForgeConfigSpec.IntValue HANGMAN_TRAP_LIFETIME;
+    public static final ForgeConfigSpec.DoubleValue HANGMAN_TRAP_RADIUS;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+        builder.push("hangmanFool");
+        HANGMAN_REFLECTION_BASE = builder.comment("Base reflection chance, plus lost health fraction, capped at 100%.")
+                .defineInRange("reflectionBaseChance", 0.25D, 0.0D, 1.0D);
+        HANGMAN_TRAP_LIFETIME = builder.comment("Trap lifetime in ticks; 600 ticks is 30 seconds.")
+                .defineInRange("trapLifetime", 600, 1, 72000);
+        HANGMAN_TRAP_RADIUS = builder.comment("Contact distance in blocks around the impact point.")
+                .defineInRange("trapRadius", 1.0D, 0.1D, 16.0D);
+        builder.pop();
         builder.push("incursusBlade");
         AERIAL_POTION_EFFECTS_ONLY = builder
                 .comment("When true, Aerial Spirit can only grant beneficial effects used by registered potions.")

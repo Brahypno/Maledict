@@ -41,6 +41,7 @@ public final class MaledictItems {
      * Curio amulet (charm slot) that renders a skull mask over the wearer's face.
      */
     public static final RegistryObject<Item> AGE_OF_ENLIGHTENMENT = ITEMS.register("age_of_enlightenment", AgeOfEnlightenmentItem::new);
+    public static final RegistryObject<Item> HANGMAN_FOOL = ITEMS.register("hangman_fool", HangmanFoolItem::new);
 
     public static final RegistryObject<Item> BLEEDING_EYE = ITEMS.register("bleeding_eye", () ->
             new Item(new Item.Properties()) {

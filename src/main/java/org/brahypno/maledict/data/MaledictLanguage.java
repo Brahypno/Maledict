@@ -17,6 +17,16 @@ public final class MaledictLanguage extends LanguageProvider {
     @Override
     protected void addTranslations() {
         if ("zh_cn".equals(locale)){
+            addItem(MaledictItems.HANGMAN_FOOL, "倒吊人的愚见");
+            add("tooltip.maledict.hangman_fool.flavor.0", "献出力量，以求取人智");
+            add("tooltip.maledict.hangman_fool.flavor.1", "智性虽有缺陷，却并非谬误");
+            add("tooltip.maledict.hangman_fool.flavor.2", "沉沦于黑暗，以期光明");
+            add("tooltip.maledict.hangman_fool.flavor.3", "");
+            add("tooltip.maledict.hangman_fool.flavor.4", "");
+            add("entity.maledict.hangman_trap", "倒吊人的陷阱法阵");
+            add("malum.gui.curio.effect.maledict.hangman_fool.trap", "弹射物落到方块上留下陷阱法阵，接触生物时触发原有命中效果");
+            add("malum.gui.curio.effect.maledict.hangman_fool.reflect", "有概率反弹弹射物，生命越低概率越高");
+            add("malum.gui.curio.effect.maledict.hangman_fool.restrictions", "无法举盾或触发不死图腾");
             add("itemGroup.maledict", "咒邪");
             add("entity.maledict.raven", "渡鸦");
             add("entity.maledict.raven_feather", "渡鸦飞羽");
@@ -165,6 +175,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.fallen.description",
                 "生命回复会堕落成伤口");
             add("curios.identifier.delusion", "视界");
+            add("curios.modifiers.delusion", "装备于视界槽位时：");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "佩戴时冷却速度加倍");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "攻击半生命值目标时触发收获精魂时的效果");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment", "击杀敌人时获得启蒙之年，已有则延长时间");
@@ -262,6 +273,16 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE + ".2",
                 "在九天九夜的折磨中，我确实 看到了些什么，也知道了些什 么。我的身体有额外的位置能 够刻画符文，而我的眼睛变成 了一处门扉。 透过这献祭的视界，我能够更 清楚的看这世界。");
         }else {
+            addItem(MaledictItems.HANGMAN_FOOL, "Hangman`s fool");
+            add("tooltip.maledict.hangman_fool.flavor.0", "\"strength\" is sacrificed for \"human wisdom\"");
+            add("tooltip.maledict.hangman_fool.flavor.1", "Intelligence that mortals grasp is flawed, it cannot be said to be false");
+            add("tooltip.maledict.hangman_fool.flavor.2", "Light sinks into the dark, seeking to redeem the radiance.");
+            add("tooltip.maledict.hangman_fool.flavor.3", "");
+            add("tooltip.maledict.hangman_fool.flavor.4", "");
+            add("entity.maledict.hangman_trap", "Hangman's Trap Circle");
+            add("malum.gui.curio.effect.maledict.hangman_fool.trap", "Projectiles leave a trap on blocks, triggering their original hit effects on contact");
+            add("malum.gui.curio.effect.maledict.hangman_fool.reflect", "Chance to reflect projectiles increases as health falls");
+            add("malum.gui.curio.effect.maledict.hangman_fool.restrictions", "Cannot raise shields or activate totems of undying");
             add("itemGroup.maledict", "Maledict");
             add("enchantment.maledict.ectoplasm", "Ectoplasm");
             add("enchantment.maledict.reminiscence", "Reminiscence");
@@ -444,6 +465,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.fallen.description",
                 "Healing decays into wounds.");
             add("curios.identifier.delusion", "Vision");
+            add("curios.modifiers.delusion", "When equipped in a vision slot:");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown",
                 "Cooldowns recover twice as fast while worn");
             add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void",

@@ -18,6 +18,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.HangmanFoolItem;
 import org.brahypno.maledict.common.item.IncursusBladeBlink;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
 import org.brahypno.maledict.common.item.RemembranceBowItem;
@@ -33,6 +34,8 @@ public final class MaledictItemProperties {
             registerBowProperties(MaledictItems.ELEGY_BOW.get());
             registerEnlightenedProperty(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
             registerBlinkProperty(MaledictItems.INCURSUS_BLADE.get());
+            ItemProperties.register(MaledictItems.HANGMAN_FOOL.get(), HangmanFoolItem.STAGE_PROPERTY,
+                    (stack, level, entity, seed) -> Math.min(2, HangmanFoolItem.stage(stack)) / 2.0F);
         });
     }
 

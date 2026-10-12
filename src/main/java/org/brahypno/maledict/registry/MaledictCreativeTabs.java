@@ -31,6 +31,9 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.EARTHEN_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+                               for (int stage = 0; stage <= 2; stage++) {
+                                   output.accept(org.brahypno.maledict.common.item.HangmanFoolItem.create(stage));
+                               }
                                output.accept(MaledictItems.BLEEDING_EYE.get());
                                output.accept(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
                                output.accept(MaledictItems.RUNE_OF_SATIATION.get());

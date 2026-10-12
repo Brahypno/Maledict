@@ -16,6 +16,7 @@ import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.entity.RavenEntity;
 import org.brahypno.maledict.common.entity.RavenFeatherEntity;
 import org.brahypno.maledict.common.entity.SpiritArrowEntity;
+import org.brahypno.maledict.common.entity.HangmanTrapEntity;
 import org.brahypno.maledict.common.entity.VicissitudeLightOrbEntity;
 import org.brahypno.maledict.common.entity.VicissitudeScytheProjectileEntity;
 import org.brahypno.maledict.common.entity.VicissitudeSpiritBoltEntity;
@@ -24,6 +25,12 @@ import org.brahypno.maledict.common.entity.VicissitudeSpiritBoltEntity;
 public final class MaledictEntities {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, Maledict.MODID);
+
+    public static final RegistryObject<EntityType<HangmanTrapEntity>> HANGMAN_TRAP =
+            ENTITY_TYPES.register("hangman_trap", () -> EntityType.Builder
+                    .<HangmanTrapEntity>of(HangmanTrapEntity::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F).clientTrackingRange(4).updateInterval(20)
+                    .build("hangman_trap"));
 
     public static final RegistryObject<EntityType<SpiritArrowEntity>> SPIRIT_ARROW =
             ENTITY_TYPES.register("spirit_arrow", () -> EntityType.Builder

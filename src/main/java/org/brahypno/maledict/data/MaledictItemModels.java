@@ -10,6 +10,7 @@ import net.minecraftforge.client.model.generators.loaders.SeparateTransformsMode
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.HangmanFoolItem;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
 import org.brahypno.maledict.common.item.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
@@ -33,6 +34,7 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerIncursusBladeModels();
 
         registerAgeOfEnlightenmentModel();
+        registerHangmanFoolModels();
 
         basicItem(MaledictItems.BLEEDING_EYE.get());
 
@@ -92,6 +94,21 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerSpawnEggModel("first_vicissitude_phase_one_spawn_egg");
         registerSpawnEggModel("raven_spawn_egg");
         registerSpawnEggModel("first_vicissitude_phase_two_spawn_egg");
+    }
+
+    private void registerHangmanFoolModels() {
+        // Distinct vanilla placeholders; replace these texture paths when the first three designs are ready.
+        ItemModelBuilder second = getBuilder("hangman_fool_stage_1")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", mcLoc("item/prismarine_shard"));
+        ItemModelBuilder third = getBuilder("hangman_fool_stage_2")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", mcLoc("item/echo_shard"));
+        getBuilder("hangman_fool")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", mcLoc("item/amethyst_shard"))
+                .override().predicate(HangmanFoolItem.STAGE_PROPERTY, 0.5F).model(second).end()
+                .override().predicate(HangmanFoolItem.STAGE_PROPERTY, 1.0F).model(third).end();
     }
 
     /** 神侵恶刃的眨眼：只有 GUI 那层换成闭眼贴图，base 与 fixed 与常态相同，所以只在物品栏里看得见。 */
