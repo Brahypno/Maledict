@@ -68,6 +68,50 @@ class TooltipFrameLayoutTest {
     }
 
     @Test
+    void asymmetricWingCornersStayFixedWhenTheirCombinedHeightFits() {
+        var border = new Insets(36, 88, 36, 28);
+        // A 64-pixel tooltip has exactly enough room for the two fixed caps.
+        var shortFrame = TooltipFrameLayout.around(100, 100, 190, 64,
+                new Insets(25, 22, 25, 22));
+        var shortSlices = shortFrame.slices(96, 144, border, false);
+        assertEquals(88, shortSlices.get(0).height());
+        assertEquals(28, shortSlices.get(shortSlices.size() - 1).height());
+
+        var tallFrame = TooltipFrameLayout.around(100, 100, 190, 160,
+                new Insets(25, 22, 25, 22));
+        var tallSlices = tallFrame.slices(96, 144, border, false);
+        assertEquals(shortSlices.get(0), tallSlices.get(0));
+        var leftRail = tallSlices.stream().filter(slice -> slice.u() == 0 && slice.v() == 88)
+                .findFirst().orElseThrow();
+        assertEquals(96, leftRail.height());
+        assertEquals(28, leftRail.sourceHeight());
+    }
+
+    @Test
+    void shortFramesShrinkAsymmetricCapsInTheirOriginalRatio() {
+        var frame = new TooltipFrameLayout(0, 0, 100, 60);
+        var slices = frame.slices(96, 144, new Insets(36, 88, 36, 28), true);
+        assertEquals(45, slices.get(0).height());
+        assertEquals(15, slices.get(slices.size() - 1).height());
+        assertEquals(6000, slices.stream().mapToInt(slice -> slice.width() * slice.height()).sum());
+    }
+
+    @Test
+    void compressedWingCapsKeepRailsAndCrestAgainstShortPanel() {
+        var border = new Insets(36, 88, 36, 28);
+        var outset = new Insets(25, 22, 25, 22);
+        assertEquals(outset, TooltipFrameLayout.fitOutset(64, border, outset));
+        var shortOutset = TooltipFrameLayout.fitOutset(40, border, outset);
+        assertEquals(new Insets(25, 15, 25, 15), shortOutset);
+        var frame = TooltipFrameLayout.around(100, 100, 190, 40, shortOutset);
+        var slices = frame.slices(96, 144, border, false);
+        assertEquals(59, slices.get(0).height());
+        assertEquals(19, slices.get(slices.size() - 1).height());
+        assertEquals(new TooltipFrameLayout(159, 74, 72, 24),
+                frame.topDecoration(shortOutset, 72, 24, 2));
+    }
+
+    @Test
     void tinyFramesShrinkCornersWithoutNegativeOrOverlappingSlices() {
         var frame = new TooltipFrameLayout(0, 0, 7, 5);
         var slices = frame.slices(24, 24, Insets.all(8), true);

@@ -34,6 +34,10 @@ public record TooltipBackground(ResourceLocation texture, int textureWidth, int 
     }
 
     public void render(GuiGraphics graphics, TooltipFrameLayout frame) {
+        render(graphics, frame, outset);
+    }
+
+    public void render(GuiGraphics graphics, TooltipFrameLayout frame, Insets effectiveOutset) {
         graphics.pose().pushPose();
         // Color fires before vanilla adds its z=400 translation. Keep artwork behind text/background.
         graphics.pose().translate(0, 0, 399);
@@ -47,7 +51,7 @@ public record TooltipBackground(ResourceLocation texture, int textureWidth, int 
                         textureWidth, textureHeight);
             }
             if (topDecoration != null) {
-                TooltipFrameLayout decoration = frame.topDecoration(outset,
+                TooltipFrameLayout decoration = frame.topDecoration(effectiveOutset,
                         topDecoration.width(), topDecoration.height(), topDecoration.overlap());
                 graphics.blit(topDecoration.texture(), decoration.x(), decoration.y(),
                         decoration.width(), decoration.height(), 0.0F, 0.0F,

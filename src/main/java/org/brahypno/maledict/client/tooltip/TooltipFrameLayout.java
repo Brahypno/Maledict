@@ -16,6 +16,17 @@ public record TooltipFrameLayout(int x, int y, int width, int height) {
                 contentHeight + 2 * VANILLA_EXTENT + outset.top() + outset.bottom());
     }
 
+    /** Keep the artwork's inner rails against the panel when short frames compress the caps. */
+    public static Insets fitOutset(int contentHeight, Insets border, Insets outset) {
+        int panelHeight = contentHeight + 2 * VANILLA_EXTENT;
+        int capHeight = border.top() + border.bottom();
+        int outerHeight = outset.top() + outset.bottom();
+        if (panelHeight + outerHeight >= capHeight) return outset;
+        double scale = (double) panelHeight / (capHeight - outerHeight);
+        return new Insets(outset.left(), (int) Math.round(outset.top() * scale),
+                outset.right(), (int) Math.round(outset.bottom() * scale));
+    }
+
     public TooltipFrameLayout topDecoration(Insets outset, int decorationWidth, int decorationHeight,
                                              int overlap) {
         int backgroundWidth = width - outset.left() - outset.right();
@@ -41,10 +52,10 @@ public record TooltipFrameLayout(int x, int y, int width, int height) {
 
     public List<Slice> slices(int textureWidth, int textureHeight, Insets border,
                               boolean drawCenter, boolean tileEdges) {
-        int left = Math.min(border.left(), width / 2);
-        int right = Math.min(border.right(), width / 2);
-        int top = Math.min(border.top(), height / 2);
-        int bottom = Math.min(border.bottom(), height / 2);
+        int left = fitLeadingBorder(width, border.left(), border.right());
+        int right = Math.min(border.right(), width - left);
+        int top = fitLeadingBorder(height, border.top(), border.bottom());
+        int bottom = Math.min(border.bottom(), height - top);
         int[] xs = {x, x + left, x + width - right, x + width};
         int[] ys = {y, y + top, y + height - bottom, y + height};
         int[] us = {0, border.left(), textureWidth - border.right(), textureWidth};
@@ -76,6 +87,13 @@ public record TooltipFrameLayout(int x, int y, int width, int height) {
             }
         }
         return slices;
+    }
+
+    // Asymmetric corners keep their natural size whenever the pair fits. For a tiny frame,
+    // share the available space in the same ratio instead of independently capping each half.
+    private static int fitLeadingBorder(int available, int leading, int trailing) {
+        int total = leading + trailing;
+        return total <= available ? leading : (int) ((long) available * leading / total);
     }
 
     public record Size(int width, int height) {}

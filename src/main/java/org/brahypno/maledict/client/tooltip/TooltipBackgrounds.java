@@ -33,9 +33,11 @@ public final class TooltipBackgrounds {
         }
         TooltipFrameLayout.Size size = TooltipFrameLayout.measure(components);
         // Color already carries the final position after wrapping, Pre handlers and the positioner.
+        TooltipFrameLayout.Insets outset = TooltipFrameLayout.fitOutset(size.height(),
+                background.border(), background.outset());
         TooltipFrameLayout frame = TooltipFrameLayout.around(event.getX(), event.getY(),
-                size.width(), size.height(), background.outset());
-        background.render(event.getGraphics(), frame);
+                size.width(), size.height(), outset);
+        background.render(event.getGraphics(), frame, outset);
         if (background.mode() == TooltipBackground.Mode.REPLACE) {
             event.setBackground(0);
             event.setBorderStart(0);

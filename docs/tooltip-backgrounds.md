@@ -28,7 +28,7 @@ public final class MyTooltipBackgrounds {
 
 以上为接入示例，其中 Incursus Blade 的贴图路径是示例路径。
 实际注册见 `MaledictTooltipBackgrounds`：启蒙之年已绑定到紫金羽翼框组合，采用 `DECORATE` 模式，
-左右连续羽翼、简洁的上下边以及独立的顶部中央羽饰；四角没有外突羽毛。
+左右上角的完整羽翼、双层框边以及独立的顶部中央羽饰；中下段没有垂挂羽毛。
 图稿和打包说明位于 `art/tooltip-backgrounds/`。
 一套 `TooltipBackground` 就是贴图、切片尺寸、外扩尺寸和模式的组合，可复用于多个物品。
 需要按标签、NBT 或一组物品选择时，使用 `event.register(Predicate<ItemStack>, TooltipBackground)`。
@@ -51,11 +51,14 @@ event.register(MaledictItems.INCURSUS_BLADE.get(), stack ->
 PNG 路径位于 `src/main/resources/assets/<namespace>/textures/...`，可以由资源包替换，按 F3+T 重载。
 `textureWidth` / `textureHeight` 必须填写整张 PNG 的像素尺寸。
 `border` 按 **左、上、右、下** 定义九宫格切片宽度；四角保持尺寸，边缘和中心拉伸。
+当目标尺寸容不下两端切片时，按原始比例压缩两端；不对每一端单独限制为目标尺寸的一半。
 例如 24×24、四边 8 的图会切成九块 8×8。
 透明像素可用于翅膀、尖角、花纹等非矩形轮廓。
 默认 `EdgeMode.STRETCH` 拉伸边缘；构造组合时最后传入 `TooltipBackground.EdgeMode.TILE`，
 则边缘按原始长度平铺，末块裁切，四角保持尺寸、中心仍拉伸。
-启蒙之年采用拉伸，左右完整的羽翼主体随提示框高度适配，肩部与末端保持固定尺寸。
+启蒙之年切片为左／右 36，上 88、下 28；采用拉伸，完整长羽翼保留在固定的上角，
+中段切片只含直线框边，羽翼不随长 tooltip 拉长。短 tooltip 按比例压缩上下角，
+并同步收缩上下外扩，保持内框和中央羽饰与黑底贴合。
 
 组合可通过最后一个参数设置 `TooltipBackground.TopDecoration`：
 `new TopDecoration(texture, textureWidth, textureHeight, width, height, overlap)`。

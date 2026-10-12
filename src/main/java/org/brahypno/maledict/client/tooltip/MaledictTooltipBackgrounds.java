@@ -14,10 +14,11 @@ public final class MaledictTooltipBackgrounds {
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
                     "textures/gui/tooltip/age_of_enlightenment.png"),
             96, 144,
-            new TooltipFrameLayout.Insets(32, 28, 32, 28),
+            // Keep the whole shoulder and primary feathers inside the fixed upper corners.
+            new TooltipFrameLayout.Insets(36, 88, 36, 28),
             // Match the artwork's inner rail to the vanilla silhouette; spare transparent pixels
             // lie underneath the vanilla background instead of leaving a visible gap.
-            new TooltipFrameLayout.Insets(25, 22, 25, 27),
+            new TooltipFrameLayout.Insets(25, 22, 25, 22),
             TooltipBackground.Mode.DECORATE, TooltipBackground.EdgeMode.STRETCH,
             new TooltipBackground.TopDecoration(
                     ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
