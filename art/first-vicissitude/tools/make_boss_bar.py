@@ -1,9 +1,8 @@
-"""Package the original crystal/pauldron boss-bar artwork for Minecraft.
+"""Package pixel-refined artwork at 2 texels per GUI pixel, without enlarging the HUD.
 
 Masters live in art/first-vicissitude/boss-bar, never in src/generated.
-The frame uses nearest-neighbour sampling and a fixed pixel-art palette.
-The base has two 182x5 rows in a 256x16 canvas; the frame is 256x32.
-Geometry below must match VicissitudeBossBarOverlay.java.
+The base retains two 182x5 rows in a 256x16 canvas. The decorative frame is
+512x64, drawn into 256x32 GUI pixels by VicissitudeBossBarOverlay.java.
 """
 from pathlib import Path
 import json
@@ -14,48 +13,34 @@ SOURCE = ROOT / "art/first-vicissitude/boss-bar"
 OUT_DIR = ROOT / "src/main/resources/assets/maledict/textures/gui/boss_bar"
 REVIEW = ROOT / "build/first-vicissitude-review/boss-bar"
 
+SCALE = 2
+PREVIEW_SCALE = 4
 BAR_WIDTH, BAR_HEIGHT = 182, 5
 BASE_TEX = (256, 16)
-FRAME_SIZE = (256, 32)
-ART_SIZE, ART_ORIGIN = (192, 30), (32, 1)
+GUI_FRAME_SIZE = (256, 32)
+FRAME_SIZE = (512, 64)
+ART_SIZE, ART_ORIGIN = (384, 60), (64, 2)
+# Retain headroom after removing the halo, rather than enlarging the silhouette.
+MASTER_TOP = 158
 FRAME_OFFSET, BAR_OFFSET = (-37, 0), (0, 19)
-BAR_IN_FRAME = (37, 19)
-# Name occupies y-9..y; next name must clear the current frame and a 2px gap.
-INCREMENT = FRAME_SIZE[1] + 11
-
-# A fixed, restrained palette removes antialiasing noise in the raster masters.
-# Transparency stays transparency; no opaque background is introduced.
-PALETTE = (
-    (20, 8, 32), (30, 17, 44), (44, 24, 63), (56, 33, 82),
-    (70, 42, 101), (88, 51, 126), (107, 63, 145), (129, 43, 171),
-    (146, 83, 174), (164, 111, 188), (189, 103, 219),
-    (65, 54, 79), (86, 73, 103), (108, 94, 125),
-    (133, 121, 151), (156, 143, 173), (179, 167, 192),
-    (202, 190, 212), (230, 223, 235), (245, 239, 242),
-    (111, 79, 63), (158, 117, 71), (201, 157, 92), (225, 182, 108),
-)
+BAR_IN_FRAME = (37, 19)  # GUI coordinates, not texture texels.
+INCREMENT = GUI_FRAME_SIZE[1] + 11
 
 
 def make_frame(phase):
     master = Image.open(SOURCE / f"{phase}-master.png").convert("RGBA")
-    # Use the visible silhouette, ignoring the generator's faint alpha speckles.
     alpha = master.getchannel("A").point(lambda a: 255 if a >= 128 else 0)
     box = alpha.getbbox()
+    box = (box[0], MASTER_TOP, box[2], box[3])
     master.putalpha(alpha)
-    sampled = master.crop(box).resize(ART_SIZE, Image.Resampling.NEAREST)
+    cropped = master.crop(box)
+    # Sample the original artwork directly at the final texture resolution.
+    # Premultiplied alpha excludes transparent RGB from edge colours; a binary
+    # silhouette preserves crisp edges without requiring a different blend mode.
+    sampled = cropped.convert("RGBa").resize(ART_SIZE, Image.Resampling.BOX).convert("RGBA")
+    sampled.putalpha(cropped.getchannel("A").resize(ART_SIZE, Image.Resampling.NEAREST))
     frame = Image.new("RGBA", FRAME_SIZE)
-    cache = {}
-    for y in range(sampled.height):
-        for x in range(sampled.width):
-            r, g, b, a = sampled.getpixel((x, y))
-            if not a:
-                continue
-            rgb = (r, g, b)
-            if rgb not in cache:
-                cache[rgb] = min(PALETTE, key=lambda c:
-                    2 * (r-c[0])**2 + 3 * (g-c[1])**2 + (b-c[2])**2)
-            frame.putpixel((x + ART_ORIGIN[0], y + ART_ORIGIN[1]),
-                           cache[rgb] + (255,))
+    frame.paste(sampled, ART_ORIGIN)
     return frame
 
 
@@ -73,60 +58,82 @@ def make_base():
 
 
 def composite(base, frame, fraction, phase_two):
-    image = Image.new("RGBA", FRAME_SIZE)
-    # Phase one is a feather shroud: no health information shows through its gaps.
-    # The server-side health/progress and the phase switch remain unchanged.
+    # Compare both resolutions at the same physical GUI scale. Never shrink the
+    # 4x baseline to the new 2x texture before comparing it.
+    size = tuple(v*PREVIEW_SCALE for v in GUI_FRAME_SIZE)
+    image = Image.new("RGBA", size)
     if phase_two:
-        image.alpha_composite(base.crop((0, 0, BAR_WIDTH, BAR_HEIGHT)), BAR_IN_FRAME)
+        position = tuple(v*PREVIEW_SCALE for v in BAR_IN_FRAME)
+        empty = base.crop((0, 0, BAR_WIDTH, BAR_HEIGHT))
+        image.alpha_composite(empty.resize((BAR_WIDTH*PREVIEW_SCALE, BAR_HEIGHT*PREVIEW_SCALE),
+                                           Image.Resampling.NEAREST), position)
         filled = int(BAR_WIDTH * fraction)
         if filled:
-            image.alpha_composite(
-                base.crop((0, BAR_HEIGHT, filled, BAR_HEIGHT * 2)), BAR_IN_FRAME)
-    image.alpha_composite(frame)
+            fill = base.crop((0, BAR_HEIGHT, filled, BAR_HEIGHT*2))
+            image.alpha_composite(fill.resize((filled*PREVIEW_SCALE, BAR_HEIGHT*PREVIEW_SCALE),
+                                              Image.Resampling.NEAREST), position)
+    image.alpha_composite(frame.resize(size, Image.Resampling.NEAREST))
     return image
 
 
-def make_preview(base, frames):
-    width, scale = 288, 4
-    image = Image.new("RGB", (width, 294), (18, 15, 23))
+def save_sheet(size, labels, sprites, path, background=(18, 15, 23)):
+    """Labels use GUI pixels; both versions are shown at the same GUI scale."""
+    image = Image.new("RGBA", size, background + (255,))
     draw = ImageDraw.Draw(image)
-    for stage, phase in enumerate(("phase-one", "phase-two")):
-        for idx, fraction in enumerate((1.0, 0.55, 0.18)):
-            y = 5 + (stage * 3 + idx) * 48
-            label = f"PHASE {stage+1}  |  {'VEILED' if stage == 0 else str(int(fraction*100))+'%'}"
-            draw.text((16, y), label, fill=(202, 190, 212), font=ImageFont.load_default(size=9))
-            sprite = composite(base, frames[phase], fraction, stage == 1)
-            image.paste(sprite, (16, y+12), sprite)
-    image.resize((width*scale, image.height*scale), Image.Resampling.NEAREST).save(
-        ROOT / "build/first-vicissitude-review/boss_bar_preview.png")
-
-
-def make_overview(base, frames):
-    image = Image.new("RGB", (288, 126), (18, 15, 23))
-    draw = ImageDraw.Draw(image)
-    for stage, phase in enumerate(("phase-one", "phase-two")):
-        y = 7 + stage * 60
-        draw.text((16, y), f"PHASE {stage+1}", fill=(202, 190, 212),
-                  font=ImageFont.load_default(size=9))
-        sprite = composite(base, frames[phase], 0.72, stage == 1)
-        image.paste(sprite, (16, y+14), sprite)
-    image.resize((1152, 504), Image.Resampling.NEAREST).save(REVIEW / "overview.png")
-
-
-def make_stacked_preview(base, frames):
-    # Same event coordinates, increment and name placement as the Java renderer.
-    image = Image.new("RGB", (320, 120), (38, 35, 44))
-    draw = ImageDraw.Draw(image)
-    event_x, event_y = 160 - BAR_WIDTH // 2, 12
     font = ImageFont.load_default(size=9)
-    for idx, phase in enumerate(("phase-one", "phase-two")):
-        y = event_y + idx * INCREMENT
-        name = "FIRST VICISSITUDE"
-        draw.text((160 - draw.textlength(name, font=font) / 2, y - 9),
-                  name, font=font, fill=(230, 237, 245))
-        sprite = composite(base, frames[phase], 0.55, idx == 1)
-        image.paste(sprite, (event_x+FRAME_OFFSET[0], y+FRAME_OFFSET[1]), sprite)
-    image.resize((960, 360), Image.Resampling.NEAREST).save(REVIEW / "stacked-layout.png")
+    for position, label in labels:
+        draw.text(position, label, fill=(202, 190, 212), font=font)
+    image = image.resize(tuple(v*PREVIEW_SCALE for v in size), Image.Resampling.NEAREST)
+    for position, sprite in sprites:
+        image.alpha_composite(sprite, tuple(v*PREVIEW_SCALE for v in position))
+    image.convert("RGB").save(path)
+
+
+def make_previews(base, frames):
+    samples = (("phase-one", 1.0), *(("phase-two", f) for f in (1.0, .51, .50, .49, .10, 0.0)))
+    labels, sprites = [], []
+    for idx, (phase, fraction) in enumerate(samples):
+        y = 5 + idx*48
+        stage = 1 if phase == "phase-one" else 2
+        label = f"PHASE {stage} | " + ("VEILED" if stage == 1 else f"{int(fraction*100)}%")
+        labels.append(((16, y), label))
+        sprites.append(((16, y+12), composite(base, frames[phase], fraction, stage == 2)))
+    save_sheet((288, len(samples)*48+6), labels, sprites,
+               REVIEW.parent / "boss_bar_preview.png")
+
+    labels, sprites = [], []
+    for stage, phase in enumerate(("phase-one", "phase-two")):
+        y = 7 + stage*60
+        labels.append(((16, y), f"PHASE {stage+1}"))
+        sprites.append(((16, y+14), composite(base, frames[phase], .72, stage == 1)))
+    save_sheet((288, 126), labels, sprites, REVIEW / "overview.png")
+
+    labels, sprites = [], []
+    font = ImageFont.load_default(size=9)
+    name = "FIRST VICISSITUDE"
+    name_x = round(160-font.getlength(name)/2)
+    for stage, phase in enumerate(("phase-one", "phase-two")):
+        y = 12 + stage*INCREMENT
+        labels.append(((name_x, y-9), name))
+        sprites.append(((160-BAR_WIDTH//2+FRAME_OFFSET[0], y),
+                        composite(base, frames[phase], .55, stage == 1)))
+    save_sheet((320, 120), labels, sprites, REVIEW / "stacked-layout.png", (38, 35, 44))
+
+    before = REVIEW / "highres-before"
+    if (before / "first_vicissitude_bar_phase_one_frame.png").exists():
+        labels, sprites = [], []
+        for col, label in enumerate(("BEFORE | 768x120 ART", "AFTER | 384x60 ART")):
+            labels.append(((16+col*288, 8), label))
+            for stage, phase in enumerate(("phase-one", "phase-two")):
+                frame = frames[phase]
+                if col == 0:
+                    suffix = phase.replace("-", "_")
+                    frame = Image.open(before / f"first_vicissitude_bar_{suffix}_frame.png").convert("RGBA")
+                y = 29+stage*62
+                labels.append(((16+col*288, y), f"PHASE {stage+1}"))
+                sprites.append(((16+col*288, y+12), composite(base, frame, .50, stage == 1)))
+        labels.append(((16, 161), "OFFLINE / SAME GUI SIZE / 4X GUI SCALE"))
+        save_sheet((576, 182), labels, sprites, REVIEW / "comparison.png")
 
 
 def main():
@@ -140,28 +147,19 @@ def main():
         base.save(OUT_DIR / f"first_vicissitude_bar_{suffix}.png")
         frame.save(OUT_DIR / f"first_vicissitude_bar_{suffix}_frame.png")
         frame.resize((1024, 128), Image.Resampling.NEAREST).save(REVIEW / f"{phase}-frame-4x.png")
-    make_preview(base, frames)
-    make_overview(base, frames)
-    make_stacked_preview(base, frames)
-    phase_two = frames["phase-two"]
-    # Measure actual alpha coverage in the fill band, excluding the emblem/end caps.
-    clear, count = 0, 0
-    for x in (*range(51, 100), *range(157, 206)):
-        for y in range(BAR_IN_FRAME[1], BAR_IN_FRAME[1]+BAR_HEIGHT):
-            clear += phase_two.getpixel((x, y))[3] == 0
-            count += 1
-    report = dict(frame_size=FRAME_SIZE, art_size=ART_SIZE, base_size=BASE_TEX,
-                  bar_size=(BAR_WIDTH, BAR_HEIGHT), bar_in_frame=BAR_IN_FRAME,
+        assert frame.size == FRAME_SIZE
+        assert set(frame.getchannel("A").get_flattened_data()) == {0, 255}
+    make_previews(base, frames)
+    # Phase one never draws health, even where feathers leave transparent gaps.
+    assert composite(base, frames["phase-one"], 0, False).tobytes() == composite(
+        base, frames["phase-one"], 1, False).tobytes()
+    report = dict(frame_texture_size=FRAME_SIZE, frame_gui_size=GUI_FRAME_SIZE,
+                  texels_per_gui_pixel=SCALE, art_texture_size=ART_SIZE,
+                  art_gui_size=(192, 30), base_size=BASE_TEX,
+                  bar_size=(BAR_WIDTH, BAR_HEIGHT), bar_in_frame_gui=BAR_IN_FRAME,
                   frame_offset=FRAME_OFFSET, bar_offset=BAR_OFFSET, increment=INCREMENT,
-                  phase_one_health_visible=False, phase_two_channel_clear_pixels=clear,
-                  phase_two_channel_sampled_pixels=count,
-                  phase_two_clear_channel_rows=sum(
-                      all(phase_two.getpixel((x, y))[3] == 0
-                          for x in (*range(51, 100), *range(157, 206)))
-                      for y in range(BAR_IN_FRAME[1], BAR_IN_FRAME[1]+BAR_HEIGHT)),
-                  palette_colors=len(PALETTE), alpha_values=[0, 255],
-                  native_frames={k: v.getbbox() for k, v in frames.items()},
-                  in_game_verified=False)
+                  phase_one_health_visible=False, palette_quantized=False,
+                  alpha_values=[0, 255], in_game_verified=False)
     (REVIEW / "layout.json").write_text(json.dumps(report, indent=2)+"\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
 

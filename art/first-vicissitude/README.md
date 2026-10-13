@@ -21,7 +21,7 @@ Blender 导出器输出。旧 `RigArtGenerator.java` 是早期方块预览工具
 - `tools/enlarge_bone_wings.py`：二阶段骨翼外段增加 20% 伸展幅度，翼根附近 8 模型单位保留。
   重建器共用同一变形函数；保存工程、运行时网格、Blockbench 与二阶段碰撞范围已同步。
 - `boss-bar/`：独立制作的晶体头肩甲血条图稿、完整提示词与尺寸约定；
-  `tools/make_boss_bar.py` 打包两阶段 256×16 底条与 256×32 装饰层，检查图输出到 `build/`。
+  `tools/make_boss_bar.py` 打包两阶段 256×16 底条与 512×64 装饰贴图（绘制为 256×32 GUI 像素），检查图输出到 `build/`。
 - `tools/body_surfaces.py`、`tools/wing_surfaces.py`、`tools/ring_surfaces.py`、`tools/relic_surfaces.py`、
   `tools/surface_sample.py`：逐表面图稿的编排与样稿生成；`tools/atlas16.py` 只生成样稿范围以外的旧占位。
 - `tools/lower_surfaces.py`：下腹与祭衣的高密度表面绘制及 UV 分配；旧图集原密度保留，新增区域独立绘制。

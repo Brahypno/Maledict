@@ -1,6 +1,6 @@
 # 无常：战斗音乐与自定义血条
 
-> 状态：**代码已接线，游戏内尚未验证**。2026-10-04 完成两阶段血条图稿替换与离线布局检查。
+> 状态：**代码已接线，游戏内尚未验证**。2026-10-12 沿原造型精修明暗并移除头后圆环，完成离线布局检查。
 > 血条当前规格见 §2.6–2.7；实机未验证事项仍按 [03 §5](03_ENGINEERING_AND_VERIFICATION.md) 记录。
 
 参考实现取自两套同类模组（用户提供）：
@@ -350,8 +350,8 @@ private final ServerBossEvent bossEvent = new ServerBossEvent(
 
 > 落地 ≠ 验证。血条和音乐一样**没有实机跑过**，见 §0。
 
-血条部分已实现，见 §0.1。当前图稿以 Boss 的紫晶头、断环和肩甲为中央缩略图标，
-一阶段覆羽遮血，二阶段脱羽露出血槽。底条仍为 256×16、装饰层为 256×32。
+血条部分已实现，见 §0.1。当前图稿以 Boss 的紫晶头和肩甲为中央缩略图标，
+一阶段覆羽遮血，二阶段脱羽露出血槽。底条为 256×16；装饰贴图为 512×64，绘制为 256×32 GUI 像素。
 Java 居中偏移、血槽位置及叠放间距已随图稿更新，具体见 §2.6–2.7。
 
 **没有做的事**（都是有意的，不是漏了）：
@@ -507,13 +507,14 @@ gui.blit(overlayTex, x + offX + ovOffX, y + ovOffY + offY, 0, 0,
 | 文件 | 尺寸 | 当前内容 |
 | --- | --- | --- |
 | `first_vicissitude_bar_phase_one.png` | 256 × 16 | 空槽与填充各 182 × 5；一阶段客户端不绘制 |
-| `first_vicissitude_bar_phase_one_frame.png` | 256 × 32 | 晶体头、断环、肩甲及覆盖整个血槽的叠层覆羽 |
+| `first_vicissitude_bar_phase_one_frame.png` | 512 × 64 | 晶体头、肩甲及覆盖整个血槽的叠层覆羽 |
 | `first_vicissitude_bar_phase_two.png` | 256 × 16 | 紫色血量填充，使用原有插值进度 |
-| `first_vicissitude_bar_phase_two_frame.png` | 256 × 32 | 同一 Boss 的头肩缩略图标、骨翼与外露血槽 |
+| `first_vicissitude_bar_phase_two_frame.png` | 512 × 64 | 同一 Boss 的头肩缩略图标、骨翼与外露血槽 |
 
-2026-10-04 根据用户要求重新制作图稿，原有项目血条没有作为图稿输入。
-中央图标表达 Boss 的非人晶体头、头后断环及骨白叠层肩甲，无眼鼻口。
-实际图案占 192×30，放在 256×32 画布的 (32,1)，保持紧凑的像素 HUD 尺度。
+2026-10-12 用户确认原版造型方向，撤去简化重设计；以原版为底细化羽片叠压、骨翼边缘光和晶体明暗面。
+中央图标保留非人晶体头、金纹及骨白叠层肩甲，无眼鼻口；仅血条图标按用户要求移除头后缺口圆环。
+针对实机显示粗糙的问题，图案从原稿直接采样为 384×60，放在 512×64 贴图的 (64,2)。
+GUI 图案仍占 192×30；绘制重载分别指定目标 256×32 与源区域/贴图 512×64，不放大血条。
 
 **当前几何**（Java 与打包脚本一致）：
 
@@ -521,13 +522,14 @@ gui.blit(overlayTex, x + offX + ovOffX, y + ovOffY + offY, 0, 0,
 | --- | --- | --- |
 | `BAR_WIDTH / BAR_HEIGHT` | 182 / 5 | 沿用原版底条尺寸 |
 | `BAR_OFFSET` | (0, 19) | 底条相对事件坐标 |
-| `OVERLAY_SIZE` | 256 × 32 | 装饰层尺寸，1:1 绘制 |
+| `OVERLAY_SIZE` | 256 × 32 | GUI 占位尺寸 |
+| `OVERLAY_TEX_SIZE` | 512 × 64 | 装饰贴图尺寸，每 GUI 像素对应 2×2 纹理像素 |
 | `OVERLAY_OFFSET` | (−37, 0) | 装饰层与原版底条在屏幕中央对齐 |
 | `BAR_IN_OVERLAY` | (37, 19) | 血槽在装饰层画布内的位置 |
 | `INCREMENT` | 43 | 图稿高度 + 名称 9px + 间隙 2px |
 
 血槽为 x37..219、y19..24（右/下边界不包含）；底边描线被下轨盖住，
-两侧实际可见 4 行。中央头肩图标及两端护甲盖在血量之上。
+坐标单位为 GUI 像素。中央头肩图标及两端护甲盖在血量之上。
 名称仍在 `event.getY()−9`，位于图稿上方，不能画进晶体头内。
 
 一阶段只画覆羽图稿与名称；不绘制空槽或填充，羽片间的负空间不会泄露血量。
@@ -545,8 +547,9 @@ gui.blit(overlayTex, x + offX + ovOffX, y + ovOffY + offY, 0, 0,
 
 图稿源和完整提示词在 [boss-bar](../../../art/first-vicissitude/boss-bar/README.md)。
 两张透明图稿由内置 `image_gen.imagegen` 制作；
-`art/first-vicissitude/tools/make_boss_bar.py` 负责裁到可见轮廓、最近邻适配尺寸、
-统一 24 色及二值透明像素，并重新输出四张游戏 PNG。
+`art/first-vicissitude/tools/make_boss_bar.py` 保留原圆环上沿的留空，避免去环后拉大图案；
+用预乘透明度的面积采样直接生成高分辨率色块，最近邻采样保留硬轮廓及二值透明像素，
+取消 24 色量化，重新输出四张游戏 PNG。底条、GUI 绘制坐标、名称和叠放间距保持原版。
 图稿原件保留，不使用旧几何占位脚本重建装饰。
 
 ```powershell
@@ -555,11 +558,12 @@ python art/first-vicissitude/tools/make_boss_bar.py
 
 - 输出四张游戏贴图到 `src/main/resources/assets/maledict/textures/gui/boss_bar/`。
 - 两阶段概览、叠放检查和实测尺寸报告在 `build/first-vicissitude-review/boss-bar/`。
-- 六档检查图为 `build/first-vicissitude-review/boss_bar_preview.png`。
+- 遮血及 100%、51%、50%、49%、10%、0% 检查图为 `build/first-vicissitude-review/boss_bar_preview.png`。
+- 同尺寸原版/当前对照为 `build/first-vicissitude-review/boss-bar/comparison.png`。
 - `preview/` 保留原有固定文件，本轮不增加模型预览图。
 
 **本轮已验证**：`compileJava --offline` 通过；贴图尺寸、透明像素、血槽位置、
-名称与叠放位置经过离线检查。二阶段两侧抽样血槽共 490 个像素，
-其中 392 个透明（四行完整透明，第五行为覆盖底边的下轨）。
+名称与叠放位置经过离线检查。高分辨率贴图尺寸、二值透明度与一阶段遮血断言通过；
+同尺寸对照直接使用 512×64 资产，检查 4 倍 GUI 缩放下的实际采样密度。
 **尚未验证**：游戏内资源重载、不同 GUI 缩放下的实际显示、实战阶段切换。
 所有血条检查图都是离线 UI 合成图，不是游戏截图。

@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
  * 图稿源在 {@code art/first-vicissitude/boss-bar}，脚本负责打包到游戏尺寸：
  * <ul>
  *   <li>base 256×16：v0–5 空槽、v5–10 填充，各是 182×5 的实心条</li>
- *   <li>overlay 256×32：居中的晶体头、断环和肩甲；一阶段覆羽，二阶段骨翼与外露血槽</li>
+ *   <li>overlay 512×64，绘制为 256×32：晶体头和肩甲；一阶段覆羽，二阶段骨翼与外露血槽</li>
  * </ul>
  *
  * <p>一阶段不绘制底条和血量填充，覆羽间的负空间不会泄露血量。
@@ -48,9 +48,11 @@ public final class VicissitudeBossBarOverlay {
     /** base 贴图的声明尺寸，UV 归一化用它。 */
     private static final int BASE_TEX_WIDTH = 256;
     private static final int BASE_TEX_HEIGHT = 16;
-    /** overlay 贴图尺寸，1:1 绘制。 */
+    /** overlay 的 GUI 占位；贴图使用两倍采样密度，不放大屏幕占位。 */
     private static final int OVERLAY_WIDTH = 256;
     private static final int OVERLAY_HEIGHT = 32;
+    private static final int OVERLAY_TEX_WIDTH = OVERLAY_WIDTH * 2;
+    private static final int OVERLAY_TEX_HEIGHT = OVERLAY_HEIGHT * 2;
 
     /** 血条本体相对 {@code event.getX()/getY()}。 */
     private static final int BAR_OFFSET_X = 0;
@@ -144,7 +146,8 @@ public final class VicissitudeBossBarOverlay {
         // 4) 晶体头、肩甲与羽翼在填充上层；名字位于整个图稿上方。
         gui.blit(OVERLAY[style],
                  event.getX() + OVERLAY_OFFSET_X, event.getY() + OVERLAY_OFFSET_Y,
-                 0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_WIDTH, OVERLAY_HEIGHT);
+                 OVERLAY_WIDTH, OVERLAY_HEIGHT, 0.0F, 0.0F,
+                 OVERLAY_TEX_WIDTH, OVERLAY_TEX_HEIGHT, OVERLAY_TEX_WIDTH, OVERLAY_TEX_HEIGHT);
     }
 
     private VicissitudeBossBarOverlay() {

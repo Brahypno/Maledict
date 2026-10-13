@@ -67,7 +67,9 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.ELEGY_BOW.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
         tag(GOETY_GRAVE_GLOVE).add(MaledictItems.INCURSUS_BLADE.get());
-        tag(L2_NO_SEAL).add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
+        tag(L2_NO_SEAL)
+                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
+                     MaledictItems.HANGMAN_FOOL.get());
         tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
         tag(CURIOS_DELUSION).add(MaledictItems.HANGMAN_FOOL.get());
         tag(CURIOS_RUNE).add(MaledictItems.RUNE_OF_SATIATION.get(),
