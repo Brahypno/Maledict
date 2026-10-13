@@ -35,9 +35,9 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
  * <p>亮度取相机所在方块而不是玩家脚下：第一人称、第三人称、旁观、自由视角下相机都可能离开身体，
  * 取脚下会在贴脸看暗处时还判成亮。阈值用迟滞（<=6 进，>=8 出，7 保持），免得站在阈值上闪。
  *
- * <p>夜视与伽马覆盖都只让效果退场，这里既不给也不收玩家的原版效果，也不动玩家的设置。
- * 失明与黑暗是例外里的例外：它们在原版里只是雾，设备开着时把雾推回正常视距就能看穿；
- * 水/岩浆/细雪的雾也一并推掉，相机泡在岩浆里时还会直接当成「看不见」把它叫起来，见 {@link #onRenderFog}。
+ * <p>夜视与伽马覆盖提供正常亮度时，后处理退场。遮挡雾另由 {@link #onRenderFog} 处理，
+ * 不依赖后处理强度，所以亮处或有夜视时仍能看穿失明、水、岩浆与细雪。
+ * 黑暗另外会周期性压暗光照图；视界槽对黑暗的免疫在服务端效果事件里处理。
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class InfraredClientHandler {
@@ -73,12 +73,10 @@ public final class InfraredClientHandler {
                 int brightness = level.getRawBrightness(cameraPos, level.getSkyDarken());
                 InfraredClientState.setDarknessActive(
                         InfraredCurve.darknessAfter(InfraredClientState.isDarknessActive(), brightness));
-                // 失明与黑暗本身就是「看不见」，不必再等环境够暗：设备一戴，它们也把微光视觉叫起来。
-                // 岩浆另算：它自己是光源，亮度永远是 15，靠亮度这一路在岩浆里永远等不到；
-                // 相机泡进岩浆就直接当看不见，顺带让那层一格厚的岩浆雾也被推掉（见 onRenderFog）。
-                requested = (InfraredClientState.isDarknessActive() || hasSightLoss(player) || cameraInLava())
-                            && !player.hasEffect(MobEffects.NIGHT_VISION)
-                            && !isGammaOverridden(minecraft);
+                // 只在正常视觉亮度不足时提亮。失明和液体的遮挡雾独立处理，
+                // 因而不会为了推雾把已有夜视、或本来足够亮的画面再转成灰度。
+                requested = InfraredCurve.needsEnhancement(InfraredClientState.isDarknessActive(),
+                        player.hasEffect(MobEffects.NIGHT_VISION), isGammaOverridden(minecraft));
             }
         }
         InfraredClientState.setRequested(requested);
@@ -105,21 +103,22 @@ public final class InfraredClientHandler {
     }
 
     /**
-     * 推掉挡视线的雾。失明与黑暗在原版里只做了一件事——把雾拉近（失明 5 格、黑暗 15 格），
-     * 所以设备开着时把雾推回正常视距就等于「看穿」它们；水、岩浆、细雪同理，那三支的雾也是原版唯一的实现，
+     * 推掉挡视线的雾。失明与黑暗会把雾拉近（失明 5 格、黑暗 15 格），
+     * 设备开着时把雾推回正常视距。黑暗还会压暗光照图，这里只处理雾。水、岩浆、细雪同理，
      * 不一起推掉的话水下中了失明还是只能看 5 格。用 Forge 的雾事件，不必 mixin，也不碰玩家的效果本身。
      *
      * <p><b>空气里的普通视距雾不动</b>：那是画面的远景层次，不是谁在挡你。所以空气这一支只在玩家身上
      * 真有失明/黑暗时动手——这时候原版那一支雾必定是效果的雾（空气分支里效果判断排在普通地形雾前面）。
-     * 岩浆那一支则靠 {@link #cameraInLava()} 把设备叫起来，否则它自己发着光，永远等不到「够暗」。
+     * 液体与细雪按相机的 FogType 直接处理，不必等环境变暗或后处理淡入。
      *
-     * <p>门槛看的是<b>当前强度</b>而不是 {@code requested}：配置把 intensity 调到 0 时淡入根本不动，
-     * 这时候也不该把雾推掉——"效果没显示出来，就别动画面"。
+     * <p>推雾由设备开关控制，不依赖后处理强度：画面本来够亮、或已有夜视时，
+     * 后处理可以完全关闭而仍然移走遮挡雾。配置将 intensity 设为 0 时仍关闭整套画面处理。
      */
     @SubscribeEvent
     public static void onRenderFog(ViewportEvent.RenderFog event) {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null || InfraredClientState.strength() <= InfraredCurve.ACTIVE_EPSILON) {
+        if (player == null || !InfraredClientState.isEyeSlotEnabled() || !InfraredSettings.enabled()
+                || InfraredSettings.intensity() <= InfraredCurve.ACTIVE_EPSILON) {
             return;
         }
         if (event.getType() == FogType.NONE && !hasSightLoss(player)) {
@@ -140,17 +139,9 @@ public final class InfraredClientHandler {
         event.setCanceled(true);
     }
 
-    /** 失明或黑暗：原版把它们做成雾，所以「看得见」这件事得由雾这一层解决。 */
+    /** 失明或黑暗的近距离雾；与是否需要提亮画面是两个独立判断。 */
     private static boolean hasSightLoss(LocalPlayer player) {
         return player.hasEffect(MobEffects.BLINDNESS) || player.hasEffect(MobEffects.DARKNESS);
-    }
-
-    /**
-     * 相机泡在岩浆里。看的是相机而不是玩家：画面被岩浆糊住与否由 {@code Camera#getFluidInCamera()} 决定，
-     * 第三人称下相机和身体可以不在同一格。
-     */
-    private static boolean cameraInLava() {
-        return Minecraft.getInstance().gameRenderer.getMainCamera().getFluidInCamera() == FogType.LAVA;
     }
 
     @SubscribeEvent

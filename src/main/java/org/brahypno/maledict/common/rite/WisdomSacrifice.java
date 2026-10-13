@@ -7,7 +7,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.MobEffectEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
@@ -15,17 +17,21 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.effect.SacrificeSchedule;
+import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import top.theillusivec4.curios.api.CuriosApi;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * 「智慧的牺牲」：没有图标、不进进度树的那一枚成就，同时兼任两个凭据——仪式不再选中你，以及那两枚
+ * 「智慧的牺牲」：有图标与获得提示、不进进度界面的那一枚成就，同时兼任两个凭据——仪式不再选中你，以及那两枚
  * 额外栏位。数据在 {@code data/maledict/advancements/wisdom_sacrifice.json}，判据是 {@code impossible}，
  * 仪式由这里发放成就；额外栏位在获得成就时发放，包括指令授予。
+ * 无 display 的独立父进度负责隐藏整个页签；仅靠 hidden 标记无法在完成后继续隐藏。
  *
  * <h2>发放条件：印记得是仪式按的，而且真的自然到期</h2>
  * 只认「{@code maledict:sacrifice} 到期」是不够的：{@code /effect give}、别的模组的随机效果、清洗与
@@ -74,6 +80,12 @@ public final class WisdomSacrifice {
     private static final UUID DELUSION_SLOT_MODIFIER = UUID.fromString("51d36a0f-ba8f-49dd-8a66-8a4416e32a5c");
 
     private static final String MODIFIER_NAME = "maledict:wisdom_sacrifice";
+
+    private static final int SIGHT_LOSS_TICKS = 6 * 60 * 20;
+    private static final int BLACKOUT_TICKS = 60;
+
+    // 自然到期的成就事件发生在 tickEffects 的迭代中；新效果必须等本 tick 结束再加。
+    private static final Set<ServerPlayer> PENDING_SIGHT_LOSS = new HashSet<>();
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -144,6 +156,21 @@ public final class WisdomSacrifice {
             handler.addPermanentSlotModifier(DELUSION_SLOT, DELUSION_SLOT_MODIFIER, MODIFIER_NAME, 1.0D,
                                              AttributeModifier.Operation.ADDITION);
         });
+        PENDING_SIGHT_LOSS.add(player);
+    }
+
+    /** 两种原版效果持续六分钟；前六十 tick 的独立黑幕与它们同时开始。 */
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        for (ServerPlayer player : PENDING_SIGHT_LOSS) {
+            player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, SIGHT_LOSS_TICKS));
+            player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, SIGHT_LOSS_TICKS));
+            MaledictNetwork.sendWisdomBlackout(player, BLACKOUT_TICKS);
+        }
+        PENDING_SIGHT_LOSS.clear();
     }
 
     private static boolean isSacrifice(@Nullable MobEffectInstance instance) {

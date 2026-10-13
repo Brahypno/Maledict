@@ -13,6 +13,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class InfraredCurveTest {
 
+    /** 已确认：正常亮度保留原画面；夜视和亮度增强均可提供正常亮度，遮挡雾独立处理。 */
+    @Test
+    void enhancementOnlyRunsWhenNormalVisionIsTooDark() {
+        assertFalse(InfraredCurve.needsEnhancement(false, false, false));
+        assertTrue(InfraredCurve.needsEnhancement(true, false, false));
+        assertFalse(InfraredCurve.needsEnhancement(true, true, false));
+        assertFalse(InfraredCurve.needsEnhancement(true, false, true));
+        assertFalse(InfraredCurve.needsEnhancement(true, true, true));
+    }
+
     @Test
     void darknessEntersAtSixOrBelow() {
         assertTrue(InfraredCurve.darknessAfter(false, 0));

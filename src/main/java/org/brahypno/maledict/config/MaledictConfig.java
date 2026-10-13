@@ -139,11 +139,11 @@ public final class MaledictConfig {
         clientBuilder.push("infrared");
         INFRARED_ENABLED = clientBuilder
                 .comment("When true, the Vision slot ( earned from Wisdom's Sacrifice)",
-                         " works as a low-light optical device. With something in that",
-                         "slot and its eye toggle lit, the client fades in a grayscale low-light",
-                         "view whenever the camera sits in darkness, the wearer is blind or",
-                         "wrapped in darkness, or the camera is inside lava - and pushes the fog",
-                         "walls those things rely on out of the way. Purely visual and client",
+                         " works as a low-light optical device. With the slot's eye toggle lit,",
+                         "the client fades in a grayscale low-light view only when normal vision",
+                         "is too dark and night vision or a gamma override does not already help.",
+                         "Obscuring effect and fluid fog is removed independently, including",
+                         "when normal vision is already bright enough. Purely visual and client",
                          "side: no world lighting, no mob effects, nothing sent to the server.",
                          "Turn this off to disable the whole feature.")
                 .define("enabled", true);

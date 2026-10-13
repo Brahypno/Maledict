@@ -26,6 +26,11 @@ final class InfraredCurve {
         return active ? brightness < DISABLE_LIGHT : brightness <= ENABLE_LIGHT;
     }
 
+    /** 环境暗，且原版夜视或亮度增强没有提供正常亮度时，才需要后处理提亮。 */
+    static boolean needsEnhancement(boolean dark, boolean nightVision, boolean gammaOverridden) {
+        return dark && !nightVision && !gammaOverridden;
+    }
+
     /**
      * 指数逼近目标：{@code alpha = 1 - e^(-dt/τ)}。按真实帧时长算，掉帧时不会比高帧率时淡得慢，
      * 而且逐帧叠出来的结果与整段一次性算出来的完全一致（指数是可乘的）。

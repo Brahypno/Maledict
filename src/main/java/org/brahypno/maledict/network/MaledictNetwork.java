@@ -59,6 +59,9 @@ public final class MaledictNetwork {
         CHANNEL.registerMessage(5, ProjectileReflectionPacket.class,
                 ProjectileReflectionPacket::encode, ProjectileReflectionPacket::decode,
                 ProjectileReflectionPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(6, WisdomBlackoutPacket.class,
+                WisdomBlackoutPacket::encode, WisdomBlackoutPacket::decode,
+                WisdomBlackoutPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendRadialAttack() {
@@ -89,6 +92,10 @@ public final class MaledictNetwork {
     public static void sendBossBarStyle(ServerPlayer player, UUID bar, int style) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                      new BossBarStylePacket(bar, style));
+    }
+
+    public static void sendWisdomBlackout(ServerPlayer player, int ticks) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new WisdomBlackoutPacket(ticks));
     }
 
     private MaledictNetwork() {

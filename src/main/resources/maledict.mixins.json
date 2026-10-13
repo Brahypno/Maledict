@@ -11,6 +11,7 @@
     "VoidConduitBlockEntityMixin"
   ],
   "client": [
+    "GameRendererMixin",
     "HiddenTagRegistryMixin"
   ],
   "injectors": {
