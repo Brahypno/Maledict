@@ -101,7 +101,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + RUNE_OF_ROTTEN_BONE_ENTRY + ".description", "拥抱枯骨");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_ROTTEN_BONE_ENTRY, "朽骨符文");
             add("malum.gui.book.entry.page.text." + RUNE_OF_ROTTEN_BONE_ENTRY + ".1",
-                "终有一天， 她将离开他们而独自离去， 她会厌倦天国天使们的歌声， 而更愿意去拥抱凡人的枯骨。");
+                "终有一天，\n她将离开他们而独自离去， \n她会厌倦天国天使们的歌声，\n而更愿意去拥抱凡人的枯骨。");
             add("malum.gui.book.entry." + UMBRAL_EXPERIMENT_ENTRY, "幽影精魂的实验");
             add("malum.gui.book.entry." + UMBRAL_EXPERIMENT_ENTRY + ".description", "探求禁忌……有意义吗");
             add("malum.gui.book.entry.page.headline." + UMBRAL_EXPERIMENT_ENTRY, "幽影精魂的实验");
@@ -116,7 +116,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + RUNE_OF_BLISS_ENTRY + ".description", "无爱亦无忧愁");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_BLISS_ENTRY, "无忧符文");
             add("malum.gui.book.entry.page.text." + RUNE_OF_BLISS_ENTRY + ".1",
-                "可是，有什么办法呢？  谁在爱，  谁就应该与他所爱的人 分担命运  永恒的坠落，无爱亦无忧愁，  即是最终的虚无。");
+                "可是，有什么办法呢？\n 谁在爱，\n 谁就应该与他所爱的人 分担命运。\n  永恒的坠落，\n无爱亦无忧愁，\n 即是最终的虚无。");
             add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY, "堕落符文");
             add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY + ".description", "选择，或是未被选择");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_THE_FALLEN_ENTRY, "堕落符文");
@@ -169,6 +169,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.ripening.description",
                 "佩戴者获得的每一份经验都多出四分之一。");
             add("effect.maledict.sacrifice", "献祭");
+            add("advancements.maledict.wisdom_sacrifice.title", "智慧的牺牲");
+            add("advancements.maledict.wisdom_sacrifice.description", "熬过九天九夜的献祭，获得贤者的智慧。");
             add("effect.maledict.sacrifice.description",
                 "贤者献祭生命，因而获取智慧。然而并非每一次牺牲都会带来智慧，只有模仿先贤的仪式，才有可能获得先贤的智慧");
             add("effect.maledict.fallen", "堕落");
@@ -272,6 +274,18 @@ public final class MaledictLanguage extends LanguageProvider {
                 "智慧从何而来？于一场刻意的 仪式中，使用提尔锋伤害自己 ，妄想获得贤人的智慧，这能 够实现吗？");
             add("malum.gui.book.entry.page.text." + SACRIFICE_RITE_PAGE + ".2",
                 "在九天九夜的折磨中，我确实 看到了些什么，也知道了些什 么。我的身体有额外的位置能 够刻画符文，而我的眼睛变成 了一处门扉。 透过这献祭的视界，我能够更 清楚的看这世界。");
+            add("malum.gui.book.entry." + BLEEDING_EYE_ENTRY, "流血之眼");
+            add("malum.gui.book.entry." + BLEEDING_EYE_ENTRY + ".description", "门扉之遗");
+            add("malum.gui.book.entry.page.headline." + BLEEDING_EYE_ENTRY, "流血之眼");
+            add("malum.gui.book.entry.page.text." + BLEEDING_EYE_ENTRY + ".1",
+                "提尔锋干净的切下了我的一只 眼睛。这是预期的牺牲。");
+            add("malum.gui.book.entry.page.text." + BLEEDING_EYE_ENTRY + ".2",
+                "这留下的眼睛因而被祝圣，\n仍然在源源不断的露出鲜血。\n 一片鲜红。但是值得。");
+            add("malum.gui.book.entry.page.headline." + HANGMAN_FOOL_PAGE, "倒吊人的愚见");
+            add("malum.gui.book.entry.page.text." + HANGMAN_FOOL_PAGE + ".1",
+                "升临高天，\n落入深谷。\n 倒吊自身，\n坠入深井，");
+            add("malum.gui.book.entry.page.text." + HANGMAN_FOOL_PAGE + ".2",
+                "让灵知踏过七重长阶，\n借以倒映纯粹的真知。\n 我的功业将成。");
         }else {
             addItem(MaledictItems.HANGMAN_FOOL, "Hangman`s fool");
             add("tooltip.maledict.hangman_fool.flavor.0", "\"strength\" is sacrificed for \"human wisdom\"");
@@ -376,7 +390,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.headline." + RUNE_OF_ROTTEN_BONE_ENTRY,
                 "Rune of Rotten Bone");
             add("malum.gui.book.entry.page.text." + RUNE_OF_ROTTEN_BONE_ENTRY + ".1",
-                "One day she will leave them and depart alone, weary of the songs of heaven's angels, preferring instead "
+                "One day\nshe will leave them and depart alone,\nweary of the songs of heaven's angels,\npreferring instead "
                 + "to embrace the bones of mortals.");
             add("malum.gui.book.entry." + UMBRAL_EXPERIMENT_ENTRY, "The Umbral Spirit Experiment");
             add("malum.gui.book.entry." + UMBRAL_EXPERIMENT_ENTRY + ".description",
@@ -395,8 +409,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry." + RUNE_OF_BLISS_ENTRY + ".description", "Untouched by Love or Sorrow");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_BLISS_ENTRY, "Rune of Bliss");
             add("malum.gui.book.entry.page.text." + RUNE_OF_BLISS_ENTRY + ".1",
-                "But what is to be done? Whoever loves must share the fate of the one he loves. The eternal fall, "
-                + "without love and so without sorrow, is the final nothingness.");
+                "But what is to be done?\nWhoever loves\nmust share the fate of the one he loves.\nThe eternal fall,\n"
+                + "without love and so without sorrow,\nis the final nothingness.");
             add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY, "Rune of the Fallen");
             add("malum.gui.book.entry." + RUNE_OF_THE_FALLEN_ENTRY + ".description", "Chosen, or Unchosen");
             add("malum.gui.book.entry.page.headline." + RUNE_OF_THE_FALLEN_ENTRY, "Rune of the Fallen");
@@ -458,6 +472,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.ripening.description",
                 "The wearer gains an extra quarter of all experience earned.");
             add("effect.maledict.sacrifice", "Sacrifice");
+            add("advancements.maledict.wisdom_sacrifice.title", "Wisdom's Sacrifice");
+            add("advancements.maledict.wisdom_sacrifice.description",
+                "Survive nine days and nights of sacrifice to gain a sage's wisdom.");
             add("effect.maledict.sacrifice.description",
                 "Sages gave their lives in sacrifice, and thereby gained wisdom. Yet not every sacrifice "
                 + "brings wisdom: only by imitating the rites of the sages might one gain a sage's wisdom.");
@@ -601,6 +618,21 @@ public final class MaledictLanguage extends LanguageProvider {
                 "Through nine days and nine nights of torment I did see something, and came to know something "
                 + "as well. My body has gained another place where runes may be carved, and my eyes have "
                 + "become a doorway. Through this sacrificial vision, I can see the world more clearly.");
+            add("malum.gui.book.entry." + BLEEDING_EYE_ENTRY, "Bleeding Eye");
+            add("malum.gui.book.entry." + BLEEDING_EYE_ENTRY + ".description", "The left of Door");
+            add("malum.gui.book.entry.page.headline." + BLEEDING_EYE_ENTRY, "Bleeding Eye");
+            add("malum.gui.book.entry.page.text." + BLEEDING_EYE_ENTRY + ".1",
+                "Tyrfing cleanly cut out one of my eyes. It was the sacrifice I had expected.");
+            add("malum.gui.book.entry.page.text." + BLEEDING_EYE_ENTRY + ".2",
+                "The eye that remained was consecrated by it,\nand still bleeds without end.\n"
+                + "Everything is stained crimson. But it was worth it.");
+            add("malum.gui.book.entry.page.headline." + HANGMAN_FOOL_PAGE, "Hangman`s fool");
+            add("malum.gui.book.entry.page.text." + HANGMAN_FOOL_PAGE + ".1",
+                "Ascend to the highest heavens,\ndescend into the deepest abyss.\n"
+                + "Hang thyself inverted,\nand plunge into the bottomless well.");
+            add("malum.gui.book.entry.page.text." + HANGMAN_FOOL_PAGE + ".2",
+                "Let gnosis traverse the sevenfold stair,\nthat it may reflect the purest truth.\n"
+                + "My Great Work is nigh upon completion.");
         }
     }
 
@@ -617,6 +649,8 @@ public final class MaledictLanguage extends LanguageProvider {
      */
     private static final String SACRIFICE_RITE_ENTRY = "maledict.corrupt_sacrifice_rite";
     private static final String SACRIFICE_RITE_PAGE = "corrupt_sacrifice_rite";
+    private static final String BLEEDING_EYE_ENTRY = "void.maledict.bleeding_eye";
+    private static final String HANGMAN_FOOL_PAGE = BLEEDING_EYE_ENTRY + ".hangman_fool";
     private static final String TOTEMIC_RUNES_CONTINUED_ENTRY = "maledict.totemic_runes_continued";
     private static final String RUNE_OF_SATIATION_ENTRY = "maledict.rune_of_satiation";
     private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";

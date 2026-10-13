@@ -131,6 +131,10 @@ const PAGES = {
   "malum.gui.book.entry.page.text.void.maledict.incursus_blade.4": "text",
   "malum.gui.book.entry.page.text.corrupt_sacrifice_rite": "spiritRite",
   "malum.gui.book.entry.page.text.corrupt_sacrifice_rite.2": "text",
+  "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.1": "headlineItem",
+  "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.2": "text",
+  "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.hangman_fool.1": "headlineItem",
+  "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.hangman_fool.2": "text",
 };
 
 function load(locale) {
@@ -145,11 +149,11 @@ let failures = 0;
 const short = (key) => key.replace("malum.gui.book.entry.page.text.", "");
 
 // Repo rule (AGENTS.md): the Chinese codex body copy carries a literal space after every 13
-// visible characters. Practically that means no space-separated run may be longer than 13
-// characters: the layout spaces are the only break points the wrapper can use inside CJK text,
+// visible characters. Practically that means no space- or newline-separated run may be longer
+// than 13 characters: both layout spaces and explicit newlines break CJK text,
 // and a 14-character run measures 126px + spacing and pushes past the 130px column.
 function checkChineseChunks(key, text) {
-  const bad = text.split(/ +/).filter((run) => [...run].length > 13);
+  const bad = text.split(/[ \n]+/).filter((run) => [...run].length > 13);
   if (bad.length > 0) {
     console.log(`    zh chunk rule violated in ${short(key)}: ${bad.map((b) => `${b} (${[...b].length})`).join(", ")}`);
     failures++;

@@ -55,6 +55,8 @@ public final class MaledictCodexEntries {
      */
     private static final String SACRIFICE_RITE_ENTRY = "maledict.corrupt_sacrifice_rite";
     private static final String SACRIFICE_RITE_PAGE = "corrupt_sacrifice_rite";
+    private static final String BLEEDING_EYE_ENTRY = "void.maledict.bleeding_eye";
+    private static final String HANGMAN_FOOL_PAGE = BLEEDING_EYE_ENTRY + ".hangman_fool";
     private static final String TOTEMIC_RUNES_CONTINUED_ENTRY = "maledict.totemic_runes_continued";
     private static final String RUNE_OF_SATIATION_ENTRY = "maledict.rune_of_satiation";
     private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";
@@ -111,6 +113,9 @@ public final class MaledictCodexEntries {
      */
     private static final int SACRIFICE_RITE_X = 0;
     private static final int SACRIFICE_RITE_Y = -10;
+    // EntryObjectHandler 按 top - y * 40 排布，下方十格必须减去 10。
+    private static final int BLEEDING_EYE_X = SACRIFICE_RITE_X;
+    private static final int BLEEDING_EYE_Y = SACRIFICE_RITE_Y - 10;
 
     @SubscribeEvent
     public static void setupEntries(SetupMalumCodexEntriesEvent event) {
@@ -120,6 +125,7 @@ public final class MaledictCodexEntries {
         addIncursusBladeEntry();
         addVicissitudeRiteEntry();
         addSacrificeRiteEntry();
+        addBleedingEyeEntry();
         addVoidRuneworkingEntry();
         addUmbralExperimentEntry();
 
@@ -246,6 +252,28 @@ public final class MaledictCodexEntries {
         builder.addPage(new SpiritRiteTextPage(rite, SACRIFICE_RITE_PAGE));
         builder.addPage(new TextPage(SACRIFICE_RITE_PAGE + ".2"));
         builder.addPage(new SoulwoodSpiritRiteRecipePage(rite));
+
+        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+    }
+
+    private static void addBleedingEyeEntry() {
+        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, BLEEDING_EYE_ENTRY)){
+            return;
+        }
+
+        PlacedBookEntryBuilder builder = BookEntry.build(BLEEDING_EYE_ENTRY, BLEEDING_EYE_X, BLEEDING_EYE_Y);
+        builder.configureWidget(widget -> widget
+                .setIcon(MaledictItems.BLEEDING_EYE)
+                .setStyle(BookWidgetStyle.DARK_SOULWOOD));
+
+        builder.addPage(new HeadlineTextItemPage(
+                BLEEDING_EYE_ENTRY, BLEEDING_EYE_ENTRY + ".1", MaledictItems.BLEEDING_EYE.get()));
+        builder.addPage(new TextPage(BLEEDING_EYE_ENTRY + ".2"));
+        builder.addPage(new HeadlineTextItemPage(
+                HANGMAN_FOOL_PAGE, HANGMAN_FOOL_PAGE + ".1", MaledictItems.HANGMAN_FOOL.get()));
+        builder.addPage(new TextPage(HANGMAN_FOOL_PAGE + ".2"));
+        // 精魂灌注产出的是无阶段 NBT 的 0 阶段；1 阶段升级属于另一种配方。
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.HANGMAN_FOOL.get()));
 
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
     }
