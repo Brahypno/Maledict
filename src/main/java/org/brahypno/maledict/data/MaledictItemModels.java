@@ -97,13 +97,13 @@ public final class MaledictItemModels extends ItemModelProvider {
     }
 
     private void registerHangmanFoolModels() {
-        // Stages zero and one have their own textures; stage two still uses a vanilla placeholder.
+        // Each of the first three stages has its own texture.
         ItemModelBuilder second = getBuilder("hangman_fool_stage_1")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", modLoc("item/hangman_fool_stage_1"));
         ItemModelBuilder third = getBuilder("hangman_fool_stage_2")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
-                .texture("layer0", mcLoc("item/echo_shard"));
+                .texture("layer0", modLoc("item/hangman_fool_stage_2"));
         getBuilder("hangman_fool")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", modLoc("item/hangman_fool"))

@@ -1,5 +1,6 @@
 package org.brahypno.maledict.data;
 
+import com.google.gson.JsonObject;
 import com.sammy.malum.data.recipe.builder.RunicWorkbenchRecipeBuilder;
 import com.sammy.malum.data.recipe.builder.SpiritInfusionRecipeBuilder;
 import com.sammy.malum.data.recipe.builder.SpiritRepairRecipeBuilder;
@@ -51,6 +52,16 @@ public final class MaledictRecipes extends RecipeProvider {
         new VoidFavorRecipeBuilder(
                 StrictNBTIngredient.of(new ItemStack(MaledictItems.HANGMAN_FOOL.get())), HangmanFoolItem.create(1))
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "void_favor/hangman_fool_stage_1"));
+
+        new NbtSpiritInfusionRecipeBuilder(StrictNBTIngredient.of(HangmanFoolItem.create(1)), 1,
+                HangmanFoolItem.create(2))
+                .addExtraItem(ItemRegistry.MNEMONIC_FRAGMENT.get(), 6)
+                .addExtraItem(ItemRegistry.AURIC_EMBERS.get(), 6)
+                .addExtraItem(ItemRegistry.VOID_SALTS.get(), 6)
+                .addExtraItem(MaledictItems.AGE_OF_ENLIGHTENMENT.get(), 1)
+                .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 16)
+                .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 8)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/hangman_fool_stage_2"));
 
         new SpiritInfusionRecipeBuilder(ItemRegistry.EDGE_OF_DELIVERANCE.get(), 1, MaledictItems.INCURSUS_BLADE.get(), 1)
                 .addExtraItem(Items.NETHER_STAR, 6)
@@ -190,5 +201,27 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 11)
                 .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 11)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/elegy_bow"));
+    }
+
+    /** Malum's builder omits output NBT; the altar also defaults to replacing it with the input tag. */
+    private static final class NbtSpiritInfusionRecipeBuilder extends SpiritInfusionRecipeBuilder {
+        private final ItemStack nbtOutput;
+
+        private NbtSpiritInfusionRecipeBuilder(Ingredient input, int inputCount, ItemStack output) {
+            super(input, inputCount, output);
+            nbtOutput = output.copy();
+        }
+
+        @Override
+        public void build(Consumer<FinishedRecipe> recipes, ResourceLocation id) {
+            recipes.accept(new Result(id) {
+                @Override
+                public void serializeRecipeData(JsonObject json) {
+                    super.serializeRecipeData(json);
+                    json.getAsJsonObject("output").addProperty("nbt", nbtOutput.getTag().toString());
+                    json.addProperty("useNbtFromInput", false);
+                }
+            });
+        }
     }
 }

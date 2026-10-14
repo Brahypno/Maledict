@@ -272,8 +272,11 @@ public final class MaledictCodexEntries {
         builder.addPage(new HeadlineTextItemPage(
                 HANGMAN_FOOL_PAGE, HANGMAN_FOOL_PAGE + ".1", MaledictItems.HANGMAN_FOOL.get()));
         builder.addPage(new TextPage(HANGMAN_FOOL_PAGE + ".2"));
-        // 精魂灌注产出的是无阶段 NBT 的 0 阶段；1 阶段升级属于另一种配方。
-        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.HANGMAN_FOOL.get()));
+        // 0、2 阶段共用物品 ID，按配方 ID 选择；1 阶段的井配方仍保持隐藏。
+        builder.addPage(SpiritInfusionPage.fromId(ResourceLocation.fromNamespaceAndPath(
+                Maledict.MODID, "spirit_infusion/hangman_fool")));
+        builder.addPage(SpiritInfusionPage.fromId(ResourceLocation.fromNamespaceAndPath(
+                Maledict.MODID, "spirit_infusion/hangman_fool_stage_2")));
 
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
     }

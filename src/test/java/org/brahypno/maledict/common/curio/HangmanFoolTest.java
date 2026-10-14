@@ -1,9 +1,13 @@
 package org.brahypno.maledict.common.curio;
 
 import com.mojang.authlib.GameProfile;
+import com.sammy.malum.common.block.curiosities.spirit_altar.SpiritAltarBlockEntity;
 import com.sammy.malum.common.block.curiosities.weeping_well.VoidConduitBlockEntity;
 import com.sammy.malum.common.recipe.FavorOfTheVoidRecipe;
+import com.sammy.malum.common.recipe.SpiritInfusionRecipe;
+import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import com.sammy.malum.registry.common.block.BlockRegistry;
+import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -44,6 +48,52 @@ import java.util.UUID;
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
 public final class HangmanFoolTest {
+    @GameTest(template = "test_empty", batch = "hangman_fool")
+    public static void infusionConsumesStageOneAndEmitsStageTwoNbt(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var recipe = SpiritInfusionRecipe.getRecipe(level,
+                candidate -> candidate.getId().toString().equals("maledict:spirit_infusion/hangman_fool_stage_2"));
+        helper.assertTrue(recipe != null, "The stage-two infusion recipe must load");
+        ItemStack input = HangmanFoolItem.create(1);
+        helper.assertTrue(recipe.doesInputMatch(input), "The infusion must accept the ordinary stage-one curio");
+        for (int stage = 0; stage <= HangmanFoolItem.MAX_STAGE; stage++) {
+            if (stage != 1) {
+                helper.assertTrue(!recipe.doesInputMatch(HangmanFoolItem.create(stage)),
+                        "Stage " + stage + " must not skip progression or be downgraded");
+            }
+        }
+        ItemStack named = input.copy();
+        named.setHoverName(Component.literal("named stage one"));
+        helper.assertTrue(!recipe.doesInputMatch(named), "The strict stage-one input must reject additional NBT");
+        helper.assertTrue(!recipe.useNbtFromInput && HangmanFoolItem.stage(recipe.output) == 2,
+                "Stage-two output NBT must not be replaced by the stage-one input tag");
+
+        BlockPos relativePos = new BlockPos(1, 1, 1);
+        helper.setBlock(relativePos, BlockRegistry.SPIRIT_ALTAR.get());
+        BlockPos pos = helper.absolutePos(relativePos);
+        var altar = (SpiritAltarBlockEntity) level.getBlockEntity(pos);
+        altar.inventory.setStackInSlot(0, input.copy());
+        altar.extrasInventory.setStackInSlot(0, new ItemStack(ItemRegistry.MNEMONIC_FRAGMENT.get(), 6));
+        altar.extrasInventory.setStackInSlot(1, new ItemStack(ItemRegistry.AURIC_EMBERS.get(), 6));
+        altar.extrasInventory.setStackInSlot(2, new ItemStack(ItemRegistry.VOID_SALTS.get(), 6));
+        altar.extrasInventory.setStackInSlot(3, new ItemStack(MaledictItems.AGE_OF_ENLIGHTENMENT.get()));
+        altar.spiritInventory.setStackInSlot(0, new ItemStack(SpiritTypeRegistry.ELDRITCH_SPIRIT.spiritShard.get(), 16));
+        altar.spiritInventory.setStackInSlot(1, new ItemStack(SpiritTypeRegistry.ARCANE_SPIRIT.spiritShard.get(), 8));
+        altar.recipe = recipe;
+        altar.craft();
+
+        var outputs = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(2),
+                entity -> entity.getItem().is(MaledictItems.HANGMAN_FOOL.get()));
+        helper.assertTrue(outputs.size() == 1 && outputs.get(0).getItem().getCount() == 1
+                && HangmanFoolItem.stage(outputs.get(0).getItem()) == 2,
+                "The actual altar must emit one curio carrying both stage markers");
+        helper.assertTrue(altar.inventory.isEmpty() && altar.extrasInventory.isEmpty() && altar.spiritInventory.isEmpty(),
+                "The altar must consume the stage-one input, materials and spirits");
+        outputs.get(0).getItem().setHoverName(Component.literal("my stage-two curio"));
+        helper.assertTrue(!recipe.output.hasCustomHoverName(), "The produced item must own its NBT");
+        helper.succeed();
+    }
+
     @GameTest(template = "test_empty", batch = "hangman_fool")
     public static void weepingWellUpgradesOnlyUntaggedStageZero(GameTestHelper helper) {
         var level = helper.getLevel();
