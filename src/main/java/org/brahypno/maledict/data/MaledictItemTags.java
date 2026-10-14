@@ -11,6 +11,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.data.ExistingFileHelper;
+import org.brahypno.changelib.equipment.EquipmentProtectionTags;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.MaledictTags;
 import org.brahypno.maledict.registry.MaledictItems;
@@ -83,5 +84,12 @@ public final class MaledictItemTags extends ItemTagsProvider {
                              MaledictItems.RUNE_OF_THE_FALLEN.get());
         tag(MaledictTags.VICISSITUDE_CONFISCATION_IMMUNE)
                 .addOptional(ResourceLocation.fromNamespaceAndPath("sophisticatedbackpacks", "backpack"));
+        tag(EquipmentProtectionTags.MAINHAND)
+                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
+        tag(EquipmentProtectionTags.OFFHAND)
+                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
+        tag(EquipmentProtectionTags.CURIOS)
+                .add(MaledictItems.HANGMAN_FOOL.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+
     }
 }
