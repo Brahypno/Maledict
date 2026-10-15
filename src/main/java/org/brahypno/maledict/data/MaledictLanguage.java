@@ -124,6 +124,24 @@ public final class MaledictLanguage extends LanguageProvider {
                 "由金中的金，究极的神圣堕落 为原始而沉重的铅。所谓的恶 意即是这种痛苦的具现化。我 精制了这份恶念，制作成了这 一份符文。它会将这份恶念施 加在对方身上，使每一次回复 生命堕化为一次苦痛。");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "回忆方尖碑");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "灵魂木方尖碑");
+            addCodexEntry("maledict.spirit_arrows", "精魂箭", "以精魂为锋",
+                    "我试着以精魂代替燧石，制成 了八种箭矢。它们可以用弓或 弩射出，命中时也能暴露生物 的灵魂。不同精魂的性质仍留 在箭头上，选对箭矢，便能省 去不少麻烦。");
+            addCodexEntry("maledict.sacred_spirit_arrow", "神圣精魂箭", "驱逐亡者",
+                    "神圣精魂排斥死而不息之物。 对亡灵生物造成的箭矢伤害提 高一半。");
+            addCodexEntry("maledict.wicked_spirit_arrow", "邪恶精魂箭", "侵蚀生者",
+                    "邪恶精魂更善于侵蚀生者。对 非亡灵生物造成的箭矢伤害提 高一半。");
+            addCodexEntry("maledict.arcane_spirit_arrow", "奥术精魂箭", "箭锋之外",
+                    "奥术精魂将魔法一同送入伤口 。命中后，额外造成三点有力 的伤害。");
+            addCodexEntry("maledict.eldritch_spirit_arrow", "邪术精魂箭", "伤口的回响",
+                    "邪术精魂使箭矢的伤害有了回 响。命中后，额外造成相当于 箭矢伤害一半的有力的伤害。 这一份不计暴击增伤。");
+            addCodexEntry("maledict.aerial_spirit_arrow", "澄空精魂箭", "乘风而行",
+                    "澄空精魂使箭矢更加轻快。射 出时的速度提高一半，也因此 飞得更远，命中更重。");
+            addCodexEntry("maledict.aqueous_spirit_arrow", "碧水精魂箭", "穿行水中",
+                    "碧水精魂使箭矢得以穿行水中 。在水中不会受到额外阻力， 也不会因重力下坠。");
+            addCodexEntry("maledict.earthen_spirit_arrow", "大地精魂箭", "沉重的箭锋",
+                    "大地精魂使箭头更加沉重。基 础伤害提高一点五，实际增加 的伤害随箭矢速度而变化。");
+            addCodexEntry("maledict.infernal_spirit_arrow", "狱火精魂箭", "无处遁形",
+                    "狱火精魂使箭矢燃烧，能够点 燃目标。命中后还会使目标发 光十秒，让它无处遁形。");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "神圣精魂箭");
             addItem(MaledictItems.WICKED_SPIRIT_ARROW, "邪恶精魂箭");
             addItem(MaledictItems.ARCANE_SPIRIT_ARROW, "奥术精魂箭");
@@ -420,6 +438,24 @@ public final class MaledictLanguage extends LanguageProvider {
                 + "the other, so that every recovery of life decays into a pang of pain.");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "Mnemonic Obelisk");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "Soulwood Obelisk");
+            addCodexEntry("maledict.spirit_arrows", "Spirit Arrows", "Spirits for arrowheads",
+                    "I tried replacing flint with spirits and made eight kinds of arrows. They can be fired from bows or crossbows, and expose the souls of creatures they strike. Each spirit retains its nature in the arrowhead. Choosing the right arrow can spare me a good deal of trouble.");
+            addCodexEntry("maledict.sacred_spirit_arrow", "Sacred Spirit Arrow", "Driving back the dead",
+                    "Sacred spirits reject those who persist beyond death. Arrow damage against undead creatures is increased by half.");
+            addCodexEntry("maledict.wicked_spirit_arrow", "Wicked Spirit Arrow", "Preying on the living",
+                    "Wicked spirits are better suited to harming the living. Arrow damage against creatures that are not undead is increased by half.");
+            addCodexEntry("maledict.arcane_spirit_arrow", "Arcane Spirit Arrow", "Beyond the arrowhead",
+                    "Arcane spirits carry magic into the wound. On hit, they deal 3 additional points of potent damage.");
+            addCodexEntry("maledict.eldritch_spirit_arrow", "Eldritch Spirit Arrow", "An echo in the wound",
+                    "Eldritch spirits make the arrow's damage echo. On hit, they deal additional potent damage equal to half the arrow's damage, excluding bonus damage from critical hits.");
+            addCodexEntry("maledict.aerial_spirit_arrow", "Aerial Spirit Arrow", "Riding the wind",
+                    "Aerial spirits lend the arrow swiftness. Its launch speed is increased by half, allowing it to fly farther and strike harder.");
+            addCodexEntry("maledict.aqueous_spirit_arrow", "Aqueous Spirit Arrow", "Through the water",
+                    "Aqueous spirits let the arrow travel through water without the added drag or the downward pull of gravity.");
+            addCodexEntry("maledict.earthen_spirit_arrow", "Earthen Spirit Arrow", "A weightier arrowhead",
+                    "Earthen spirits lend weight to the arrowhead. Base damage is increased by 1.5; the actual damage gained varies with the arrow's speed.");
+            addCodexEntry("maledict.infernal_spirit_arrow", "Infernal Spirit Arrow", "Nowhere to hide",
+                    "Infernal spirits set the arrow ablaze, allowing it to ignite its target. On hit, the target also glows for 10 seconds, leaving it nowhere to hide.");
             addItem(MaledictItems.SACRED_SPIRIT_ARROW, "Sacred Spirit Arrow");
             addItem(MaledictItems.WICKED_SPIRIT_ARROW, "Wicked Spirit Arrow");
             addItem(MaledictItems.ARCANE_SPIRIT_ARROW, "Arcane Spirit Arrow");
@@ -634,6 +670,13 @@ public final class MaledictLanguage extends LanguageProvider {
                 "Let gnosis traverse the sevenfold stair,\nthat it may reflect the purest truth.\n"
                 + "My Great Work is nigh upon completion.");
         }
+    }
+
+    private void addCodexEntry(String identifier, String title, String description, String text) {
+        add("malum.gui.book.entry." + identifier, title);
+        add("malum.gui.book.entry." + identifier + ".description", description);
+        add("malum.gui.book.entry.page.headline." + identifier, title);
+        add("malum.gui.book.entry.page.text." + identifier + ".1", text);
     }
 
     private static final String OBELISKS_ENTRY = "void.maledict.obelisks";

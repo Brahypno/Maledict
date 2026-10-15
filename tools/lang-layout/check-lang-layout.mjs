@@ -103,6 +103,15 @@ const PAGE_TYPES = {
 
 // page text key -> page type, as wired up in client/codex/MaledictCodexEntries.java
 const PAGES = {
+  "malum.gui.book.entry.page.text.maledict.spirit_arrows.1": "headline",
+  "malum.gui.book.entry.page.text.maledict.sacred_spirit_arrow.1": "headline",
+  "malum.gui.book.entry.page.text.maledict.wicked_spirit_arrow.1": "headline",
+  "malum.gui.book.entry.page.text.maledict.arcane_spirit_arrow.1": "headline",
+  "malum.gui.book.entry.page.text.maledict.eldritch_spirit_arrow.1": "headline",
+  "malum.gui.book.entry.page.text.maledict.aerial_spirit_arrow.1": "headline",
+  "malum.gui.book.entry.page.text.maledict.aqueous_spirit_arrow.1": "headline",
+  "malum.gui.book.entry.page.text.maledict.earthen_spirit_arrow.1": "headline",
+  "malum.gui.book.entry.page.text.maledict.infernal_spirit_arrow.1": "headline",
   "malum.gui.book.entry.page.text.maledict.remembrance_bow.1": "headlineItem",
   "malum.gui.book.entry.page.text.maledict.remembrance_bow.2": "text",
   "malum.gui.book.entry.page.text.void.maledict.elegy_bow.1": "headlineItem",

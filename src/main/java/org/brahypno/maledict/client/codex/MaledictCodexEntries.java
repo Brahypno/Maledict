@@ -11,6 +11,7 @@ import com.sammy.malum.client.screen.codex.pages.EntrySelectorPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.RuneworkingPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.SpiritInfusionPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.SpiritRiteRecipePage;
+import com.sammy.malum.client.screen.codex.pages.recipe.vanilla.CraftingPage;
 import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextItemPage;
 import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextPage;
 import com.sammy.malum.client.screen.codex.pages.text.SpiritRiteTextPage;
@@ -21,12 +22,14 @@ import com.sammy.malum.common.events.SetupMalumCodexEntriesEvent;
 import com.sammy.malum.common.spiritrite.TotemicRiteType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.common.item.SpiritArrowType;
 import org.brahypno.maledict.common.rite.SacrificeRite;
 import org.brahypno.maledict.common.rite.SacrificeRiteType;
 import org.brahypno.maledict.common.rite.SummoningRite;
@@ -37,6 +40,10 @@ import java.util.List;
 
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class MaledictCodexEntries {
+    private static final String SPIRIT_ARROWS_ENTRY = "maledict.spirit_arrows";
+    // 思念弓 (2,13) 正上方；Malum 的节点按 top - y * 40 排布。
+    private static final int SPIRIT_ARROWS_X = 2;
+    private static final int SPIRIT_ARROWS_Y = 14;
     private static final String REMEMBRANCE_BOW_ENTRY = "maledict.remembrance_bow";
     private static final String ELEGY_BOW_ENTRY = "void.maledict.elegy_bow";
     private static final int REMEMBRANCE_BOW_X = 2;
@@ -119,6 +126,7 @@ public final class MaledictCodexEntries {
 
     @SubscribeEvent
     public static void setupEntries(SetupMalumCodexEntriesEvent event) {
+        addSpiritArrowsEntry();
         addRemembranceBowEntry();
         addElegyBowEntry();
         addObelisksEntry();
@@ -142,6 +150,31 @@ public final class MaledictCodexEntries {
                 new EntryReference(MaledictItems.RUNE_OF_DECAY, decayRune),
                 new EntryReference(MaledictItems.RUNE_OF_THE_PACK, packRune),
                 new EntryReference(MaledictItems.RUNE_OF_RIPENING, ripeningRune)));
+    }
+
+    private static void addSpiritArrowsEntry() {
+        if (containsEntry(ArcanaProgressionScreen.ENTRIES, SPIRIT_ARROWS_ENTRY)){
+            return;
+        }
+
+        PlacedBookEntryBuilder builder = BookEntry.build(SPIRIT_ARROWS_ENTRY, SPIRIT_ARROWS_X, SPIRIT_ARROWS_Y);
+        builder.configureWidget(widget -> widget
+                .setIcon(MaledictItems.ELDRITCH_SPIRIT_ARROW)
+                .setStyle(BookWidgetStyle.RUNEWOOD));
+        builder.addPage(new HeadlineTextPage(SPIRIT_ARROWS_ENTRY, SPIRIT_ARROWS_ENTRY + ".1"));
+        builder.addPage(new EntrySelectorPage(MaledictCodexEntries::spiritArrowEntry, SpiritArrowType.values()));
+        ArcanaProgressionScreen.ENTRIES.add(builder.build());
+    }
+
+    private static EntryReference spiritArrowEntry(SpiritArrowType type) {
+        RegistryObject<Item> arrow = MaledictItems.getSpiritArrow(type);
+        String identifier = "maledict." + arrow.getId().getPath();
+        return new EntryReference(arrow, BookEntry.build(identifier)
+                .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
+                .addPage(new CraftingPage(arrow.get(),
+                        Items.AIR, type.getSpiritType().spiritShard.get(), Items.AIR,
+                        Items.AIR, Items.STICK, Items.AIR,
+                        Items.AIR, Items.FEATHER, Items.AIR)));
     }
 
     private static void addVoidRuneworkingEntry() {
