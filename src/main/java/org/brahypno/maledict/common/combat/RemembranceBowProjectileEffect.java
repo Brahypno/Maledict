@@ -1,20 +1,40 @@
 package org.brahypno.maledict.common.combat;
 
+import com.sammy.malum.core.handlers.SoulDataHandler;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
 
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class RemembranceBowProjectileEffect {
+    private static final String EXPOSE_SOUL = Maledict.MODID + ":expose_soul";
     private static final String PHASE_COUNT = Maledict.MODID + ":phase_count";
     private static final String PHASE_RANGE = Maledict.MODID + ":phase_range";
     private static final double SEARCH_STEP = 0.05D;
+
+    public static void markForSoulExposure(AbstractArrow arrow) {
+        arrow.getPersistentData().putBoolean(EXPOSE_SOUL, true);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void exposeSoulOnImpact(ProjectileImpactEvent event) {
+        if (event.getProjectile() instanceof AbstractArrow arrow
+                && !arrow.level().isClientSide
+                && arrow.getPersistentData().getBoolean(EXPOSE_SOUL)
+                && event.getRayTraceResult() instanceof EntityHitResult hit
+                && hit.getEntity() instanceof LivingEntity target) {
+            SoulDataHandler.exposeSoul(target);
+        }
+    }
 
     public static void markForPhasing(AbstractArrow arrow, double range) {
         arrow.getPersistentData().putInt(PHASE_COUNT, 1);

@@ -91,6 +91,7 @@ public final class RemembranceBowItem extends BowItem {
                                   ? (ArrowItem) ammunition.getItem()
                                   : (ArrowItem) Items.ARROW;
             AbstractArrow arrow = customArrow(arrowItem.createArrow(level, ammunition, player));
+            RemembranceBowProjectileEffect.markForSoulExposure(arrow);
             int reminiscenceLevel = EnchantmentHelper.getItemEnchantmentLevel(MaledictEnchantments.REMINISCENCE.get(), bow);
             RemembranceBowProjectileEffect.markForPhasing(arrow, 2.0D + reminiscenceLevel);
             arrow.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F,
