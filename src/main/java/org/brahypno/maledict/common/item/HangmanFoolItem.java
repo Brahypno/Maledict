@@ -2,6 +2,7 @@ package org.brahypno.maledict.common.item;
 
 import com.google.common.collect.Multimap;
 import com.sammy.malum.common.item.curiosities.curios.MalumCurioItem;
+import com.sammy.malum.compability.irons_spellbooks.IronsSpellsCompat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
@@ -105,6 +106,7 @@ public final class HangmanFoolItem extends MalumCurioItem {
         addAttributeModifier(attributes, LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get(),
                 id -> new AttributeModifier(id, "Hangman's magic proficiency", 0.5D,
                         AttributeModifier.Operation.MULTIPLY_TOTAL));
+        IronsSpellsCompat.addSpellPowerToCurio(this, attributes, 0.5F);
     }
 
     @Override
