@@ -8,6 +8,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictCreativeTabs;
+import org.brahypno.maledict.registry.MaledictAttributes;
 import org.brahypno.maledict.registry.MaledictEnchantments;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictBlockEntities;
@@ -27,6 +28,7 @@ public final class Maledict {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, MaledictConfig.COMMON_SPEC);
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, MaledictConfig.CLIENT_SPEC);
         MaledictEnchantments.ENCHANTMENTS.register(modBus);
+        MaledictAttributes.ATTRIBUTES.register(modBus);
         MaledictEntities.ENTITY_TYPES.register(modBus);
         MaledictBlocks.BLOCKS.register(modBus);
         MaledictBlockEntities.BLOCK_ENTITY_TYPES.register(modBus);

@@ -31,9 +31,17 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue HANGMAN_REFLECTION_BASE;
     public static final ForgeConfigSpec.IntValue HANGMAN_TRAP_LIFETIME;
     public static final ForgeConfigSpec.DoubleValue HANGMAN_TRAP_RADIUS;
+    public static final ForgeConfigSpec.DoubleValue OMEN_MINIMUM_SHARE;
+    public static final ForgeConfigSpec.DoubleValue OMEN_MAXIMUM_FLOOR_BUDGET;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+        builder.push("transcendOmen");
+        OMEN_MINIMUM_SHARE = builder.comment("Minimum reverse route share, limited by maximumFloorBudget / active routes.")
+                .defineInRange("minimumShare", 0.03D, 0.0D, 1.0D);
+        OMEN_MAXIMUM_FLOOR_BUDGET = builder.comment("Maximum fraction of the normalized route budget reserved for minimum shares.")
+                .defineInRange("maximumFloorBudget", 0.50D, 0.0D, 1.0D);
+        builder.pop();
         builder.push("hangmanFool");
         HANGMAN_REFLECTION_BASE = builder.comment("Base reflection chance, plus lost health fraction, capped at 100%.")
                 .defineInRange("reflectionBaseChance", 0.25D, 0.0D, 1.0D);
