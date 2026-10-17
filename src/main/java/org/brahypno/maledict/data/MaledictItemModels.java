@@ -42,6 +42,9 @@ public final class MaledictItemModels extends ItemModelProvider {
 
         basicItem(MaledictItems.BLEEDING_EYE.get());
 
+        withExistingParent("raven_feather", mcLoc("item/generated"))
+                .texture("layer0", modLoc("entity/raven_feather"));
+
         getBuilder("curio_return_token")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", modLoc("item/curio_return_token"));

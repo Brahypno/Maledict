@@ -64,6 +64,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.brahypno.maledict.registry.MaledictEntities;
+import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictSounds;
 
 /** A neutral Vicissitude bird; trust is earned through breeding, never by taming adults. */
@@ -78,6 +79,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
             SynchedEntityData.defineId(RavenEntity.class, EntityDataSerializers.INT);
     @Nullable
     private RavenEntity companion;
+    private final RavenPreening preening = new RavenPreening();
     @Nullable
     private Vec3 landingTarget;
     @Nullable
@@ -326,6 +328,20 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
             if (getTarget() != null || (companion != null && !companion.isAlive())) {
                 releaseCompanion();
             }
+            tickPreening();
+        }
+    }
+
+    private void tickPreening() {
+        // Companions share a gathering even before the second bird starts its own idle goal.
+        boolean together = companion != null && companion.companion == this && companion.isAlive()
+                && getTarget() == null && companion.getTarget() == null
+                && !isInLove() && !companion.isInLove()
+                && onGround() && companion.onGround() && !isFlying() && !companion.isFlying()
+                && !isInWater() && !isInLava() && !companion.isInWater() && !companion.isInLava()
+                && distanceToSqr(companion) <= 4.0D;
+        if (preening.tick(together) && random.nextInt(4) == 0) {
+            spawnAtLocation(MaledictItems.RAVEN_FEATHER.get());
         }
     }
 
@@ -1011,8 +1027,10 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     }
 
     private void releaseCompanion() {
+        preening.reset();
         if (companion != null) {
             if (companion.companion == this) {
+                companion.preening.reset();
                 companion.companion = null;
             }
             companion = null;
