@@ -152,6 +152,9 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "狱火精魂箭");
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
             add("attribute.name.maledict.transcend_omen", "超越预兆");
+            add("attribute.name.maledict.descent", "堕落");
+            add("attribute.name.maledict.descent.desc",
+                "提高造成与受到的伤害，倍率随双方堕落值之和增加而增加");
             add("entity.maledict.first_vicissitude", "无常(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "启蒙之年");
             addItem(MaledictItems.BLEEDING_EYE, "流血之眼");
@@ -467,6 +470,9 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "Infernal Spirit Arrow");
             add("attribute.name.maledict.powder_snow_damage", "Freezing Damage");
             add("attribute.name.maledict.transcend_omen", "Transcend Omen");
+            add("attribute.name.maledict.descent", "Descent");
+            add("attribute.name.maledict.descent.desc",
+                "Increases damage dealt and taken, with the multiplier increasing as the sum of both entities' Descent rises");
             add("entity.maledict.first_vicissitude", "Vicissitude(WIP)");
             addItem(MaledictItems.AGE_OF_ENLIGHTENMENT, "Age of Enlightenment");
             addItem(MaledictItems.BLEEDING_EYE, "Bleeding Eye");
