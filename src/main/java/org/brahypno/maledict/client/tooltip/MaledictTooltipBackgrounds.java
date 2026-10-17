@@ -25,10 +25,20 @@ public final class MaledictTooltipBackgrounds {
                             "textures/gui/tooltip/age_of_enlightenment_crest.png"),
                     72, 24, 72, 24, 2));
 
+    public static final TooltipBackground HANGMAN_FOOL = new TooltipBackground(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
+                    "textures/gui/tooltip/hangman_fool.png"),
+            96, 144,
+            // Wings remain in the fixed lower corners; only the bare upper rails stretch.
+            new TooltipFrameLayout.Insets(32, 20, 32, 104),
+            new TooltipFrameLayout.Insets(23, 14, 23, 15),
+            TooltipBackground.Mode.DECORATE, TooltipBackground.EdgeMode.STRETCH);
+
     private MaledictTooltipBackgrounds() {}
 
     @SubscribeEvent
     public static void register(RegisterTooltipBackgroundsEvent event) {
         event.register(MaledictItems.AGE_OF_ENLIGHTENMENT.get(), AGE_OF_ENLIGHTENMENT);
+        event.register(MaledictItems.HANGMAN_FOOL.get(), HANGMAN_FOOL);
     }
 }
