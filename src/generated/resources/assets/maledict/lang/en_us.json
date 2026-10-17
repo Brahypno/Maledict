@@ -49,6 +49,7 @@
   "item.maledict.hangman_fool": "Hangman`s fool",
   "item.maledict.incursus_blade": "The Incursus Blade",
   "item.maledict.infernal_spirit_arrow": "Infernal Spirit Arrow",
+  "item.maledict.lover_axe": "The Lover's AX",
   "item.maledict.malignant_pewter_tablet": "Malignant Pewter Tablet",
   "item.maledict.raven_spawn_egg": "The Raven Spawn Egg",
   "item.maledict.remembrance_bow": "Remembrance Bow",
@@ -254,5 +255,8 @@
   "tooltip.maledict.incursus_blade.spirit.eldritch": "Eldritch %s%% (%s/%s): Convert a portion of damage into absorption up to a cap, and immediately restore Soul Ward",
   "tooltip.maledict.incursus_blade.spirit.infernal": "Infernal %s (%s/%s): Additional looting level",
   "tooltip.maledict.incursus_blade.spirit.sacred": "Sacred %s%% (%s/%s): Shorten enemies' beneficial effects; extend or inflict harmful effects",
-  "tooltip.maledict.incursus_blade.spirit.wicked": "Wicked %s%% (%s/%s): Critical damage"
+  "tooltip.maledict.incursus_blade.spirit.wicked": "Wicked %s%% (%s/%s): Critical damage",
+  "tooltip.maledict.lover_axe.charged": "Effective hits with at least 90% charge grant 2 additional Descent.",
+  "tooltip.maledict.lover_axe.descent": "Gain 0.1 Descent per second in either hand; lose 0.1 per second when not held.",
+  "tooltip.maledict.lover_axe.wound": "Each effective melee hit reduces the target's maximum health by 2%, cleared on true death."
 }

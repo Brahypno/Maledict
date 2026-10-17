@@ -1,0 +1,6 @@
+{
+  "parent": "malum:item/handheld_large",
+  "textures": {
+    "layer0": "maledict:item/lover_axe_huge"
+  }
+}

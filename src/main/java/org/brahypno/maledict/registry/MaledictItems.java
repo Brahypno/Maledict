@@ -32,6 +32,7 @@ public final class MaledictItems {
 
     public static final RegistryObject<Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
             new IncursusBladeItem(MaledictItemTiers.INCURSUS, new Item.Properties().rarity(Rarity.EPIC)));
+    public static final RegistryObject<Item> LOVER_AXE = ITEMS.register("lover_axe", LoverAxeItem::new);
     public static final RegistryObject<Item> REMEMBRANCE_BOW = ITEMS.register("remembrance_bow", () ->
             new RemembranceBowItem(new Item.Properties().durability(384).rarity(Rarity.RARE), false));
     public static final RegistryObject<Item> ELEGY_BOW = ITEMS.register("elegy_bow", () ->

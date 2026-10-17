@@ -12,6 +12,7 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.item.HangmanFoolItem;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
+import org.brahypno.maledict.common.item.LoverAxeItem;
 import org.brahypno.maledict.common.item.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
 
@@ -32,6 +33,9 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerSeparateBowModel("elegy_bow");
 
         registerIncursusBladeModels();
+        ItemModelBuilder lavenderAxe = loverAxeModel("lover_axe_lavender");
+        loverAxeModel("lover_axe").override()
+                .predicate(LoverAxeItem.COLOR_PROPERTY, 0.5F).model(lavenderAxe).end();
 
         registerAgeOfEnlightenmentModel();
         registerHangmanFoolModels();
@@ -137,6 +141,20 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .predicate(IncursusBladeItem.BLINK_PROPERTY, 0.5F)
                 .model(blink)
                 .end();
+    }
+
+    private ItemModelBuilder loverAxeModel(String name) {
+        ItemModelBuilder handheld = getBuilder(name + "_handheld")
+                .parent(new ModelFile.UncheckedModelFile(
+                        ResourceLocation.fromNamespaceAndPath("malum", "item/handheld_large")))
+                .texture("layer0", modLoc("item/" + name + "_huge"));
+        ItemModelBuilder inventory = withExistingParent(name + "_gui", "item/handheld")
+                .texture("layer0", modLoc("item/" + name));
+        ItemModelBuilder model = withExistingParent(name, "item/handheld");
+        model.customLoader(SeparateTransformsModelBuilder::begin).base(handheld)
+                .perspective(ItemDisplayContext.GUI, inventory)
+                .perspective(ItemDisplayContext.FIXED, inventory);
+        return model;
     }
 
     private void registerSpawnEggModel(String name) {

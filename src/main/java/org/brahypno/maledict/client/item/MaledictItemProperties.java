@@ -21,6 +21,7 @@ import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.item.HangmanFoolItem;
 import org.brahypno.maledict.common.item.IncursusBladeBlink;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
+import org.brahypno.maledict.common.item.LoverAxeItem;
 import org.brahypno.maledict.common.item.RemembranceBowItem;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictMobEffects;
@@ -34,6 +35,8 @@ public final class MaledictItemProperties {
             registerBowProperties(MaledictItems.ELEGY_BOW.get());
             registerEnlightenedProperty(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
             registerBlinkProperty(MaledictItems.INCURSUS_BLADE.get());
+            ItemProperties.register(MaledictItems.LOVER_AXE.get(), LoverAxeItem.COLOR_PROPERTY,
+                    (stack, level, entity, seed) -> LoverAxeItem.isLavender(stack) ? 1.0F : 0.0F);
             ItemProperties.register(MaledictItems.HANGMAN_FOOL.get(), HangmanFoolItem.STAGE_PROPERTY,
                     (stack, level, entity, seed) -> Math.min(2, HangmanFoolItem.stage(stack)) / 2.0F);
         });

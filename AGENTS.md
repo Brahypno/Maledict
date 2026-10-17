@@ -10,6 +10,11 @@
 
 ## Development Notes
 
+- Mixins are a last resort. First use existing item/entity overrides, Forge events, extension hooks, and public APIs.
+  For custom left-click weapon behavior, check `Item#onLeftClickEntity` before considering an injection into
+  `Player#attack`. Introduce a mixin only when those supported extension points cannot implement the required
+  behavior, and document the concrete missing capability before adding it.
+
 - Chinese text for Malum codex body pages must contain a literal space after every 13 visible characters. Punctuation
   counts toward the 13-character limit; the inserted layout spaces do not.
 - Write the Chinese codex copy first, then derive the English localization from its meaning.

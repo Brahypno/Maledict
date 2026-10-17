@@ -43,6 +43,10 @@ public final class MaledictLanguage extends LanguageProvider {
                 "镰刀命中时，按这一击占目标最大生命的比例，尝到其掉落物本可提供的饥饿与饱食度；"
                 + "1 至 3 级分别回复 50%、60%、70%，掉落物附带的食物效果也会一并生效。");
             addItem(MaledictItems.INCURSUS_BLADE, "神侵恶刃");
+            addItem(MaledictItems.LOVER_AXE, "恋人之斧");
+            add("tooltip.maledict.lover_axe.wound", "每次有效近战命中使目标最大生命值降低 2%，真正死亡后清除。");
+            add("tooltip.maledict.lover_axe.descent", "主手或副手持有时每秒增加 0.1 堕落；离手每秒减少 0.1。");
+            add("tooltip.maledict.lover_axe.charged", "蓄力至少 90% 的有效命中额外增加 2 堕落。");
             addItem(MaledictItems.REMEMBRANCE_BOW, "思念弓");
             addItem(MaledictItems.ELEGY_BOW, "哀歌弓");
             add("malum.gui.book.entry.maledict.remembrance_bow", "思念弓");
@@ -336,6 +340,10 @@ public final class MaledictLanguage extends LanguageProvider {
                 + "by the damage dealt as a fraction of its maximum health. Levels 1 to 3 restore 50%, 60% and 70% of that "
                 + "amount, respectively. Any food effects from those drops also apply.");
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
+            addItem(MaledictItems.LOVER_AXE, "The Lover's AX");
+            add("tooltip.maledict.lover_axe.wound", "Each effective melee hit reduces the target's maximum health by 2%, cleared on true death.");
+            add("tooltip.maledict.lover_axe.descent", "Gain 0.1 Descent per second in either hand; lose 0.1 per second when not held.");
+            add("tooltip.maledict.lover_axe.charged", "Effective hits with at least 90% charge grant 2 additional Descent.");
             addItem(MaledictItems.REMEMBRANCE_BOW, "Remembrance Bow");
             addItem(MaledictItems.ELEGY_BOW, "Elegy Bow");
             add("malum.gui.book.entry.maledict.remembrance_bow", "Remembrance Bow");

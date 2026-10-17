@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:item/handheld",
+  "base": {
+    "parent": "malum:item/handheld_large",
+    "textures": {
+      "layer0": "maledict:item/lover_axe_huge"
+    }
+  },
+  "loader": "forge:separate_transforms",
+  "overrides": [
+    {
+      "model": "maledict:item/lover_axe_lavender",
+      "predicate": {
+        "maledict:lover_axe_color": 0.5
+      }
+    }
+  ],
+  "perspectives": {
+    "fixed": {
+      "parent": "minecraft:item/handheld",
+      "textures": {
+        "layer0": "maledict:item/lover_axe"
+      }
+    },
+    "gui": {
+      "parent": "minecraft:item/handheld",
+      "textures": {
+        "layer0": "maledict:item/lover_axe"
+      }
+    }
+  }
+}

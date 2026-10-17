@@ -46,6 +46,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
+        tag(ItemTags.AXES).add(MaledictItems.LOVER_AXE.get());
         tag(ItemTags.ARROWS)
                 .add(MaledictItems.SACRED_SPIRIT_ARROW.get())
                 .add(MaledictItems.WICKED_SPIRIT_ARROW.get())
@@ -70,7 +71,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(GOETY_GRAVE_GLOVE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(L2_NO_SEAL)
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
-                     MaledictItems.HANGMAN_FOOL.get());
+                     MaledictItems.HANGMAN_FOOL.get(), MaledictItems.LOVER_AXE.get());
         tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
         tag(CURIOS_DELUSION).add(MaledictItems.HANGMAN_FOOL.get());
         tag(CURIOS_RUNE).add(MaledictItems.RUNE_OF_SATIATION.get(),

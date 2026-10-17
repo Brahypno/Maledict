@@ -49,6 +49,7 @@
   "item.maledict.hangman_fool": "倒吊人的愚见",
   "item.maledict.incursus_blade": "神侵恶刃",
   "item.maledict.infernal_spirit_arrow": "狱火精魂箭",
+  "item.maledict.lover_axe": "恋人之斧",
   "item.maledict.malignant_pewter_tablet": "恶念白镴符板",
   "item.maledict.raven_spawn_egg": "渡鸦刷怪蛋",
   "item.maledict.remembrance_bow": "思念弓",
@@ -254,5 +255,8 @@
   "tooltip.maledict.incursus_blade.spirit.eldritch": "邪术 %s%%（%s/%s）：伤害按比例转化为有上限的黄心，并立即恢复灵魂护盾",
   "tooltip.maledict.incursus_blade.spirit.infernal": "狱火 %s（%s/%s）：额外抢夺等级",
   "tooltip.maledict.incursus_blade.spirit.sacred": "神圣 %s%%（%s/%s）：缩短敌方正面效果，延长或施加负面效果",
-  "tooltip.maledict.incursus_blade.spirit.wicked": "邪恶 %s%%（%s/%s）：暴击伤害"
+  "tooltip.maledict.incursus_blade.spirit.wicked": "邪恶 %s%%（%s/%s）：暴击伤害",
+  "tooltip.maledict.lover_axe.charged": "蓄力至少 90% 的有效命中额外增加 2 堕落。",
+  "tooltip.maledict.lover_axe.descent": "主手或副手持有时每秒增加 0.1 堕落；离手每秒减少 0.1。",
+  "tooltip.maledict.lover_axe.wound": "每次有效近战命中使目标最大生命值降低 2%，真正死亡后清除。"
 }
