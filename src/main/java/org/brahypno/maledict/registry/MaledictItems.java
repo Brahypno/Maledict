@@ -29,6 +29,8 @@ public final class MaledictItems {
 
     public static final RegistryObject<Item> RAVEN_SPAWN_EGG = ITEMS.register("raven_spawn_egg", () ->
             new ForgeSpawnEggItem(MaledictEntities.RAVEN, 0x151820, 0xB80F22, new Item.Properties()));
+    public static final RegistryObject<Item> RAVEN_FEATHER = ITEMS.register("raven_feather", () ->
+            new Item(new Item.Properties()));
 
     public static final RegistryObject<Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
             new IncursusBladeItem(MaledictItemTiers.INCURSUS, new Item.Properties().rarity(Rarity.EPIC)));

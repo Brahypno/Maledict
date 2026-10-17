@@ -32,6 +32,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("entity.maledict.raven", "渡鸦");
             add("entity.maledict.raven_feather", "渡鸦飞羽");
             addItem(MaledictItems.RAVEN_SPAWN_EGG, "渡鸦刷怪蛋");
+            addItem(MaledictItems.RAVEN_FEATHER, "渡鸦羽毛");
             add("enchantment.maledict.ectoplasm", "灵质");
             add("enchantment.maledict.reminiscence", "追忆");
             add("enchantment.maledict.aftertaste", "回味");
@@ -494,6 +495,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("entity.maledict.raven", "The Raven");
             add("entity.maledict.raven_feather", "Raven Feather");
             addItem(MaledictItems.RAVEN_SPAWN_EGG, "The Raven Spawn Egg");
+            addItem(MaledictItems.RAVEN_FEATHER, "Raven Feather");
             addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_TWO_SPAWN_EGG, "Vicissitude Spawn Egg (Phase Two)");
             addItem(MaledictItems.RUNE_OF_SATIATION, "Rune of Satiation");
             addItem(MaledictItems.RUNE_OF_DECAY, "Rune of Decay");
