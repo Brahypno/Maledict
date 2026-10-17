@@ -20,6 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.NetworkHooks;
 import org.brahypno.maledict.common.curio.HangmanFoolProjectiles;
+import org.brahypno.maledict.common.curio.HangmanFoolRelay;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.mixin.ProjectileAccess;
 import org.brahypno.maledict.registry.MaledictEntities;
@@ -62,6 +63,10 @@ public final class HangmanTrapEntity extends Entity {
         return Direction.from3DDataValue(entityData.get(FACE));
     }
 
+    public boolean isOwnedBy(Entity entity) {
+        return entity.getUUID().equals(owner);
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -102,6 +107,7 @@ public final class HangmanTrapEntity extends Entity {
         Vec3 velocity = new Vec3(motion.getDouble(0), motion.getDouble(1), motion.getDouble(2));
         HangmanFoolProjectiles.applyMotion(projectile, velocity, false);
         projectile.setPos(target.getBoundingBox().getCenter());
+        HangmanFoolRelay.markTrapRelease(projectile);
         if (!level().addFreshEntity(projectile)) {
             return;
         }

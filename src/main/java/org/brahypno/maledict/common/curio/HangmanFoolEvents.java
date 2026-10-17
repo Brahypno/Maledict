@@ -6,6 +6,7 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingUseTotemEvent;
 import net.minecraftforge.event.entity.living.ShieldBlockEvent;
@@ -20,6 +21,15 @@ import org.brahypno.maledict.network.MaledictNetwork;
 
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class HangmanFoolEvents {
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onLaunch(EntityJoinLevelEvent event) {
+        // Move before tracking begins: the ordinary spawn packet already carries the new origin and motion.
+        if (!event.getLevel().isClientSide() && !event.loadedFromDisk()
+                && event.getEntity() instanceof Projectile projectile) {
+            HangmanFoolRelay.redirect(projectile);
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     @SuppressWarnings("removal")
     public static void onImpact(ProjectileImpactEvent event) {
@@ -43,6 +53,10 @@ public final class HangmanFoolEvents {
             && HangmanFoolItem.equippedStage(shooter) >= 1
             && HangmanTrapEntity.capture(projectile, hit)){
             event.setCanceled(true);
+            if (HangmanFoolItem.equippedStage(shooter) >= 3) {
+                // Stage-three shots stop at obstacles after depositing their normal trap payload.
+                projectile.discard();
+            }
             //projectile.discard(); TODO：See if its good to discard or not
         }
     }

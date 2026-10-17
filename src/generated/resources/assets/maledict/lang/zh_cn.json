@@ -200,6 +200,7 @@
   "malum.gui.curio.effect.maledict.decay": "身边敌对之物每两秒被磨去半颗心，永不致命。",
   "malum.gui.curio.effect.maledict.fallen": "使对方的生命回复堕落成伤口",
   "malum.gui.curio.effect.maledict.hangman_fool.reflect": "有概率反弹弹射物，生命越低概率越高",
+  "malum.gui.curio.effect.maledict.hangman_fool.relay": "弹射物从自身16格内的法阵按近到远轮流射出，瞄准视线64格内的首个实体或方块，不消耗法阵",
   "malum.gui.curio.effect.maledict.hangman_fool.restrictions": "无法举盾或触发不死图腾",
   "malum.gui.curio.effect.maledict.hangman_fool.trap": "弹射物落到方块上留下陷阱法阵，接触生物时触发原有命中效果",
   "malum.gui.curio.effect.maledict.melancholia": "会逐渐获得同类伤害的抗性。治疗和伤害对你来说都很麻木。",

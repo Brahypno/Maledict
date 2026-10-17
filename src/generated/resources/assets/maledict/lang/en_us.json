@@ -200,6 +200,7 @@
   "malum.gui.curio.effect.maledict.decay": "Nearby hostile creatures lose half a heart every two seconds. This damage is never fatal.",
   "malum.gui.curio.effect.maledict.fallen": "Makes the target's healing decay into wounds.",
   "malum.gui.curio.effect.maledict.hangman_fool.reflect": "Chance to reflect projectiles increases as health falls",
+  "malum.gui.curio.effect.maledict.hangman_fool.relay": "Shots cycle through your circles within 16 blocks, nearest first, aiming at the first entity or block within 64 blocks of your gaze without consuming circles",
   "malum.gui.curio.effect.maledict.hangman_fool.restrictions": "Cannot raise shields or activate totems of undying",
   "malum.gui.curio.effect.maledict.hangman_fool.trap": "Projectiles leave a trap on blocks, triggering their original hit effects on contact",
   "malum.gui.curio.effect.maledict.melancholia": "You gradually become resistant to repeated damage of the same kind. Healing and harm alike leave you numb.",

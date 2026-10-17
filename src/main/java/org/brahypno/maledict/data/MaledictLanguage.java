@@ -26,6 +26,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("entity.maledict.hangman_trap", "倒吊人的陷阱法阵");
             add("malum.gui.curio.effect.maledict.hangman_fool.trap", "弹射物落到方块上留下陷阱法阵，接触生物时触发原有命中效果");
             add("malum.gui.curio.effect.maledict.hangman_fool.reflect", "有概率反弹弹射物，生命越低概率越高");
+            add("malum.gui.curio.effect.maledict.hangman_fool.relay", "弹射物从自身16格内的法阵按近到远轮流射出，瞄准视线64格内的首个实体或方块，不消耗法阵");
             add("malum.gui.curio.effect.maledict.hangman_fool.restrictions", "无法举盾或触发不死图腾");
             add("itemGroup.maledict", "咒邪");
             add("entity.maledict.raven", "渡鸦");
@@ -318,6 +319,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("entity.maledict.hangman_trap", "Hangman's Trap Circle");
             add("malum.gui.curio.effect.maledict.hangman_fool.trap", "Projectiles leave a trap on blocks, triggering their original hit effects on contact");
             add("malum.gui.curio.effect.maledict.hangman_fool.reflect", "Chance to reflect projectiles increases as health falls");
+            add("malum.gui.curio.effect.maledict.hangman_fool.relay",
+                "Shots cycle through your circles within 16 blocks, nearest first, aiming at the first entity or block within 64 blocks of your gaze without consuming circles");
             add("malum.gui.curio.effect.maledict.hangman_fool.restrictions", "Cannot raise shields or activate totems of undying");
             add("itemGroup.maledict", "Maledict");
             add("enchantment.maledict.ectoplasm", "Ectoplasm");

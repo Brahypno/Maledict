@@ -26,7 +26,7 @@ import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.List;
 
-/** One vision curio, with cumulative per-stack stage markers. Stages three and four reserve no abilities. */
+/** One vision curio, with cumulative per-stack stage markers. Stage four reserves no ability. */
 public final class HangmanFoolItem extends MalumCurioItem {
     private static final String EFFECT_PREFIX = "maledict.hangman_fool.";
     private static final String FLAVOR_TEXT_PREFIX = "tooltip.maledict.hangman_fool.flavor.";
@@ -131,6 +131,9 @@ public final class HangmanFoolItem extends MalumCurioItem {
         if (stage >= 2) {
             lines.add(positiveEffect(EFFECT_PREFIX + "reflect"));
             lines.add(negativeEffect(EFFECT_PREFIX + "restrictions"));
+        }
+        if (stage >= 3) {
+            lines.add(positiveEffect(EFFECT_PREFIX + "relay"));
         }
         if (FMLEnvironment.dist == Dist.CLIENT && Screen.hasShiftDown()) {
             Component flavor = Component.translatable(FLAVOR_TEXT_PREFIX + stage).withStyle(ChatFormatting.DARK_PURPLE);
