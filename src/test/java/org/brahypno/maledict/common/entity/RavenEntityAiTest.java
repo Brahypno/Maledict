@@ -3,20 +3,76 @@ package org.brahypno.maledict.common.entity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.BeforeBatch;
+import net.minecraft.gametest.framework.AfterBatch;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.AABB;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.BabyEntitySpawnEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.registry.MaledictEntities;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
+@Mod.EventBusSubscriber(modid = "maledict")
 public final class RavenEntityAiTest {
+    private static final Map<UUID, Parents> PARENTS = new HashMap<>();
+
+    @BeforeBatch(batch = "raven_ai")
+    public static void clearPreviousFixtures(ServerLevel level) {
+        clearFixtures(level);
+    }
+
+    @AfterBatch(batch = "raven_ai")
+    public static void clearCompletedFixtures(ServerLevel level) {
+        clearFixtures(level);
+    }
+
+    private static void clearFixtures(ServerLevel level) {
+        var fixtures = new ArrayList<Entity>();
+        for (Entity entity : level.getAllEntities()) {
+            if (entity instanceof RavenEntity && entity.getPersistentData().getBoolean("RavenAiTestFixture")) {
+                fixtures.add(entity);
+            }
+        }
+        fixtures.forEach(Entity::discard);
+        PARENTS.clear();
+    }
+
+    @SubscribeEvent
+    public static void recordOffspring(BabyEntitySpawnEvent event) {
+        Parents parents = PARENTS.get(event.getParentA().getUUID());
+        if (parents != null && parents.contains(event.getParentB()) && event.getChild() instanceof RavenEntity chick) {
+            parents.chick = chick;
+            parents.births++;
+            chick.getPersistentData().putBoolean("RavenAiTestFixture", true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void recordFixtureDamage(LivingAttackEvent event) {
+        if (event.getEntity() instanceof RavenEntity raven
+                && raven.getPersistentData().getBoolean("RavenAiTestFixture")) {
+            raven.getPersistentData().putString("RavenAiTestLastAttack", event.getSource().getMsgId()
+                    + " amount=" + event.getAmount() + " pos=" + raven.position()
+                    + " head=" + raven.level().getBlockState(BlockPos.containing(raven.getEyePosition())));
+        }
+    }
+
     @GameTest(template = "raven_ai_empty", batch = "raven_ai", timeoutTicks = 300)
-    public static void lovingAdultsFiveBlocksApartAcrossANetherStepBreed(GameTestHelper helper) {
-        prepareFloor(helper);
-        // The user's Nether save has a one-block rise between x=21 and x=22.
+    public static void lovingAdultsFiveBlocksApartAcrossAOneBlockStepBreed(GameTestHelper helper) {
+        prepareArena(helper);
+        // Synthetic one-block step; this does not load or reproduce a complete user save.
         for (int x = 8; x < 17; x++) {
             for (int z = 0; z < 17; z++) {
                 helper.setBlock(new BlockPos(x, 1, z), Blocks.NETHERRACK);
@@ -24,20 +80,15 @@ public final class RavenEntityAiTest {
         }
         RavenEntity first = spawn(helper, 5, 1, 8);
         RavenEntity second = spawn(helper, 10, 2, 8);
+        Parents parents = parents(helper, first, second);
         first.setInLove(null);
         second.setInLove(null);
-        helper.succeedWhen(() -> {
-            AABB bounds = new AABB(helper.absolutePos(BlockPos.ZERO),
-                    helper.absolutePos(new BlockPos(17, 10, 17)));
-            helper.assertTrue(helper.getLevel().getEntitiesOfClass(RavenEntity.class, bounds,
-                    RavenEntity::isBaby).size() == 1, "Loving parents must meet across the saved Nether terrain's step: "
-                    + describe(first) + "; " + describe(second));
-        });
+        helper.succeedWhen(() -> parents.assertBred(helper));
     }
 
     @GameTest(template = "raven_ai_empty", batch = "raven_ai", timeoutTicks = 300)
     public static void lovingAdultsOnDifferentHeightsFlyToMeetAndBreed(GameTestHelper helper) {
-        prepareFloor(helper);
+        prepareArena(helper);
         for (int x = 6; x <= 8; x++) {
             for (int z = 7; z <= 9; z++) {
                 for (int y = 1; y <= 4; y++) {
@@ -47,46 +98,33 @@ public final class RavenEntityAiTest {
         }
         RavenEntity first = spawn(helper, 7, 5, 8);
         RavenEntity second = spawn(helper, 10, 1, 8);
+        Parents parents = parents(helper, first, second);
         first.setInLove(null);
         second.setInLove(null);
-        helper.succeedWhen(() -> {
-            AABB bounds = new AABB(helper.absolutePos(BlockPos.ZERO),
-                    helper.absolutePos(new BlockPos(17, 10, 17)));
-            helper.assertTrue(helper.getLevel().getEntitiesOfClass(RavenEntity.class, bounds,
-                    RavenEntity::isBaby).size() == 1, "Nearby parents separated by a ledge must fly to meet and breed: "
-                    + describe(first) + "; " + describe(second));
-        });
+        helper.succeedWhen(() -> parents.assertBred(helper));
     }
 
     @GameTest(template = "raven_ai_empty", batch = "raven_ai", timeoutTicks = 300)
     public static void lovingAdultsSixBlocksApartApproachAndBreed(GameTestHelper helper) {
-        prepareFloor(helper);
+        prepareArena(helper);
         RavenEntity first = spawn(helper, 5, 1, 8);
         RavenEntity second = spawn(helper, 11, 1, 8);
+        Parents parents = parents(helper, first, second);
         helper.runAtTickTime(5, () -> {
             first.setInLove(null);
             second.setInLove(null);
         });
-        helper.succeedWhen(() -> {
-            AABB bounds = new AABB(helper.absolutePos(BlockPos.ZERO),
-                    helper.absolutePos(new BlockPos(17, 10, 17)));
-            helper.assertTrue(helper.getLevel().getEntitiesOfClass(RavenEntity.class, bounds,
-                    RavenEntity::isBaby).size() == 1, "Loving adults must approach and produce one chick: "
-                    + describe(first) + "; " + describe(second));
-            helper.assertTrue(first.getAge() > 0 && second.getAge() > 0,
-                    "Successful breeding must put both parents on cooldown");
-        });
+        helper.succeedWhen(() -> parents.assertBred(helper));
     }
 
     @GameTest(template = "raven_ai_empty", batch = "raven_ai", timeoutTicks = 100)
     public static void courtshipContinuesWhileAirborneAndOutOfBreedingRange(GameTestHelper helper) {
-        prepareFloor(helper);
+        prepareArena(helper);
         RavenEntity first = spawn(helper, 5, 4, 8);
         RavenEntity second = spawn(helper, 11, 4, 8);
+        Parents parents = parents(helper, first, second);
         first.setInLove(null);
         second.setInLove(null);
-        AABB bounds = new AABB(helper.absolutePos(BlockPos.ZERO),
-                helper.absolutePos(new BlockPos(17, 10, 17)));
         helper.onEachTick(() -> {
             // Keep both airborne and six blocks apart for the first 40 ticks, then
             // bring them within breeding range without giving them time to land.
@@ -96,15 +134,10 @@ public final class RavenEntityAiTest {
             }
         });
         helper.runAtTickTime(55, () -> helper.assertTrue(
-                helper.getLevel().getEntitiesOfClass(RavenEntity.class, bounds, RavenEntity::isBaby).isEmpty(),
+                parents.chick == null,
                 "Proximity must not skip the courtship wait"));
         helper.runAtTickTime(85, () -> {
-            helper.assertTrue(helper.getLevel().getEntitiesOfClass(RavenEntity.class, bounds,
-                    RavenEntity::isBaby).size() == 1,
-                    "Airborne courtship must count time spent outside breeding range: "
-                            + describe(first) + "; " + describe(second));
-            helper.assertTrue(first.getAge() > 0 && second.getAge() > 0,
-                    "Successful airborne breeding must put both parents on cooldown");
+            parents.assertBred(helper);
             helper.succeed();
         });
     }
@@ -119,7 +152,7 @@ public final class RavenEntityAiTest {
 
     @GameTest(template = "raven_ai_empty", batch = "raven_ai", timeoutTicks = 250)
     public static void environmentalDamageEscapesAroundACornerThenLands(GameTestHelper helper) {
-        prepareFloor(helper);
+        prepareArena(helper);
         // Neither leg near the start is three blocks long. A safe destination needs a turn,
         // which cannot pass an expanded-AABB test of the entire straight route.
         for (int x = 2; x <= 9; x++) {
@@ -150,7 +183,7 @@ public final class RavenEntityAiTest {
 
     @GameTest(template = "raven_ai_empty", batch = "raven_ai", timeoutTicks = 250)
     public static void standingInFireEscapesAndLandsAwayFromFire(GameTestHelper helper) {
-        prepareFloor(helper);
+        prepareArena(helper);
         helper.setBlock(new BlockPos(8, 1, 8), Blocks.FIRE);
         RavenEntity raven = spawn(helper, 8, 1, 8);
         Vec3 origin = raven.position();
@@ -164,18 +197,59 @@ public final class RavenEntityAiTest {
         });
     }
 
-    private static void prepareFloor(GameTestHelper helper) {
+    private static void prepareArena(GameTestHelper helper) {
         for (int x = 0; x < 17; x++) {
             for (int z = 0; z < 17; z++) {
                 helper.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+                for (int y = 1; y < 10; y++) {
+                    boolean boundary = x == 0 || x == 16 || z == 0 || z == 16 || y == 9;
+                    helper.setBlock(new BlockPos(x, y, z), boundary ? Blocks.GLASS : Blocks.AIR);
+                }
             }
+        }
+    }
+
+    private static Parents parents(GameTestHelper helper, RavenEntity first, RavenEntity second) {
+        Parents parents = new Parents(first, second);
+        PARENTS.put(first.getUUID(), parents);
+        PARENTS.put(second.getUUID(), parents);
+        helper.onEachTick(() -> {
+            helper.assertTrue(first.getHealth() == first.getMaxHealth() && second.getHealth() == second.getMaxHealth(),
+                    "Breeding fixture received unexpected damage: " + describe(first) + "; " + describe(second));
+        });
+        return parents;
+    }
+
+    private static final class Parents {
+        private final RavenEntity first;
+        private final RavenEntity second;
+        private RavenEntity chick;
+        private int births;
+
+        private Parents(RavenEntity first, RavenEntity second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        private boolean contains(Entity entity) {
+            return entity == first || entity == second;
+        }
+
+        private void assertBred(GameTestHelper helper) {
+            helper.assertTrue(births == 1 && chick != null && chick.isAlive() && chick.isBaby()
+                            && helper.getLevel().getEntity(chick.getUUID()) == chick,
+                    "This pair must produce its own live chick: " + describe(first) + "; " + describe(second));
+            helper.assertTrue(first.getAge() > 0 && second.getAge() > 0,
+                    "Both parents must enter breeding cooldown");
         }
     }
 
     private static String describe(RavenEntity raven) {
         return "pos=" + raven.position() + ", flying=" + raven.isFlying() + ", ground=" + raven.onGround()
                 + ", motion=" + raven.getDeltaMovement() + ", pathDone=" + raven.getNavigation().isDone()
-                + ", love=" + raven.isInLove() + ", age=" + raven.getAge();
+                + ", love=" + raven.isInLove() + ", age=" + raven.getAge()
+                + ", health=" + raven.getHealth()
+                + ", lastAttack=" + raven.getPersistentData().getString("RavenAiTestLastAttack");
     }
 
     private static RavenEntity spawn(GameTestHelper helper, int x, int y, int z) {
@@ -184,6 +258,8 @@ public final class RavenEntityAiTest {
         BlockPos pos = helper.absolutePos(new BlockPos(x, y, z));
         raven.setPos(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
         raven.setPersistenceRequired();
+        raven.getPersistentData().putBoolean("RavenAiTestFixture", true);
+        helper.assertTrue(helper.getLevel().noCollision(raven), "Fixture spawn intersects a block: " + describe(raven));
         helper.assertTrue(helper.getLevel().addFreshEntity(raven), "Raven must join the real level");
         return raven;
     }
