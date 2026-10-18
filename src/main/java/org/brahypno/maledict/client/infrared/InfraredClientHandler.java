@@ -19,6 +19,7 @@ import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.realm.BlightedRealm;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 
@@ -62,7 +63,8 @@ public final class InfraredClientHandler {
         InfraredClientState.setEyeSlotEnabled(player != null && isEyeSlotDeviceOn(player));
 
         boolean requested = false;
-        if (player != null && level != null && InfraredClientState.isEyeSlotEnabled() && InfraredSettings.enabled()) {
+        if (player != null && level != null && !BlightedRealm.is(level)
+                && InfraredClientState.isEyeSlotEnabled() && InfraredSettings.enabled()) {
             Camera camera = minecraft.gameRenderer.getMainCamera();
             if (camera.isInitialized()) {
                 BlockPos cameraPos = BlockPos.containing(camera.getPosition());
@@ -80,6 +82,11 @@ public final class InfraredClientHandler {
             }
         }
         InfraredClientState.setRequested(requested);
+        if (level != null && BlightedRealm.is(level)) {
+            InfraredClientState.setStrength(0);
+            InfraredClientState.setDarknessActive(false);
+            InfraredPostProcessor.INSTANCE.setActive(false);
+        }
     }
 
     /**
@@ -89,6 +96,11 @@ public final class InfraredClientHandler {
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+            return;
+        }
+        if (Minecraft.getInstance().level != null && BlightedRealm.is(Minecraft.getInstance().level)) {
+            InfraredClientState.setStrength(0);
+            InfraredPostProcessor.INSTANCE.setActive(false);
             return;
         }
         // intensity 是淡入之后能到的上限：调低它是"整层效果轻一点"，不是"慢一点"。

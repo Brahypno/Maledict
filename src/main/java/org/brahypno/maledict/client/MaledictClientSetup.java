@@ -9,12 +9,15 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
+import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.infrared.InfraredPostProcessor;
+import org.brahypno.maledict.client.realm.BlightedRealmEffects;
+import org.brahypno.maledict.common.realm.BlightedRealm;
 import org.brahypno.maledict.client.item.AgeOfEnlightenmentCurioRenderer;
 import org.brahypno.maledict.client.item.AgeOfEnlightenmentModel;
 import org.brahypno.maledict.client.item.SpiritArrowRenderer;
@@ -41,6 +44,11 @@ import top.theillusivec4.curios.api.client.CuriosRendererRegistry;
 /** 客户端 MOD 总线注册入口：实体与图层、饰品、HUD、物品颜色与粒子、后处理器。 */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class MaledictClientSetup {
+
+    @SubscribeEvent
+    public static void registerDimensionEffects(RegisterDimensionSpecialEffectsEvent event) {
+        event.register(BlightedRealm.ID, new BlightedRealmEffects());
+    }
 
     private static AgeOfEnlightenmentModel ageOfEnlightenmentModel;
     private static final IVoidItem VOID_PARTICLES = new IVoidItem() {

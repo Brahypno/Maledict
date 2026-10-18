@@ -1,0 +1,11 @@
+{
+  "type": "maledict:blighted_realm",
+  "generator": {
+    "type": "minecraft:noise",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "maledict:blighted_wastes"
+    },
+    "settings": "maledict:blighted_realm"
+  }
+}

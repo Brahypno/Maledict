@@ -17,6 +17,10 @@ public final class MaledictLanguage extends LanguageProvider {
     @Override
     protected void addTranslations() {
         if ("zh_cn".equals(locale)){
+            add("dimension.maledict.blighted_realm", "腐枯界");
+            add("biome.maledict.blighted_wastes", "腐枯荒原");
+            add("message.maledict.well_unavailable", "彼端无处落足，深井将你拒回。");
+            add("message.maledict.realm_no_respawn", "此界无法安置你的归处。");
             addItem(MaledictItems.HANGMAN_FOOL, "倒吊人的愚见");
             add("tooltip.maledict.hangman_fool.flavor.0", "献出力量，以求取人智");
             add("tooltip.maledict.hangman_fool.flavor.1", "智性虽有缺陷，却并非谬误");
@@ -315,6 +319,10 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text." + HANGMAN_FOOL_PAGE + ".2",
                 "让灵知踏过七重长阶，\n借以倒映纯粹的真知。\n 我的功业将成。");
         }else {
+            add("dimension.maledict.blighted_realm", "The Blighted Realm");
+            add("biome.maledict.blighted_wastes", "Blighted Wastes");
+            add("message.maledict.well_unavailable", "There is no safe passage beyond. The well rejects you.");
+            add("message.maledict.realm_no_respawn", "You cannot bind your return to this realm.");
             addItem(MaledictItems.HANGMAN_FOOL, "Hangman`s fool");
             add("tooltip.maledict.hangman_fool.flavor.0", "\"strength\" is sacrificed for \"human wisdom\"");
             add("tooltip.maledict.hangman_fool.flavor.1", "Intelligence that mortals grasp is flawed, it cannot be said to be false");
