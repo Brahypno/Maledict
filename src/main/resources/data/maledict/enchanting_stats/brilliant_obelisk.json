@@ -1,11 +1,10 @@
 {
   "block": "malum:brilliant_obelisk",
   "stats": {
-    "maxEterna": 20,
-    "eterna": 5,
+    "maxEterna": 40,
+    "eterna": 10,
     "quanta": 5,
     "arcana": 5,
-    "rectification": 0,
     "clues": 0
   }
 }

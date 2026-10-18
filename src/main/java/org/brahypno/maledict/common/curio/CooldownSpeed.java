@@ -3,7 +3,7 @@ package org.brahypno.maledict.common.curio;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemCooldowns;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
 
 import java.lang.reflect.Field;

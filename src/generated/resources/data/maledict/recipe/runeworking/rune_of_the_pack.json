@@ -1,0 +1,16 @@
+{
+  "type": "malum:runeworking",
+  "input": {
+    "count": 4,
+    "item": "malum:soulwood_log"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:rune_of_the_pack"
+  },
+  "secondaryInput": {
+    "count": 32,
+    "item": "malum:wicked_spirit"
+  },
+  "soundType": "malum:runic_workbench_shapes_wooden_rune"
+}

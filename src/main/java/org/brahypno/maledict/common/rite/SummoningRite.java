@@ -1,10 +1,9 @@
 package org.brahypno.maledict.common.rite;
 
 import com.sammy.malum.common.block.curiosities.totem.TotemBaseBlockEntity;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
-import com.sammy.malum.registry.common.SoundRegistry;
-import com.sammy.malum.registry.common.SpiritRiteRegistry;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
+import com.sammy.malum.registry.common.MalumSoundEvents;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -13,10 +12,10 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDifficulty;
@@ -31,7 +30,6 @@ import java.util.List;
 /**
  * Registers the encounter's four rites in Malum's rite table and performs what they create.
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class SummoningRite {
     private static final Logger LOGGER = LogUtils.getLogger();
     /** Never stack creations: one is already a boss encounter. */
@@ -63,68 +61,12 @@ public final class SummoningRite {
         }
     }
 
-    @SubscribeEvent
-    public static void onCommonSetup(FMLCommonSetupEvent event) {
-        // Rite types are plain static state, so this only has to run after Malum's own class init.
-        event.enqueueWork(SummoningRite::install);
-    }
-
-    public static void install() {
-        for (Recipe recipe : Recipe.values()) {
-            if (SpiritRiteRegistry.getRite(recipe.identifier) != null) {
-                continue;
-            }
-            MalumSpiritType[] spirits = spiritsOf(recipe);
-            if (!allPoleSpirits(spirits)) {
-                LOGGER.warn("Skipping rite {}: its recipe uses a spirit Malum's totem poles refuse",
-                        recipe.identifier);
-                continue;
-            }
-            SpiritRiteRegistry.create(new VicissitudeRiteType(recipe.identifier, recipe.difficulty,
-                    spirits));
-        }
-    }
-
-    /** Bottom pole first: the eldritch tier sits under the arcane spirits. */
-    private static MalumSpiritType[] spiritsOf(Recipe recipe) {
-        List<MalumSpiritType> spirits = new ArrayList<>(recipe.arcane + recipe.eldritch);
-        for (int index = 0; index < recipe.eldritch; index++) {
-            spirits.add(SpiritTypeRegistry.ELDRITCH_SPIRIT);
-        }
-        for (int index = 0; index < recipe.arcane; index++) {
-            spirits.add(SpiritTypeRegistry.ARCANE_SPIRIT);
-        }
-        return spirits.toArray(new MalumSpiritType[0]);
-    }
-
-    private static boolean allPoleSpirits(MalumSpiritType[] spirits) {
-        for (MalumSpiritType spirit : spirits) {
-            if (!poleSpirit(spirit)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /** The one spirit a totem pole will not take; every other registered shard is fine. */
-    private static boolean poleSpirit(MalumSpiritType spirit) {
-        return spirit != null && !SpiritTypeRegistry.UMBRAL_SPIRIT.equals(spirit);
-    }
-
-    /** The rite that summons the given difficulty, or null before common setup has run. */
-    @Nullable
     public static VicissitudeRiteType rite(BossDifficulty difficulty) {
-        for (Recipe recipe : Recipe.values()) {
-            if (recipe.difficulty == difficulty) {
-                return SpiritRiteRegistry.getRite(recipe.identifier)
-                               instanceof VicissitudeRiteType rite ? rite : null;
-            }
-        }
-        return null;
+        return org.brahypno.maledict.registry.MaledictRites.summoning(difficulty);
     }
 
     /** Creates the configured entity; Vicissitude enters through a suspended rift. */
-    static void summon(TotemBaseBlockEntity totem, ServerLevel level, BossDifficulty difficulty) {
+    public static void summon(TotemBaseBlockEntity totem, ServerLevel level, BossDifficulty difficulty) {
         if (!MaledictConfig.SUMMONING_RITE.get()) {
             return;
         }
@@ -147,7 +89,7 @@ public final class SummoningRite {
         if (created instanceof FirstVicissitudeBossEntity boss) {
             boss.setBossDifficulty(difficulty);
         }
-        float yaw = totem.getDirection().toYRot();
+        float yaw = totem.getTotemDirection().toYRot();
         if (!place(created, level, x, base.getY(), z, yaw)) {
             // Every candidate was blocked; a rite that promises uncontrolled creation must not
             // quietly do nothing, and the encounter brings its own unstick search.
@@ -162,7 +104,7 @@ public final class SummoningRite {
         level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, created.getX(),
                 created.getY() + created.getBbHeight() * 0.5D, created.getZ(), 64, 1.2D, 1.6D, 1.2D,
                 0.02D);
-        level.playSound(null, x, base.getY(), z, SoundRegistry.SOUL_SHATTER.get(),
+        level.playSound(null, x, base.getY(), z, MalumSoundEvents.SOUL_SHATTER.get(),
                 SoundSource.HOSTILE, 1.2F, 0.7F);
     }
 
@@ -184,7 +126,7 @@ public final class SummoningRite {
         if (identity == null) {
             return null;
         }
-        return ForgeRegistries.ENTITY_TYPES.getValue(identity);
+        return BuiltInRegistries.ENTITY_TYPE.get(identity);
     }
 
     private SummoningRite() {

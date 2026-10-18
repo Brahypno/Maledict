@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.List;
 
 public final class MaledictBlockLoot extends BlockLootSubProvider {
-    public MaledictBlockLoot() {
-        super(Set.of(), FeatureFlags.REGISTRY.allFlags());
+    public MaledictBlockLoot(net.minecraft.core.HolderLookup.Provider registries) {
+        super(Set.of(), FeatureFlags.REGISTRY.allFlags(), registries);
     }
 
     @Override

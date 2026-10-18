@@ -1,7 +1,9 @@
 package org.brahypno.maledict.common.item;
 
+import static com.sammy.malum.core.helpers.ComponentHelper.*;
+import net.minecraft.core.Holder;
 import com.sammy.malum.common.item.curiosities.curios.runes.AbstractRuneCurioItem;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -24,12 +26,12 @@ public final class PulseRuneItem extends AbstractRuneCurioItem {
 
     public static final int EFFECT_AMPLIFIER = 0;
 
-    private final Supplier<MobEffect> effect;
+    private final net.minecraft.core.Holder<MobEffect> effect;
     private final String tooltipSuffix;
 
-    public PulseRuneItem(Item.Properties properties, MalumSpiritType spiritType,
-                         Supplier<MobEffect> effect, String tooltipSuffix) {
-        super(properties, spiritType);
+    public PulseRuneItem(Item.Properties properties, com.sammy.malum.core.systems.registry.SpiritHolder<SpiritArcanaType> spiritType,
+                         net.minecraft.core.Holder<MobEffect> effect, String tooltipSuffix) {
+        super(properties, spiritType, MalumTrinketType.RUNE);
         this.effect = effect;
         this.tooltipSuffix = tooltipSuffix;
     }
@@ -48,7 +50,7 @@ public final class PulseRuneItem extends AbstractRuneCurioItem {
             return;
         }
 
-        wearer.addEffect(new MobEffectInstance(effect.get(),
+        wearer.addEffect(new MobEffectInstance(effect,
                 EFFECT_DURATION_TICKS, EFFECT_AMPLIFIER, true, true));
     }
 }

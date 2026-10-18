@@ -1,5 +1,6 @@
 package org.brahypno.maledict.common.entity;
 
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
@@ -7,7 +8,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
@@ -49,7 +49,7 @@ public final class RavenFeatherEntity extends ThrowableProjectile {
     }
 
     @Override
-    protected void defineSynchedData() {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
     }
 
     @Override
@@ -63,7 +63,7 @@ public final class RavenFeatherEntity extends ThrowableProjectile {
     @Override
     protected boolean canHitEntity(Entity entity) {
         return entity instanceof LivingEntity living && super.canHitEntity(entity)
-                && RavenShotSafety.mayHit(living.getMobType() == MobType.UNDEAD,
+                && RavenShotSafety.mayHit(living.getType().is(net.minecraft.tags.EntityTypeTags.UNDEAD),
                 entity.getUUID().equals(intendedTarget), entity instanceof RavenEntity,
                 trustedPlayers.contains(entity.getUUID()));
     }
@@ -73,7 +73,7 @@ public final class RavenFeatherEntity extends ThrowableProjectile {
         super.onHitEntity(hit);
         if (!level().isClientSide && hit.getEntity() instanceof LivingEntity target) {
             LivingEntity owner = getOwner() instanceof LivingEntity living ? living : null;
-            float damage = RavenCombat.attackDamage(baseDamage, difficulty, target.getMobType() == MobType.UNDEAD);
+            float damage = RavenCombat.attackDamage(baseDamage, difficulty, target.getType().is(net.minecraft.tags.EntityTypeTags.UNDEAD));
             if (target.hurt(damageSources().mobProjectile(this, owner), damage) && owner instanceof RavenEntity raven) {
                 raven.onFeatherHit(target);
             }

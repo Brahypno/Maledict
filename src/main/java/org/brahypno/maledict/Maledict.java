@@ -1,10 +1,9 @@
 package org.brahypno.maledict;
 
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictCreativeTabs;
@@ -21,13 +20,13 @@ import org.brahypno.maledict.registry.MaledictSounds;
 public final class Maledict {
     public static final String MODID = "maledict";
 
-    @SuppressWarnings({"removal"})
-    public Maledict() {
-        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+    public Maledict(IEventBus modBus, ModContainer container) {
 
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, MaledictConfig.COMMON_SPEC);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, MaledictConfig.CLIENT_SPEC);
-        MaledictEnchantments.ENCHANTMENTS.register(modBus);
+        container.registerConfig(ModConfig.Type.COMMON, MaledictConfig.COMMON_SPEC);
+        container.registerConfig(ModConfig.Type.CLIENT, MaledictConfig.CLIENT_SPEC);
+        org.brahypno.maledict.registry.MaledictAttachments.TYPES.register(modBus);
+        org.brahypno.maledict.registry.MaledictRites.EFFECTS.register(modBus);
+        org.brahypno.maledict.registry.MaledictRites.RITES.register(modBus);
         MaledictAttributes.ATTRIBUTES.register(modBus);
         MaledictEntities.ENTITY_TYPES.register(modBus);
         MaledictBlocks.BLOCKS.register(modBus);
@@ -36,6 +35,6 @@ public final class Maledict {
         MaledictMobEffects.MOB_EFFECTS.register(modBus);
         MaledictSounds.SOUND_EVENTS.register(modBus);
         MaledictCreativeTabs.CREATIVE_TABS.register(modBus);
-        MaledictNetwork.register();
+        MaledictNetwork.register(modBus);
     }
 }

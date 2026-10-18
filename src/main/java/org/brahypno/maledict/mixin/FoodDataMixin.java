@@ -35,7 +35,7 @@ public abstract class FoodDataMixin {
             return;
         }
 
-        MobEffectInstance blessing = player.getEffect(MaledictMobEffects.BLESSING_OF_LIFE.get());
+        MobEffectInstance blessing = player.getEffect(MaledictMobEffects.BLESSING_OF_LIFE);
         if (blessing == null) {
             return;
         }

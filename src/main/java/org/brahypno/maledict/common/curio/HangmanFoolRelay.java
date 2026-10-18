@@ -46,13 +46,7 @@ public final class HangmanFoolRelay {
         projectile.zo = origin.z;
         HangmanFoolProjectiles.applyMotion(projectile, direction, false);
         projectile.setDeltaMovement(velocity);
-        if (projectile instanceof AbstractHurtingProjectile fireball) {
-            double power = new Vec3(fireball.xPower, fireball.yPower, fireball.zPower).length();
-            Vec3 acceleration = direction.scale(power);
-            fireball.xPower = acceleration.x;
-            fireball.yPower = acceleration.y;
-            fireball.zPower = acceleration.z;
-        }
+        // Fireball acceleration follows the new velocity; accelerationPower is unchanged.
         projectile.getPersistentData().putBoolean(PROCESSED, true);
     }
 

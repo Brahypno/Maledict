@@ -1,0 +1,16 @@
+{
+  "type": "malum:runeworking",
+  "input": {
+    "count": 4,
+    "item": "malum:tainted_rock"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:rune_of_melancholia"
+  },
+  "secondaryInput": {
+    "count": 16,
+    "item": "malum:umbral_spirit"
+  },
+  "soundType": "malum:runic_workbench_shapes_tainted_rune"
+}

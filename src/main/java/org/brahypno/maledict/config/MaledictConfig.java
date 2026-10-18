@@ -1,40 +1,40 @@
 package org.brahypno.maledict.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class MaledictConfig {
-    public static final ForgeConfigSpec COMMON_SPEC;
-    public static final ForgeConfigSpec CLIENT_SPEC;
-    public static final ForgeConfigSpec.DoubleValue SCREENSHAKE_INTENSITY;
-    public static final ForgeConfigSpec.BooleanValue VICISSITUDE_BOSS_MUSIC;
-    public static final ForgeConfigSpec.DoubleValue VICISSITUDE_BOSS_MUSIC_VOLUME;
-    public static final ForgeConfigSpec.DoubleValue VICISSITUDE_ENGAGEMENT_RANGE;
-    public static final ForgeConfigSpec.DoubleValue VICISSITUDE_DAMAGE_RANGE;
-    public static final ForgeConfigSpec.IntValue VICISSITUDE_ADAPTATION_LEVEL;
-    public static final ForgeConfigSpec.BooleanValue SUMMONING_RITE;
-    public static final ForgeConfigSpec.ConfigValue<String> SUMMONING_RITE_ENTITY;
-    public static final ForgeConfigSpec.BooleanValue AERIAL_POTION_EFFECTS_ONLY;
-    public static final ForgeConfigSpec.DoubleValue EARTHEN_UPGRADE_COST_COEFFICIENT;
-    public static final ForgeConfigSpec.DoubleValue AQUEOUS_UPGRADE_COST_COEFFICIENT;
-    public static final ForgeConfigSpec.DoubleValue ARCANE_UPGRADE_COST_COEFFICIENT;
-    public static final ForgeConfigSpec.DoubleValue AERIAL_UPGRADE_COST_COEFFICIENT;
-    public static final ForgeConfigSpec.DoubleValue SACRED_UPGRADE_COST_COEFFICIENT;
-    public static final ForgeConfigSpec.DoubleValue INFERNAL_UPGRADE_COST_COEFFICIENT;
-    public static final ForgeConfigSpec.DoubleValue ELDRITCH_UPGRADE_COST_COEFFICIENT;
-    public static final ForgeConfigSpec.DoubleValue WICKED_UPGRADE_COST_COEFFICIENT;
-    public static final ForgeConfigSpec.DoubleValue ENLIGHTENMENT_COOLDOWN_SPEED;
-    public static final ForgeConfigSpec.DoubleValue ENLIGHTENMENT_MELEE_DAMAGE_MULTIPLIER;
-    public static final ForgeConfigSpec.BooleanValue INFRARED_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue INFRARED_INTENSITY;
-    public static final ForgeConfigSpec.DoubleValue INFRARED_GRAYSCALE_THRESHOLD;
-    public static final ForgeConfigSpec.DoubleValue INFRARED_GRAYSCALE_SOFTNESS;
-    public static final ForgeConfigSpec.DoubleValue HANGMAN_REFLECTION_BASE;
-    public static final ForgeConfigSpec.IntValue HANGMAN_TRAP_LIFETIME;
-    public static final ForgeConfigSpec.DoubleValue HANGMAN_TRAP_RADIUS;
-    public static final ForgeConfigSpec.DoubleValue OMEN_MINIMUM_SHARE;
+    public static final ModConfigSpec COMMON_SPEC;
+    public static final ModConfigSpec CLIENT_SPEC;
+    public static final ModConfigSpec.DoubleValue SCREENSHAKE_INTENSITY;
+    public static final ModConfigSpec.BooleanValue VICISSITUDE_BOSS_MUSIC;
+    public static final ModConfigSpec.DoubleValue VICISSITUDE_BOSS_MUSIC_VOLUME;
+    public static final ModConfigSpec.DoubleValue VICISSITUDE_ENGAGEMENT_RANGE;
+    public static final ModConfigSpec.DoubleValue VICISSITUDE_DAMAGE_RANGE;
+    public static final ModConfigSpec.IntValue VICISSITUDE_ADAPTATION_LEVEL;
+    public static final ModConfigSpec.BooleanValue SUMMONING_RITE;
+    public static final ModConfigSpec.ConfigValue<String> SUMMONING_RITE_ENTITY;
+    public static final ModConfigSpec.BooleanValue AERIAL_POTION_EFFECTS_ONLY;
+    public static final ModConfigSpec.DoubleValue EARTHEN_UPGRADE_COST_COEFFICIENT;
+    public static final ModConfigSpec.DoubleValue AQUEOUS_UPGRADE_COST_COEFFICIENT;
+    public static final ModConfigSpec.DoubleValue ARCANE_UPGRADE_COST_COEFFICIENT;
+    public static final ModConfigSpec.DoubleValue AERIAL_UPGRADE_COST_COEFFICIENT;
+    public static final ModConfigSpec.DoubleValue SACRED_UPGRADE_COST_COEFFICIENT;
+    public static final ModConfigSpec.DoubleValue INFERNAL_UPGRADE_COST_COEFFICIENT;
+    public static final ModConfigSpec.DoubleValue ELDRITCH_UPGRADE_COST_COEFFICIENT;
+    public static final ModConfigSpec.DoubleValue WICKED_UPGRADE_COST_COEFFICIENT;
+    public static final ModConfigSpec.DoubleValue ENLIGHTENMENT_COOLDOWN_SPEED;
+    public static final ModConfigSpec.DoubleValue ENLIGHTENMENT_MELEE_DAMAGE_MULTIPLIER;
+    public static final ModConfigSpec.BooleanValue INFRARED_ENABLED;
+    public static final ModConfigSpec.DoubleValue INFRARED_INTENSITY;
+    public static final ModConfigSpec.DoubleValue INFRARED_GRAYSCALE_THRESHOLD;
+    public static final ModConfigSpec.DoubleValue INFRARED_GRAYSCALE_SOFTNESS;
+    public static final ModConfigSpec.DoubleValue HANGMAN_REFLECTION_BASE;
+    public static final ModConfigSpec.IntValue HANGMAN_TRAP_LIFETIME;
+    public static final ModConfigSpec.DoubleValue HANGMAN_TRAP_RADIUS;
+    public static final ModConfigSpec.DoubleValue OMEN_MINIMUM_SHARE;
 
     static {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
         builder.push("transcendOmen");
         OMEN_MINIMUM_SHARE = builder.comment("Minimum share per active reverse route. Total shares may exceed 100%.")
                 .defineInRange("minimumShare", 0.01D, 0.0D, 1.0D);
@@ -124,7 +124,7 @@ public final class MaledictConfig {
         builder.pop();
         COMMON_SPEC = builder.build();
 
-        ForgeConfigSpec.Builder clientBuilder = new ForgeConfigSpec.Builder();
+        ModConfigSpec.Builder clientBuilder = new ModConfigSpec.Builder();
         clientBuilder.push("firstVicissitude");
         SCREENSHAKE_INTENSITY = clientBuilder
                 .comment("Client side multiplier for the First Vicissitude screenshake. 0 disables it.")
@@ -177,7 +177,7 @@ public final class MaledictConfig {
         CLIENT_SPEC = clientBuilder.build();
     }
 
-    private static ForgeConfigSpec.DoubleValue defineUpgradeCostCoefficient(ForgeConfigSpec.Builder builder, String spirit, double defaultValue) {
+    private static ModConfigSpec.DoubleValue defineUpgradeCostCoefficient(ModConfigSpec.Builder builder, String spirit, double defaultValue) {
         return builder
                 .comment("Upgrade cost coefficient for the " + spirit + " spirit. Must be at least 1.")
                 .defineInRange(spirit, defaultValue, 0.5, Integer.MAX_VALUE);

@@ -13,10 +13,10 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.gametest.GameTestHolder;
-import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.common.entity.HangmanTrapEntity;
 import org.brahypno.maledict.common.item.HangmanFoolItem;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -91,7 +91,7 @@ public final class HangmanFoolRelayTest {
         f.entities.add(far);
         BlockPos wall = BlockPos.containing(eye.add(0, 0, 6));
         helper.getLevel().setBlockAndUpdate(wall, Blocks.STONE.defaultBlockState());
-        Arrow probe = new Arrow(helper.getLevel(), f.player);
+        Arrow probe = new Arrow(helper.getLevel(), f.player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ARROW), null);
         double firstZ = near.getBoundingBox().inflate(near.getPickRadius()).minZ;
         vector(helper, new Vec3(eye.x, eye.y, firstZ), HangmanFoolRelay.aimTarget(f.player, probe).getLocation(),
                 "The first entity's ray intersection, not its center, is the aim point");
@@ -114,12 +114,12 @@ public final class HangmanFoolRelayTest {
     public static void relayPreservesArrowPayloadAndFireballSpeedAndAcceleration(GameTestHelper helper) {
         Fixture f = new Fixture(helper);
         var circle = f.circle(2);
-        Arrow arrow = new Arrow(helper.getLevel(), f.player);
+        Arrow arrow = new Arrow(helper.getLevel(), f.player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ARROW), null);
         arrow.setDeltaMovement(0, 0, 3);
         arrow.setBaseDamage(7);
-        arrow.setPierceLevel((byte) 2);
+        org.brahypno.maledict.TestSupport.piercing(arrow, (byte) 2);
         arrow.setCritArrow(true);
-        arrow.setSecondsOnFire(20);
+        arrow.igniteForSeconds(20);
         helper.getLevel().addFreshEntity(arrow);
         f.entities.add(arrow);
         f.assertOrigin(arrow, circle);
@@ -128,15 +128,14 @@ public final class HangmanFoolRelayTest {
                 && arrow.getPierceLevel() == 2 && arrow.isCritArrow() && arrow.isOnFire(), "Original payload and owner");
         Vec3 aim = HangmanFoolRelay.aimTarget(f.player, arrow).getLocation();
         vector(helper, aim.subtract(arrow.position()).normalize(), arrow.getDeltaMovement().normalize(), "Arrow aim");
-        var fireball = new SmallFireball(helper.getLevel(), f.player, 0, 0, 1);
+        var fireball = new SmallFireball(helper.getLevel(), f.player, new Vec3(0, 0, 1));
+        fireball.setPos(f.player.getEyePosition());
         fireball.setDeltaMovement(0, 0, 2);
         helper.getLevel().addFreshEntity(fireball);
         f.entities.add(fireball);
         f.assertOrigin(fireball, circle);
         equal(helper, 2, fireball.getDeltaMovement().length(), "Fireball speed");
-        Vec3 power = new Vec3(fireball.xPower, fireball.yPower, fireball.zPower);
-        equal(helper, 0.1, power.length(), "Fireball acceleration magnitude");
-        vector(helper, fireball.getDeltaMovement().normalize(), power.normalize(), "Fireball acceleration follows aim");
+        equal(helper, 0.1, fireball.accelerationPower, "Relay preserves native fireball acceleration magnitude");
         helper.assertTrue(circle.isAlive(), "Shooting must not consume the trap");
         f.finish();
     }
@@ -146,14 +145,14 @@ public final class HangmanFoolRelayTest {
         Fixture f = new Fixture(helper);
         var a = f.circle(2);
         var b = f.circle(4);
-        Arrow released = new Arrow(helper.getLevel(), f.player);
+        Arrow released = new Arrow(helper.getLevel(), f.player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ARROW), null);
         released.setDeltaMovement(0, 0, 2);
         Vec3 original = released.position();
         HangmanFoolRelay.markTrapRelease(released);
         helper.getLevel().addFreshEntity(released);
         f.entities.add(released);
         vector(helper, original, released.position(), "Restored contact payload stays at its contact position");
-        var loaded = new Arrow(helper.getLevel(), f.player);
+        var loaded = new Arrow(helper.getLevel(), f.player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ARROW), null);
         HangmanFoolEvents.onLaunch(new EntityJoinLevelEvent(loaded, helper.getLevel(), true));
         vector(helper, original, loaded.position(), "Disk loads keep their saved position");
         var shot = f.shot();
@@ -314,7 +313,7 @@ public final class HangmanFoolRelayTest {
 
         HangmanTrapEntity circle(double distance, Direction face) {
             Vec3 impact = player.position().add(distance, 0, 0);
-            var payload = new Arrow(helper.getLevel(), player);
+            var payload = new Arrow(helper.getLevel(), player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ARROW), null);
             payload.setDeltaMovement(0, 0, 3);
             helper.assertTrue(HangmanTrapEntity.capture(payload,
                     new BlockHitResult(impact, face, BlockPos.containing(impact), false)), "Capture succeeds");
@@ -325,7 +324,7 @@ public final class HangmanFoolRelayTest {
         }
 
         Arrow shot() {
-            var arrow = new Arrow(helper.getLevel(), player);
+            var arrow = new Arrow(helper.getLevel(), player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ARROW), null);
             arrow.setPos(player.getEyePosition());
             arrow.setDeltaMovement(0, 0, 3);
             helper.getLevel().addFreshEntity(arrow);

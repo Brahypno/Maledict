@@ -2,22 +2,23 @@ package org.brahypno.maledict.common.item;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.registry.MaledictAttributes;
 
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class LoverAxeEvents {
     private LoverAxeEvents() {}
 
     @SubscribeEvent
-    public static void tick(LivingEvent.LivingTickEvent event) {
-        LivingEntity entity = event.getEntity();
+    public static void tick(EntityTickEvent.Pre event) {
+        if (!(event.getEntity() instanceof LivingEntity livingEntity)) return;
+        LivingEntity entity = livingEntity;
         if (entity.level().isClientSide() || !entity.isAlive() || entity.tickCount % 20 != 0) return;
-        var descent = entity.getAttribute(MaledictAttributes.DESCENT.get());
+        var descent = entity.getAttribute(MaledictAttributes.DESCENT);
         if (descent == null) return;
         boolean holding = entity.getMainHandItem().getItem() instanceof LoverAxeItem
                 || entity.getOffhandItem().getItem() instanceof LoverAxeItem;

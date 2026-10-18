@@ -3,10 +3,10 @@ package org.brahypno.maledict.common.entity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.entity.ProjectileImpactEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +15,7 @@ import java.util.UUID;
 import java.util.WeakHashMap;
 
 /** Projectile positions still precede the collision when vanilla invokes the victim's hurt(). */
-@Mod.EventBusSubscriber(modid = Maledict.MODID)
+@EventBusSubscriber(modid = Maledict.MODID)
 public final class VicissitudeHitLocation {
     private record Impact(UUID victim, long tick, Vec3 point) {}
     private static final Map<Entity, Impact> IMPACTS = new WeakHashMap<>();

@@ -139,8 +139,8 @@ final class VicissitudeBlenderMesh {
     private static void emit(
             Vertex vertex, Triangle triangle, PoseStack.Pose pose, VertexConsumer buffer,
             int light, int overlay, float red, float green, float blue, float alpha) {
-        buffer.vertex(pose.pose(), vertex.x, vertex.y, vertex.z).color(red, green, blue, alpha)
-              .uv(vertex.u, vertex.v).overlayCoords(overlay).uv2(light)
-              .normal(pose.normal(), triangle.nx, triangle.ny, triangle.nz).endVertex();
+        buffer.addVertex(pose.pose(), vertex.x, vertex.y, vertex.z).setColor(red, green, blue, alpha)
+              .setUv(vertex.u, vertex.v).setOverlay(overlay).setLight(light)
+              .setNormal(pose, triangle.nx, triangle.ny, triangle.nz);
     }
 }

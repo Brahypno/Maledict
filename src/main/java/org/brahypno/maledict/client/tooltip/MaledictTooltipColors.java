@@ -1,17 +1,17 @@
 package org.brahypno.maledict.client.tooltip;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderTooltipEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderTooltipEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.registry.MaledictItems;
 
 /**
  * Item-specific tooltip colors on the client Forge bus.
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class MaledictTooltipColors {
     /**
      * 殷红色，沿用原版提示框的透明度。

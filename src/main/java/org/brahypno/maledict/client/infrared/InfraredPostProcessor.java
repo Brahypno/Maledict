@@ -53,7 +53,7 @@ public final class InfraredPostProcessor extends PostProcessor {
     }
 
     @Override
-    public void beforeProcess(PoseStack viewModelStack) {
+    public void beforeProcess(org.joml.Matrix4f viewModelMatrix) {
         setUniform("Strength", InfraredClientState.strength());
         setUniform("Gain", GAIN);
         setUniform("Lift", LIFT);

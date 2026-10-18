@@ -6,7 +6,7 @@
       "layer0": "maledict:item/elegy_bow_huge"
     }
   },
-  "loader": "forge:separate_transforms",
+  "loader": "neoforge:separate_transforms",
   "overrides": [
     {
       "model": "maledict:item/elegy_bow_pulling_0",

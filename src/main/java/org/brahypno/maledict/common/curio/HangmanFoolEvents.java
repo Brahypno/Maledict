@@ -5,21 +5,21 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraftforge.event.entity.ProjectileImpactEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
-import net.minecraftforge.event.entity.living.LivingUseTotemEvent;
-import net.minecraftforge.event.entity.living.ShieldBlockEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.neoforged.neoforge.event.entity.living.LivingUseTotemEvent;
+import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.HangmanTrapEntity;
 import org.brahypno.maledict.common.item.HangmanFoolItem;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class HangmanFoolEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLaunch(EntityJoinLevelEvent event) {
@@ -70,7 +70,7 @@ public final class HangmanFoolEvents {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onShieldBlock(ShieldBlockEvent event) {
+    public static void onShieldBlock(LivingShieldBlockEvent event) {
         if (HangmanFoolItem.equippedStage(event.getEntity()) >= 2){
             event.setCanceled(true);
         }

@@ -9,18 +9,19 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.rite.VicissitudeSummoning;
 import org.joml.Matrix4f;
-import team.lodestar.lodestone.registry.client.LodestoneRenderTypeRegistry;
-import team.lodestar.lodestone.registry.common.particle.LodestoneParticleRegistry;
+import team.lodestar.lodestone.registry.client.LodestoneRenderTypes;
+import team.lodestar.lodestone.registry.common.particle.LodestoneParticleTypes;
 import team.lodestar.lodestone.systems.easing.Easing;
 import team.lodestar.lodestone.systems.particle.builder.WorldParticleBuilder;
 import team.lodestar.lodestone.systems.particle.data.GenericParticleData;
@@ -32,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** An opaque suspended aperture, orbiting wisps and a distance-faded cinematic post effect. */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class VicissitudeSummoningEffects {
     private static final List<FirstVicissitudeBossEntity> SUMMONING = new ArrayList<>();
     private static final Color BONE = new Color(0xD8DBE2);
@@ -61,7 +62,7 @@ public final class VicissitudeSummoningEffects {
         for (int i = 0; i < 24; i++) {
             double angle = i * Math.PI * 2 / 24;
             double x = Math.cos(angle), z = Math.sin(angle);
-            WorldParticleBuilder.create(LodestoneParticleRegistry.WISP_PARTICLE)
+            WorldParticleBuilder.create(LodestoneParticleTypes.WISP_PARTICLE)
                     .setColorData(ColorParticleData.create(BONE, VIOLET).build())
                     .setTransparencyData(GenericParticleData.create(0.85F, 0).build())
                     .setScaleData(GenericParticleData.create(0.18F, 0).build())
@@ -71,7 +72,7 @@ public final class VicissitudeSummoningEffects {
                             position.z + z * 0.55D);
         }
         for (int i = 0; i < 8; i++) {
-            WorldParticleBuilder.create(LodestoneParticleRegistry.SMOKE_PARTICLE)
+            WorldParticleBuilder.create(LodestoneParticleTypes.SMOKE_PARTICLE)
                     .setRenderType(LodestoneWorldParticleRenderType.LUMITRANSPARENT)
                     .setColorData(ColorParticleData.create(Color.BLACK, VIOLET).build())
                     .setTransparencyData(GenericParticleData.create(0, 0.65F, 0).build())
@@ -93,7 +94,7 @@ public final class VicissitudeSummoningEffects {
             double angle = ticks * 0.065D + Math.PI * 2 * i / 6;
             double x = Math.cos(angle) * radius;
             double z = Math.sin(angle) * radius;
-            WorldParticleBuilder.create(LodestoneParticleRegistry.WISP_PARTICLE)
+            WorldParticleBuilder.create(LodestoneParticleTypes.WISP_PARTICLE)
                     .setColorData(ColorParticleData.create(BONE, VIOLET).build())
                     .setTransparencyData(GenericParticleData.create(0.7F, 0).build())
                     .setScaleData(GenericParticleData.create(0.12F, 0.03F).build())
@@ -104,7 +105,7 @@ public final class VicissitudeSummoningEffects {
         double angle = level.random.nextDouble() * Math.PI * 2;
         double x = Math.cos(angle) * radius * 0.85;
         double z = Math.sin(angle) * radius * 0.85;
-        WorldParticleBuilder.create(LodestoneParticleRegistry.SMOKE_PARTICLE)
+        WorldParticleBuilder.create(LodestoneParticleTypes.SMOKE_PARTICLE)
                 .setRenderType(LodestoneWorldParticleRenderType.LUMITRANSPARENT)
                 .setColorData(ColorParticleData.create(Color.BLACK, VIOLET).build())
                 .setTransparencyData(GenericParticleData.create(0, 0.6F, 0).build())
@@ -116,7 +117,7 @@ public final class VicissitudeSummoningEffects {
             float spread = (ticks - VicissitudeSummoning.ARRIVAL_TICK) * 0.22F;
             for (int i = 0; i < 12; i++) {
                 double a = i * Math.PI * 2 / 12;
-                WorldParticleBuilder.create(LodestoneParticleRegistry.SPARKLE_PARTICLE)
+                WorldParticleBuilder.create(LodestoneParticleTypes.SPARKLE_PARTICLE)
                         .setColorData(ColorParticleData.create(BONE, VIOLET).build())
                         .setTransparencyData(GenericParticleData.create(0.6F, 0).setEasing(Easing.SINE_IN).build())
                         .setScaleData(GenericParticleData.create(0.16F, 0).build())
@@ -140,7 +141,7 @@ public final class VicissitudeSummoningEffects {
             float flash = 0;
             for (FirstVicissitudeBossEntity boss : SUMMONING) {
                 if (boss.level() != mc.level || boss.isRemoved() || !boss.isAlive()) continue;
-                float ticks = boss.getSummoningTicks(event.getPartialTick());
+                float ticks = boss.getSummoningTicks(event.getPartialTick().getGameTimeDeltaPartialTick(false));
                 float distance = (float) event.getCamera().getPosition().distanceTo(boss.getSummoningPortal());
                 float proximity = 1.0F - Mth.clamp((distance - 12) / 36, 0, 1);
                 strength = Math.max(strength, VicissitudeSummoning.grayscale(ticks) * proximity);
@@ -156,7 +157,7 @@ public final class VicissitudeSummoningEffects {
         VertexConsumer vertices = buffers.getBuffer(RiftRenderState.TYPE);
         for (FirstVicissitudeBossEntity boss : SUMMONING) {
             if (boss.level() != mc.level || boss.isRemoved() || !boss.isAlive()) continue;
-            float ticks = boss.getSummoningTicks(event.getPartialTick());
+            float ticks = boss.getSummoningTicks(event.getPartialTick().getGameTimeDeltaPartialTick(false));
             float radius = RADIUS * VicissitudeSummoning.aperture(ticks);
             if (radius < 0.01F) continue;
             Vec3 portal = boss.getSummoningPortal();
@@ -188,17 +189,19 @@ public final class VicissitudeSummoningEffects {
 
     private static void vertex(VertexConsumer vertices, Matrix4f matrix,
                                float x, float y, float z, float gray, float alpha) {
-        vertices.vertex(matrix, x, y, z).color(gray, gray, gray, alpha).endVertex();
+        vertices.addVertex(matrix, x, y, z).setColor(gray, gray, gray, alpha);
     }
 
     private static final class RiftRenderState extends RenderStateShard {
-        private static final RenderType TYPE = LodestoneRenderTypeRegistry.createGenericRenderType(
+        private static final RenderType TYPE = LodestoneRenderTypes.createGenericRenderType(
+                team.lodestar.lodestone.systems.rendering.rendeertype.RenderTypeToken.createToken(
+                        ResourceLocation.parse("maledict:summoning_rift")),
                 "maledict_summoning_rift", DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.TRIANGLES,
-                LodestoneRenderTypeRegistry.builder()
+                LodestoneRenderTypes.builder()
                         .setShaderState(new ShaderStateShard(GameRenderer::getPositionColorShader))
                         .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                        .setTextureState(LodestoneRenderTypeRegistry.NO_TEXTURE)
-                        .setCullState(LodestoneRenderTypeRegistry.NO_CULL)
+                        .setTextureState(LodestoneRenderTypes.NO_TEXTURE)
+                        .setCullState(LodestoneRenderTypes.NO_CULL)
                         .setWriteMaskState(COLOR_DEPTH_WRITE));
 
         private RiftRenderState() {

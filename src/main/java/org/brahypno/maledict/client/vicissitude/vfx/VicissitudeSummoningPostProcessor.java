@@ -29,7 +29,7 @@ public final class VicissitudeSummoningPostProcessor extends PostProcessor {
     }
 
     @Override
-    public void beforeProcess(PoseStack viewModelStack) {
+    public void beforeProcess(org.joml.Matrix4f viewModelMatrix) {
         if (effects == null) return;
         for (EffectInstance effect : effects) {
             Uniform strengthUniform = effect.getUniform("Strength");

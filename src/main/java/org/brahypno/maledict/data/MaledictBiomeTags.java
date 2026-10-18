@@ -6,7 +6,7 @@ import net.minecraft.tags.BiomeTags;
 import net.minecraft.data.tags.TagsProvider;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraftforge.common.data.ExistingFileHelper;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.realm.BlightedRealm;
 

@@ -3,23 +3,24 @@ package org.brahypno.maledict.common.attribute;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.registry.MaledictAttributes;
 
 /** Descent scales post-mitigation damage; attribute sources own its value and lifetime. */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class DescentDamageEvents {
     private DescentDamageEvents() {}
 
-    // Run before NORMAL-priority consumers, including the delayed damage pool.
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onLivingDamage(LivingDamageEvent event) {
+    // Lodestone's NORMAL listener rebuilds magic damage from original damage;
+    // run afterwards and before the LOWEST delayed pool consumes the remainder.
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onLivingDamage(LivingDamageEvent.Pre event) {
         LivingEntity victim = event.getEntity();
-        float amount = event.getAmount();
+        float amount = event.getNewDamage();
         if (victim.level().isClientSide() || !Float.isFinite(amount) || amount <= 0.0F) {
             return;
         }
@@ -34,11 +35,11 @@ public final class DescentDamageEvents {
             descent += effectiveDescent(living);
         }
         double multiplier = 1.0D + 3.0D * (1.0D - Math.exp(-descent / 10.0D));
-        event.setAmount((float) Math.min(Float.MAX_VALUE, amount * multiplier));
+        event.setNewDamage((float) Math.min(Float.MAX_VALUE, amount * multiplier));
     }
 
     private static double effectiveDescent(LivingEntity entity) {
-        AttributeInstance attribute = entity.getAttribute(MaledictAttributes.DESCENT.get());
+        AttributeInstance attribute = entity.getAttribute(MaledictAttributes.DESCENT);
         if (attribute == null) {
             return 0.0D;
         }

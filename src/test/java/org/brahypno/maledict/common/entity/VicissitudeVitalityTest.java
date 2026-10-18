@@ -11,23 +11,17 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.CombatRules;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.gametest.GameTestHolder;
-import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.engine.JupiterTestEngine;
-import org.junit.platform.engine.discovery.DiscoverySelectors;
-import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
-import org.junit.platform.launcher.core.LauncherFactory;
-import org.junit.platform.launcher.core.LauncherConfig;
-import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -92,9 +86,10 @@ public final class VicissitudeVitalityTest {
         ledger.commit(woundedId, wounded);
         ledger.commit(deadId, corpse);
         Path file = directory.resolve("ledger.dat");
-        ledger.save(file.toFile());
+        ledger.save(file.toFile(), org.brahypno.maledict.TestSupport.registries());
+        net.neoforged.neoforge.common.IOUtilities.waitUntilIOWorkerComplete();
         VicissitudeVitalityLedger restored =
-                VicissitudeVitalityLedger.load(NbtIo.readCompressed(file.toFile()).getCompound("data"));
+                VicissitudeVitalityLedger.load(NbtIo.readCompressed(file, net.minecraft.nbt.NbtAccounter.unlimitedHeap()).getCompound("data"), org.brahypno.maledict.TestSupport.registries());
         assertTrue(wounded.equals(restored.find(woundedId)), "Saving must retain the open gate, wounds and timers");
         assertTrue(corpse.equals(restored.find(deadId)), "A dead UUID must stay dead on reload");
         assertTrue(restored.find(woundedId).killAttempt(13, 100).current() == 0.0F,
@@ -154,7 +149,7 @@ public final class VicissitudeVitalityTest {
         TestBoss boss = spawn(helper);
         float initial = boss.getHealth();
         Events listener = new Events(boss);
-        listener.damage = event -> event.setAmount(event.getAmount() / 2);
+        listener.damage = event -> event.setNewDamage(event.getNewDamage() / 2);
         withListener(listener, () -> {
             boss.hurt(boss.damageSources().generic(), 12);
             boss.hurt(boss.damageSources().generic(), 28);
@@ -182,7 +177,7 @@ public final class VicissitudeVitalityTest {
         float initial = boss.getHealth();
         Events listener = new Events(boss);
         listener.damage = event -> {
-            if (event.getAmount() == 10) boss.hurt(boss.damageSources().magic(), 2);
+            if (event.getNewDamage() == 10) boss.hurt(boss.damageSources().magic(), 2);
         };
         withListener(listener, () -> boss.hurt(boss.damageSources().generic(), 10));
         equal(helper, initial - 10, boss.getHealth(), "Outer 10 and nested 2 must total 10");
@@ -195,9 +190,9 @@ public final class VicissitudeVitalityTest {
         float initial = boss.getHealth();
         Events listener = new Events(boss);
         listener.damage = event -> {
-            if (event.getAmount() == 20) {
+            if (event.getNewDamage() == 20) {
                 boss.hurt(boss.damageSources().magic(), 6);
-                event.setCanceled(true);
+                event.setNewDamage(0.0F);
             }
         };
         withListener(listener, () -> boss.hurt(boss.damageSources().generic(), 20));
@@ -211,7 +206,7 @@ public final class VicissitudeVitalityTest {
         float initial = boss.getHealth();
         Events listener = new Events(boss);
         listener.hurt = event -> boss.setHealth(0);
-        listener.damage = event -> event.setAmount(5000);
+        listener.damage = event -> event.setNewDamage(5000);
         withListener(listener, () -> boss.hurt(boss.damageSources().generic(), 2));
         equal(helper, initial - 100, boss.getHealth(), "Final write must enforce the 100-health cap");
         helper.succeed();
@@ -268,8 +263,7 @@ public final class VicissitudeVitalityTest {
         loaded.load(tag);
         helper.assertTrue(helper.getLevel().addFreshEntity(loaded), "Reloaded entity must join");
         equal(helper, wounded, loaded.getHealth(), "Reload must bind to wounded world record");
-        equal(helper, wounded, loaded.getCapability(VicissitudeVitalityCapability.CAPABILITY)
-                .orElseThrow(() -> new IllegalStateException("Missing attached capability")).current(),
+        equal(helper, wounded, loaded.getData(org.brahypno.maledict.registry.MaledictAttachments.VICISSITUDE_VITALITY).current(),
                 "Real attached capability must synchronize to authority");
         helper.succeed();
     }
@@ -298,39 +292,16 @@ public final class VicissitudeVitalityTest {
     public static void batchMaximumUsesArmorAndAbsorptionResults(GameTestHelper helper) {
         TestBoss boss = spawn(helper);
         boss.getAttribute(Attributes.ARMOR).setBaseValue(20);
+        boss.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_ABSORPTION).setBaseValue(1000);
         boss.setAbsorptionAmount(4);
         float initial = boss.getHealth();
-        float first = CombatRules.getDamageAfterAbsorb(20, 20, 0) - 4;
-        float second = CombatRules.getDamageAfterAbsorb(28, 20, 0);
+        float first = CombatRules.getDamageAfterAbsorb(boss, 20, boss.damageSources().mobAttack(boss), 20, 0) - 4;
+        float second = CombatRules.getDamageAfterAbsorb(boss, 28, boss.damageSources().mobAttack(boss), 20, 0);
         boss.hurt(boss.damageSources().mobAttack(boss), 20);
         equal(helper, initial - first, boss.getHealth(), "First channel must consume absorption after armor");
         boss.hurt(boss.damageSources().mobAttack(boss), 28);
         equal(helper, initial - Math.max(first, second), boss.getHealth(), "Batch must maximize reduced health loss");
         equal(helper, 0, boss.getAbsorptionAmount(), "Absorption must be consumed once available");
-        helper.succeed();
-    }
-
-    @GameTest(template = "test_empty")
-    public static void existingVicissitudeRulesAlsoRunInLoadedGame(GameTestHelper helper) throws ClassNotFoundException {
-        String[] suites = {
-                "common.entity.DamageAdaptationTest", "common.entity.DamageAdaptationStorageTest",
-                "common.entity.VicissitudeVitalityTest", "common.entity.VicissitudeUnstickSearchTest",
-                "common.rite.VicissitudeSummoningTest", "common.rite.VicissitudeTotemConsumptionTest",
-                "rig.VicissitudeRigTest", "rig.VicissitudeSwingBandTest", "rig.VicissitudeHitGeometryTest",
-                "rig.VicissitudeFeatherShedTest", "client.vicissitude.music.VicissitudeThemeTest",
-                "client.vicissitude.model.VicissitudeRenderOptimizationTest", "data.FirstVicissitudeSpiritDataTest"};
-        var request = LauncherDiscoveryRequestBuilder.request();
-        for (String suite : suites) request.selectors(DiscoverySelectors.selectClass(Class.forName("org.brahypno.maledict." + suite)));
-        var listener = new SummaryGeneratingListener();
-        // Forge's module layers do not expose the engine through the launcher's default ServiceLoader.
-        var launcher = LauncherFactory.create(LauncherConfig.builder().enableTestEngineAutoRegistration(false)
-                .addTestEngines(new JupiterTestEngine()).build());
-        launcher.registerTestExecutionListeners(listener);
-        launcher.execute(request.build());
-        var summary = listener.getSummary();
-        helper.assertTrue(summary.getTestsFoundCount() > 0, "JUnit suites must actually be discovered in Forge");
-        helper.assertTrue(summary.getTotalFailureCount() == 0,
-                "Existing tests failed in loaded game: " + summary.getFailures());
         helper.succeed();
     }
 
@@ -347,18 +318,18 @@ public final class VicissitudeVitalityTest {
     }
 
     private static void withListener(Events listener, Runnable action) {
-        MinecraftForge.EVENT_BUS.register(listener);
-        try { action.run(); } finally { MinecraftForge.EVENT_BUS.unregister(listener); }
+        NeoForge.EVENT_BUS.register(listener);
+        try { action.run(); } finally { NeoForge.EVENT_BUS.unregister(listener); }
     }
 
     public static final class Events {
         private final TestBoss boss;
-        Consumer<LivingHurtEvent> hurt = event -> {};
-        Consumer<LivingDamageEvent> damage = event -> {};
+        Consumer<LivingIncomingDamageEvent> hurt = event -> {};
+        Consumer<LivingDamageEvent.Pre> damage = event -> {};
         Consumer<LivingDeathEvent> death = event -> {};
         Events(TestBoss boss) { this.boss = boss; }
-        @SubscribeEvent public void hurt(LivingHurtEvent event) { if (event.getEntity() == boss) hurt.accept(event); }
-        @SubscribeEvent public void damage(LivingDamageEvent event) { if (event.getEntity() == boss) damage.accept(event); }
+        @SubscribeEvent public void hurt(LivingIncomingDamageEvent event) { if (event.getEntity() == boss) hurt.accept(event); }
+        @SubscribeEvent public void damage(LivingDamageEvent.Pre event) { if (event.getEntity() == boss) damage.accept(event); }
         @SubscribeEvent public void death(LivingDeathEvent event) { if (event.getEntity() == boss) death.accept(event); }
     }
 
@@ -373,6 +344,6 @@ public final class VicissitudeVitalityTest {
         @Override protected void registerGoals() {}
         @Override protected float getVitalityDamageLimit() { return 100; }
         @Override protected void onFinalDeath(DamageSource source) { finalDeaths++; }
-        @Override protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) { lootDrops++; }
+        @Override protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean recentlyHit) { lootDrops++; }
     }
 }

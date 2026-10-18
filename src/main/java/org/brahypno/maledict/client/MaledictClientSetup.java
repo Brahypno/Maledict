@@ -1,19 +1,20 @@
 package org.brahypno.maledict.client;
 
+import net.minecraft.resources.ResourceLocation;
 import com.sammy.malum.common.item.IVoidItem;
 import com.sammy.malum.visual_effects.ScreenParticleEffects;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.EntityRenderersEvent;
-import net.minecraftforge.client.event.RegisterColorHandlersEvent;
-import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
-import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.infrared.InfraredPostProcessor;
 import org.brahypno.maledict.client.realm.BlightedRealmEffects;
@@ -42,7 +43,7 @@ import team.lodestar.lodestone.systems.postprocess.PostProcessHandler;
 import top.theillusivec4.curios.api.client.CuriosRendererRegistry;
 
 /** 客户端 MOD 总线注册入口：实体与图层、饰品、HUD、物品颜色与粒子、后处理器。 */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class MaledictClientSetup {
 
     @SubscribeEvent
@@ -88,7 +89,7 @@ public final class MaledictClientSetup {
     public static void bakeLayers(EntityRenderersEvent.AddLayers event) {
         ageOfEnlightenmentModel = new AgeOfEnlightenmentModel(
                 event.getEntityModels().bakeLayer(AgeOfEnlightenmentModel.LAYER));
-        for (String skin : event.getSkins()) {
+        for (var skin : event.getSkins()) {
             PlayerRenderer renderer = event.getSkin(skin);
             if (renderer != null) {
                 renderer.addLayer(new RavenShoulderLayer(renderer, event.getEntityModels()));
@@ -110,10 +111,10 @@ public final class MaledictClientSetup {
 
     /** 两条延迟池显示叠在原版红心之后、护甲之前，不占新的 HUD 行。 */
     @SubscribeEvent
-    public static void registerGuiOverlays(RegisterGuiOverlaysEvent event) {
-        event.registerAbove(VanillaGuiOverlay.PLAYER_HEALTH.id(), "delayed_vitals_heal",
+    public static void registerGuiOverlays(RegisterGuiLayersEvent event) {
+        event.registerAbove(VanillaGuiLayers.PLAYER_HEALTH, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "delayed_vitals_heal"),
                             DelayedVitalsOverlay.PENDING_HEAL);
-        event.registerAbove(VanillaGuiOverlay.PLAYER_HEALTH.id(), "delayed_vitals_damage",
+        event.registerAbove(VanillaGuiLayers.PLAYER_HEALTH, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "delayed_vitals_damage"),
                             DelayedVitalsOverlay.PENDING_DAMAGE);
     }
 

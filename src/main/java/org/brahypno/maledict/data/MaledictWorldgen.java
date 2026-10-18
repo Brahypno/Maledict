@@ -1,13 +1,13 @@
 package org.brahypno.maledict.data;
 
-import com.sammy.malum.registry.common.block.BlockRegistry;
-import com.sammy.malum.registry.common.worldgen.FeatureRegistry;
+import com.sammy.malum.registry.common.block.MalumBlocks;
+import com.sammy.malum.registry.common.worldgen.MalumFeatures;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
-import net.minecraft.data.worldgen.BootstapContext;
+import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.placement.CavePlacements;
 import net.minecraft.data.worldgen.placement.OrePlacements;
 import net.minecraft.resources.ResourceKey;
@@ -29,7 +29,7 @@ import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConf
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.*;
 import net.minecraft.world.level.levelgen.structure.templatesystem.BlockMatchTest;
-import net.minecraftforge.common.data.DatapackBuiltinEntriesProvider;
+import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.realm.BlightedRealm;
 import org.brahypno.maledict.registry.MaledictBlocks;
@@ -60,20 +60,20 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                 .add(Registries.LEVEL_STEM, MaledictWorldgen::dimension), Set.of(Maledict.MODID));
     }
 
-    private static void features(BootstapContext<ConfiguredFeature<?, ?>> context) {
-        context.register(TREES, new ConfiguredFeature<>(FeatureRegistry.SOULWOOD_TREE.get(), NoneFeatureConfiguration.INSTANCE));
+    private static void features(BootstrapContext<ConfiguredFeature<?, ?>> context) {
+        context.register(TREES, new ConfiguredFeature<>(MalumFeatures.SOULWOOD_TREE.get(), NoneFeatureConfiguration.INSTANCE));
         context.register(GROWTH, new ConfiguredFeature<>(Feature.SIMPLE_BLOCK,
-                new SimpleBlockConfiguration(BlockStateProvider.simple(BlockRegistry.BLIGHTED_GROWTH.get()))));
+                new SimpleBlockConfiguration(BlockStateProvider.simple(MalumBlocks.BLIGHTED_GROWTH.get()))));
         // Match vanilla ORE_GOLD_BURIED; registry holders cannot be dereferenced during this bootstrap.
         context.register(LEAD_ORE, new ConfiguredFeature<>(Feature.ORE, new OreConfiguration(List.of(
-                OreConfiguration.target(new BlockMatchTest(BlockRegistry.TAINTED_ROCK.get()),
+                OreConfiguration.target(new BlockMatchTest(MalumBlocks.TAINTED_ROCK.get()),
                         MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get().defaultBlockState()),
-                OreConfiguration.target(new BlockMatchTest(BlockRegistry.TWISTED_ROCK.get()),
+                OreConfiguration.target(new BlockMatchTest(MalumBlocks.TWISTED_ROCK.get()),
                         MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get().defaultBlockState())),
                 9, 0.5F)));
     }
 
-    private static void placements(BootstapContext<PlacedFeature> context) {
+    private static void placements(BootstrapContext<PlacedFeature> context) {
         var features = context.lookup(Registries.CONFIGURED_FEATURE);
         // Broad noise patches provide woods and open ground inside the initial single biome.
         context.register(PLACED_TREES, new PlacedFeature(features.getOrThrow(TREES), List.of(
@@ -94,7 +94,7 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                         BiomeFilter.biome())));
     }
 
-    private static void biomes(BootstapContext<Biome> context) {
+    private static void biomes(BootstrapContext<Biome> context) {
         var generation = new BiomeGenerationSettings.Builder(context.lookup(Registries.PLACED_FEATURE),
                 context.lookup(Registries.CONFIGURED_CARVER));
         BiomeDefaultFeatures.addDefaultCarversAndLakes(generation);
@@ -133,12 +133,12 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                 .mobSpawnSettings(mobs.build()).generationSettings(generation.build()).build());
     }
 
-    private static void noise(BootstapContext<NoiseGeneratorSettings> context) {
+    private static void noise(BootstrapContext<NoiseGeneratorSettings> context) {
         var vanilla = NoiseGeneratorSettings.overworld(context, false, false);
-        var earth = SurfaceRules.state(BlockRegistry.BLIGHTED_EARTH.get().defaultBlockState());
-        var soil = SurfaceRules.state(BlockRegistry.BLIGHTED_SOIL.get().defaultBlockState());
-        var rock = SurfaceRules.state(BlockRegistry.TAINTED_ROCK.get().defaultBlockState());
-        var deepRock = SurfaceRules.state(BlockRegistry.TWISTED_ROCK.get().defaultBlockState());
+        var earth = SurfaceRules.state(MalumBlocks.BLIGHTED_EARTH.get().defaultBlockState());
+        var soil = SurfaceRules.state(MalumBlocks.BLIGHTED_EARTH.get().defaultBlockState());
+        var rock = SurfaceRules.state(MalumBlocks.TAINTED_ROCK.get().defaultBlockState());
+        var deepRock = SurfaceRules.state(MalumBlocks.TWISTED_ROCK.get().defaultBlockState());
         var surface = SurfaceRules.sequence(
                 SurfaceRules.ifTrue(SurfaceRules.verticalGradient("bedrock_floor", VerticalAnchor.bottom(),
                         VerticalAnchor.aboveBottom(5)), SurfaceRules.state(Blocks.BEDROCK.defaultBlockState())),
@@ -149,18 +149,18 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                 SurfaceRules.ifTrue(SurfaceRules.verticalGradient("deepslate", VerticalAnchor.absolute(0),
                         VerticalAnchor.absolute(8)), deepRock));
         context.register(BlightedRealm.NOISE, new NoiseGeneratorSettings(vanilla.noiseSettings(),
-                BlockRegistry.TAINTED_ROCK.get().defaultBlockState(), vanilla.defaultFluid(), vanilla.noiseRouter(), surface,
+                MalumBlocks.TAINTED_ROCK.get().defaultBlockState(), vanilla.defaultFluid(), vanilla.noiseRouter(), surface,
                 vanilla.spawnTarget(), vanilla.seaLevel(), false, true, true, false));
     }
 
-    private static void dimensionType(BootstapContext<DimensionType> context) {
+    private static void dimensionType(BootstrapContext<DimensionType> context) {
         context.register(BlightedRealm.TYPE, new DimensionType(OptionalLong.of(18000L), true, false,
                 false, false, BlightedRealm.COORDINATE_SCALE, false, false, -64, 384, 384,
                 BlockTags.INFINIBURN_OVERWORLD, BlightedRealm.ID, 0.12F,
                 new DimensionType.MonsterSettings(false, true, UniformInt.of(0, 7), 0)));
     }
 
-    private static void dimension(BootstapContext<LevelStem> context) {
+    private static void dimension(BootstrapContext<LevelStem> context) {
         context.register(BlightedRealm.STEM, new LevelStem(context.lookup(Registries.DIMENSION_TYPE).getOrThrow(BlightedRealm.TYPE),
                 new NoiseBasedChunkGenerator(new FixedBiomeSource(context.lookup(Registries.BIOME).getOrThrow(BlightedRealm.WASTES)),
                         context.lookup(Registries.NOISE_SETTINGS).getOrThrow(BlightedRealm.NOISE))));

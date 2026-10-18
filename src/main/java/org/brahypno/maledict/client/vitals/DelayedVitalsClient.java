@@ -2,10 +2,11 @@ package org.brahypno.maledict.client.vitals;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.event.tick.*;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.vitals.DelayedVitals;
 import org.brahypno.maledict.common.vitals.DelayedVitalsPool;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * {@code LocalPlayer#hurtTo} 把「血量同步值变低」一律当成挨打，顺手点亮受伤动画。见
  * {@link #suppressDrainHurtReaction}。
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class DelayedVitalsClient {
 
     /** 上一帧的血量，用来认出「这一下掉血是我们池子漏的」。 */
@@ -38,7 +39,7 @@ public final class DelayedVitalsClient {
 
     /** 每客户端 tick 推进一步；返回值是要落地的量，这里只关心池子变小。 */
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
+    public static void onClientTick(ClientTickEvent.Post event) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             lastHealth = Float.NaN;
@@ -54,9 +55,6 @@ public final class DelayedVitalsClient {
             suppressDrainHurtReaction(player);
         }
 
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
         lastHealth = health;
 
         if (pool == null || pool.isEmpty()) {

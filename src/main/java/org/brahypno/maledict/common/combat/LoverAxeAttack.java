@@ -17,8 +17,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.event.ForgeEventFactory;
+import net.neoforged.neoforge.common.CommonHooks;
+import net.neoforged.neoforge.event.EventHooks;
 import org.brahypno.maledict.common.item.LoverAxeItem;
 
 /** Single-target axe attack entered through the item's supported left-click hook. */
@@ -34,23 +34,26 @@ public final class LoverAxeAttack {
         float strength = player.getAttackStrengthScale(0.5F);
         float base = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE)
                 * (0.2F + strength * strength * 0.8F);
-        float enchantment = EnchantmentHelper.getDamageBonus(weapon, target.getMobType()) * strength;
+        float enchantment = (EnchantmentHelper.modifyDamage((ServerLevel) player.level(), weapon, target,
+                player.damageSources().playerAttack(player), (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE))
+                - (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE)) * strength;
         try {
             if (base <= 0 && enchantment <= 0) return;
             boolean charged = strength > 0.9F;
             boolean sprinting = charged && player.isSprinting();
             float knockback = (float) player.getAttributeValue(Attributes.ATTACK_KNOCKBACK)
-                    + EnchantmentHelper.getKnockbackBonus(player) + (sprinting ? 1 : 0);
+                    + EnchantmentHelper.modifyKnockback((ServerLevel) player.level(), weapon, target,
+                    player.damageSources().playerAttack(player), 0.0F) + (sprinting ? 1 : 0);
             boolean falling = charged && player.fallDistance > 0 && !player.onGround()
                     && !player.onClimbable() && !player.isInWater()
                     && !player.hasEffect(MobEffects.BLINDNESS) && !player.isPassenger()
                     && !player.isSprinting();
-            var critical = ForgeHooks.getCriticalHit(player, target, falling, falling ? 1.5F : 1.0F);
-            float damage = (critical == null ? base : base * critical.getDamageModifier()) + enchantment;
+            var critical = CommonHooks.fireCriticalHit(player, target, falling, falling ? 1.5F : 1.0F);
+            float damage = (critical.isCriticalHit() ? base * critical.getDamageMultiplier() : base) + enchantment;
 
-            int fireAspect = EnchantmentHelper.getFireAspect(player);
+            int fireAspect = org.brahypno.maledict.registry.MaledictEnchantments.level(weapon, net.minecraft.world.item.enchantment.Enchantments.FIRE_ASPECT);
             boolean ignited = fireAspect > 0 && !target.isOnFire();
-            if (ignited) target.setSecondsOnFire(1);
+            if (ignited) target.igniteForSeconds(1);
             float initialHealth = target.getHealth();
             Vec3 initialMotion = target.getDeltaMovement();
             if (!LoverAxeItem.attack(player, target, player.damageSources().playerAttack(player), damage)) {
@@ -71,23 +74,22 @@ public final class LoverAxeAttack {
                 target.setDeltaMovement(initialMotion);
             }
             if (sprinting) sound(player, SoundEvents.PLAYER_ATTACK_KNOCKBACK);
-            sound(player, critical != null ? SoundEvents.PLAYER_ATTACK_CRIT
+            sound(player, critical.isCriticalHit() ? SoundEvents.PLAYER_ATTACK_CRIT
                     : charged ? SoundEvents.PLAYER_ATTACK_STRONG : SoundEvents.PLAYER_ATTACK_WEAK);
-            if (critical != null) player.crit(target);
+            if (critical.isCriticalHit()) player.crit(target);
             if (enchantment > 0) player.magicCrit(target);
 
             player.setLastHurtMob(target);
-            EnchantmentHelper.doPostHurtEffects(target, player);
-            EnchantmentHelper.doPostDamageEffects(player, target);
+            EnchantmentHelper.doPostAttackEffects((ServerLevel) player.level(), target, player.damageSources().playerAttack(player));
             ItemStack beforeWear = weapon.copy();
-            weapon.hurtEnemy(target, player);
+            if (weapon.hurtEnemy(target, player)) weapon.postHurtEnemy(target, player);
             if (weapon.isEmpty()) {
-                ForgeEventFactory.onPlayerDestroyItem(player, beforeWear, InteractionHand.MAIN_HAND);
+                EventHooks.onPlayerDestroyItem(player, beforeWear, InteractionHand.MAIN_HAND);
                 player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
             }
             float loss = initialHealth - target.getHealth();
             player.awardStat(Stats.DAMAGE_DEALT, Math.round(loss * 10));
-            if (fireAspect > 0) target.setSecondsOnFire(fireAspect * 4);
+            if (fireAspect > 0) target.igniteForSeconds(fireAspect * 4);
             if (player.level() instanceof ServerLevel level && loss > 2) {
                 level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, target.getX(), target.getY(0.5), target.getZ(),
                         (int) (loss * 0.5F), 0.1, 0, 0.1, 0.2);

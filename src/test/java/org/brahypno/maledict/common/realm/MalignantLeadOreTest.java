@@ -1,7 +1,7 @@
 package org.brahypno.maledict.common.realm;
 
-import com.sammy.malum.registry.common.block.BlockRegistry;
-import com.sammy.malum.registry.common.item.ItemRegistry;
+import com.sammy.malum.registry.common.block.MalumBlocks;
+import com.sammy.malum.registry.common.item.MalumItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
@@ -21,9 +21,9 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.util.FakePlayerFactory;
-import net.minecraftforge.gametest.GameTestHolder;
-import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.data.MaledictWorldgen;
 import org.brahypno.maledict.registry.MaledictBlocks;
 import org.brahypno.maledict.registry.MaledictItems;
@@ -52,7 +52,7 @@ public final class MalignantLeadOreTest {
                 "The replacement retains vanilla buried-gold size and air-exposure restrictions");
         for (boolean deep : new boolean[]{false, true}) {
             BlockPos center = new BlockPos(4600, deep ? -24 : 24, 4600);
-            var host = deep ? BlockRegistry.TWISTED_ROCK.get() : BlockRegistry.TAINTED_ROCK.get();
+            var host = deep ? MalumBlocks.TWISTED_ROCK.get() : MalumBlocks.TAINTED_ROCK.get();
             var ore = deep ? MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get() : MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get();
             for (var pos : BlockPos.betweenClosed(center.offset(-5, -5, -5), center.offset(5, 5, 5))) {
                 realm.setBlockAndUpdate(pos, host.defaultBlockState());
@@ -72,9 +72,9 @@ public final class MalignantLeadOreTest {
         var level = helper.getLevel();
         var pick = new ItemStack(Items.IRON_PICKAXE);
         var silk = pick.copy();
-        silk.enchant(Enchantments.SILK_TOUCH, 1);
+        silk.enchant(org.brahypno.maledict.TestSupport.enchantment(Enchantments.SILK_TOUCH), 1);
         var fortune = pick.copy();
-        fortune.enchant(Enchantments.BLOCK_FORTUNE, 3);
+        fortune.enchant(org.brahypno.maledict.TestSupport.enchantment(Enchantments.FORTUNE), 3);
         for (Block ore : new Block[]{MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get()}) {
             var state = ore.defaultBlockState();
             helper.assertTrue(pick.isCorrectToolForDrops(state) && !new ItemStack(Items.STONE_PICKAXE).isCorrectToolForDrops(state),
@@ -88,7 +88,7 @@ public final class MalignantLeadOreTest {
             var params = new LootParams.Builder(level).withParameter(LootContextParams.BLOCK_STATE, state)
                     .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(helper.absolutePos(BlockPos.ZERO)))
                     .withParameter(LootContextParams.TOOL, fortune).create(LootContextParamSets.BLOCK);
-            var table = level.getServer().getLootData().getLootTable(ore.getLootTable());
+            var table = level.getServer().reloadableRegistries().getLootTable(ore.getLootTable());
             int max = 0;
             for (long seed = 1; seed <= 16; seed++) {
                 var fortunateDrops = table.getRandomItems(params, seed);
@@ -100,15 +100,15 @@ public final class MalignantLeadOreTest {
             helper.assertTrue(max > 1, "Fortune must be able to increase the fragment yield");
         }
         var recipe = (CraftingRecipe) level.getRecipeManager().byKey(
-                ResourceLocation.fromNamespaceAndPath("maledict", "malignant_lead_from_fragments")).orElseThrow();
+                ResourceLocation.fromNamespaceAndPath("maledict", "malignant_lead_from_fragments")).orElseThrow().value();
         var grid = new TransientCraftingContainer(FakePlayerFactory.getMinecraft(level).inventoryMenu, 3, 3);
         for (int slot = 0; slot < 8; slot++) grid.setItem(slot, new ItemStack(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()));
-        helper.assertTrue(recipe.matches(grid, level), "Eight fragments craft without a required arrangement");
-        var result = recipe.assemble(grid, level.registryAccess());
-        helper.assertTrue(result.is(ItemRegistry.MALIGNANT_LEAD.get()) && result.getCount() == 1,
+        helper.assertTrue(recipe.matches(grid.asCraftInput(), level), "Eight fragments craft without a required arrangement");
+        var result = recipe.assemble(grid.asCraftInput(), level.registryAccess());
+        helper.assertTrue(result.is(MalumItems.MALIGNANT_LEAD.get()) && result.getCount() == 1,
                 "The result is one existing Malum malignant lead, not a second resource");
         grid.setItem(7, ItemStack.EMPTY);
-        helper.assertTrue(!recipe.matches(grid, level), "Seven fragments must not craft a lead");
+        helper.assertTrue(!recipe.matches(grid.asCraftInput(), level), "Seven fragments must not craft a lead");
         helper.succeed();
     }
 }

@@ -1,14 +1,14 @@
 package org.brahypno.maledict.client.tooltip;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.registry.MaledictItems;
 
 /** Item-to-artwork registrations on the client MOD bus. */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class MaledictTooltipBackgrounds {
     public static final TooltipBackground AGE_OF_ENLIGHTENMENT = new TooltipBackground(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID,

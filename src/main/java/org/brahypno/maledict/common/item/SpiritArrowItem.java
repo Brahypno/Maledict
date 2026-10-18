@@ -1,7 +1,7 @@
 package org.brahypno.maledict.common.item;
 
-import com.sammy.malum.common.item.ISpiritAffiliatedItem;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
+import com.sammy.malum.common.item.spirit.ISpiritAffiliatedItem;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.ArrowItem;
@@ -18,19 +18,19 @@ public class SpiritArrowItem extends ArrowItem implements ISpiritAffiliatedItem 
     }
 
     @Override
-    public AbstractArrow createArrow(Level level, ItemStack stack, LivingEntity shooter) {
+    public AbstractArrow createArrow(Level level, ItemStack stack, LivingEntity shooter, ItemStack weapon) {
         SpiritArrowEntity arrow = new SpiritArrowEntity(level, shooter, arrowType);
         if (arrowType == SpiritArrowType.EARTHEN) {
             arrow.setBaseDamage(arrow.getBaseDamage() + 1.5D);
         }
         if (arrowType == SpiritArrowType.INFERNAL) {
-            arrow.setSecondsOnFire(100);
+            arrow.igniteForSeconds(100);
         }
         return arrow;
     }
 
     @Override
-    public MalumSpiritType getDefiningSpiritType() {
+    public com.sammy.malum.core.systems.spirit.type.SpiritLike getDefiningSpiritType() {
         return arrowType.getSpiritType();
     }
 }

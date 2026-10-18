@@ -17,8 +17,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.network.NetworkHooks;
+import net.neoforged.neoforge.event.EventHooks;
+import net.minecraft.server.level.ServerEntity;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import org.brahypno.maledict.common.curio.HangmanFoolProjectiles;
 import org.brahypno.maledict.common.curio.HangmanFoolRelay;
 import org.brahypno.maledict.config.MaledictConfig;
@@ -55,8 +56,8 @@ public final class HangmanTrapEntity extends Entity {
     }
 
     @Override
-    protected void defineSynchedData() {
-        entityData.define(FACE, Direction.UP.get3DDataValue());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(FACE, Direction.UP.get3DDataValue());
     }
 
     public Direction face() {
@@ -113,7 +114,7 @@ public final class HangmanTrapEntity extends Entity {
         }
         EntityHitResult hit = new EntityHitResult(target);
         try {
-            if (!ForgeEventFactory.onProjectileImpact(projectile, hit)) {
+            if (!EventHooks.onProjectileImpact(projectile, hit)) {
                 ((ProjectileAccess) projectile).maledict$onHit(hit);
             }
         } finally {
@@ -143,7 +144,7 @@ public final class HangmanTrapEntity extends Entity {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity serverEntity) {
+        return new ClientboundAddEntityPacket(this, serverEntity);
     }
 }

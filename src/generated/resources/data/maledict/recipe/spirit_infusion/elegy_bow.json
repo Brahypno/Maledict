@@ -1,0 +1,39 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 11,
+      "item": "malum:null_slate"
+    },
+    {
+      "count": 11,
+      "item": "malum:void_salts"
+    },
+    {
+      "count": 2,
+      "item": "malum:malignant_pewter_ingot"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "maledict:remembrance_bow"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:elegy_bow"
+  },
+  "spirits": [
+    {
+      "type": "malum:wicked",
+      "count": 11
+    },
+    {
+      "type": "malum:eldritch",
+      "count": 11
+    },
+    {
+      "type": "malum:infernal",
+      "count": 11
+    }
+  ]
+}

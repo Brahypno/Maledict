@@ -1,7 +1,9 @@
 package org.brahypno.maledict.common.item;
 
+import static com.sammy.malum.core.helpers.ComponentHelper.*;
+import net.minecraft.core.Holder;
 import com.sammy.malum.common.item.curiosities.curios.runes.AbstractRuneCurioItem;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -54,8 +56,8 @@ public final class RuneOfMelancholiaItem extends AbstractRuneCurioItem {
     /** 没有来源的伤害（摔落、火、毒）只有类型这一半，用空串占位，键里照样不会和别的撞上。 */
     private static final String NO_SOURCE = "";
 
-    public RuneOfMelancholiaItem(Item.Properties properties, MalumSpiritType spiritType) {
-        super(properties, spiritType);
+    public RuneOfMelancholiaItem(Item.Properties properties, com.sammy.malum.core.systems.registry.SpiritHolder<SpiritArcanaType> spiritType) {
+        super(properties, spiritType, MalumTrinketType.RUNE);
     }
 
     @Override
@@ -69,7 +71,7 @@ public final class RuneOfMelancholiaItem extends AbstractRuneCurioItem {
         if (wearer == null) {
             return null;
         }
-        ICuriosItemHandler handler = CuriosApi.getCuriosInventory(wearer).resolve().orElse(null);
+        ICuriosItemHandler handler = CuriosApi.getCuriosInventory(wearer).orElse(null);
         if (handler == null) {
             return null;
         }
@@ -113,13 +115,13 @@ public final class RuneOfMelancholiaItem extends AbstractRuneCurioItem {
     public static void clearAdaptation(LivingEntity wearer) {
         ItemStack rune = equipped(wearer);
         if (rune != null) {
-            rune.removeTagKey(ADAPTATION_TAG);
+            org.brahypno.maledict.common.item.MaledictItemData.update(rune, data -> data.remove(ADAPTATION_TAG));
         }
     }
 
     private static DamageAdaptation read(ItemStack rune) {
         DamageAdaptation adaptation = new DamageAdaptation();
-        CompoundTag tag = rune.getTagElement(ADAPTATION_TAG);
+        CompoundTag tag = org.brahypno.maledict.common.item.MaledictItemData.read(rune).getCompound(ADAPTATION_TAG);
         if (tag == null) {
             return adaptation;
         }
@@ -140,7 +142,7 @@ public final class RuneOfMelancholiaItem extends AbstractRuneCurioItem {
     private static void write(ItemStack rune, DamageAdaptation adaptation) {
         List<String> window = adaptation.snapshot();
         if (window.isEmpty()) {
-            rune.removeTagKey(ADAPTATION_TAG);
+            org.brahypno.maledict.common.item.MaledictItemData.update(rune, data -> data.remove(ADAPTATION_TAG));
             return;
         }
 
@@ -158,6 +160,6 @@ public final class RuneOfMelancholiaItem extends AbstractRuneCurioItem {
         CompoundTag tag = new CompoundTag();
         tag.put(WINDOW_TAG, messages);
         tag.put(HITS_TAG, hits);
-        rune.addTagElement(ADAPTATION_TAG, tag);
+        org.brahypno.maledict.common.item.MaledictItemData.update(rune, data -> data.put(ADAPTATION_TAG, tag));
     }
 }

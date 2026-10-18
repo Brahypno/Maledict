@@ -1,10 +1,11 @@
 package org.brahypno.maledict.common.item;
 
+import static com.sammy.malum.core.helpers.ComponentHelper.*;
+import net.minecraft.core.Holder;
 import com.sammy.malum.common.item.curiosities.curios.runes.AbstractRuneCurioItem;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
-import com.sammy.malum.registry.common.ParticleEffectTypeRegistry;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
-import com.sammy.malum.visual_effects.networked.data.ColorEffectData;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
+import com.sammy.malum.registry.common.MalumParticleEffectTypes;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -37,8 +38,8 @@ public final class PackRuneItem extends AbstractRuneCurioItem {
 
     private final String tooltipSuffix;
 
-    public PackRuneItem(Item.Properties properties, MalumSpiritType spiritType, String tooltipSuffix) {
-        super(properties, spiritType);
+    public PackRuneItem(Item.Properties properties, com.sammy.malum.core.systems.registry.SpiritHolder<SpiritArcanaType> spiritType, String tooltipSuffix) {
+        super(properties, spiritType, MalumTrinketType.RUNE);
         this.tooltipSuffix = tooltipSuffix;
     }
 
@@ -76,8 +77,7 @@ public final class PackRuneItem extends AbstractRuneCurioItem {
 
     private static void bless(LivingEntity beast) {
         if (!beast.hasEffect(MobEffects.DAMAGE_BOOST)) {
-            ParticleEffectTypeRegistry.HEXING_SMOKE.createEntityEffect(beast,
-                    new ColorEffectData(SpiritTypeRegistry.WICKED_SPIRIT.getPrimaryColor()));
+            MalumParticleEffectTypes.ENTITY_RITE_EFFECT.createEffect(beast).color(MalumSpiritTypes.WICKED_SPIRIT.getPrimaryColor()).spawn((net.minecraft.server.level.ServerLevel) beast.level());
         }
         beast.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, BOON_DURATION_TICKS,
                 BOON_AMPLIFIER, true, true));

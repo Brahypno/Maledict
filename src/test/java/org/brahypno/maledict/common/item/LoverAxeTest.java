@@ -15,16 +15,16 @@ import net.minecraft.world.entity.monster.Spider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.gametest.GameTestHolder;
-import net.minecraftforge.gametest.PrefixGameTestTemplate;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.effect.MobEffects;
 import org.brahypno.maledict.registry.MaledictAttributes;
 import org.brahypno.maledict.registry.MaledictItems;
@@ -38,16 +38,14 @@ public final class LoverAxeTest {
     public static void acceptsTheSameEnchantmentsAsAnOrdinaryAxe(GameTestHelper helper) {
         ItemStack axe = new ItemStack(MaledictItems.LOVER_AXE.get());
         ItemStack ordinary = new ItemStack(Items.NETHERITE_AXE);
-        for (var enchantment : ForgeRegistries.ENCHANTMENTS) {
-            if (enchantment.canEnchant(ordinary)) {
-                helper.assertTrue(enchantment.canEnchant(axe),
-                        "Missing axe/anvil enchantment: " + ForgeRegistries.ENCHANTMENTS.getKey(enchantment));
-            }
-            if (enchantment.canApplyAtEnchantingTable(ordinary)) {
-                helper.assertTrue(enchantment.canApplyAtEnchantingTable(axe),
-                        "Missing axe/table enchantment: " + ForgeRegistries.ENCHANTMENTS.getKey(enchantment));
-            }
-        }
+        helper.getLevel().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                .holders().forEach(holder -> {
+                    var enchantment = holder.value();
+                    if (enchantment.canEnchant(ordinary)) helper.assertTrue(enchantment.canEnchant(axe),
+                            "Missing axe/anvil enchantment: " + holder.key().location());
+                    if (ordinary.supportsEnchantment(holder)) helper.assertTrue(axe.supportsEnchantment(holder),
+                            "Missing axe/table enchantment: " + holder.key().location());
+                });
         helper.succeed();
     }
 
@@ -55,7 +53,7 @@ public final class LoverAxeTest {
     public static void leftClickAppliesSharpnessAndDurabilityAndResetsCooldown(GameTestHelper helper) {
         ChargedPlayer player = player(helper);
         ItemStack weapon = player.getMainHandItem();
-        weapon.enchant(Enchantments.SHARPNESS, 5);
+        weapon.enchant(org.brahypno.maledict.TestSupport.enchantment(Enchantments.SHARPNESS), 5);
         Cow victim = cow(helper);
         player.cooldownReset = false;
         player.attack(victim);
@@ -65,7 +63,7 @@ public final class LoverAxeTest {
         equal(helper, 2, weapon.getDamageValue(), "Axe melee consumes normal durability");
         helper.assertTrue(player.cooldownReset, "Left-click replacement resets attack cooldown");
         ChargedPlayer falling = player(helper);
-        falling.getMainHandItem().enchant(Enchantments.SHARPNESS, 5);
+        falling.getMainHandItem().enchant(org.brahypno.maledict.TestSupport.enchantment(Enchantments.SHARPNESS), 5);
         falling.fallDistance = 1;
         falling.setOnGround(false);
         Cow criticalTarget = cow(helper);
@@ -77,7 +75,7 @@ public final class LoverAxeTest {
     @GameTest(template = "test_empty", batch = "lover_axe")
     public static void baneOfArthropodsRetainsItsDamageAndPostHitEffect(GameTestHelper helper) {
         ChargedPlayer player = player(helper);
-        player.getMainHandItem().enchant(Enchantments.BANE_OF_ARTHROPODS, 2);
+        player.getMainHandItem().enchant(org.brahypno.maledict.TestSupport.enchantment(Enchantments.BANE_OF_ARTHROPODS), 2);
         Spider target = new Spider(EntityType.SPIDER, helper.getLevel()) {
             @Override
             public boolean fireImmune() { return true; }
@@ -97,11 +95,11 @@ public final class LoverAxeTest {
         ChargedPlayer player = player(helper);
         Cow target = cow(helper);
         CancelPlayerAttack cancel = new CancelPlayerAttack(target);
-        MinecraftForge.EVENT_BUS.register(cancel);
+        NeoForge.EVENT_BUS.register(cancel);
         try {
             player.attack(target);
         } finally {
-            MinecraftForge.EVENT_BUS.unregister(cancel);
+            NeoForge.EVENT_BUS.unregister(cancel);
         }
         equal(helper, 100, target.getHealth(), "Forge player attack cancellation prevents the weapon attack");
         equal(helper, 100, target.getMaxHealth(), "Canceled left-click does not wound");
@@ -137,11 +135,11 @@ public final class LoverAxeTest {
         ChargedPlayer player = player(helper);
         Cow victim = cow(helper);
         CancelAttack cancel = new CancelAttack(victim);
-        MinecraftForge.EVENT_BUS.register(cancel);
+        NeoForge.EVENT_BUS.register(cancel);
         try {
             player.attack(victim);
         } finally {
-            MinecraftForge.EVENT_BUS.unregister(cancel);
+            NeoForge.EVENT_BUS.unregister(cancel);
         }
         helper.assertTrue(victim.getHealth() < 100, "Medium probe bypasses canceled normal damage");
         equal(helper, 98, victim.getMaxHealth(), "Probe fallback wounds only once");
@@ -164,22 +162,21 @@ public final class LoverAxeTest {
     @GameTest(template = "test_empty", batch = "lover_axe")
     public static void eitherHandGrowsOnceThenBaseDecaysWithoutBakingModifiers(GameTestHelper helper) {
         Cow holder = cow(helper);
-        var attribute = holder.getAttribute(MaledictAttributes.DESCENT.get());
-        attribute.addTransientModifier(new AttributeModifier(UUID.randomUUID(), "External Descent", 5,
-                AttributeModifier.Operation.ADDITION));
+        var attribute = holder.getAttribute(MaledictAttributes.DESCENT);
+        attribute.addTransientModifier(new AttributeModifier(org.brahypno.maledict.TestSupport.modifierId(UUID.randomUUID()), 5, AttributeModifier.Operation.ADD_VALUE));
         holder.tickCount = 20;
         holder.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(MaledictItems.LOVER_AXE.get()));
-        LoverAxeEvents.tick(new LivingEvent.LivingTickEvent(holder));
+        LoverAxeEvents.tick(new net.neoforged.neoforge.event.tick.EntityTickEvent.Pre(holder));
         equal(helper, 0.1, attribute.getBaseValue(), "Offhand grows base");
         holder.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(MaledictItems.LOVER_AXE.get()));
         holder.tickCount = 40;
-        LoverAxeEvents.tick(new LivingEvent.LivingTickEvent(holder));
+        LoverAxeEvents.tick(new net.neoforged.neoforge.event.tick.EntityTickEvent.Pre(holder));
         equal(helper, 0.2, attribute.getBaseValue(), "Dual wield does not double growth");
         holder.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         holder.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
         for (int i = 3; i <= 6; i++) {
             holder.tickCount = i * 20;
-            LoverAxeEvents.tick(new LivingEvent.LivingTickEvent(holder));
+            LoverAxeEvents.tick(new net.neoforged.neoforge.event.tick.EntityTickEvent.Pre(holder));
         }
         equal(helper, 0, attribute.getBaseValue(), "Decay stops at zero");
         equal(helper, 5, attribute.getValue(), "External modifier remains independent");
@@ -204,7 +201,7 @@ public final class LoverAxeTest {
         private final LivingEntity victim;
         CancelAttack(LivingEntity victim) { this.victim = victim; }
         @SubscribeEvent
-        public void cancel(LivingAttackEvent event) {
+        public void cancel(LivingIncomingDamageEvent event) {
             if (event.getEntity() == victim) event.setCanceled(true);
         }
     }
@@ -234,12 +231,13 @@ public final class LoverAxeTest {
         ChargedPlayer player = new ChargedPlayer(helper);
         ItemStack axe = new ItemStack(MaledictItems.LOVER_AXE.get());
         player.setItemSlot(EquipmentSlot.MAINHAND, axe);
-        player.getAttributes().addTransientAttributeModifiers(axe.getAttributeModifiers(EquipmentSlot.MAINHAND));
+        axe.forEachModifier(EquipmentSlot.MAINHAND, (attribute, modifier) ->
+                player.getAttribute(attribute).addTransientModifier(modifier));
         return player;
     }
 
     private static double descent(LivingEntity entity) {
-        return entity.getAttribute(MaledictAttributes.DESCENT.get()).getBaseValue();
+        return entity.getAttribute(MaledictAttributes.DESCENT).getBaseValue();
     }
 
     private static void equal(GameTestHelper helper, double expected, double actual, String message) {

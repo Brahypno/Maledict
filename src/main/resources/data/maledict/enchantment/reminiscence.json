@@ -1,0 +1,23 @@
+{
+  "description": {
+    "translate": "enchantment.maledict.reminiscence"
+  },
+  "supported_items": [
+    "maledict:remembrance_bow",
+    "maledict:elegy_bow"
+  ],
+  "weight": 2,
+  "max_level": 3,
+  "min_cost": {
+    "base": 10,
+    "per_level_above_first": 10
+  },
+  "max_cost": {
+    "base": 25,
+    "per_level_above_first": 10
+  },
+  "anvil_cost": 4,
+  "slots": [
+    "mainhand"
+  ]
+}

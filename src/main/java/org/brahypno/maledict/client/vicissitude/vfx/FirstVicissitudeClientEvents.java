@@ -4,13 +4,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.VicissitudeEffectPacket;
 import team.lodestar.lodestone.handlers.ScreenshakeHandler;
 import team.lodestar.lodestone.systems.easing.Easing;
-import team.lodestar.lodestone.systems.screenshake.PositionedScreenshakeInstance;
+import team.lodestar.lodestone.systems.screenshake.ScreenshakeBuilder;
 import team.lodestar.lodestone.systems.screenshake.ScreenshakeInstance;
 
 import java.util.ArrayDeque;
@@ -101,14 +101,10 @@ public final class FirstVicissitudeClientEvents {
         if (scale <= 0.0F) {
             return;
         }
-        ScreenshakeInstance instance = new PositionedScreenshakeInstance(
-                // The elevated portal already sits outside the ordinary eight-block combat range.
-                // Lodestone halves near-field strength when facing away, then cubes it and
-                // ignores values below 0.1. Combat peaks must exceed 0.93 to remain visible there.
-                duration, position, summoning ? 32.0F : SHAKE_FULL_STRENGTH_DISTANCE,
-                summoning ? 64.0F : SHAKE_MAX_DISTANCE, Easing.QUAD_IN)
-                .setIntensity(intensity * scale * (summoning ? 0.65F : 0.85F), intensity * scale, 0)
-                .setEasing(Easing.QUAD_IN, Easing.QUAD_OUT);
+        ScreenshakeInstance instance = ScreenshakeBuilder.create().setDuration(duration)
+                .placedAt(position, summoning ? 64.0F : SHAKE_MAX_DISTANCE, Easing.QUAD_IN)
+                .setStrength(intensity * scale * (summoning ? 0.65F : 0.85F), intensity * scale, 0)
+                .setEasing(Easing.QUAD_IN, Easing.QUAD_OUT).build();
         ScreenshakeHandler.addScreenshake(instance);
     }
 }

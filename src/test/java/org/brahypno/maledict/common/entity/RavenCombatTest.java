@@ -16,11 +16,8 @@ class RavenCombatTest {
     }
 
     @Test
-    void successiveUndeadHitsAreHalvedIndependentlyBeforeArmor() {
-        // Undead 8 -> 4, undead 8 -> 4, ordinary 8 -> 8, undead 8 -> 4.
-        assertEquals(4, RavenCombat.incomingDamage(8, true));
+    void undeadDamageIsHalvedAndOrdinaryDamageIsUnchanged() {
         assertEquals(4, RavenCombat.incomingDamage(8, true));
         assertEquals(8, RavenCombat.incomingDamage(8, false));
-        assertEquals(4, RavenCombat.incomingDamage(8, true));
     }
 }

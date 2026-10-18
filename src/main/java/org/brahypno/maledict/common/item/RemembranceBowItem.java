@@ -45,7 +45,7 @@ public final class RemembranceBowItem extends BowItem {
             return;
         }
 
-        int charge = getUseDuration(bow) - remainingUseDuration;
+        int charge = getUseDuration(bow, livingEntity) - remainingUseDuration;
         float power = getPowerForTime(Math.round(charge * getDrawSpeedMultiplier(bow)));
         if (power < 1.0F) {
             return;
@@ -68,8 +68,8 @@ public final class RemembranceBowItem extends BowItem {
 
         boolean hasInfiniteArrows = hasInfiniteArrows(player, bow);
         ItemStack ammunition = player.getProjectile(bow);
-        int charge = getUseDuration(bow) - timeLeft;
-        charge = net.minecraftforge.event.ForgeEventFactory.onArrowLoose(bow, level, player, charge, !ammunition.isEmpty() || hasInfiniteArrows);
+        int charge = getUseDuration(bow, livingEntity) - timeLeft;
+        charge = net.neoforged.neoforge.event.EventHooks.onArrowLoose(bow, level, player, charge, !ammunition.isEmpty() || hasInfiniteArrows);
         if (charge < 0 || ammunition.isEmpty() && !hasInfiniteArrows){
             return;
         }
@@ -90,9 +90,9 @@ public final class RemembranceBowItem extends BowItem {
             ArrowItem arrowItem = ammunition.getItem() instanceof ArrowItem
                                   ? (ArrowItem) ammunition.getItem()
                                   : (ArrowItem) Items.ARROW;
-            AbstractArrow arrow = customArrow(arrowItem.createArrow(level, ammunition, player));
+            AbstractArrow arrow = customArrow(arrowItem.createArrow(level, ammunition, player, bow), ammunition, bow);
             RemembranceBowProjectileEffect.markForSoulExposure(arrow);
-            int reminiscenceLevel = EnchantmentHelper.getItemEnchantmentLevel(MaledictEnchantments.REMINISCENCE.get(), bow);
+            int reminiscenceLevel = org.brahypno.maledict.registry.MaledictEnchantments.level(bow, MaledictEnchantments.REMINISCENCE);
             RemembranceBowProjectileEffect.markForPhasing(arrow, 2.0D + reminiscenceLevel);
             arrow.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F,
                                     power * 3.0F * ARROW_SPEED_MULTIPLIER, 1.0F);
@@ -100,21 +100,8 @@ public final class RemembranceBowItem extends BowItem {
                 arrow.setCritArrow(true);
             }
 
-            int powerLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.POWER_ARROWS, bow);
-            if (powerLevel > 0){
-                arrow.setBaseDamage(arrow.getBaseDamage() + powerLevel * 0.5D + 0.5D);
-            }
-
-            int punchLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.PUNCH_ARROWS, bow);
-            if (punchLevel > 0){
-                arrow.setKnockback(punchLevel);
-            }
-
-            if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FLAMING_ARROWS, bow) > 0){
-                arrow.setSecondsOnFire(100);
-            }
-
-            bow.hurtAndBreak(1, player, owner -> owner.broadcastBreakEvent(player.getUsedItemHand()));
+            // The arrow retains its firing weapon; vanilla now applies Power, Punch and Flame.
+            bow.hurtAndBreak(1, player, LivingEntity.getSlotForHand(player.getUsedItemHand()));
             if (infiniteAmmunition || player.getAbilities().instabuild
                                       && (ammunition.is(Items.SPECTRAL_ARROW) || ammunition.is(Items.TIPPED_ARROW))){
                 arrow.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
@@ -140,7 +127,7 @@ public final class RemembranceBowItem extends BowItem {
 
     private static boolean hasInfiniteArrows(Player player, ItemStack bow) {
         return player.getAbilities().instabuild
-               || EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, bow) > 0;
+               || org.brahypno.maledict.registry.MaledictEnchantments.level(bow, Enchantments.INFINITY) > 0;
     }
 
     public int getDefaultProjectileRange() {return 20;}

@@ -2,20 +2,20 @@ package org.brahypno.maledict.client.tooltip;
 
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderTooltipEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModLoader;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderTooltipEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModLoader;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import org.brahypno.maledict.Maledict;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /** Pure client renderer; combinations are supplied through RegisterTooltipBackgroundsEvent. */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class TooltipBackgrounds {
     private static List<RegisterTooltipBackgroundsEvent.Registration> backgrounds = List.of();
 
@@ -56,7 +56,7 @@ public final class TooltipBackgrounds {
         return null;
     }
 
-    @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+    @EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
     public static final class ClientRegistration {
         private ClientRegistration() {}
 
@@ -64,7 +64,7 @@ public final class TooltipBackgrounds {
         public static void onClientSetup(FMLClientSetupEvent event) {
             event.enqueueWork(() -> {
                 var registration = new RegisterTooltipBackgroundsEvent();
-                ModLoader.get().postEvent(registration);
+                ModLoader.postEvent(registration);
                 backgrounds = registration.registrations();
             });
         }

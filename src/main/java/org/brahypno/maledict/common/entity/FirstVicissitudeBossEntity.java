@@ -1,12 +1,12 @@
 package org.brahypno.maledict.common.entity;
 
 import com.sammy.malum.common.block.curiosities.totem.TotemBaseBlockEntity;
-import com.sammy.malum.core.helpers.ParticleHelper;
-import com.sammy.malum.registry.common.DamageTypeRegistry;
-import com.sammy.malum.registry.common.ParticleEffectTypeRegistry;
-import com.sammy.malum.registry.common.SoundRegistry;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
-import com.sammy.malum.registry.common.item.ItemRegistry;
+import com.sammy.malum.visual_effects.networked.MalumNetworkedWeaponParticleEffectType;
+import com.sammy.malum.registry.common.MalumDamageTypes;
+import com.sammy.malum.registry.common.MalumParticleEffectTypes;
+import com.sammy.malum.registry.common.MalumSoundEvents;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
+import com.sammy.malum.registry.common.item.MalumItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -41,8 +41,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.common.ForgeMod;
+import net.neoforged.neoforge.event.EventHooks;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.curio.VicissitudeCurioLedger;
@@ -187,8 +187,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     /**
      * Fixed id so the difficulty health modifier is rewritten instead of stacking.
      */
-    private static final UUID MAX_HEALTH_MODIFIER_ID =
-            UUID.fromString("2c4b1d5a-9f34-4b1c-9a37-6d1f4c0a51e2");
+    private static final ResourceLocation MAX_HEALTH_MODIFIER_ID = ResourceLocation.parse("maledict:vicissitude_difficulty_health");
     /**
      * Base id for baked weapon modifiers; each slot gets the next least significant value.
      */
@@ -320,7 +319,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         double delta = bossDifficulty.maxHealth() - VicissitudeBossEntity.BASE_MAX_HEALTH;
         if (delta != 0.0D){
             attribute.addPermanentModifier(new AttributeModifier(MAX_HEALTH_MODIFIER_ID,
-                                                                 "Vicissitude difficulty health", delta, AttributeModifier.Operation.ADDITION));
+                                                                 delta, AttributeModifier.Operation.ADD_VALUE));
         }
     }
 
@@ -336,68 +335,55 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             }
         }
         appliedWeaponAttributes.clear();
-        int slot = 0;
-        for (var entry : createWeaponForDifficulty(bossDifficulty)
-                .getAttributeModifiers(EquipmentSlot.MAINHAND).entries()) {
-            UUID id = weaponModifierId(slot++);
-            AttributeInstance instance = getAttribute(entry.getKey());
-            if (instance == null){
-                continue;
+        int[] slot = {0};
+        createWeaponForDifficulty(bossDifficulty).forEachModifier(EquipmentSlot.MAINHAND, (attribute, source) -> {
+            ResourceLocation id = ResourceLocation.parse("maledict:vicissitude_weapon/" + slot[0]++);
+            AttributeInstance instance = getAttribute(attribute);
+            if (instance != null) {
+                instance.removeModifier(id);
+                instance.addPermanentModifier(new AttributeModifier(id, source.amount(), source.operation()));
+                appliedWeaponAttributes.add(new AppliedAttribute(attribute, id));
             }
-            instance.removeModifier(id);
-            AttributeModifier source = entry.getValue();
-            instance.addPermanentModifier(new AttributeModifier(id,
-                                                                "Vicissitude weapon " + entry.getKey().getDescriptionId(), source.getAmount(),
-                                                                source.getOperation()));
-            appliedWeaponAttributes.add(new AppliedAttribute(entry.getKey(), id));
-        }
-    }
-
-    private static UUID weaponModifierId(int slot) {
-        return new UUID(WEAPON_ATTRIBUTE_ID.getMostSignificantBits(),
-                        WEAPON_ATTRIBUTE_ID.getLeastSignificantBits() + slot);
+        });
     }
 
     private void suppressHeldItemAttributes() {
-        ItemStack held = getMainHandItem();
-        if (held.isEmpty()){
-            return;
-        }
-        getAttributes().removeAttributeModifiers(
-                held.getAttributeModifiers(EquipmentSlot.MAINHAND));
+        getMainHandItem().forEachModifier(EquipmentSlot.MAINHAND, (attribute, modifier) -> {
+            AttributeInstance instance = getAttribute(attribute);
+            if (instance != null) instance.removeModifier(modifier.id());
+        });
     }
 
-    private record AppliedAttribute(Attribute attribute, UUID id) {
-    }
+    private record AppliedAttribute(net.minecraft.core.Holder<Attribute> attribute, ResourceLocation id) {}
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        entityData.define(DATA_STAGE, (byte) VicissitudeBossStage.DORMANT.ordinal());
-        entityData.define(DATA_SUMMON_START, -1L);
-        entityData.define(DATA_SUMMON_LANDING, BlockPos.ZERO);
-        entityData.define(DATA_SUMMON_RISE, 0.0F);
-        entityData.define(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
-        entityData.define(DATA_ACTIVE_SIDE, (byte) 0);
-        entityData.define(DATA_WEAPON_STATE, (byte) 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_STAGE, (byte) VicissitudeBossStage.DORMANT.ordinal());
+        builder.define(DATA_SUMMON_START, -1L);
+        builder.define(DATA_SUMMON_LANDING, BlockPos.ZERO);
+        builder.define(DATA_SUMMON_RISE, 0.0F);
+        builder.define(DATA_ACTION, (byte) VicissitudeRig.Action.NONE.ordinal());
+        builder.define(DATA_ACTIVE_SIDE, (byte) 0);
+        builder.define(DATA_WEAPON_STATE, (byte) 0);
         // defineSynchedData runs before field initializers, so the tier starts as SIMPLE (0).
-        entityData.define(DATA_WEAPON_TIER, (byte) 0);
-        entityData.define(DATA_ACTION_SEQUENCE, 0);
-        entityData.define(DATA_ACTION_START, 0L);
-        entityData.define(DATA_HURT_TICKS, 0);
-        entityData.define(DATA_TRANSITION_TICKS, 0);
-        entityData.define(DATA_PHASE_TWO_REACHED, false);
-        entityData.define(DATA_WING_FOLD, 0.0F);
-        entityData.define(DATA_CORE_GLOW, 0.55F);
-        entityData.define(DATA_GROUND_X, 0.0F);
-        entityData.define(DATA_GROUND_Y, 0.0F);
-        entityData.define(DATA_GROUND_Z, 0.0F);
-        entityData.define(DATA_GROUND_INNER, 0.0F);
-        entityData.define(DATA_GROUND_OUTER, 0.0F);
-        entityData.define(DATA_GROUND_GAP_CENTER, 0.0F);
-        entityData.define(DATA_GROUND_GAP_WIDTH, 0.0F);
-        entityData.define(DATA_GROUND_START, 0L);
-        entityData.define(DATA_GROUND_DURATION, 0);
+        builder.define(DATA_WEAPON_TIER, (byte) 0);
+        builder.define(DATA_ACTION_SEQUENCE, 0);
+        builder.define(DATA_ACTION_START, 0L);
+        builder.define(DATA_HURT_TICKS, 0);
+        builder.define(DATA_TRANSITION_TICKS, 0);
+        builder.define(DATA_PHASE_TWO_REACHED, false);
+        builder.define(DATA_WING_FOLD, 0.0F);
+        builder.define(DATA_CORE_GLOW, 0.55F);
+        builder.define(DATA_GROUND_X, 0.0F);
+        builder.define(DATA_GROUND_Y, 0.0F);
+        builder.define(DATA_GROUND_Z, 0.0F);
+        builder.define(DATA_GROUND_INNER, 0.0F);
+        builder.define(DATA_GROUND_OUTER, 0.0F);
+        builder.define(DATA_GROUND_GAP_CENTER, 0.0F);
+        builder.define(DATA_GROUND_GAP_WIDTH, 0.0F);
+        builder.define(DATA_GROUND_START, 0L);
+        builder.define(DATA_GROUND_DURATION, 0);
     }
 
     @Override
@@ -436,7 +422,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     /**
      * Must run before the entity joins the world: the health pool is captured in
-     * {@link #onAddedToWorld()} and locks the difficulty.
+     * {@link #onAddedToLevel()} and locks the difficulty.
      */
     public void setSpawnPhase(BossDifficulty difficulty, BossSpawnPhase phase) {
         setBossDifficulty(difficulty);
@@ -594,7 +580,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     @Override
-    public void onAddedToWorld() {
+    public void onAddedToLevel() {
         if (!level().isClientSide){
             // The base class captures the health pool here, so the modifier must be in place first.
             applyDifficultyAttributes();
@@ -604,7 +590,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 applyWeaponAttributes();
             }
         }
-        super.onAddedToWorld();
+        super.onAddedToLevel();
         if (!level().isClientSide && Double.isNaN(idleHoverY)){
             idleHoverY = Math.min(level().getMaxBuildHeight() - getBbHeight() - 1.0D,
                                   getY() + HOVER_HEIGHT);
@@ -723,13 +709,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         refreshPose();
         if (ticks == 1){
             sendEvent(VicissitudeEffectPacket.EVENT_SUMMON_OPEN, getSummoningPortal());
-            playSound(SoundRegistry.SOUL_SHATTER.get(), 1.8F, 0.45F);
+            playSound(MalumSoundEvents.SOUL_SHATTER.get(), 1.8F, 0.45F);
         }else if (ticks == VicissitudeSummoning.OPEN_TICKS){
             sendEvent(VicissitudeEffectPacket.EVENT_SUMMON_EMERGE, getSummoningPortal());
             playSound(net.minecraft.sounds.SoundEvents.END_PORTAL_SPAWN, 1.4F, 0.6F);
         }else if (ticks == VicissitudeSummoning.ARRIVAL_TICK){
             sendEvent(VicissitudeEffectPacket.EVENT_SUMMON_ARRIVE, position());
-            playSound(SoundRegistry.SOUL_SHATTER.get(), 2.0F, 0.65F);
+            playSound(MalumSoundEvents.SOUL_SHATTER.get(), 2.0F, 0.65F);
             idleHoverY = getY();
         }
     }
@@ -1072,7 +1058,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             sendEvent(VicissitudeEffectPacket.EVENT_TRANSITION_FLASH, position());
         }
         if (transitionTicks == 30){
-            SoundHelper.playSound(this, SoundRegistry.SOUL_SHATTER.get(), 1.2F,
+            SoundHelper.playSound(this, MalumSoundEvents.SOUL_SHATTER.get(), 1.2F,
                                   RandomHelper.randomBetween(level().getRandom(), 0.7F, 0.9F));
         }
         if (transitionTicks == 45){
@@ -1629,7 +1615,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return false;
         }
         return hurtParticipant(victim,
-                               DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this), damage);
+                               DamageTypeHelper.create(level(), MalumDamageTypes.SCYTHE_SWEEP, this), damage);
     }
 
     /**
@@ -1651,18 +1637,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void spawnSlashEffect(boolean vertical) {
-        ParticleHelper.SlashParticleEffectBuilder particles = ParticleHelper
-                .createSlashingEffect(ParticleEffectTypeRegistry.SCYTHE_SLASH)
-                .setSpiritType(SpiritTypeRegistry.UMBRAL_SPIRIT);
+        MalumNetworkedWeaponParticleEffectType.MalumWeaponParticleEffectBuilder<?> particles = MalumParticleEffectTypes.SCYTHE_SLASH.createEffect()
+                .color(MalumSpiritTypes.UMBRAL_SPIRIT);
         if (vertical){
-            particles.setVerticalSlashAngle();
+            particles.verticalSlashRotation();
         }else {
-            particles.setSlashAngle(getYRot());
+            particles.slashRotation(getYRot());
         }
-        particles.setMirrored(actionLeft);
+        particles.mirrored(actionLeft);
         Vec3 direction = getLookAngle().multiply(1.0D, 0.0D, 1.0D);
-        particles.spawnSlashingParticle(level(), position().add(0.0D, getBbHeight() * 0.6D, 0.0D),
-                                        direction);
+        particles.at(position().add(0.0D, getBbHeight() * 0.6D, 0.0D)).aimedAt(direction).spawn((ServerLevel) level());
     }
 
     private void tickDash(int ticks) {
@@ -1725,7 +1709,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         }
         scytheToken = scythe.getUUID();
         setWeaponState(2);
-        SoundHelper.playSound(this, SoundRegistry.SCYTHE_THROW.get(), 1.1F,
+        SoundHelper.playSound(this, MalumSoundEvents.SCYTHE_THROW.get(), 1.1F,
                               RandomHelper.randomBetween(level().getRandom(), 0.8F, 1.0F));
     }
 
@@ -1741,7 +1725,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         // A catch must not erase a ground tell or truncate a volley already in progress.
         scytheRecoveryPending = true;
         if (caught){
-            SoundHelper.playSound(this, SoundRegistry.SCYTHE_CATCH.get(), 1.0F,
+            SoundHelper.playSound(this, MalumSoundEvents.SCYTHE_CATCH.get(), 1.0F,
                                   RandomHelper.randomBetween(level().getRandom(), 0.9F, 1.1F));
             sendEvent(VicissitudeEffectPacket.EVENT_SCYTHE_CATCH, handAnchorWorldPosition());
         }
@@ -1766,16 +1750,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      * Per-difficulty loot table; {@code Mob#getLootTable} is final, so this is the only override point.
      */
     @Override
-    protected ResourceLocation getDefaultLootTable() {
-        return bossDifficulty.lootTable();
+    protected net.minecraft.resources.ResourceKey<net.minecraft.world.level.storage.loot.LootTable> getDefaultLootTable() {
+        return net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, bossDifficulty.lootTable());
     }
 
     /**
      * Extra Age of Enlightenment drop, gated on {@code recentlyHit}: a player hit it in the last 100 ticks.
      */
     @Override
-    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
-        super.dropCustomDeathLoot(source, looting, recentlyHit);
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, source, recentlyHit);
         if (!recentlyHit){
             return;
         }
@@ -1794,10 +1778,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     @Override
-    public void onRemovedFromWorld() {
+    public void onRemovedFromLevel() {
         // Unload/transfer keeps boss ownership in its saved NBT; genuine deletion settles it.
         if (getRemovalReason() != null && getRemovalReason().shouldDestroy()) settleConfiscatedCurios();
-        super.onRemovedFromWorld();
+        super.onRemovedFromLevel();
     }
 
     private void settleConfiscatedCurios() {
@@ -1953,7 +1937,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         List<VicissitudeRig.SegmentVolume> volumes = segmentVolumes();
         if (source.getDirectEntity() instanceof Player player) {
             Vec3 from = player.getEyePosition();
-            double reach = player.getAttributeValue(ForgeMod.ENTITY_REACH.get());
+            double reach = player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
             Vec3 to = from.add(player.getLookAngle().scale(reach));
             return VicissitudeRig.firstSegmentAlongRay(volumes, rigPoint(from), rigPoint(to));
         }
@@ -2097,7 +2081,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void playSwingSound(boolean left) {
-        SoundHelper.playSound(this, SoundRegistry.SCYTHE_SWEEP.get(), 0.9F,
+        SoundHelper.playSound(this, MalumSoundEvents.SCYTHE_SWEEP.get(), 0.9F,
                               RandomHelper.randomBetween(level().getRandom(), 0.9F, 1.2F));
     }
 
@@ -2420,7 +2404,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Override
     public boolean canBeAffected(MobEffectInstance effect) {
-        return effect.getEffect().getCategory() != MobEffectCategory.HARMFUL
+        return effect.getEffect().value().getCategory() != MobEffectCategory.HARMFUL
                && super.canBeAffected(effect);
     }
 
@@ -2828,7 +2812,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     private void destroyBlockingBlocks() {
-        if (!ForgeEventFactory.getMobGriefingEvent(level(), this)){
+        if (!EventHooks.canEntityGrief(level(), this)){
             return;
         }
         BlockPos center = blockPosition();
@@ -2840,7 +2824,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                     BlockState state = level().getBlockState(position);
                     if (!state.isAir()
                         && state.canEntityDestroy(level(), position, this)
-                        && ForgeEventFactory.onEntityDestroyBlock(this, position, state)){
+                        && EventHooks.onEntityDestroyBlock(this, position, state)){
                         destroyed = level().destroyBlock(position, true, this) || destroyed;
                     }
                 }
@@ -2883,10 +2867,10 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     static ItemStack createWeaponForDifficulty(BossDifficulty difficulty) {
         if (difficulty == BossDifficulty.SIMPLE){
-            return new ItemStack(ItemRegistry.SOUL_STAINED_STEEL_SCYTHE.get());
+            return new ItemStack(MalumItems.SOUL_STAINED_STEEL_SCYTHE.get());
         }
         if (difficulty == BossDifficulty.DIFFICULT){
-            return new ItemStack(ItemRegistry.EDGE_OF_DELIVERANCE.get());
+            return new ItemStack(MalumItems.EDGE_OF_DELIVERANCE.get());
         }
         ItemStack weapon = new ItemStack(MaledictItems.INCURSUS_BLADE.get());
         IncursusBladeItem.initializeStats(weapon);
@@ -2971,7 +2955,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         super.readAdditionalSaveData(tag);
         if (tag.contains("RiteSummonStart", Tag.TAG_LONG)){
             entityData.set(DATA_SUMMON_START, tag.getLong("RiteSummonStart"));
-            entityData.set(DATA_SUMMON_LANDING, NbtUtils.readBlockPos(tag.getCompound("RiteSummonLanding")));
+            entityData.set(DATA_SUMMON_LANDING, NbtUtils.readBlockPos(tag, "RiteSummonLanding").orElse(BlockPos.ZERO));
             entityData.set(DATA_SUMMON_RISE, tag.getFloat("RiteSummonRise"));
             if (tag.contains("RiteSummonTotem", Tag.TAG_COMPOUND)
                 && level() instanceof ServerLevel serverLevel){
@@ -3093,7 +3077,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                 CompoundTag item = new CompoundTag();
                 item.putString("Slot", curio.slotIdentifier());
                 item.putInt("Index", curio.slotIndex());
-                item.put("Stack", curio.stack().save(new CompoundTag()));
+                item.put("Stack", curio.stack().save(registryAccess()));
                 items.add(item);
             }
             player.put("Items", items);
@@ -3112,7 +3096,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             Deque<VicissitudeCurioLedger.Entry> items = new ArrayDeque<>();
             for (Tag itemTag : player.getList("Items", Tag.TAG_COMPOUND)) {
                 CompoundTag item = (CompoundTag) itemTag;
-                ItemStack stack = ItemStack.of(item.getCompound("Stack"));
+                ItemStack stack = ItemStack.parseOptional(registryAccess(), item.getCompound("Stack"));
                 if (!stack.isEmpty()){
                     items.addLast(new VicissitudeCurioLedger.Entry(
                             item.getString("Slot"), item.getInt("Index"), stack));

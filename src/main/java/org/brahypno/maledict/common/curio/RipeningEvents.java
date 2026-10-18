@@ -2,9 +2,9 @@ package org.brahypno.maledict.common.curio;
 
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.event.entity.player.PlayerXpEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.effect.RipeningBonus;
 import org.brahypno.maledict.registry.MaledictMobEffects;
@@ -14,7 +14,7 @@ import org.brahypno.maledict.registry.MaledictMobEffects;
  *
  * <p>只改这一次要发的量（{@code setAmount}）；发完再补一笔会再次触发本事件，自己乘自己。
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class RipeningEvents {
 
     @SubscribeEvent
@@ -28,7 +28,7 @@ public final class RipeningEvents {
             return;
         }
 
-        MobEffectInstance ripening = player.getEffect(MaledictMobEffects.RIPENING.get());
+        MobEffectInstance ripening = player.getEffect(MaledictMobEffects.RIPENING);
         if (ripening == null) {
             return;
         }

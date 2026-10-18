@@ -4,9 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.sammy.malum.client.RenderUtils;
 import com.sammy.malum.client.SpiritBasedWorldVFXBuilder;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import com.sammy.malum.registry.client.MalumRenderTypeTokens;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -16,7 +16,7 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.brahypno.maledict.common.entity.VicissitudeScytheProjectileEntity;
-import team.lodestar.lodestone.registry.client.LodestoneRenderTypeRegistry;
+import team.lodestar.lodestone.registry.client.LodestoneRenderTypes;
 import team.lodestar.lodestone.systems.rendering.LodestoneRenderType;
 import team.lodestar.lodestone.systems.rendering.VFXBuilders;
 
@@ -25,8 +25,8 @@ import team.lodestar.lodestone.systems.rendering.VFXBuilders;
  */
 public final class VicissitudeScytheRenderer
         extends EntityRenderer<VicissitudeScytheProjectileEntity> {
-    private static final LodestoneRenderType TRAIL_TYPE = LodestoneRenderTypeRegistry
-            .ADDITIVE_TEXTURE_TRIANGLE.applyAndCache(MalumRenderTypeTokens.CONCENTRATED_TRAIL);
+    private static final LodestoneRenderType TRAIL_TYPE = LodestoneRenderTypes
+            .ADDITIVE_TEXTURE_TRIANGLE.apply(MalumRenderTypeTokens.CONCENTRATED_TRAIL).getRenderType();
 
     public VicissitudeScytheRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -47,7 +47,7 @@ public final class VicissitudeScytheRenderer
                 buffers, entity.level(), entity.getId());
         poseStack.popPose();
 
-        MalumSpiritType spirit = SpiritTypeRegistry.UMBRAL_SPIRIT;
+        var spirit = MalumSpiritTypes.UMBRAL_SPIRIT;
         VFXBuilders.WorldVFXBuilder trail = SpiritBasedWorldVFXBuilder.create(spirit)
                 .setRenderType(TRAIL_TYPE);
         RenderUtils.renderEntityTrail(poseStack, trail, entity.trail, entity,

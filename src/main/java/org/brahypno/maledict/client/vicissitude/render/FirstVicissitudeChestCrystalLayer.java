@@ -2,7 +2,7 @@ package org.brahypno.maledict.client.vicissitude.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.sammy.malum.registry.common.item.ItemRegistry;
+import com.sammy.malum.registry.common.item.MalumItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;
@@ -68,7 +68,7 @@ final class FirstVicissitudeChestCrystalLayer
         stack.scale(.5F, .5F, .5F);
         stack.translate(-.5, -.5, -.5);
         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(
-                Block.byItem(ItemRegistry.BLOCK_OF_CTHONIC_GOLD.get()).defaultBlockState(),
+                Block.byItem(MalumItems.BLOCK_OF_CTHONIC_GOLD.get()).defaultBlockState(),
                 stack, buffers, light, OverlayTexture.NO_OVERLAY);
         stack.popPose();
     }

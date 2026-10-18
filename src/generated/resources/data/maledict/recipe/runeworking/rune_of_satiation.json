@@ -1,0 +1,16 @@
+{
+  "type": "malum:runeworking",
+  "input": {
+    "count": 4,
+    "item": "malum:runewood_log"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:rune_of_satiation"
+  },
+  "secondaryInput": {
+    "count": 32,
+    "item": "malum:sacred_spirit"
+  },
+  "soundType": "malum:runic_workbench_shapes_wooden_rune"
+}

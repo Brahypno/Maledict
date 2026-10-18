@@ -55,10 +55,10 @@ public final class VicissitudeCurioLedger extends SavedData {
         }
         ServerLevel overworld = level.getServer().overworld();
         return overworld.getDataStorage().computeIfAbsent(
-                VicissitudeCurioLedger::load, VicissitudeCurioLedger::new, FILE_ID);
+                new SavedData.Factory<>(VicissitudeCurioLedger::new, VicissitudeCurioLedger::load, null), FILE_ID);
     }
 
-    public static VicissitudeCurioLedger load(CompoundTag tag) {
+    public static VicissitudeCurioLedger load(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
         VicissitudeCurioLedger ledger = new VicissitudeCurioLedger();
         for (Tag playerTag : tag.getList("Players", Tag.TAG_COMPOUND)) {
             CompoundTag compound = (CompoundTag) playerTag;
@@ -68,7 +68,7 @@ public final class VicissitudeCurioLedger extends SavedData {
             List<Entry> entries = new ArrayList<>();
             for (Tag itemTag : compound.getList("Items", Tag.TAG_COMPOUND)) {
                 CompoundTag item = (CompoundTag) itemTag;
-                ItemStack stack = ItemStack.of(item.getCompound("Stack"));
+                ItemStack stack = ItemStack.parseOptional(registries, item.getCompound("Stack"));
                 if (!stack.isEmpty()) {
                     ResourceLocation dimension = item.contains("ReturnDimension", Tag.TAG_STRING)
                             ? ResourceLocation.tryParse(item.getString("ReturnDimension")) : null;
@@ -87,7 +87,7 @@ public final class VicissitudeCurioLedger extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundTag save(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
         ListTag players = new ListTag();
         for (Map.Entry<UUID, List<Entry>> entry : pending.entrySet()) {
             if (entry.getValue().isEmpty()) {
@@ -100,7 +100,7 @@ public final class VicissitudeCurioLedger extends SavedData {
                 CompoundTag item = new CompoundTag();
                 item.putString("Slot", curio.slotIdentifier());
                 item.putInt("Index", curio.slotIndex());
-                item.put("Stack", curio.stack().save(new CompoundTag()));
+                item.put("Stack", curio.stack().save(registries));
                 if (curio.encounter() != null) item.putUUID("Encounter", curio.encounter());
                 if (curio.returnSite() != null) {
                     item.putString("ReturnDimension", curio.returnSite().dimension().toString());

@@ -3,11 +3,11 @@ package org.brahypno.maledict.common.curio;
 import com.mojang.authlib.GameProfile;
 import com.sammy.malum.common.block.curiosities.spirit_altar.SpiritAltarBlockEntity;
 import com.sammy.malum.common.block.curiosities.weeping_well.VoidConduitBlockEntity;
-import com.sammy.malum.common.recipe.FavorOfTheVoidRecipe;
+import com.sammy.malum.common.recipe.VoidFavorRecipe;
 import com.sammy.malum.common.recipe.SpiritInfusionRecipe;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
-import com.sammy.malum.registry.common.block.BlockRegistry;
-import com.sammy.malum.registry.common.item.ItemRegistry;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
+import com.sammy.malum.registry.common.block.MalumBlocks;
+import com.sammy.malum.registry.common.item.MalumItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -25,17 +25,17 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingUseTotemEvent;
-import net.minecraftforge.event.entity.living.ShieldBlockEvent;
-import net.minecraftforge.gametest.GameTestHolder;
-import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEvent;
+import net.neoforged.neoforge.event.entity.living.LivingUseTotemEvent;
+import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.common.item.HangmanFoolItem;
 import org.brahypno.maledict.registry.MaledictItems;
-import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
+import team.lodestar.lodestone.registry.common.LodestoneAttributes;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurio;
@@ -51,46 +51,49 @@ public final class HangmanFoolTest {
     @GameTest(template = "test_empty", batch = "hangman_fool")
     public static void infusionConsumesStageOneAndEmitsStageTwoNbt(GameTestHelper helper) {
         var level = helper.getLevel();
-        var recipe = SpiritInfusionRecipe.getRecipe(level,
-                candidate -> candidate.getId().toString().equals("maledict:spirit_infusion/hangman_fool_stage_2"));
+        var recipe = (SpiritInfusionRecipe) level.getRecipeManager().byKey(
+                net.minecraft.resources.ResourceLocation.parse("maledict:spirit_infusion/hangman_fool_stage_2"))
+                .map(net.minecraft.world.item.crafting.RecipeHolder::value).orElseThrow();
         helper.assertTrue(recipe != null, "The stage-two infusion recipe must load");
         ItemStack input = HangmanFoolItem.create(1);
-        helper.assertTrue(recipe.doesInputMatch(input), "The infusion must accept the ordinary stage-one curio");
+        helper.assertTrue(recipe.input.test(input), "The infusion must accept the ordinary stage-one curio");
         for (int stage = 0; stage <= HangmanFoolItem.MAX_STAGE; stage++) {
             if (stage != 1) {
-                helper.assertTrue(!recipe.doesInputMatch(HangmanFoolItem.create(stage)),
+                helper.assertTrue(!recipe.input.test(HangmanFoolItem.create(stage)),
                         "Stage " + stage + " must not skip progression or be downgraded");
             }
         }
         ItemStack named = input.copy();
-        named.setHoverName(Component.literal("named stage one"));
-        helper.assertTrue(!recipe.doesInputMatch(named), "The strict stage-one input must reject additional NBT");
-        helper.assertTrue(!recipe.useNbtFromInput && HangmanFoolItem.stage(recipe.output) == 2,
+        named.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal("named stage one"));
+        helper.assertTrue(!recipe.input.test(named), "The strict stage-one input must reject additional NBT");
+        helper.assertTrue(!recipe.carryOverComponentData && HangmanFoolItem.stage(recipe.result) == 2,
                 "Stage-two output NBT must not be replaced by the stage-one input tag");
 
         BlockPos relativePos = new BlockPos(1, 1, 1);
-        helper.setBlock(relativePos, BlockRegistry.SPIRIT_ALTAR.get());
+        helper.setBlock(relativePos, MalumBlocks.SPIRIT_ALTAR.get());
         BlockPos pos = helper.absolutePos(relativePos);
         var altar = (SpiritAltarBlockEntity) level.getBlockEntity(pos);
         altar.inventory.setStackInSlot(0, input.copy());
-        altar.extrasInventory.setStackInSlot(0, new ItemStack(ItemRegistry.MNEMONIC_FRAGMENT.get(), 6));
-        altar.extrasInventory.setStackInSlot(1, new ItemStack(ItemRegistry.AURIC_EMBERS.get(), 6));
-        altar.extrasInventory.setStackInSlot(2, new ItemStack(ItemRegistry.VOID_SALTS.get(), 6));
+        altar.extrasInventory.setStackInSlot(0, new ItemStack(MalumItems.MNEMONIC_FRAGMENT.get(), 6));
+        altar.extrasInventory.setStackInSlot(1, new ItemStack(MalumItems.AURIC_EMBERS.get(), 6));
+        altar.extrasInventory.setStackInSlot(2, new ItemStack(MalumItems.VOID_SALTS.get(), 6));
         altar.extrasInventory.setStackInSlot(3, new ItemStack(MaledictItems.AGE_OF_ENLIGHTENMENT.get()));
-        altar.spiritInventory.setStackInSlot(0, new ItemStack(SpiritTypeRegistry.ELDRITCH_SPIRIT.spiritShard.get(), 16));
-        altar.spiritInventory.setStackInSlot(1, new ItemStack(SpiritTypeRegistry.ARCANE_SPIRIT.spiritShard.get(), 8));
+        altar.spiritInventory.setStackInSlot(0, new ItemStack(MalumSpiritTypes.ELDRITCH_SPIRIT.getSpiritShard(), 16));
+        altar.spiritInventory.setStackInSlot(1, new ItemStack(MalumSpiritTypes.ARCANE_SPIRIT.getSpiritShard(), 8));
         altar.recipe = recipe;
-        altar.craft();
+        altar.craft(level);
 
         var outputs = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(2),
                 entity -> entity.getItem().is(MaledictItems.HANGMAN_FOOL.get()));
         helper.assertTrue(outputs.size() == 1 && outputs.get(0).getItem().getCount() == 1
                 && HangmanFoolItem.stage(outputs.get(0).getItem()) == 2,
                 "The actual altar must emit one curio carrying both stage markers");
-        helper.assertTrue(altar.inventory.isEmpty() && altar.extrasInventory.isEmpty() && altar.spiritInventory.isEmpty(),
-                "The altar must consume the stage-one input, materials and spirits");
-        outputs.get(0).getItem().setHoverName(Component.literal("my stage-two curio"));
-        helper.assertTrue(!recipe.output.hasCustomHoverName(), "The produced item must own its NBT");
+        helper.assertTrue(altar.inventory.getStackInSlot(0).isEmpty() && altar.extrasInventory.isEmpty()
+                        && altar.spiritInventory.nonEmptyItemStacks.stream().allMatch(ItemStack::isEmpty),
+                "The altar must consume the stage-one input, materials and spirits: input=" + altar.inventory.getStackInSlot(0)
+                        + ", extras=" + altar.extrasInventory.nonEmptyItemStacks + ", spirits=" + altar.spiritInventory.nonEmptyItemStacks);
+        outputs.get(0).getItem().set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal("my stage-two curio"));
+        helper.assertTrue(!recipe.result.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME), "The produced item must own its NBT");
         helper.succeed();
     }
 
@@ -98,26 +101,26 @@ public final class HangmanFoolTest {
     public static void weepingWellUpgradesOnlyUntaggedStageZero(GameTestHelper helper) {
         var level = helper.getLevel();
         ItemStack input = new ItemStack(MaledictItems.HANGMAN_FOOL.get());
-        var recipe = FavorOfTheVoidRecipe.getRecipe(level, input);
-        helper.assertTrue(recipe != null && recipe.getId().toString().equals(
-                "maledict:void_favor/hangman_fool_stage_1"), "The loaded well recipe must accept an untagged stage zero");
-        helper.assertTrue(HangmanFoolItem.stage(recipe.output) == 1 && recipe.output.getCount() == 1,
+        var recipe = voidRecipe(level, input);
+        helper.assertTrue(recipe != null && level.getRecipeManager().byKey(net.minecraft.resources.ResourceLocation.parse(
+                "maledict:void_favor/hangman_fool_stage_1")).orElseThrow().value() == recipe, "The loaded well recipe must accept an untagged stage zero");
+        helper.assertTrue(HangmanFoolItem.stage(recipe.result) == 1 && recipe.result.getCount() == 1,
                 "The loaded recipe must keep its stage-one output NBT");
         for (int stage = 1; stage <= HangmanFoolItem.MAX_STAGE; stage++) {
-            helper.assertTrue(FavorOfTheVoidRecipe.getRecipe(level, HangmanFoolItem.create(stage)) == null,
+            helper.assertTrue(voidRecipe(level, HangmanFoolItem.create(stage)) == null,
                     "An existing stage " + stage + " must not be converted again or downgraded");
         }
         ItemStack named = input.copy();
-        named.setHoverName(Component.literal("named stage zero"));
-        helper.assertTrue(FavorOfTheVoidRecipe.getRecipe(level, named) == null,
+        named.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal("named stage zero"));
+        helper.assertTrue(voidRecipe(level, named) == null,
                 "A named stage zero must not match the strict input");
         ItemStack enchanted = input.copy();
-        enchanted.enchant(Enchantments.UNBREAKING, 2);
-        helper.assertTrue(FavorOfTheVoidRecipe.getRecipe(level, enchanted) == null,
+        enchanted.enchant(org.brahypno.maledict.TestSupport.enchantment(Enchantments.UNBREAKING), 2);
+        helper.assertTrue(voidRecipe(level, enchanted) == null,
                 "An enchanted stage zero must not match the strict input");
 
         BlockPos pos = helper.absolutePos(new BlockPos(1, 2, 1));
-        var well = new VoidConduitBlockEntity(pos, BlockRegistry.VOID_CONDUIT.get().defaultBlockState());
+        var well = new VoidConduitBlockEntity(pos, MalumBlocks.VOID_CONDUIT.get().defaultBlockState());
         well.setLevel(level);
         well.spitOutItem(input);
         var outputs = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(1),
@@ -125,12 +128,12 @@ public final class HangmanFoolTest {
         helper.assertTrue(outputs.size() == 1 && outputs.get(0).getItem().getCount() == 1
                 && HangmanFoolItem.stage(outputs.get(0).getItem()) == 1,
                 "The actual well conversion must emit one stage-one curio with its NBT");
-        outputs.get(0).getItem().setHoverName(Component.literal("my upgraded curio"));
-        helper.assertTrue(!recipe.output.hasCustomHoverName(),
+        outputs.get(0).getItem().set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal("my upgraded curio"));
+        helper.assertTrue(!recipe.result.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME),
                 "Changing an output's NBT must not mutate the recipe template");
         well.spitOutItem(input.copy());
         var nextOutputs = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(1),
-                entity -> entity.getItem().is(MaledictItems.HANGMAN_FOOL.get()) && !entity.getItem().hasCustomHoverName());
+                entity -> entity.getItem().is(MaledictItems.HANGMAN_FOOL.get()) && !entity.getItem().has(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
         helper.assertTrue(nextOutputs.size() == 1 && HangmanFoolItem.stage(nextOutputs.get(0).getItem()) == 1,
                 "The next conversion must emit an independent, unnamed stage-one curio");
         helper.succeed();
@@ -139,20 +142,24 @@ public final class HangmanFoolTest {
     @GameTest(template = "test_empty", batch = "hangman_fool")
     public static void stageSequencePreservesNbtAndRequiresEveryPreviousMarker(GameTestHelper helper) {
         ItemStack stack = new ItemStack(MaledictItems.HANGMAN_FOOL.get());
-        helper.assertTrue(stack.getTag() == null && HangmanFoolItem.stage(stack) == 0,
+        helper.assertTrue(!stack.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA) && HangmanFoolItem.stage(stack) == 0,
                 "A completely untagged item must already be stage zero");
-        stack.setHoverName(Component.literal("preserved"));
-        stack.enchant(Enchantments.UNBREAKING, 2);
+        stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal("preserved"));
+        stack.enchant(org.brahypno.maledict.TestSupport.enchantment(Enchantments.UNBREAKING), 2);
         helper.assertTrue(HangmanFoolItem.stage(stack) == 0, "No stage NBT means stage zero");
         for (int stage = 1; stage <= 4; stage++) {
             helper.assertTrue(HangmanFoolItem.advance(stack), "Upgrade must add the next marker");
-            stack = ItemStack.of(stack.save(new CompoundTag()));
+            stack = ItemStack.parse(org.brahypno.maledict.TestSupport.registries(), stack.save(org.brahypno.maledict.TestSupport.registries())).orElseThrow();
             helper.assertTrue(HangmanFoolItem.stage(stack) == stage, "Stage sequence must be 0 -> 1 -> 2 -> 3 -> 4");
             helper.assertTrue(stack.getHoverName().getString().equals("preserved")
-                    && stack.getEnchantmentLevel(Enchantments.UNBREAKING) == 2, "Upgrade must preserve other NBT");
+                    && stack.getEnchantmentLevel(org.brahypno.maledict.TestSupport.enchantment(Enchantments.UNBREAKING)) == 2, "Upgrade must preserve other NBT");
         }
         helper.assertTrue(!HangmanFoolItem.advance(stack), "There is no stage five");
-        stack.getOrCreateTag().getCompound(HangmanFoolItem.STAGES_TAG).remove("stage_1");
+        org.brahypno.maledict.common.item.MaledictItemData.update(stack, data -> {
+            var stages = data.getCompound(HangmanFoolItem.STAGES_TAG);
+            stages.remove("stage_1");
+            data.put(HangmanFoolItem.STAGES_TAG, stages);
+        });
         helper.assertTrue(HangmanFoolItem.stage(stack) == 0, "Stage two cannot skip stage one");
         helper.succeed();
     }
@@ -161,24 +168,24 @@ public final class HangmanFoolTest {
     public static void realCuriosEquipHalvesAttackAndMultipliesMagicThenUnequipRestores(GameTestHelper helper) {
         Fixture f = new Fixture(helper, 0);
         double attack = f.player.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        double magic = f.player.getAttributeValue(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get());
+        double magic = f.player.getAttributeValue(LodestoneAttributes.MAGIC_PROFICIENCY);
         f.tickCurios();
         equal(helper, attack * 0.5D, f.player.getAttributeValue(Attributes.ATTACK_DAMAGE), "Attack total");
-        equal(helper, magic * 1.5D, f.player.getAttributeValue(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get()), "Magic total");
+        equal(helper, magic * 1.5D, f.player.getAttributeValue(LodestoneAttributes.MAGIC_PROFICIENCY), "Magic total");
         var item = (HangmanFoolItem) f.stack().getItem();
         var modifiers = item.getAttributeModifiers(new SlotContext("delusion", f.player, 0, false, true),
-                UUID.randomUUID(), f.stack());
-        helper.assertTrue(modifiers.values().stream().allMatch(m -> m.getOperation() == AttributeModifier.Operation.MULTIPLY_TOTAL),
+                net.minecraft.resources.ResourceLocation.parse("maledict:test/hangman"), f.stack());
+        helper.assertTrue(modifiers.values().stream().allMatch(m -> m.operation() == AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
                 "Both modifiers must use MULTIPLY_TOTAL");
         helper.assertTrue(!item.canEquip(new SlotContext("charm", f.player, 0, false, true), f.stack()), "Vision slot only");
         f.equip(2);
         f.tickCurios();
         equal(helper, attack * 0.5D, f.player.getAttributeValue(Attributes.ATTACK_DAMAGE), "Upgrade must not double apply attack");
-        equal(helper, magic * 1.5D, f.player.getAttributeValue(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get()), "Upgrade preserves magic");
+        equal(helper, magic * 1.5D, f.player.getAttributeValue(LodestoneAttributes.MAGIC_PROFICIENCY), "Upgrade preserves magic");
         f.inventory.setEquippedCurio("delusion", 0, ItemStack.EMPTY);
         f.tickCurios();
         equal(helper, attack, f.player.getAttributeValue(Attributes.ATTACK_DAMAGE), "Unequip attack");
-        equal(helper, magic, f.player.getAttributeValue(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get()), "Unequip magic");
+        equal(helper, magic, f.player.getAttributeValue(LodestoneAttributes.MAGIC_PROFICIENCY), "Unequip magic");
         f.finish();
     }
 
@@ -204,14 +211,21 @@ public final class HangmanFoolTest {
         f.player.setHealth(4);
         helper.getLevel().addNewPlayer(f.player);
         Vec3 center = f.player.getBoundingBox().getCenter();
+        // The 1.21.1 test grid starts close to terrain; clear the complete flight corridor.
+        for (BlockPos pos : BlockPos.betweenClosed(f.player.blockPosition().offset(-4, 0, -1),
+                f.player.blockPosition().offset(4, 3, 1))) {
+            helper.getLevel().setBlockAndUpdate(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+        }
         LivingEntity behind = f.target();
         behind.setPos(center.add(2, -0.5D, 0));
-        Arrow arrow = new Arrow(helper.getLevel(), center.x - 2, center.y, center.z);
+        Arrow arrow = new Arrow(helper.getLevel(), center.x - 2, center.y, center.z, new ItemStack(Items.ARROW), null);
         arrow.setDeltaMovement(4, 0, 0);
-        arrow.setPierceLevel((byte) 3);
+        org.brahypno.maledict.TestSupport.piercing(arrow, (byte) 3);
         helper.getLevel().addFreshEntity(arrow);
         arrow.tick();
-        helper.assertTrue(HangmanFoolProjectiles.wasReflected(arrow), "Must reflect through the actual arrow tick hook");
+        helper.assertTrue(HangmanFoolProjectiles.wasReflected(arrow), "Must reflect through the actual arrow tick hook; pos=" + arrow.position() + ", motion=" + arrow.getDeltaMovement()
+                        + ", player=" + f.player.getBoundingBox() + ", stage=" + HangmanFoolItem.equippedStage(f.player)
+                        + ", alive=" + f.player.isAlive() + ", pickable=" + f.player.isPickable());
         equal(helper, -4 * 0.99F, arrow.getDeltaMovement().x, "Reversed arrow retains normal vanilla drag");
         helper.assertTrue(arrow.getPierceLevel() == 3 && arrow.getX() < f.player.getX() - 2,
                 "Cancellation ends the old ray and lets the reversed arrow finish its normal movement");
@@ -243,7 +257,7 @@ public final class HangmanFoolTest {
         var context = new SlotContext("charm", f.player, 0, false, true);
         var item = (HangmanFoolItem) stack.getItem();
         helper.assertTrue(!item.canEquip(context, stack), "Only vision slots permit equip");
-        helper.assertTrue(item.getAttributeModifiers(context, UUID.randomUUID(), stack).isEmpty(),
+        helper.assertTrue(item.getAttributeModifiers(context, org.brahypno.maledict.TestSupport.modifierId(UUID.randomUUID()), stack).isEmpty(),
                 "Forced equipment in another slot must grant neither attack nor magic modifiers");
         helper.assertTrue(HangmanFoolItem.equippedStage(f.player) == -1,
                 "Combat passives must ignore this item outside vision slots");
@@ -255,14 +269,21 @@ public final class HangmanFoolTest {
         f.finish();
     }
 
+    private static VoidFavorRecipe voidRecipe(net.minecraft.server.level.ServerLevel level, ItemStack input) {
+        return level.getRecipeManager().getRecipeFor(
+                com.sammy.malum.registry.common.recipe.MalumRecipeTypes.VOID_FAVOR.get(),
+                new net.minecraft.world.item.crafting.SingleRecipeInput(input), level)
+                .map(net.minecraft.world.item.crafting.RecipeHolder::value).orElse(null);
+    }
+
     private static void assertRestrictions(GameTestHelper helper, Fixture f, boolean canceled) {
         var start = new LivingEntityUseItemEvent.Start(f.player, new ItemStack(Items.SHIELD), 72000);
-        var shield = new ShieldBlockEvent(f.player, f.player.damageSources().generic(), 4);
+        var shield = new LivingShieldBlockEvent(f.player, new net.neoforged.neoforge.common.damagesource.DamageContainer(f.player.damageSources().generic(), 4), true);
         var totem = new LivingUseTotemEvent(f.player, f.player.damageSources().generic(),
                 new ItemStack(Items.TOTEM_OF_UNDYING), InteractionHand.OFF_HAND);
-        MinecraftForge.EVENT_BUS.post(start);
-        MinecraftForge.EVENT_BUS.post(shield);
-        MinecraftForge.EVENT_BUS.post(totem);
+        NeoForge.EVENT_BUS.post(start);
+        NeoForge.EVENT_BUS.post(shield);
+        NeoForge.EVENT_BUS.post(totem);
         helper.assertTrue(start.isCanceled() == canceled && shield.isCanceled() == canceled && totem.isCanceled() == canceled,
                 "Shield start, block, and totem restrictions must begin at stage two");
     }
@@ -295,7 +316,8 @@ public final class HangmanFoolTest {
         }
 
         void tickCurios() {
-            MinecraftForge.EVENT_BUS.post(new LivingEvent.LivingTickEvent(player));
+            NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.EntityTickEvent.Pre(player));
+            NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.EntityTickEvent.Post(player));
         }
 
         LivingEntity target() {

@@ -1,5 +1,6 @@
 package org.brahypno.maledict.common.item;
 
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -41,7 +42,7 @@ public final class CurioReturnTokenItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip,
+    public void appendHoverText(ItemStack stack, net.minecraft.world.item.Item.TooltipContext context, List<Component> tooltip,
                                 TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.maledict.curio_return_token"));
     }

@@ -1,20 +1,16 @@
 package org.brahypno.maledict.common.vitals;
 
+import net.minecraft.core.HolderLookup;
+import org.brahypno.maledict.registry.MaledictAttachments;
+import net.neoforged.neoforge.common.util.INBTSerializable;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.common.capabilities.AutoRegisterCapability;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilitySerializable;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,12 +18,8 @@ import org.jetbrains.annotations.Nullable;
  * 延迟池挂在玩家身上，而不是挂在符文上：符文只是开关，一旦入队就必须还清，摘下符文、符文被没收
  * 都不影响结算。挂在 {@link Player} 上是因为只有玩家会佩戴符文，客户端那一份只当显示用。
  */
-@AutoRegisterCapability
-@Mod.EventBusSubscriber(modid = Maledict.MODID)
-public final class DelayedVitals implements ICapabilitySerializable<CompoundTag> {
+public final class DelayedVitals implements INBTSerializable<CompoundTag> {
 
-    public static final Capability<DelayedVitals> CAPABILITY =
-            CapabilityManager.get(new CapabilityToken<>() {});
 
     private static final ResourceLocation KEY =
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "delayed_vitals");
@@ -37,7 +29,6 @@ public final class DelayedVitals implements ICapabilitySerializable<CompoundTag>
     private final DelayedVitalsPool pool = new DelayedVitalsPool();
 
     /** 缓存下来复用：{@code getCapability} 会被问得非常频繁。 */
-    private final LazyOptional<DelayedVitals> optional = LazyOptional.of(() -> this);
 
     /** 本 tick 有变化、需要给客户端发一包。 */
     private boolean dirty;
@@ -51,16 +42,10 @@ public final class DelayedVitals implements ICapabilitySerializable<CompoundTag>
     private DamageSource earliestSource;
 
     /** 符文只对玩家开放，非玩家实体不挂，省掉一堆没用的 capability。 */
-    @SubscribeEvent
-    public static void attach(AttachCapabilitiesEvent<Entity> event) {
-        if (event.getObject() instanceof Player) {
-            event.addCapability(KEY, new DelayedVitals());
-        }
-    }
 
     @Nullable
     public static DelayedVitals get(Entity entity) {
-        return entity.getCapability(CAPABILITY).orElse(null);
+        return entity instanceof Player ? entity.getData(MaledictAttachments.DELAYED_VITALS) : null;
     }
 
     public DelayedVitalsPool pool() {
@@ -124,13 +109,9 @@ public final class DelayedVitals implements ICapabilitySerializable<CompoundTag>
         pool.set(damage, heal);
     }
 
-    @Override
-    public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side) {
-        return capability == CAPABILITY ? optional.cast() : LazyOptional.empty();
-    }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
         CompoundTag tag = new CompoundTag();
         CompoundTag poolTag = new CompoundTag();
         poolTag.putFloat("Damage", pool.pendingDamage());
@@ -140,7 +121,7 @@ public final class DelayedVitals implements ICapabilitySerializable<CompoundTag>
     }
 
     @Override
-    public void deserializeNBT(CompoundTag tag) {
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag tag) {
         CompoundTag poolTag = tag.getCompound(POOL_TAG);
         pool.set(poolTag.getFloat("Damage"), poolTag.getFloat("Heal"));
     }

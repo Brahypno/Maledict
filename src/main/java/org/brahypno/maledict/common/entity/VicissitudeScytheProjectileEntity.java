@@ -1,6 +1,6 @@
 package org.brahypno.maledict.common.entity;
 
-import com.sammy.malum.registry.common.DamageTypeRegistry;
+import com.sammy.malum.registry.common.MalumDamageTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -69,9 +69,9 @@ public final class VicissitudeScytheProjectileEntity extends Projectile {
     }
 
     @Override
-    protected void defineSynchedData() {
-        entityData.define(DATA_WEAPON_TIER, (byte) 0);
-        entityData.define(DATA_RETURNING, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_WEAPON_TIER, (byte) 0);
+        builder.define(DATA_RETURNING, false);
     }
 
     public ItemStack getItem() {
@@ -149,7 +149,7 @@ public final class VicissitudeScytheProjectileEntity extends Projectile {
             if (!struck && target instanceof LivingEntity living) {
                 struck = true;
                 boss.hurtParticipant(living,
-                        DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, boss),
+                        DamageTypeHelper.create(level(), MalumDamageTypes.SCYTHE_SWEEP, this, boss),
                         damage);
             }
             setReturning(true);

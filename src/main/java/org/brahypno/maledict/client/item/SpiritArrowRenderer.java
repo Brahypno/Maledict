@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.brahypno.maledict.common.entity.SpiritArrowEntity;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import team.lodestar.lodestone.registry.client.LodestoneRenderTypeRegistry;
+import team.lodestar.lodestone.registry.client.LodestoneRenderTypes;
 import team.lodestar.lodestone.systems.rendering.VFXBuilders;
 
 import java.awt.Color;
@@ -35,8 +35,8 @@ public class SpiritArrowRenderer extends ArrowRenderer<SpiritArrowEntity> {
     public void render(SpiritArrowEntity entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         var spiritType = entity.getArrowType().getSpiritType();
-        var trailRenderType = LodestoneRenderTypeRegistry.ADDITIVE_TEXTURE_TRIANGLE
-                .applyAndCache(MalumRenderTypeTokens.CONCENTRATED_TRAIL);
+        var trailRenderType = LodestoneRenderTypes.ADDITIVE_TEXTURE_TRIANGLE
+                .apply(MalumRenderTypeTokens.CONCENTRATED_TRAIL).getRenderType();
         var trailBuilder = VFXBuilders.createWorld().setRenderType(trailRenderType);
         float visualScale = Math.min(1.0F, entity.tickCount / 5.0F);
         RenderUtils.renderEntityTrail(
@@ -53,15 +53,15 @@ public class SpiritArrowRenderer extends ArrowRenderer<SpiritArrowEntity> {
     }
 
     @Override
-    public void vertex(Matrix4f pose, Matrix3f normal, VertexConsumer consumer,
+    public void vertex(PoseStack.Pose pose, VertexConsumer consumer,
                        int x, int y, int z, float u, float v,
                        int normalX, int normalZ, int normalY, int packedLight) {
-        consumer.vertex(pose, x, y, z)
-                .color(renderColor.getRed(), renderColor.getGreen(), renderColor.getBlue(), 255)
-                .uv(u, v)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normal, normalX, normalY, normalZ)
-                .endVertex();
+        consumer.addVertex(pose, x, y, z)
+                .setColor(renderColor.getRed(), renderColor.getGreen(), renderColor.getBlue(), 255)
+                .setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(packedLight)
+                .setNormal(pose, normalX, normalY, normalZ)
+                ;
     }
 }

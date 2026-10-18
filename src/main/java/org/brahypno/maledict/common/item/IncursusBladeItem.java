@@ -1,16 +1,17 @@
 package org.brahypno.maledict.common.item;
 
+import net.minecraft.core.Holder;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.sammy.malum.common.capability.MalumPlayerDataCapability;
+import com.sammy.malum.registry.common.MalumAttachmentTypes;
 import com.sammy.malum.common.item.curiosities.weapons.scythe.MagicScytheItem;
 import com.sammy.malum.common.item.spirit.SpiritShardItem;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
-import com.sammy.malum.registry.common.AttributeRegistry;
-import com.sammy.malum.registry.common.DamageTypeRegistry;
-import com.sammy.malum.registry.common.DamageTypeTagRegistry;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
-import com.sammy.malum.registry.common.item.EnchantmentRegistry;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
+import com.sammy.malum.registry.common.MalumAttributes;
+import com.sammy.malum.registry.common.MalumDamageTypes;
+import com.sammy.malum.registry.common.MalumTags;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
+import com.sammy.malum.registry.common.enchantment.EnchantmentKeys;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -33,7 +34,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.changelib.DamageHelper.DamageProbeResult;
 import org.brahypno.maledict.Maledict;
@@ -42,7 +43,7 @@ import org.brahypno.maledict.common.combat.IncursusBladeEnchantments;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.jetbrains.annotations.Nullable;
-import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
+import team.lodestar.lodestone.registry.common.LodestoneAttributes;
 import team.lodestar.lodestone.registry.common.tag.LodestoneDamageTypeTags;
 
 import java.util.function.Consumer;
@@ -74,18 +75,18 @@ public final class IncursusBladeItem extends MagicScytheItem {
     };
     private static final double[] STAT_DEFAULTS = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    public IncursusBladeItem(Tier tier, Item.Properties properties) {
+    public IncursusBladeItem(Tier tier, team.lodestar.lodestone.systems.item.LodestoneItemProperties properties) {
         super(tier, -3.0f - tier.getAttackDamageBonus(), 0.1f, 0.0f, properties);
     }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (stack.getEnchantmentLevel(EnchantmentRegistry.REBOUND.get()) > 0){
+        if (org.brahypno.maledict.registry.MaledictEnchantments.level(stack, EnchantmentKeys.REBOUND) > 0){
             IncursusBladeEnchantments.throwScythe(level, player, hand, stack);
             return InteractionResultHolder.success(stack);
         }
-        if (stack.getEnchantmentLevel(EnchantmentRegistry.ASCENSION.get()) > 0){
+        if (org.brahypno.maledict.registry.MaledictEnchantments.level(stack, EnchantmentKeys.ASCENSION) > 0){
             IncursusBladeEnchantments.triggerAscension(level, player, hand, stack);
             return InteractionResultHolder.success(stack);
         }
@@ -93,23 +94,19 @@ public final class IncursusBladeItem extends MagicScytheItem {
     }
 
     @Override
-    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
-        if (slot != EquipmentSlot.MAINHAND){
-            return super.getDefaultAttributeModifiers(slot);
-        }
-
-        ImmutableMultimap.Builder<Attribute, AttributeModifier> attributes = ImmutableMultimap.builder();
-        attributes.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(
-                BASE_ATTACK_DAMAGE_UUID, "Incursus blade damage", getStat(stack, ATTACK_DAMAGE),
-                AttributeModifier.Operation.ADDITION));
-        attributes.put(Attributes.ATTACK_SPEED, new AttributeModifier(
-                BASE_ATTACK_SPEED_UUID, "Incursus blade speed", -3.3,
-                AttributeModifier.Operation.ADDITION));
-        attributes.put(LodestoneAttributeRegistry.MAGIC_DAMAGE.get(), new AttributeModifier(
-                LodestoneAttributeRegistry.UUIDS.get(LodestoneAttributeRegistry.MAGIC_DAMAGE),
-                "Incursus blade magic damage", getStat(stack, MAGIC_DAMAGE),
-                AttributeModifier.Operation.ADDITION));
-        return attributes.build();
+    public net.minecraft.world.item.component.ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
+        var slot = net.minecraft.world.entity.EquipmentSlotGroup.MAINHAND;
+        return net.minecraft.world.item.component.ItemAttributeModifiers.builder()
+                .add(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_ID,
+                        getStat(stack, ATTACK_DAMAGE), AttributeModifier.Operation.ADD_VALUE), slot)
+                .add(Attributes.ATTACK_SPEED, new AttributeModifier(BASE_ATTACK_SPEED_ID,
+                        -3.3D, AttributeModifier.Operation.ADD_VALUE), slot)
+                .add(LodestoneAttributes.MAGIC_DAMAGE, new AttributeModifier(LodestoneAttributes.BASE_MAGIC_DAMAGE,
+                        getStat(stack, MAGIC_DAMAGE), AttributeModifier.Operation.ADD_VALUE), slot)
+                .add(Attributes.MAX_ABSORPTION, new AttributeModifier(
+                        ResourceLocation.parse("maledict:incursus_blade/absorption_capacity"),
+                        1000.0D, AttributeModifier.Operation.ADD_VALUE), slot)
+                .build();
     }
 
     @Override
@@ -131,7 +128,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
             return false;
         }
 
-        String statKey = getSpiritStatKey(spirit.type.identifier);
+        String statKey = getSpiritStatKey(spirit.getName());
         if (statKey == null){
             return false;
         }
@@ -157,7 +154,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
             || carried.isEmpty()){
             return false;
         }
-        String statKey = getSpiritStatKey(spirit.type.identifier);
+        String statKey = getSpiritStatKey(spirit.getName());
         if (statKey == null){
             return false;
         }
@@ -167,13 +164,13 @@ public final class IncursusBladeItem extends MagicScytheItem {
     }
 
     @Override
-    public void hurtEvent(LivingHurtEvent event, LivingEntity attacker, LivingEntity target, ItemStack stack) {
+    public void outgoingDamageEvent(LivingDamageEvent.Pre event, LivingEntity attacker, LivingEntity target, ItemStack stack) {
         if (attacker.level().isClientSide() || attacker.getMainHandItem() != stack){
             return;
         }
 
         boolean magicDamage = event.getSource().is(LodestoneDamageTypeTags.IS_MAGIC);
-        boolean scytheDamage = event.getSource().is(DamageTypeTagRegistry.IS_SCYTHE);
+        boolean scytheDamage = event.getSource().is(MalumTags.DamageTypeTags.IS_SCYTHE);
         boolean powderSnowDamage = event.getSource().is(DamageTypes.FREEZE);
         if (!magicDamage && !scytheDamage && !powderSnowDamage){
             return;
@@ -183,27 +180,27 @@ public final class IncursusBladeItem extends MagicScytheItem {
         // 所以这里取 getAttribute() 判空：null 才表示「这个实体没有这条属性」，缺了就跳过该倍率。
 
         if (magicDamage){
-            event.setAmount(event.getAmount() * (float) scytheProficiencyOrNeutral(
-                    attacker.getAttributeValue(AttributeRegistry.SCYTHE_PROFICIENCY.get())));
+            event.setNewDamage(event.getNewDamage() * (float) scytheProficiencyOrNeutral(
+                    attacker.getAttributeValue(MalumAttributes.SCYTHE_PROFICIENCY)));
         }
 
         if (scytheDamage){
-            AttributeInstance proficiency = attacker.getAttribute(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get());
+            AttributeInstance proficiency = attacker.getAttribute(LodestoneAttributes.MAGIC_PROFICIENCY);
             if (proficiency != null){
-                event.setAmount(event.getAmount() * (float) proficiency.getValue());
+                event.setNewDamage(event.getNewDamage() * (float) proficiency.getValue());
             }
-            AttributeInstance resistance = target.getAttribute(LodestoneAttributeRegistry.MAGIC_RESISTANCE.get());
+            AttributeInstance resistance = target.getAttribute(LodestoneAttributes.MAGIC_RESISTANCE);
             if (resistance != null){
-                event.setAmount(event.getAmount() / (float) Math.max(0.01, resistance.getValue()));
+                event.setNewDamage(event.getNewDamage() / (float) Math.max(0.01, resistance.getValue()));
             }
         }
 
-        if (event.getSource().is(DamageTypeRegistry.SCYTHE_MELEE)){
-            // 这次近战命中确实触发了 LivingHurtEvent；IncursusBladeAttack 靠它判断要不要补魔法伤害。
+        if (event.getSource().is(MalumDamageTypes.SCYTHE_MELEE)){
+            // 这次近战命中确实触发了 LivingDamageEvent.Pre；IncursusBladeAttack 靠它判断要不要补魔法伤害。
             IncursusBladeAttack.markMeleeHurtEvent(target, event.getSource());
         }
 
-        addAbsorptionFromDamage(attacker, stack, event.getAmount());
+        addAbsorptionFromDamage(attacker, stack, event.getNewDamage());
     }
 
     /** 镰刀熟练度缺省时当中性 1：它走 {@code getAttributeValue}，取不到给的是 0，而它当乘数用。 */
@@ -227,7 +224,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
             attacker.setAbsorptionAmount(newAbsorption);
         }
         if (attacker instanceof Player player){
-            MalumPlayerDataCapability.getCapability(player).soulWardHandler.soulWardProgress = 0.0;
+            player.getData(MalumAttachmentTypes.SOUL_WARD).addCooldown(player, 1.0F);
         }
     }
 
@@ -246,16 +243,17 @@ public final class IncursusBladeItem extends MagicScytheItem {
     }
 
     public static void initializeStats(ItemStack stack) {
-        CompoundTag stats = stack.getOrCreateTagElement(STATS_TAG);
+        CompoundTag stats = MaledictItemData.read(stack).getCompound(STATS_TAG);
         for (int i = 0; i < STAT_KEYS.length; i++) {
             if (!stats.contains(STAT_KEYS[i], Tag.TAG_ANY_NUMERIC)){
                 stats.putDouble(STAT_KEYS[i], STAT_DEFAULTS[i]);
             }
         }
+        MaledictItemData.update(stack, root -> root.put(STATS_TAG, stats));
     }
 
     public static double getStat(ItemStack stack, String key) {
-        CompoundTag tag = stack.getTagElement(STATS_TAG);
+        CompoundTag tag = MaledictItemData.read(stack).getCompound(STATS_TAG);
         if (tag != null && tag.contains(key, Tag.TAG_ANY_NUMERIC)){
             return tag.getDouble(key);
         }
@@ -346,12 +344,16 @@ public final class IncursusBladeItem extends MagicScytheItem {
 
     public static void setStat(ItemStack stack, String key, double value) {
         getStat(stack, key);
-        stack.getOrCreateTagElement(STATS_TAG).putDouble(key, value);
+        MaledictItemData.update(stack, root -> {
+            CompoundTag stats = root.getCompound(STATS_TAG);
+            stats.putDouble(key, value);
+            root.put(STATS_TAG, stats);
+        });
     }
 
     public static int getUpgradeProgress(ItemStack stack, String key) {
         getStat(stack, key);
-        CompoundTag progress = stack.getTagElement(UPGRADE_PROGRESS_TAG);
+        CompoundTag progress = MaledictItemData.read(stack).getCompound(UPGRADE_PROGRESS_TAG);
         return progress == null ? 0 : progress.getInt(key);
     }
 
@@ -378,17 +380,22 @@ public final class IncursusBladeItem extends MagicScytheItem {
             setStat(stack, key, getStat(stack, key) + 1.0);
             cost = getNextUpgradeCost(stack, key);
         }
-        stack.getOrCreateTagElement(UPGRADE_PROGRESS_TAG).putInt(key, progress);
+        int savedProgress = progress;
+        MaledictItemData.update(stack, root -> {
+            CompoundTag upgrades = root.getCompound(UPGRADE_PROGRESS_TAG);
+            upgrades.putInt(key, savedProgress);
+            root.put(UPGRADE_PROGRESS_TAG, upgrades);
+        });
     }
 
     @Override
-    public MalumSpiritType getDefiningSpiritType() {
-        return SpiritTypeRegistry.UMBRAL_SPIRIT;
+    public com.sammy.malum.core.systems.spirit.type.SpiritLike getDefiningSpiritType() {
+        return MalumSpiritTypes.UMBRAL_SPIRIT;
     }
 
     public boolean canDisableShield(ItemStack stack, ItemStack shield, LivingEntity entity, LivingEntity attacker) {return true;}
 
-    public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
+    public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<Item> onBroken) {
         return Math.min(amount, 20);
     }
 }

@@ -8,13 +8,13 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.event.entity.ProjectileImpactEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class RemembranceBowProjectileEffect {
     private static final String EXPOSE_SOUL = Maledict.MODID + ":expose_soul";
     private static final String PHASE_COUNT = Maledict.MODID + ":phase_count";
@@ -32,7 +32,7 @@ public final class RemembranceBowProjectileEffect {
                 && arrow.getPersistentData().getBoolean(EXPOSE_SOUL)
                 && event.getRayTraceResult() instanceof EntityHitResult hit
                 && hit.getEntity() instanceof LivingEntity target) {
-            SoulDataHandler.exposeSoul(target);
+            target.getData(com.sammy.malum.registry.common.MalumAttachmentTypes.LIVING_SOUL_INFO).setExposed();
         }
     }
 

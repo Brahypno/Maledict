@@ -20,7 +20,7 @@ final class VicissitudeVitalityLedger extends SavedData {
 
     static VicissitudeVitalityLedger get(ServerLevel level) {
         return level.getServer().overworld().getDataStorage().computeIfAbsent(
-                VicissitudeVitalityLedger::load, VicissitudeVitalityLedger::new, FILE_NAME);
+                new SavedData.Factory<>(VicissitudeVitalityLedger::new, VicissitudeVitalityLedger::load, null), FILE_NAME);
     }
 
     VicissitudeVitality find(UUID identity) {
@@ -34,7 +34,7 @@ final class VicissitudeVitalityLedger extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundTag save(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
         ListTag records = new ListTag();
         entries.forEach((identity, value) -> {
             CompoundTag record = encode(value);
@@ -45,7 +45,7 @@ final class VicissitudeVitalityLedger extends SavedData {
         return tag;
     }
 
-    static VicissitudeVitalityLedger load(CompoundTag tag) {
+    static VicissitudeVitalityLedger load(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
         VicissitudeVitalityLedger ledger = new VicissitudeVitalityLedger();
         for (Tag entry : tag.getList("Entries", Tag.TAG_COMPOUND)) {
             CompoundTag record = (CompoundTag) entry;

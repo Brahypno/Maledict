@@ -32,7 +32,7 @@ public final class BlightedRealmEffects extends DimensionSpecialEffects {
     }
 
     @Override
-    public boolean renderSky(ClientLevel level, int ticks, float partialTick, PoseStack poseStack,
+    public boolean renderSky(ClientLevel level, int ticks, float partialTick, Matrix4f modelViewMatrix,
                              Camera camera, Matrix4f projection, boolean foggy, Runnable setupFog) {
         setupFog.run();
         if (foggy || camera.getFluidInCamera() != FogType.NONE) return true;
@@ -40,9 +40,8 @@ public final class BlightedRealmEffects extends DimensionSpecialEffects {
         RenderSystem.disableCull();
         RenderSystem.setShaderColor(1, 1, 1, 1);
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        var buffer = Tesselator.getInstance().getBuilder();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        Matrix4f matrix = poseStack.last().pose();
+        var buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        Matrix4f matrix = modelViewMatrix;
         float[] elevations = {-(float) Math.PI / 2, 0, (float) Math.PI / 6, (float) Math.PI / 3, (float) Math.PI / 2};
         for (int band = 0; band < elevations.length - 1; band++) {
             for (int segment = 0; segment < 48; segment++) {
@@ -54,7 +53,7 @@ public final class BlightedRealmEffects extends DimensionSpecialEffects {
                 vertex(buffer, matrix, first, elevations[band + 1]);
             }
         }
-        BufferUploader.drawWithShader(buffer.end());
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
         return true;
@@ -67,7 +66,7 @@ public final class BlightedRealmEffects extends DimensionSpecialEffects {
         int red = Math.round(0x55 + (0x16 - 0x55) * blend);
         int green = Math.round(0x42 + (0x12 - 0x42) * blend);
         int blue = Math.round(0x61 + (0x1E - 0x61) * blend);
-        buffer.vertex(matrix, (float) Math.cos(azimuth) * radius, height * 128,
-                (float) Math.sin(azimuth) * radius).color(red, green, blue, 255).endVertex();
+        buffer.addVertex(matrix, (float) Math.cos(azimuth) * radius, height * 128,
+                (float) Math.sin(azimuth) * radius).setColor(red, green, blue, 255);
     }
 }

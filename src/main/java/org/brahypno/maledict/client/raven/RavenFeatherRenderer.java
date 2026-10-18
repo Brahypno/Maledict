@@ -44,7 +44,7 @@ public final class RavenFeatherRenderer extends EntityRenderer<RavenFeatherEntit
 
     private static void vertex(VertexConsumer vertices, PoseStack.Pose pose,
                                float x, float y, float u, float v, int light) {
-        vertices.vertex(pose.pose(), x, y, 0).color(255, 255, 255, 255).uv(u, v)
-                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light).normal(pose.normal(), 0, 0, 1).endVertex();
+        vertices.addVertex(pose.pose(), x, y, 0).setColor(255, 255, 255, 255).setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, 0, 0, 1);
     }
 }

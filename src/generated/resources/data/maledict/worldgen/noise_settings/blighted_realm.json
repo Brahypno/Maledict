@@ -458,7 +458,7 @@
               "then_run": {
                 "type": "minecraft:block",
                 "result_state": {
-                  "Name": "malum:blighted_soil"
+                  "Name": "malum:blighted_earth"
                 }
               }
             }

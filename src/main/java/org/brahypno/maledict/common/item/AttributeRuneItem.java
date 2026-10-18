@@ -1,8 +1,9 @@
 package org.brahypno.maledict.common.item;
 
+import net.minecraft.core.Holder;
 import com.google.common.collect.Multimap;
 import com.sammy.malum.common.item.curiosities.curios.runes.AbstractRuneCurioItem;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
@@ -17,7 +18,7 @@ import java.util.function.Supplier;
  * 修饰符只是把抗性往上加，实际减伤是 {@code 1 - 1 / 抗性}，两个数不是一回事。
  */
 public final class AttributeRuneItem extends AbstractRuneCurioItem {
-    private final Supplier<Attribute> attribute;
+    private final Holder<Attribute> attribute;
 
     /** 只有 {@code /attribute} 与调试界面看得见，不翻译。 */
     private final String modifierName;
@@ -25,10 +26,10 @@ public final class AttributeRuneItem extends AbstractRuneCurioItem {
     private final double amount;
     private final AttributeModifier.Operation operation;
 
-    public AttributeRuneItem(Item.Properties properties, MalumSpiritType spiritType,
-                             Supplier<Attribute> attribute, String modifierName,
+    public AttributeRuneItem(Item.Properties properties, com.sammy.malum.core.systems.registry.SpiritHolder<SpiritArcanaType> spiritType,
+                             Holder<Attribute> attribute, String modifierName,
                              double amount, AttributeModifier.Operation operation) {
-        super(properties, spiritType);
+        super(properties, spiritType, MalumTrinketType.RUNE);
         this.attribute = attribute;
         this.modifierName = modifierName;
         this.amount = amount;
@@ -36,9 +37,9 @@ public final class AttributeRuneItem extends AbstractRuneCurioItem {
     }
 
     @Override
-    public void addAttributeModifiers(Multimap<Attribute, AttributeModifier> attributeMap,
+    public void addAttributeModifiers(Multimap<Holder<Attribute>, AttributeModifier> attributeMap,
                                       SlotContext slotContext, ItemStack stack) {
-        addAttributeModifier(attributeMap, attribute.get(),
-                             uuid -> new AttributeModifier(uuid, modifierName, amount, operation));
+        addAttributeModifier(attributeMap, attribute,
+                             new AttributeModifier(net.minecraft.resources.ResourceLocation.parse("maledict:stagnant_evolution"), amount, operation));
     }
 }

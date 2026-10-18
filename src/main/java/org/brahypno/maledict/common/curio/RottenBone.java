@@ -1,5 +1,6 @@
 package org.brahypno.maledict.common.curio;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 
 import java.nio.charset.StandardCharsets;
@@ -29,13 +30,13 @@ public final class RottenBone {
 
     private static final String MODIFIER_NAME = "Rune of Rotten Bone";
 
-    private static final List<UUID> MODIFIER_IDS = buildModifierIds();
+    private static final List<ResourceLocation> MODIFIER_IDS = buildModifierIds();
 
-    public static List<UUID> modifierIds() {
+    public static List<ResourceLocation> modifierIds() {
         return MODIFIER_IDS;
     }
 
-    public static UUID modifierId(int stack) {
+    public static ResourceLocation modifierId(int stack) {
         return MODIFIER_IDS.get(stack);
     }
 
@@ -44,7 +45,7 @@ public final class RottenBone {
     }
 
     /** 这一次该挂第几条修饰符；四条都挂上了就是 {@link OptionalInt#empty()}。 */
-    public static OptionalInt nextStack(Collection<UUID> applied) {
+    public static OptionalInt nextStack(Collection<ResourceLocation> applied) {
         for (int stack = 0; stack < MAX_TRIGGERS; stack++) {
             if (!applied.contains(MODIFIER_IDS.get(stack))) {
                 return OptionalInt.of(stack);
@@ -54,8 +55,8 @@ public final class RottenBone {
     }
 
     public static AttributeModifier modifier(int stack) {
-        return new AttributeModifier(modifierId(stack), modifierName(stack), modifierAmount(),
-                                     AttributeModifier.Operation.MULTIPLY_TOTAL);
+        return new AttributeModifier(modifierId(stack), modifierAmount(),
+                                     AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
     /** 这一条修饰符的数值：{@link #LOSS_FRACTION} 取负，{@code MULTIPLY_TOTAL} 下即当前上限 × 0.75。 */
@@ -67,11 +68,10 @@ public final class RottenBone {
         return maxHealth > SPENT_MAX_HEALTH;
     }
 
-    private static List<UUID> buildModifierIds() {
-        List<UUID> ids = new ArrayList<>(MAX_TRIGGERS);
+    private static List<ResourceLocation> buildModifierIds() {
+        List<ResourceLocation> ids = new ArrayList<>(MAX_TRIGGERS);
         for (int stack = 0; stack < MAX_TRIGGERS; stack++) {
-            ids.add(UUID.nameUUIDFromBytes(
-                    (MODIFIER_ID_PREFIX + stack).getBytes(StandardCharsets.UTF_8)));
+            ids.add(ResourceLocation.parse(MODIFIER_ID_PREFIX + stack));
         }
         return List.copyOf(ids);
     }

@@ -2,7 +2,7 @@ package org.brahypno.maledict.client.vicissitude.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.sammy.malum.registry.common.item.ItemRegistry;
+import com.sammy.malum.registry.common.item.MalumItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -62,7 +62,7 @@ public final class FirstVicissitudeBossRenderer
      */
     @Override
     protected void setupRotations(FirstVicissitudeBossEntity entity, PoseStack poseStack,
-                                  float ageInTicks, float rotationYaw, float partialTick) {
+                                  float ageInTicks, float rotationYaw, float partialTick, float scale) {
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - rotationYaw));
     }
 
@@ -143,7 +143,7 @@ public final class FirstVicissitudeBossRenderer
 
         private static float weaponScale(ItemStack stack) {
             if (stack.is(MaledictItems.INCURSUS_BLADE.get())
-                || stack.is(ItemRegistry.SOUL_STAINED_STEEL_SCYTHE.get())){
+                || stack.is(MalumItems.SOUL_STAINED_STEEL_SCYTHE.get())){
                 return 1.6F;
             }
             return 1.15F;

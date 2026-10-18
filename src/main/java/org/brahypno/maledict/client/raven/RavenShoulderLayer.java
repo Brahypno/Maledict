@@ -40,7 +40,7 @@ public final class RavenShoulderLayer extends RenderLayer<AbstractClientPlayer, 
         pose.translate(0.0D, -1.5D, 0.0D);
         model.setupShoulderPose(headYaw, headPitch);
         model.renderToBuffer(pose, buffers.getBuffer(model.renderType(RavenRenderer.TEXTURE)),
-                light, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
+                light, OverlayTexture.NO_OVERLAY, -1);
         pose.popPose();
     }
 }

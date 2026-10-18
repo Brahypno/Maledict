@@ -21,9 +21,7 @@ public final class HangmanReflectionClient {
         ((ProjectileAccess) projectile).maledict$setLeftOwner(false);
         HangmanFoolProjectiles.applyMotion(projectile, packet.velocity(), false);
         if (projectile instanceof AbstractHurtingProjectile fireball) {
-            fireball.xPower = packet.power().x;
-            fireball.yPower = packet.power().y;
-            fireball.zPower = packet.power().z;
+            fireball.accelerationPower = packet.power();
         }
     }
 

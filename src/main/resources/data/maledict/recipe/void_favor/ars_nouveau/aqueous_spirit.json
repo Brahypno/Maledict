@@ -1,0 +1,16 @@
+{
+  "type": "malum:void_favor",
+  "input": {
+    "item": "ars_nouveau:water_essence"
+  },
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "ars_nouveau"
+    }
+  ],
+  "result": {
+    "count": 3,
+    "id": "malum:aqueous_spirit"
+  }
+}

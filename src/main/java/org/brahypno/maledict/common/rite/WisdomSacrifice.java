@@ -1,7 +1,7 @@
 package org.brahypno.maledict.common.rite;
 
 import com.mojang.logging.LogUtils;
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -9,12 +9,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.MobEffectEvent;
-import net.minecraftforge.event.entity.player.AdvancementEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.*;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
+import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.effect.SacrificeSchedule;
 import org.brahypno.maledict.network.MaledictNetwork;
@@ -54,7 +54,7 @@ import java.util.UUID;
  * {@code baseSize + 修饰符} 重算并存进 NBT，所以死亡重生的 {@code readTag} 与重登都带得回来；固定 UUID
  * 又让重复发放自然覆盖而不是叠加。{@code ISlotHelper#growSlotType} 那条老路已被标了删除，不再用。
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class WisdomSacrifice {
     /** 成就 id，对应 {@code data/maledict/advancements/wisdom_sacrifice.json}。 */
     public static final ResourceLocation ID =
@@ -76,8 +76,8 @@ public final class WisdomSacrifice {
     private static final String OFFERED_KEY = "maledict:sacrifice_offered";
 
     /** 两枚栏位的修饰符 id：固定值，重复发放按 UUID 覆盖，不会越加越多。 */
-    private static final UUID RUNE_SLOT_MODIFIER = UUID.fromString("2d6a33ed-1957-4f63-bd82-b853bcf483ad");
-    private static final UUID DELUSION_SLOT_MODIFIER = UUID.fromString("51d36a0f-ba8f-49dd-8a66-8a4416e32a5c");
+    private static final ResourceLocation RUNE_SLOT_MODIFIER = ResourceLocation.parse("maledict:wisdom_sacrifice/rune_slot_modifier");
+    private static final ResourceLocation DELUSION_SLOT_MODIFIER = ResourceLocation.parse("maledict:wisdom_sacrifice/delusion_slot_modifier");
 
     private static final String MODIFIER_NAME = "maledict:wisdom_sacrifice";
 
@@ -127,7 +127,7 @@ public final class WisdomSacrifice {
 
     /** 拿到成就的人不再被仪式选中；仪式每次发动都要问一遍。 */
     public static boolean hasEarned(ServerPlayer player) {
-        Advancement advancement = advancement(player.server);
+        AdvancementHolder advancement = advancement(player.server);
         return advancement != null && player.getAdvancements().getOrStartProgress(advancement).isDone();
     }
 
@@ -136,7 +136,7 @@ public final class WisdomSacrifice {
         if (hasEarned(player)) {
             return;
         }
-        Advancement advancement = advancement(player.server);
+        AdvancementHolder advancement = advancement(player.server);
         if (advancement == null) {
             LOGGER.warn("Wisdom's Sacrifice: advancement {} is missing from the datapack, nothing granted", ID);
             return;
@@ -147,24 +147,21 @@ public final class WisdomSacrifice {
     /** 获得「智慧的牺牲」即永久增加两枚栏位，无论是仪式完成还是指令授予。 */
     @SubscribeEvent
     public static void onAdvancementEarned(AdvancementEvent.AdvancementEarnEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !ID.equals(event.getAdvancement().getId())) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || !ID.equals(event.getAdvancement().id())) {
             return;
         }
         CuriosApi.getCuriosInventory(player).ifPresent(handler -> {
-            handler.addPermanentSlotModifier(RUNE_SLOT, RUNE_SLOT_MODIFIER, MODIFIER_NAME, 1.0D,
-                                             AttributeModifier.Operation.ADDITION);
-            handler.addPermanentSlotModifier(DELUSION_SLOT, DELUSION_SLOT_MODIFIER, MODIFIER_NAME, 1.0D,
-                                             AttributeModifier.Operation.ADDITION);
+            handler.addPermanentSlotModifier(RUNE_SLOT, RUNE_SLOT_MODIFIER, 1.0D,
+                                             AttributeModifier.Operation.ADD_VALUE);
+            handler.addPermanentSlotModifier(DELUSION_SLOT, DELUSION_SLOT_MODIFIER, 1.0D,
+                                             AttributeModifier.Operation.ADD_VALUE);
         });
         PENDING_SIGHT_LOSS.add(player);
     }
 
     /** 两种原版效果持续六分钟；前六十 tick 的独立黑幕与它们同时开始。 */
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+    public static void onServerTick(ServerTickEvent.Post event) {
         for (ServerPlayer player : PENDING_SIGHT_LOSS) {
             player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, SIGHT_LOSS_TICKS));
             player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, SIGHT_LOSS_TICKS));
@@ -174,7 +171,7 @@ public final class WisdomSacrifice {
     }
 
     private static boolean isSacrifice(@Nullable MobEffectInstance instance) {
-        return instance != null && instance.getEffect() == MaledictMobEffects.SACRIFICE.get();
+        return instance != null && instance.getEffect() == MaledictMobEffects.SACRIFICE;
     }
 
     /** 有凭据，且世界时间已经走过期限。 */
@@ -192,8 +189,8 @@ public final class WisdomSacrifice {
     }
 
     @Nullable
-    private static Advancement advancement(MinecraftServer server) {
-        return server.getAdvancements().getAdvancement(ID);
+    private static AdvancementHolder advancement(MinecraftServer server) {
+        return server.getAdvancements().get(ID);
     }
 
     private WisdomSacrifice() {

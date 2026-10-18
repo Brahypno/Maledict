@@ -1,14 +1,14 @@
 package org.brahypno.maledict.common.curio;
 
-import com.sammy.malum.registry.common.SoundRegistry;
+import com.sammy.malum.registry.common.MalumSoundEvents;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.RuneOfRottenBoneItem;
 import team.lodestar.lodestone.helpers.SoundHelper;
@@ -16,13 +16,13 @@ import team.lodestar.lodestone.helpers.SoundHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
-import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * 「朽骨符文」唯一的出手点：{@code LivingDeathEvent} 在 {@code die()} 的最开头发出，取消即整条 return，
  * 此时血量已经归零、必须自己设回去；只有接不住才清账，顺序反了的话每次免死都会把欠账一笔勾销。
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class RottenBoneEvents {
 
     private static final float SOUND_VOLUME = 1.0F;
@@ -63,7 +63,7 @@ public final class RottenBoneEvents {
         victim.setHealth(RottenBone.HEAL);
 
         event.setCanceled(true);
-        SoundHelper.playSound(victim, SoundRegistry.SOUL_WARD_DEPLETE.get(), SOUND_VOLUME, SOUND_PITCH);
+        SoundHelper.playSound(victim, MalumSoundEvents.SOUL_WARD_DEPLETE.get(), SOUND_VOLUME, SOUND_PITCH);
         return true;
     }
 
@@ -73,16 +73,16 @@ public final class RottenBoneEvents {
         if (maximumHealth == null) {
             return;
         }
-        for (UUID id : RottenBone.modifierIds()) {
+        for (ResourceLocation id : RottenBone.modifierIds()) {
             maximumHealth.removeModifier(id);
         }
     }
 
     /** 属性上现有的修饰符 id；{@link RottenBone} 只认 id，不关心别的模组挂了什么。 */
-    private static List<UUID> appliedModifierIds(AttributeInstance instance) {
-        List<UUID> ids = new ArrayList<>();
+    private static List<ResourceLocation> appliedModifierIds(AttributeInstance instance) {
+        List<ResourceLocation> ids = new ArrayList<>();
         for (AttributeModifier modifier : instance.getModifiers()) {
-            ids.add(modifier.getId());
+            ids.add(modifier.id());
         }
         return ids;
     }

@@ -10,8 +10,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.client.gui.overlay.IGuiOverlay;
+import net.minecraft.client.gui.LayeredDraw;
+import net.minecraft.client.DeltaTracker;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.vitals.DelayedVitals;
 import org.brahypno.maledict.common.vitals.DelayedVitalsHearts;
@@ -33,7 +33,7 @@ import org.brahypno.maledict.common.vitals.DelayedVitalsPool;
  * <p>贴图是本模组自己的白色心形遮罩（满心 / 左半心），靠 {@code setColor} 上色；原版红心的颜色是
  * 烘焙进贴图的，直接染它只会越染越黑。
  */
-public final class DelayedVitalsOverlay implements IGuiOverlay {
+public final class DelayedVitalsOverlay implements LayeredDraw.Layer {
 
     /** 待扣除：邪恶精魂紫 {@code #792CEC}，画在「正在离开」的那几颗心上。 */
     public static final DelayedVitalsOverlay PENDING_DAMAGE =
@@ -90,9 +90,12 @@ public final class DelayedVitalsOverlay implements IGuiOverlay {
     }
 
     @Override
-    public void render(ForgeGui gui, GuiGraphics graphics, float partialTick, int width, int height) {
-        Minecraft minecraft = gui.getMinecraft();
-        if (minecraft.options.hideGui || !gui.shouldDrawSurvivalElements()) {
+    public void render(GuiGraphics graphics, DeltaTracker deltaTracker) {
+        Minecraft minecraft = Minecraft.getInstance();
+        var gui = minecraft.gui;
+        int width = graphics.guiWidth();
+        int height = graphics.guiHeight();
+        if (minecraft.options.hideGui || minecraft.gameMode == null || !minecraft.gameMode.canHurtPlayer()) {
             return;
         }
         if (!(minecraft.getCameraEntity() instanceof LocalPlayer player)) {

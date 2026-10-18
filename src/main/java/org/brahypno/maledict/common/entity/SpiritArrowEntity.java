@@ -1,7 +1,7 @@
 package org.brahypno.maledict.common.entity;
 
 import com.sammy.malum.core.handlers.SoulDataHandler;
-import com.sammy.malum.registry.common.DamageTypeRegistry;
+import com.sammy.malum.registry.common.MalumDamageTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -11,7 +11,6 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -36,14 +35,15 @@ public class SpiritArrowEntity extends AbstractArrow {
     }
 
     public SpiritArrowEntity(Level level, LivingEntity shooter, SpiritArrowType arrowType) {
-        super(MaledictEntities.SPIRIT_ARROW.get(), shooter, level);
+        super(MaledictEntities.SPIRIT_ARROW.get(), shooter, level,
+                new ItemStack(MaledictItems.getSpiritArrow(arrowType).get()), shooter.getMainHandItem());
         setArrowType(arrowType);
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        entityData.define(ARROW_TYPE, SpiritArrowType.SACRED.ordinal());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(ARROW_TYPE, SpiritArrowType.SACRED.ordinal());
     }
 
     public SpiritArrowType getArrowType() {
@@ -103,7 +103,7 @@ public class SpiritArrowEntity extends AbstractArrow {
         }
         try {
             if (hitResult.getEntity() instanceof LivingEntity le)
-                SoulDataHandler.exposeSoul(le);
+                le.getData(com.sammy.malum.registry.common.MalumAttachmentTypes.LIVING_SOUL_INFO).setExposed();
             super.onHitEntity(hitResult);
         }
         finally {
@@ -115,7 +115,7 @@ public class SpiritArrowEntity extends AbstractArrow {
         if (!(target instanceof LivingEntity livingTarget)){
             return false;
         }
-        boolean undead = livingTarget.getMobType() == MobType.UNDEAD;
+        boolean undead = livingTarget.getType().is(net.minecraft.tags.EntityTypeTags.UNDEAD);
         return getArrowType() == SpiritArrowType.SACRED && undead
                || getArrowType() == SpiritArrowType.WICKED && !undead;
     }
@@ -136,12 +136,12 @@ public class SpiritArrowEntity extends AbstractArrow {
 
     private void dealMagicDamage(LivingEntity target, float amount) {
         if (!level().isClientSide && amount > 0.0F){
-            DamageProbe.mediumDamageMethod(target, DamageTypeHelper.create(level(), DamageTypeRegistry.VOODOO, this, getOwner()), amount);
+            DamageProbe.mediumDamageMethod(target, DamageTypeHelper.create(level(), MalumDamageTypes.VOODOO, this, getOwner()), amount);
         }
     }
 
     @Override
-    protected ItemStack getPickupItem() {
+    protected ItemStack getDefaultPickupItem() {
         return new ItemStack(MaledictItems.getSpiritArrow(getArrowType()).get());
     }
 

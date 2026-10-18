@@ -38,7 +38,7 @@ public final class WeepingWellLinks extends SavedData {
 
     public static WeepingWellLinks get(ServerLevel level) {
         return level.getServer().overworld().getDataStorage().computeIfAbsent(
-                WeepingWellLinks::load, WeepingWellLinks::new, FILE_NAME);
+                new SavedData.Factory<>(WeepingWellLinks::new, WeepingWellLinks::load, null), FILE_NAME);
     }
 
     public Link find(GlobalPos core) {
@@ -85,7 +85,7 @@ public final class WeepingWellLinks extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundTag save(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
         ListTag pairs = new ListTag();
         for (Link link : new HashSet<>(links.values())) {
             CompoundTag entry = new CompoundTag();
@@ -97,7 +97,7 @@ public final class WeepingWellLinks extends SavedData {
         return tag;
     }
 
-    public static WeepingWellLinks load(CompoundTag tag) {
+    public static WeepingWellLinks load(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
         WeepingWellLinks data = new WeepingWellLinks();
         for (Tag value : tag.getList("Pairs", Tag.TAG_COMPOUND)) {
             CompoundTag pair = (CompoundTag) value;

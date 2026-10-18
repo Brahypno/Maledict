@@ -1,16 +1,17 @@
 package org.brahypno.maledict.registry;
 
+import net.minecraft.core.Holder;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
-import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
-import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.entity.RavenEntity;
@@ -21,18 +22,18 @@ import org.brahypno.maledict.common.entity.VicissitudeLightOrbEntity;
 import org.brahypno.maledict.common.entity.VicissitudeScytheProjectileEntity;
 import org.brahypno.maledict.common.entity.VicissitudeSpiritBoltEntity;
 
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.MOD)
 public final class MaledictEntities {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
-            DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, Maledict.MODID);
+            DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, Maledict.MODID);
 
-    public static final RegistryObject<EntityType<HangmanTrapEntity>> HANGMAN_TRAP =
+    public static final DeferredHolder<EntityType<?>, EntityType<HangmanTrapEntity>> HANGMAN_TRAP =
             ENTITY_TYPES.register("hangman_trap", () -> EntityType.Builder
                     .<HangmanTrapEntity>of(HangmanTrapEntity::new, MobCategory.MISC)
                     .sized(0.1F, 0.1F).clientTrackingRange(4).updateInterval(20)
                     .build("hangman_trap"));
 
-    public static final RegistryObject<EntityType<SpiritArrowEntity>> SPIRIT_ARROW =
+    public static final DeferredHolder<EntityType<?>, EntityType<SpiritArrowEntity>> SPIRIT_ARROW =
             ENTITY_TYPES.register("spirit_arrow", () -> EntityType.Builder
                     .<SpiritArrowEntity>of(SpiritArrowEntity::new, MobCategory.MISC)
                     .sized(0.5F, 0.5F)
@@ -40,7 +41,7 @@ public final class MaledictEntities {
                     .updateInterval(20)
                     .build("spirit_arrow"));
 
-    public static final RegistryObject<EntityType<FirstVicissitudeBossEntity>> FIRST_VICISSITUDE =
+    public static final DeferredHolder<EntityType<?>, EntityType<FirstVicissitudeBossEntity>> FIRST_VICISSITUDE =
             ENTITY_TYPES.register("first_vicissitude", () -> EntityType.Builder
                     .of(FirstVicissitudeBossEntity::new, MobCategory.MONSTER)
                     .sized(1.6F, 4.375F)
@@ -48,7 +49,7 @@ public final class MaledictEntities {
                     .fireImmune()
                     .build("first_vicissitude"));
 
-    public static final RegistryObject<EntityType<RavenEntity>> RAVEN =
+    public static final DeferredHolder<EntityType<?>, EntityType<RavenEntity>> RAVEN =
             ENTITY_TYPES.register("raven", () -> EntityType.Builder
                     .of(RavenEntity::new, MobCategory.CREATURE)
                     .sized(1.0F, 1.0F)
@@ -56,7 +57,7 @@ public final class MaledictEntities {
                     .updateInterval(1)
                     .build("raven"));
 
-    public static final RegistryObject<EntityType<RavenFeatherEntity>> RAVEN_FEATHER =
+    public static final DeferredHolder<EntityType<?>, EntityType<RavenFeatherEntity>> RAVEN_FEATHER =
             ENTITY_TYPES.register("raven_feather", () -> EntityType.Builder
                     .<RavenFeatherEntity>of(RavenFeatherEntity::new, MobCategory.MISC)
                     .sized(0.25F, 0.25F)
@@ -64,7 +65,7 @@ public final class MaledictEntities {
                     .updateInterval(1)
                     .build("raven_feather"));
 
-    public static final RegistryObject<EntityType<VicissitudeSpiritBoltEntity>> VICISSITUDE_SPIRIT_BOLT =
+    public static final DeferredHolder<EntityType<?>, EntityType<VicissitudeSpiritBoltEntity>> VICISSITUDE_SPIRIT_BOLT =
             ENTITY_TYPES.register("vicissitude_spirit_bolt", () -> EntityType.Builder
                     .<VicissitudeSpiritBoltEntity>of(VicissitudeSpiritBoltEntity::new, MobCategory.MISC)
                     .sized(0.5F, 0.5F)
@@ -73,7 +74,7 @@ public final class MaledictEntities {
                     .fireImmune()
                     .build("vicissitude_spirit_bolt"));
 
-    public static final RegistryObject<EntityType<VicissitudeScytheProjectileEntity>> VICISSITUDE_SCYTHE =
+    public static final DeferredHolder<EntityType<?>, EntityType<VicissitudeScytheProjectileEntity>> VICISSITUDE_SCYTHE =
             ENTITY_TYPES.register("vicissitude_scythe", () -> EntityType.Builder
                     .<VicissitudeScytheProjectileEntity>of(VicissitudeScytheProjectileEntity::new,
                             MobCategory.MISC)
@@ -83,7 +84,7 @@ public final class MaledictEntities {
                     .fireImmune()
                     .build("vicissitude_scythe"));
 
-    public static final RegistryObject<EntityType<VicissitudeLightOrbEntity>> VICISSITUDE_LIGHT_ORB =
+    public static final DeferredHolder<EntityType<?>, EntityType<VicissitudeLightOrbEntity>> VICISSITUDE_LIGHT_ORB =
             ENTITY_TYPES.register("vicissitude_light_orb", () -> EntityType.Builder
                     .<VicissitudeLightOrbEntity>of(VicissitudeLightOrbEntity::new, MobCategory.MISC)
                     .sized(0.75F, 0.75F)
@@ -99,10 +100,10 @@ public final class MaledictEntities {
     }
 
     @SubscribeEvent
-    public static void registerSpawnPlacements(SpawnPlacementRegisterEvent event) {
-        event.register(RAVEN.get(), SpawnPlacements.Type.ON_GROUND,
+    public static void registerSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+        event.register(RAVEN.get(), net.minecraft.world.entity.SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, RavenEntity::checkRavenSpawnRules,
-                SpawnPlacementRegisterEvent.Operation.REPLACE);
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
     }
 
     private MaledictEntities() {

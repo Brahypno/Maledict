@@ -1,0 +1,16 @@
+{
+  "type": "malum:runeworking",
+  "input": {
+    "count": 4,
+    "item": "malum:null_slate"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:rune_of_bliss"
+  },
+  "secondaryInput": {
+    "count": 32,
+    "item": "malum:umbral_spirit"
+  },
+  "soundType": "malum:runic_workbench_shapes_void_rune"
+}

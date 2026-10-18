@@ -2,13 +2,13 @@ package org.brahypno.maledict.client.item;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import org.brahypno.maledict.common.entity.HangmanTrapEntity;
-import team.lodestar.lodestone.registry.client.LodestoneRenderTypeRegistry;
+import team.lodestar.lodestone.registry.client.LodestoneRenderTypes;
 import team.lodestar.lodestone.systems.rendering.LodestoneRenderType;
 import team.lodestar.lodestone.systems.rendering.VFXBuilders;
 import team.lodestar.lodestone.systems.rendering.rendeertype.RenderTypeToken;
@@ -17,8 +17,8 @@ import team.lodestar.lodestone.systems.rendering.rendeertype.RenderTypeToken;
 public final class HangmanTrapRenderer extends EntityRenderer<HangmanTrapEntity> {
     private static final ResourceLocation TEXTURE =
             ResourceLocation.fromNamespaceAndPath("malum", "textures/particle/hexagon.png");
-    private static final LodestoneRenderType RENDER_TYPE = LodestoneRenderTypeRegistry.ADDITIVE_TEXTURE
-            .applyAndCache(RenderTypeToken.createCachedToken(TEXTURE));
+    private static final LodestoneRenderType RENDER_TYPE = LodestoneRenderTypes.ADDITIVE_TEXTURE
+            .apply(RenderTypeToken.createToken(TEXTURE)).getRenderType();
     // setFormat also initializes the vertex supplier required by renderQuad.
     private final VFXBuilders.WorldVFXBuilder builder = VFXBuilders.createWorld().setFormat(RENDER_TYPE.format());
 
@@ -36,11 +36,11 @@ public final class HangmanTrapRenderer extends EntityRenderer<HangmanTrapEntity>
         float angle = (trap.tickCount + partialTick) * 1.5F;
         pose.mulPose(Axis.ZP.rotationDegrees(angle));
         builder.setVertexConsumer(buffers.getBuffer(RENDER_TYPE)).setUV(0, 0, 1, 1)
-                .setLight(0xF000F0).setColor(SpiritTypeRegistry.WICKED_SPIRIT.getPrimaryColor(), 0.6F)
+                .setLight(0xF000F0).setColor(MalumSpiritTypes.WICKED_SPIRIT.getPrimaryColor(), 0.6F)
                 .renderQuad(pose, 1.0F);
         pose.translate(0, 0, 0.002D);
         pose.mulPose(Axis.ZP.rotationDegrees(-angle * 2.0F));
-        builder.setColor(SpiritTypeRegistry.WICKED_SPIRIT.getSecondaryColor(), 0.35F)
+        builder.setColor(MalumSpiritTypes.WICKED_SPIRIT.getSecondaryColor(), 0.35F)
                 .renderQuad(pose, 0.75F);
         pose.popPose();
         super.render(trap, yaw, partialTick, pose, buffers, light);

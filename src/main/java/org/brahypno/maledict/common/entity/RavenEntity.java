@@ -50,7 +50,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -102,11 +102,11 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     public RavenEntity(EntityType<? extends RavenEntity> type, Level level) {
         super(type, level);
         jumpControl = new RavenJumpControl();
-        setPathfindingMalus(BlockPathTypes.WATER, -1.0F);
-        setPathfindingMalus(BlockPathTypes.LAVA, -1.0F);
-        setPathfindingMalus(BlockPathTypes.DANGER_FIRE, -1.0F);
-        setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, -1.0F);
-        setPathfindingMalus(BlockPathTypes.DAMAGE_OTHER, -1.0F);
+        setPathfindingMalus(PathType.WATER, -1.0F);
+        setPathfindingMalus(PathType.LAVA, -1.0F);
+        setPathfindingMalus(PathType.DANGER_FIRE, -1.0F);
+        setPathfindingMalus(PathType.DAMAGE_FIRE, -1.0F);
+        setPathfindingMalus(PathType.DAMAGE_OTHER, -1.0F);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -120,11 +120,11 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        entityData.define(FLYING, false);
-        entityData.define(HOVERING, false);
-        entityData.define(PECK_TICKS, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(FLYING, false);
+        builder.define(HOVERING, false);
+        builder.define(PECK_TICKS, 0);
     }
 
     @Override
@@ -200,7 +200,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         goalSelector.addGoal(10, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this, RavenEntity.class));
         targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class,
-                10, true, false, target -> target.getMobType() == MobType.UNDEAD));
+                10, true, false, target -> target.getType().is(net.minecraft.tags.EntityTypeTags.UNDEAD)));
     }
 
     @Override
@@ -208,10 +208,6 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         return new GroundPathNavigation(this, level);
     }
 
-    @Override
-    public MobType getMobType() {
-        return VicissitudeBossEntity.VICISSITUDE;
-    }
 
     @Override
     protected SoundEvent getAmbientSound() {
@@ -362,7 +358,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     }
 
     @Override
-    protected void jumpFromGround() {
+    public void jumpFromGround() {
         super.jumpFromGround();
         hopCooldown = 10;
     }
@@ -427,17 +423,19 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         entityData.set(PECK_TICKS, 6);
         float base = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
         float damage = RavenCombat.attackDamage(base, level().getDifficulty().getId(),
-                living.getMobType() == MobType.UNDEAD);
+                living.getType().is(net.minecraft.tags.EntityTypeTags.UNDEAD));
         boolean hit = target.hurt(damageSources().mobAttack(this), damage);
         if (hit) {
-            doEnchantDamageEffects(this, target);
+            net.minecraft.world.item.enchantment.EnchantmentHelper.doPostAttackEffects(
+                    (net.minecraft.server.level.ServerLevel) level(), target, damageSources().mobAttack(this));
             setLastHurtMob(target);
         }
         return hit;
     }
 
     public void onFeatherHit(LivingEntity target) {
-        doEnchantDamageEffects(this, target);
+        net.minecraft.world.item.enchantment.EnchantmentHelper.doPostAttackEffects(
+                    (net.minecraft.server.level.ServerLevel) level(), target, damageSources().mobAttack(this));
         setLastHurtMob(target);
     }
 
@@ -460,7 +458,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         }
         return level().getEntitiesOfClass(LivingEntity.class, new AABB(origin, aim).inflate(0.3D),
                         bystander -> bystander != this && bystander != target && bystander.isAlive()
-                                && bystander.getMobType() != MobType.UNDEAD)
+                                && !bystander.getType().is(net.minecraft.tags.EntityTypeTags.UNDEAD))
                 .stream().noneMatch(bystander -> RavenShotSafety.crossesBody(bystander.getBoundingBox(), origin, aim));
     }
 
@@ -504,7 +502,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         boolean undead = source.getEntity() instanceof LivingEntity attacker
-                && attacker.getMobType() == MobType.UNDEAD;
+                && attacker.getType().is(net.minecraft.tags.EntityTypeTags.UNDEAD);
         boolean hit = super.hurt(source, RavenCombat.incomingDamage(amount, undead));
         if (hit && isAlive() && !level().isClientSide) {
             boolean environmental = source.getEntity() == null && (source.is(DamageTypeTags.IS_FIRE)
@@ -626,9 +624,9 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
 
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
-            MobSpawnType reason, @Nullable SpawnGroupData group, @Nullable CompoundTag tag) {
+            MobSpawnType reason, @Nullable SpawnGroupData group) {
         return super.finalizeSpawn(level, difficulty, reason,
-                group == null ? new AgeableMobGroupData(false) : group, tag);
+                group == null ? new AgeableMobGroupData(false) : group);
     }
 
     public boolean trusts(UUID player) {
@@ -860,10 +858,10 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         for (BlockPos pos : BlockPos.betweenClosed(BlockPos.containing(body.minX, body.minY - 0.08D, body.minZ),
                 BlockPos.containing(body.maxX, body.maxY, body.maxZ))) {
             BlockState state = level().getBlockState(pos);
-            BlockPathTypes type = state.getBlockPathType(level(), pos, this);
+            PathType type = state.getBlockPathType(level(), pos, this);
             if (WalkNodeEvaluator.isBurningBlock(state) || state.is(Blocks.CACTUS)
-                    || state.is(Blocks.SWEET_BERRY_BUSH) || type == BlockPathTypes.DAMAGE_FIRE
-                    || type == BlockPathTypes.DAMAGE_OTHER || type == BlockPathTypes.LAVA) {
+                    || state.is(Blocks.SWEET_BERRY_BUSH) || type == PathType.DAMAGE_FIRE
+                    || type == PathType.DAMAGE_OTHER || type == PathType.LAVA) {
                 return true;
             }
         }

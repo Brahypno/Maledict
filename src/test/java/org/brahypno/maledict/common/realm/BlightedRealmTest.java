@@ -1,11 +1,10 @@
 package org.brahypno.maledict.common.realm;
 
 import com.mojang.authlib.GameProfile;
-import com.sammy.malum.common.capability.MalumLivingEntityDataCapability;
-import com.sammy.malum.common.capability.MalumPlayerDataCapability;
-import com.sammy.malum.core.handlers.TouchOfDarknessHandler;
-import com.sammy.malum.registry.common.MobEffectRegistry;
-import com.sammy.malum.registry.common.block.BlockRegistry;
+import com.sammy.malum.core.handlers.WeepingWellRejectionHandler;
+import com.sammy.malum.registry.common.MalumAttachmentTypes;
+import com.sammy.malum.registry.common.MalumMobEffects;
+import com.sammy.malum.registry.common.block.MalumBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.Registries;
@@ -29,14 +28,14 @@ import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguratio
 import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.entity.living.LivingFallEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.MobSpawnEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.gametest.GameTestHolder;
-import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEvent;
+import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.common.item.HangmanFoolItem;
 import org.brahypno.maledict.data.MaledictWorldgen;
 import org.brahypno.maledict.registry.MaledictItems;
@@ -66,7 +65,7 @@ public final class BlightedRealmTest {
         var y = endpoint(BlightedRealm.LEVEL, 205, 80, 100);
         data.pair(a, x);
         data.pair(b, y);
-        var loaded = WeepingWellLinks.load(data.save(new CompoundTag()));
+        var loaded = WeepingWellLinks.load(data.save(new CompoundTag(), org.brahypno.maledict.TestSupport.registries()), org.brahypno.maledict.TestSupport.registries());
         check(helper, loaded.find(a.core()).other(a.core()).equals(x), "A always leads to its actual X well");
         check(helper, loaded.find(y.core()).other(y.core()).equals(b),
                 "A player arriving from A but using Y returns to B, including after NBT reload");
@@ -75,7 +74,7 @@ public final class BlightedRealmTest {
         loaded.replaceEndpoint(loaded.find(x.core()), rebuiltA);
         var rebuiltX = endpoint(BlightedRealm.LEVEL, 137, 80, -50);
         loaded.replaceEndpoint(loaded.find(rebuiltA.core()), rebuiltX);
-        var rebuilt = WeepingWellLinks.load(loaded.save(new CompoundTag()));
+        var rebuilt = WeepingWellLinks.load(loaded.save(new CompoundTag(), org.brahypno.maledict.TestSupport.registries()), org.brahypno.maledict.TestSupport.registries());
         check(helper, rebuilt.find(a.core()) == null && rebuilt.find(x.core()) == null,
                 "Rebuilding either endpoint removes both stale identities");
         check(helper, rebuilt.find(rebuiltX.core()).other(rebuiltX.core()).equals(rebuiltA)
@@ -105,9 +104,9 @@ public final class BlightedRealmTest {
         check(helper, !biome.value().hasPrecipitation() && biome.value().getWaterColor() == 0x30243E,
                 "The biome has still weather and purple water");
         var ground = realm.getBlockState(new BlockPos(sample.getX(), surface - 1, sample.getZ()));
-        check(helper, ground.is(BlockRegistry.BLIGHTED_EARTH.get()) || ground.is(BlockRegistry.BLIGHTED_SOIL.get())
-                        || ground.is(BlockRegistry.TAINTED_ROCK.get()) || ground.is(BlockRegistry.BLIGHTED_SOULWOOD.get())
-                        || ground.is(BlockRegistry.SOULWOOD_LOG.get()) || ground.is(BlockTags.LEAVES),
+        check(helper, ground.is(MalumBlocks.BLIGHTED_EARTH.get())
+                        || ground.is(MalumBlocks.TAINTED_ROCK.get()) || ground.is(MalumBlocks.BLIGHTED_SOULWOOD.get())
+                        || ground.is(MalumBlocks.SOULWOOD_LOG.get()) || ground.is(BlockTags.LEAVES),
                 "Surface generation must use blighted ground or soulwood; got " + ground + " at y=" + surface);
         check(helper, realm.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).containsKey(MaledictWorldgen.TREES.location()),
                 "The native soulwood configured feature must load");
@@ -138,13 +137,14 @@ public final class BlightedRealmTest {
     public static void unqualifiedRejectionRemainsNative(GameTestHelper helper) {
         FakePlayer player = player(helper.getLevel());
         BlockPos core = makeSource(helper, player);
-        var darkness = MalumLivingEntityDataCapability.getCapability(player).touchOfDarknessHandler;
-        darkness.progressToRejection = 60;
-        TouchOfDarknessHandler.entityTick(new LivingEvent.LivingTickEvent(player));
-        check(helper, player.serverLevel() == helper.getLevel() && darkness.rejection == 39,
-                "An unqualified 61st contact tick must execute Malum's rejection");
-        check(helper, player.hasEffect(MobEffectRegistry.REJECTED.get())
-                        && MalumPlayerDataCapability.getCapability(player).hasBeenRejected,
+        var darkness = player.getData(MalumAttachmentTypes.WEEPING_WELL_INFO);
+        darkness.voidRejection = 59;
+        darkness.primordialGoopTimer = 2;
+        WeepingWellRejectionHandler.entityTick(new net.neoforged.neoforge.event.tick.EntityTickEvent.Pre(player));
+        check(helper, player.serverLevel() == helper.getLevel() && darkness.isInRejectedState && darkness.voidRejection == 60,
+                "An unqualified 60th contact tick must execute Malum's rejection");
+        check(helper, player.hasEffect(MalumMobEffects.REJECTED)
+                        && player.getData(MalumAttachmentTypes.PROGRESSION_DATA).hasBeenRejected,
                 "Native rejected effect and revelation state remain intact");
         check(helper, WeepingWellLinks.get(helper.getLevel()).find(GlobalPos.of(Level.OVERWORLD, core)) == null,
                 "Unqualified rejection must not create a paired destination");
@@ -160,27 +160,32 @@ public final class BlightedRealmTest {
         inventory.setCurios(Map.of("delusion", new CurioStacksHandler(inventory, "delusion", 1,
                 true, true, true, ICurio.DropRule.DEFAULT)));
         inventory.setEquippedCurio("delusion", 0, HangmanFoolItem.create(0));
-        var darkness = MalumLivingEntityDataCapability.getCapability(player).touchOfDarknessHandler;
-        darkness.progressToRejection = 60;
-        TouchOfDarknessHandler.entityTick(new LivingEvent.LivingTickEvent(player));
-        check(helper, BlightedRealm.is(player.serverLevel()), "The real 61st-tick rejection call must traverse through the mixin; dimension="
-                + player.level().dimension().location() + ", rejection=" + darkness.rejection + ", contact=" + darkness.progressToRejection
+        var darkness = player.getData(MalumAttachmentTypes.WEEPING_WELL_INFO);
+        darkness.voidRejection = 59;
+        darkness.primordialGoopTimer = 2;
+        WeepingWellRejectionHandler.entityTick(new net.neoforged.neoforge.event.tick.EntityTickEvent.Pre(player));
+        check(helper, BlightedRealm.is(player.serverLevel()), "The real 60th-tick rejection call must traverse through the mixin; dimension="
+                + player.level().dimension().location() + ", rejection=" + darkness.voidRejection + ", contact=" + darkness.primordialGoopTimer
                 + ", eligible=" + WellAdmission.hasVisionEquipment(player));
         var links = WeepingWellLinks.get(player.serverLevel());
         var link = links.find(GlobalPos.of(Level.OVERWORLD, core));
-        check(helper, link != null && player.serverLevel().getBlockState(link.realm().core().pos()).is(BlockRegistry.VOID_CONDUIT.get()),
+        check(helper, link != null && player.serverLevel().getBlockState(link.realm().core().pos()).is(MalumBlocks.VOID_CONDUIT.get()),
                 "Traversal must place the native well template and remember both ends");
-        check(helper, darkness.rejection == 39 && darkness.currentAffliction == 100
-                        && !player.hasEffect(MobEffectRegistry.REJECTED.get())
-                        && !MalumPlayerDataCapability.getCapability(player).hasBeenRejected,
-                "Emergence reuses native motion and darkness without rejected potion or revelation");
+        darkness = player.getData(MalumAttachmentTypes.WEEPING_WELL_INFO);
+        check(helper, darkness.isInRejectedState && darkness.voidRejection == 60 && player.getData(MalumAttachmentTypes.TOUCH_OF_DARKNESS).touchOfDarkness == 100
+                        && !player.hasEffect(MalumMobEffects.REJECTED)
+                        && !player.getData(MalumAttachmentTypes.PROGRESSION_DATA).hasBeenRejected,
+                "Emergence reuses native motion and darkness without rejected potion or revelation: rejection=" + darkness.voidRejection
+                        + ", rejected=" + darkness.isInRejectedState + ", touch=" + player.getData(MalumAttachmentTypes.TOUCH_OF_DARKNESS).touchOfDarkness
+                        + ", potion=" + player.hasEffect(MalumMobEffects.REJECTED)
+                        + ", progression=" + player.getData(MalumAttachmentTypes.PROGRESSION_DATA).hasBeenRejected);
         check(helper, player.getPersistentData().contains(WeepingWellTravel.EMERGENCE_UNTIL),
                 "The emergence fall has explicit, temporary protection");
         var fall = new LivingFallEvent(player, 16, 1);
-        MinecraftForge.EVENT_BUS.post(fall);
+        NeoForge.EVENT_BUS.post(fall);
         check(helper, fall.isCanceled(), "The emergence fall must not cause damage");
         var secondFall = new LivingFallEvent(player, 16, 1);
-        MinecraftForge.EVENT_BUS.post(secondFall);
+        NeoForge.EVENT_BUS.post(secondFall);
         check(helper, !secondFall.isCanceled(), "The same transit cannot grant permanent fall immunity");
         inventory.setEquippedCurio("delusion", 0, ItemStack.EMPTY);
         player.setPos(Vec3.atBottomCenterOf(link.realm().core().pos()));
@@ -188,7 +193,7 @@ public final class BlightedRealmTest {
                 "A transit cooldown must prevent immediately returning");
         player.getPersistentData().remove("maledict:well_cooldown");
         WeepingWellTravel.clearContact(player);
-        darkness.reject(player);
+        WeepingWellRejectionHandler.launchPlayer(player);
         check(helper, player.serverLevel() == helper.getLevel(), "The paired return must work after removing the equipment");
         check(helper, player.position().distanceTo(Vec3.atCenterOf(core)) < 12,
                 "Return must emerge at the paired source, rather than the dimension spawn");
@@ -197,13 +202,13 @@ public final class BlightedRealmTest {
         var realm = helper.getLevel().getServer().getLevel(BlightedRealm.LEVEL);
         FakePlayer stranded = player(realm);
         stranded.setPos(Vec3.atBottomCenterOf(link.realm().core().pos()));
-        MalumLivingEntityDataCapability.getCapability(stranded).touchOfDarknessHandler.reject(stranded);
+        WeepingWellRejectionHandler.launchPlayer(stranded);
         var repaired = links.find(link.realm().core());
         check(helper, repaired != null && !repaired.overworld().core().equals(link.overworld().core())
                         && links.find(link.overworld().core()) == null,
                 "Returning through X must replace destroyed A with a newly paired A' rather than using spawn");
         check(helper, stranded.serverLevel() == helper.getLevel()
-                        && helper.getLevel().getBlockState(repaired.overworld().core().pos()).is(BlockRegistry.VOID_CONDUIT.get())
+                        && helper.getLevel().getBlockState(repaired.overworld().core().pos()).is(MalumBlocks.VOID_CONDUIT.get())
                         && stranded.position().distanceTo(Vec3.atCenterOf(repaired.overworld().core().pos())) < 12,
                 "An unequipped returner must emerge from the actual rebuilt overworld well");
         BlockPos repairedCore = repaired.overworld().core().pos();
@@ -219,15 +224,15 @@ public final class BlightedRealmTest {
     public static void blightedGroundSupportsAnimalsWithoutChangingOverworld(GameTestHelper helper) {
         var realm = helper.getLevel().getServer().getLevel(BlightedRealm.LEVEL);
         BlockPos pos = new BlockPos(1024, 160, 1024);
-        realm.setBlockAndUpdate(pos.below(), BlockRegistry.BLIGHTED_EARTH.get().defaultBlockState());
+        realm.setBlockAndUpdate(pos.below(), MalumBlocks.BLIGHTED_EARTH.get().defaultBlockState());
         var allowed = new MobSpawnEvent.SpawnPlacementCheck(EntityType.COW, realm, MobSpawnType.NATURAL,
                 pos, realm.random, false);
-        MinecraftForge.EVENT_BUS.post(allowed);
-        check(helper, allowed.getResult() == Event.Result.ALLOW, "Animals can use the realm's blighted surface");
+        NeoForge.EVENT_BUS.post(allowed);
+        check(helper, allowed.getResult() == MobSpawnEvent.SpawnPlacementCheck.Result.SUCCEED, "Animals can use the realm's blighted surface");
         var untouched = new MobSpawnEvent.SpawnPlacementCheck(EntityType.COW, helper.getLevel(), MobSpawnType.NATURAL,
                 pos, realm.random, false);
-        MinecraftForge.EVENT_BUS.post(untouched);
-        check(helper, untouched.getResult() == Event.Result.DEFAULT, "The same adaptation must not change the overworld");
+        NeoForge.EVENT_BUS.post(untouched);
+        check(helper, untouched.getResult() == MobSpawnEvent.SpawnPlacementCheck.Result.DEFAULT, "The same adaptation must not change the overworld");
         realm.setBlockAndUpdate(pos.below(), Blocks.AIR.defaultBlockState());
         helper.succeed();
     }
@@ -236,7 +241,7 @@ public final class BlightedRealmTest {
     public static void fractionalGroundAndSpawnBinding(GameTestHelper helper) {
         FakePlayer player = player(helper.getLevel());
         BlockPos ground = helper.absolutePos(new BlockPos(1, 2, 1));
-        helper.getLevel().setBlockAndUpdate(ground, BlockRegistry.BLIGHTED_EARTH.get().defaultBlockState());
+        helper.getLevel().setBlockAndUpdate(ground, MalumBlocks.BLIGHTED_EARTH.get().defaultBlockState());
         Vec3 landing = new Vec3(ground.getX() + 0.5D, ground.getY() + 14.0D / 16, ground.getZ() + 0.5D);
         check(helper, WellPlacement.safe(helper.getLevel(), player, landing), "Safe feet height must use the real 14/16 collision shape");
         check(helper, !WellPlacement.safe(helper.getLevel(), player, landing.add(0, 0.125, 0)),
@@ -251,10 +256,10 @@ public final class BlightedRealmTest {
     public static void undergroundHostLayersAndOreReplacement(GameTestHelper helper) {
         var realm = helper.getLevel().getServer().getLevel(BlightedRealm.LEVEL);
         var settings = realm.registryAccess().registryOrThrow(Registries.NOISE_SETTINGS).get(BlightedRealm.NOISE);
-        check(helper, settings != null && settings.defaultBlock().is(BlockRegistry.TAINTED_ROCK.get()),
+        check(helper, settings != null && settings.defaultBlock().is(MalumBlocks.TAINTED_ROCK.get()),
                 "Tainted rock must be the full noise terrain's default block, not only its surface rule");
-        var tainted = BlockRegistry.TAINTED_ROCK.get().defaultBlockState();
-        var twisted = BlockRegistry.TWISTED_ROCK.get().defaultBlockState();
+        var tainted = MalumBlocks.TAINTED_ROCK.get().defaultBlockState();
+        var twisted = MalumBlocks.TWISTED_ROCK.get().defaultBlockState();
         check(helper, tainted.is(BlockTags.STONE_ORE_REPLACEABLES) && twisted.is(BlockTags.DEEPSLATE_ORE_REPLACEABLES)
                         && tainted.is(BlockTags.BASE_STONE_OVERWORLD) && twisted.is(BlockTags.BASE_STONE_OVERWORLD),
                 "Both layers must join their matching ore-replacement and base-stone tags");
@@ -264,10 +269,10 @@ public final class BlightedRealmTest {
         int wrongLayer = 0;
         for (BlockPos pos : BlockPos.betweenClosed(new BlockPos(4096, -48, 4096), new BlockPos(4111, 32, 4111))) {
             var state = realm.getBlockState(pos);
-            if (pos.getY() >= 16 && state.is(BlockRegistry.TAINTED_ROCK.get())) upper++;
-            if (pos.getY() <= -16 && state.is(BlockRegistry.TWISTED_ROCK.get())) lower++;
-            if ((pos.getY() >= 16 && state.is(BlockRegistry.TWISTED_ROCK.get()))
-                    || (pos.getY() <= -16 && state.is(BlockRegistry.TAINTED_ROCK.get()))) wrongLayer++;
+            if (pos.getY() >= 16 && state.is(MalumBlocks.TAINTED_ROCK.get())) upper++;
+            if (pos.getY() <= -16 && state.is(MalumBlocks.TWISTED_ROCK.get())) lower++;
+            if ((pos.getY() >= 16 && state.is(MalumBlocks.TWISTED_ROCK.get()))
+                    || (pos.getY() <= -16 && state.is(MalumBlocks.TAINTED_ROCK.get()))) wrongLayer++;
         }
         check(helper, upper > 128 && lower > 128 && wrongLayer == 0,
                 "Generated underground mass must have the confirmed upper/lower hosts: upper=" + upper + ", lower=" + lower + ", wrong=" + wrongLayer);
@@ -292,7 +297,17 @@ public final class BlightedRealmTest {
     }
 
     private static FakePlayer player(ServerLevel level) {
-        return new FakePlayer(level, new GameProfile(UUID.randomUUID(), "BlightTest"));
+        var player = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "BlightTest"));
+        // Real dimension transfer queries negotiated payload channels. FakePlayer has no channel.
+        player.connection = new net.minecraft.server.network.ServerGamePacketListenerImpl(level.getServer(),
+                player.connection.getConnection(), player,
+                net.minecraft.server.network.CommonListenerCookie.createInitial(player.getGameProfile(), false)) {
+            @Override public boolean hasChannel(net.minecraft.resources.ResourceLocation id) { return false; }
+            @Override public void send(net.minecraft.network.protocol.Packet<?> packet) {}
+            @Override public void send(net.minecraft.network.protocol.Packet<?> packet,
+                                       net.minecraft.network.PacketSendListener listener) {}
+        };
+        return player;
     }
 
     private static BlockPos makeSource(GameTestHelper helper, FakePlayer player) {
@@ -300,7 +315,7 @@ public final class BlightedRealmTest {
         for (BlockPos ground : BlockPos.betweenClosed(core.offset(-4, -1, -4), core.offset(4, -1, 4))) {
             helper.getLevel().setBlockAndUpdate(ground, Blocks.STONE.defaultBlockState());
         }
-        helper.getLevel().setBlockAndUpdate(core, BlockRegistry.VOID_CONDUIT.get().defaultBlockState());
+        helper.getLevel().setBlockAndUpdate(core, MalumBlocks.VOID_CONDUIT.get().defaultBlockState());
         player.setPos(Vec3.atBottomCenterOf(core));
         return core;
     }

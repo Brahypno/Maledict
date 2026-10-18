@@ -15,13 +15,13 @@ public final class MaledictBiomeModifiers implements DataProvider {
     private final PackOutput.PathProvider output;
 
     public MaledictBiomeModifiers(PackOutput output) {
-        this.output = output.createPathProvider(PackOutput.Target.DATA_PACK, "forge/biome_modifier");
+        this.output = output.createPathProvider(PackOutput.Target.DATA_PACK, "neoforge/biome_modifier");
     }
 
     @Override
     public CompletableFuture<?> run(CachedOutput cache) {
         JsonObject modifier = new JsonObject();
-        modifier.addProperty("type", "forge:add_spawns");
+        modifier.addProperty("type", "neoforge:add_spawns");
         JsonArray biomes = new JsonArray();
         biomes.add("minecraft:crimson_forest");
         biomes.add("minecraft:nether_wastes");

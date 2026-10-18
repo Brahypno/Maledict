@@ -6,7 +6,7 @@
       "layer0": "maledict:item/incursus_blade_huge"
     }
   },
-  "loader": "forge:separate_transforms",
+  "loader": "neoforge:separate_transforms",
   "overrides": [
     {
       "model": "maledict:item/incursus_blade_blink",

@@ -10,13 +10,14 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.*;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.minecraft.world.entity.LivingEntity;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.MaledictTags;
 import org.brahypno.maledict.registry.MaledictItems;
@@ -38,7 +39,7 @@ import javax.annotation.Nullable;
  * <p>Original identifier and index only; rebuild dependent slots before falling back to the
  * backpack. Once the encounter ends, remaining overflow goes into chests near the boss.
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class VicissitudeCurioReturns {
     public static final String REMAINING_MESSAGE_KEY = "message.maledict.first_vicissitude.curio_return_pending";
     private static final String COMPLETED_MESSAGE_KEY = "message.maledict.first_vicissitude.curio_return_complete";
@@ -189,8 +190,9 @@ public final class VicissitudeCurioReturns {
                                 || !level.getWorldBorder().isWithinBounds(pos) || !level.isEmptyBlock(pos)) continue;
                         if (level.setBlock(pos, Blocks.CHEST.defaultBlockState(), 3)
                                 && level.getBlockEntity(pos) instanceof ChestBlockEntity chest) {
-                            chest.setCustomName(player.getDisplayName().copy().append(" ")
-                                    .append(Component.translatable("container.chest")));
+                            chest.applyComponents(chest.collectComponents(), net.minecraft.core.component.DataComponentPatch.builder()
+                                    .set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, player.getDisplayName().copy().append(" ")
+                                            .append(Component.translatable("container.chest"))).build());
                             return chest;
                         }
                     }
@@ -267,8 +269,9 @@ public final class VicissitudeCurioReturns {
 
     /** Curios applies equipment and slot attributes at NORMAL priority on this same event. */
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onEquipmentTick(LivingEvent.LivingTickEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
+    public static void onEquipmentTick(EntityTickEvent.Pre event) {
+        if (!(event.getEntity() instanceof LivingEntity livingEntity)) return;
+        if (livingEntity instanceof ServerPlayer player) {
             VicissitudeCurioLedger.get(player.serverLevel()).equipmentUpdated(player.getUUID(), player.level().getGameTime());
         }
     }
@@ -302,8 +305,8 @@ public final class VicissitudeCurioReturns {
     }
 
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || event.getServer().getTickCount() % QUEUE_INTERVAL_TICKS != 0) {
+    public static void onServerTick(ServerTickEvent.Post event) {
+        if (event.getServer().getTickCount() % QUEUE_INTERVAL_TICKS != 0) {
             return;
         }
         MinecraftServer server = event.getServer();

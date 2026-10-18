@@ -1,14 +1,15 @@
 package org.brahypno.maledict.common.effect;
 
-import com.sammy.malum.registry.common.AttributeRegistry;
+import net.minecraft.core.Holder;
+import com.sammy.malum.registry.common.MalumAttributes;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
+import team.lodestar.lodestone.registry.common.LodestoneAttributes;
 
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * 黑暗时代：佩戴启蒙之年击杀敌人时，附近一名敌人获得的减益，刻意标成 {@link MobEffectCategory#BENEFICIAL} 走 HUD 正面边框。
@@ -21,25 +22,24 @@ public final class AgeOfDarknessEffect extends MobEffect {
     /** 每级削减的比例，{@code 0.2} 即 20%。 */
     public static final double REDUCTION_PER_LEVEL = 0.2D;
 
-    /** UUID 必须固定：原版添加与移除属性修饰符都是按 UUID 匹配的，否则摘不干净。 */
-    private static final UUID MAGIC_RESISTANCE_MODIFIER_ID = modifierId("magic_resistance");
-    private static final UUID SOUL_WARD_CAP_MODIFIER_ID = modifierId("soul_ward_cap");
-    private static final UUID SOUL_WARD_INTEGRITY_MODIFIER_ID = modifierId("soul_ward_integrity");
+    /** ResourceLocation 必须固定：原版添加与移除属性修饰符都是按 ResourceLocation 匹配的，否则摘不干净。 */
+    private static final ResourceLocation MAGIC_RESISTANCE_MODIFIER_ID = modifierId("magic_resistance");
+    private static final ResourceLocation SOUL_WARD_CAP_MODIFIER_ID = modifierId("soul_ward_cap");
+    private static final ResourceLocation SOUL_WARD_INTEGRITY_MODIFIER_ID = modifierId("soul_ward_integrity");
 
     public AgeOfDarknessEffect() {
         super(MobEffectCategory.BENEFICIAL, COLOR);
-        strip(LodestoneAttributeRegistry.MAGIC_RESISTANCE.get(), MAGIC_RESISTANCE_MODIFIER_ID);
-        strip(AttributeRegistry.SOUL_WARD_CAP.get(), SOUL_WARD_CAP_MODIFIER_ID);
-        strip(AttributeRegistry.SOUL_WARD_INTEGRITY.get(), SOUL_WARD_INTEGRITY_MODIFIER_ID);
+        strip(LodestoneAttributes.MAGIC_RESISTANCE, MAGIC_RESISTANCE_MODIFIER_ID);
+        strip(MalumAttributes.SOUL_WARD_CAPACITY, SOUL_WARD_CAP_MODIFIER_ID);
+        strip(MalumAttributes.SOUL_WARD_INTEGRITY, SOUL_WARD_INTEGRITY_MODIFIER_ID);
     }
 
-    private void strip(Attribute attribute, UUID modifierId) {
-        addAttributeModifier(attribute, modifierId.toString(), -REDUCTION_PER_LEVEL,
-                AttributeModifier.Operation.MULTIPLY_TOTAL);
+    private void strip(Holder<Attribute> attribute, ResourceLocation modifierId) {
+        addAttributeModifier(attribute, modifierId, -REDUCTION_PER_LEVEL,
+                AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
-    private static UUID modifierId(String attribute) {
-        return UUID.nameUUIDFromBytes(
-                ("maledict:age_of_darkness/" + attribute).getBytes(StandardCharsets.UTF_8));
+    private static ResourceLocation modifierId(String attribute) {
+        return ResourceLocation.parse("maledict:age_of_darkness/" + attribute);
     }
 }

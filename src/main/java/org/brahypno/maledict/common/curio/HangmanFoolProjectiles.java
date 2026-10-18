@@ -35,11 +35,7 @@ public final class HangmanFoolProjectiles {
         projectile.setXRot(pitch);
         projectile.yRotO = yaw;
         projectile.xRotO = pitch;
-        if (reversePower && projectile instanceof AbstractHurtingProjectile fireball) {
-            fireball.xPower = -fireball.xPower;
-            fireball.yPower = -fireball.yPower;
-            fireball.zPower = -fireball.zPower;
-        }
+        // 1.21.1 accelerates along velocity, so reversing motion reverses acceleration too.
     }
 
     public static boolean wasReflected(Projectile projectile) {

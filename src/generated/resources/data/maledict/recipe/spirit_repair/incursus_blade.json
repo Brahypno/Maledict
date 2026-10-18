@@ -1,0 +1,37 @@
+{
+  "type": "malum:spirit_repair",
+  "durabilityPercentage": 1.0,
+  "repairMaterial": {
+    "count": 1,
+    "item": "minecraft:nether_star"
+  },
+  "spirits": [
+    {
+      "type": "malum:sacred",
+      "count": 4
+    },
+    {
+      "type": "malum:arcane",
+      "count": 4
+    },
+    {
+      "type": "malum:aerial",
+      "count": 4
+    },
+    {
+      "type": "malum:aqueous",
+      "count": 4
+    },
+    {
+      "type": "malum:earthen",
+      "count": 4
+    },
+    {
+      "type": "malum:infernal",
+      "count": 4
+    }
+  ],
+  "validItems": [
+    "maledict:incursus_blade"
+  ]
+}

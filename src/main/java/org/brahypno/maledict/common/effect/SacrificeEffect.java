@@ -1,6 +1,6 @@
 package org.brahypno.maledict.common.effect;
 
-import com.sammy.malum.registry.common.DamageTypeRegistry;
+import com.sammy.malum.registry.common.MalumDamageTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -28,17 +28,18 @@ public final class SacrificeEffect extends MobEffect {
     }
 
     @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         return SacrificeSchedule.isPulse(duration);
     }
 
     @Override
-    public void applyEffectTick(LivingEntity wearer, int amplifier) {
+    public boolean applyEffectTick(LivingEntity wearer, int amplifier) {
         if (wearer.level().isClientSide){
-            return;
+            return true;
         }
 
-        DamageSource source = DamageTypeHelper.create(wearer.level(), DamageTypeRegistry.VOODOO);
+        DamageSource source = DamageTypeHelper.create(wearer.level(), MalumDamageTypes.VOODOO);
         wearer.hurt(source, SacrificeSchedule.DAMAGE);
+        return true;
     }
 }

@@ -1,8 +1,8 @@
 package org.brahypno.maledict.common.entity;
 
 import com.sammy.malum.common.entity.scythe.ScytheBoomerangEntity;
-import com.sammy.malum.registry.common.DamageTypeRegistry;
-import com.sammy.malum.registry.common.SoundRegistry;
+import com.sammy.malum.registry.common.MalumDamageTypes;
+import com.sammy.malum.registry.common.MalumSoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
@@ -69,19 +69,20 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
             // 这一记写死 medium（不随精魂成长），但无忧符文对「这把刀打出的伤害」是一个口径，照抬一档。
             boolean hit = IncursusBladeItem.raisedByBliss(IncursusBladeItem.DamageTier.MEDIUM, owner)
                                            .deal(target,
-                                                 DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, owner),
+                                                 DamageTypeHelper.create(level(), MalumDamageTypes.SCYTHE_SWEEP, this, owner),
                                                  damage)
                                            .success();
             if (hit){
-                ItemHelper.applyEnchantments(owner, target, scythe);
-                int fireAspect = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FIRE_ASPECT, scythe);
+                net.minecraft.world.item.enchantment.EnchantmentHelper.doPostAttackEffectsWithItemSource(
+                        (net.minecraft.server.level.ServerLevel) level(), target, DamageTypeHelper.create(level(), MalumDamageTypes.SCYTHE_SWEEP, this, owner), scythe);
+                int fireAspect = org.brahypno.maledict.registry.MaledictEnchantments.level(scythe, Enchantments.FIRE_ASPECT);
                 if (fireAspect > 0 && target instanceof LivingEntity livingTarget){
-                    livingTarget.setSecondsOnFire(fireAspect * 4);
+                    livingTarget.igniteForSeconds(fireAspect * 4);
                 }
                 IncursusBladeItem.applyTieredDamage(
                         scythe,
                         target,
-                        DamageTypeHelper.create(level(), DamageTypeRegistry.VOODOO, this, owner),
+                        DamageTypeHelper.create(level(), MalumDamageTypes.VOODOO, this, owner),
                         magicDamage);
                 IncursusBladeItem.applyTieredDamage(
                         scythe,
@@ -95,12 +96,12 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
             owner.setItemInHand(InteractionHand.MAIN_HAND, heldItem);
             SoundHelper.playSound(
                     this,
-                    SoundRegistry.SCYTHE_SWEEP.get(),
+                    MalumSoundEvents.SCYTHE_SWEEP.get(),
                     1.0f,
                     RandomHelper.randomBetween(level().getRandom(), 0.75f, 1.25f));
         }
 
-        if (isEnhanced()){
+        if (isNarrow()){
             returnTimer = 0;
             Entity owner = getOwner();
             if (owner instanceof LivingEntity){

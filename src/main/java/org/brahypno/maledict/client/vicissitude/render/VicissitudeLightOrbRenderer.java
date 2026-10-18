@@ -4,16 +4,16 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.sammy.malum.client.RenderUtils;
 import com.sammy.malum.client.SpiritBasedWorldVFXBuilder;
 import com.sammy.malum.client.renderer.entity.FloatingItemEntityRenderer;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import com.sammy.malum.registry.client.MalumRenderTypeTokens;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.resources.ResourceLocation;
 import org.brahypno.maledict.common.entity.VicissitudeLightOrbEntity;
-import team.lodestar.lodestone.registry.client.LodestoneRenderTypeRegistry;
+import team.lodestar.lodestone.registry.client.LodestoneRenderTypes;
 import team.lodestar.lodestone.systems.rendering.LodestoneRenderType;
 import team.lodestar.lodestone.systems.rendering.VFXBuilders;
 
@@ -28,10 +28,10 @@ public final class VicissitudeLightOrbRenderer extends EntityRenderer<Vicissitud
     @Override
     public void render(VicissitudeLightOrbEntity entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
-        MalumSpiritType umbral = SpiritTypeRegistry.UMBRAL_SPIRIT;
-        MalumSpiritType eldritch = SpiritTypeRegistry.ELDRITCH_SPIRIT;
-        LodestoneRenderType renderType = LodestoneRenderTypeRegistry.ADDITIVE_TEXTURE_TRIANGLE
-                .applyAndCache(MalumRenderTypeTokens.CONCENTRATED_TRAIL);
+        var umbral = MalumSpiritTypes.UMBRAL_SPIRIT;
+        var eldritch = MalumSpiritTypes.ELDRITCH_SPIRIT;
+        LodestoneRenderType renderType = LodestoneRenderTypes.ADDITIVE_TEXTURE_TRIANGLE
+                .apply(MalumRenderTypeTokens.CONCENTRATED_TRAIL).getRenderType();
         VFXBuilders.WorldVFXBuilder umbralTrail = SpiritBasedWorldVFXBuilder.create(umbral)
                 .setRenderType(renderType);
         VFXBuilders.WorldVFXBuilder eldritchTrail = SpiritBasedWorldVFXBuilder.create(eldritch)

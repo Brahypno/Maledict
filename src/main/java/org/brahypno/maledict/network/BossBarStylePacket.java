@@ -1,13 +1,14 @@
 package org.brahypno.maledict.network;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.vicissitude.VicissitudeBossBarOverlay;
 
 import java.util.UUID;
-import java.util.function.Supplier;
 
 /**
  * 把"这条血条该用哪套皮肤"告诉客户端。
@@ -20,24 +21,28 @@ import java.util.function.Supplier;
  * <p>样式号只在三个时机发：血条入队（{@code addPlayer}）、阶段切换（{@code setStyle}）、
  * 离队（{@code removePlayer}，发 {@link #STYLE_NONE} 让客户端删掉映射，避免 UUID 越攒越多）。
  */
-public record BossBarStylePacket(UUID bar, int style) {
+public record BossBarStylePacket(UUID bar, int style) implements CustomPacketPayload {
+    public static final Type<BossBarStylePacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "boss_bar_style"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, BossBarStylePacket> STREAM_CODEC =
+            StreamCodec.of((buffer, packet) -> encode(packet, buffer), BossBarStylePacket::decode);
+
+    @Override
+    public Type<BossBarStylePacket> type() { return TYPE; }
+
     /** 删掉这条血条的样式映射，回到原版渲染。 */
     public static final int STYLE_NONE = -1;
 
-    public static void encode(BossBarStylePacket packet, FriendlyByteBuf buffer) {
+    public static void encode(BossBarStylePacket packet, RegistryFriendlyByteBuf buffer) {
         buffer.writeUUID(packet.bar);
         buffer.writeVarInt(packet.style);
     }
 
-    public static BossBarStylePacket decode(FriendlyByteBuf buffer) {
+    public static BossBarStylePacket decode(RegistryFriendlyByteBuf buffer) {
         return new BossBarStylePacket(buffer.readUUID(), buffer.readVarInt());
     }
 
     public static void handle(BossBarStylePacket packet,
-                              Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> VicissitudeBossBarOverlay.accept(packet)));
-        context.setPacketHandled(true);
+                              IPayloadContext context) {
+        context.enqueueWork(() -> VicissitudeBossBarOverlay.accept(packet));
     }
 }

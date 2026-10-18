@@ -2,18 +2,16 @@
   "required": true,
   "minVersion": "0.8",
   "package": "org.brahypno.maledict.mixin",
-  "compatibilityLevel": "JAVA_17",
-  "refmap": "maledict.refmap.json",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [
     "FoodDataMixin",
     "PlayerRavenShoulderMixin",
     "ProjectileAccess",
-    "TouchOfDarknessHandlerMixin",
-    "VoidConduitBlockEntityMixin"
+    "WeepingWellRejectionHandlerMixin",
+    "MalignantInfluenceDataAccessor"
   ],
   "client": [
-    "GameRendererMixin",
-    "HiddenTagRegistryMixin"
+    "GameRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

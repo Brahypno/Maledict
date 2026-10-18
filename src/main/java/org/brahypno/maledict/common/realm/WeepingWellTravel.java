@@ -1,8 +1,10 @@
 package org.brahypno.maledict.common.realm;
 
 import com.mojang.logging.LogUtils;
-import com.sammy.malum.common.capability.MalumLivingEntityDataCapability;
-import com.sammy.malum.core.handlers.TouchOfDarknessHandler;
+import com.sammy.malum.registry.common.MalumAttachmentTypes;
+import com.sammy.malum.core.handlers.WeepingWellRejectionHandler;
+import org.brahypno.maledict.network.WellTravelPacket;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
@@ -13,7 +15,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.ForgeMod;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import org.slf4j.Logger;
 
 import java.util.Optional;
@@ -108,35 +110,40 @@ public final class WeepingWellTravel {
         player.hurtMarked = true;
         player.fallDistance = 0;
         player.getPersistentData().putLong(COOLDOWN, player.server.overworld().getGameTime() + COOLDOWN_TICKS);
-        if (emerge) {
-            var darkness = MalumLivingEntityDataCapability.getCapability(player).touchOfDarknessHandler;
-            // Reuse Malum's own upward motion and vignette decay, without calling reject or its client packet.
-            darkness.rejection = 40;
-            darkness.currentAffliction = 100;
-            player.getPersistentData().putLong(EMERGENCE_UNTIL, player.server.overworld().getGameTime() + 100);
-        }
-        // Malum's native sync carries the same emergence state to the client.
-        MalumLivingEntityDataCapability.syncSelf(player);
+        applyVisualState(player, emerge);
+        if (emerge) player.getPersistentData().putLong(EMERGENCE_UNTIL, player.server.overworld().getGameTime() + 100);
+        PacketDistributor.sendToPlayer(player, new WellTravelPacket(emerge));
         return true;
     }
 
     public static void clearContact(Player player) {
-        var darkness = MalumLivingEntityDataCapability.getCapability(player).touchOfDarknessHandler;
-        darkness.progressToRejection = 0;
-        darkness.rejection = 0;
-        darkness.currentAffliction = 0;
-        darkness.expectedAffliction = 0;
-        darkness.afflictionDuration = 0;
-        darkness.isNearWeepingWell = false;
-        var gravity = player.getAttribute(ForgeMod.ENTITY_GRAVITY.get());
-        if (gravity != null) gravity.removeModifier(TouchOfDarknessHandler.GRAVITY_MODIFIER_UUID);
+        applyVisualState(player, false);
+        if (player instanceof ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(serverPlayer, new WellTravelPacket(false));
+        }
+    }
+
+    /** Both sides use Malum 1.8.2's sixty-tick rejection and contact-dependent ascent. */
+    public static void applyVisualState(Player player, boolean emerge) {
+        var darkness = player.getData(MalumAttachmentTypes.TOUCH_OF_DARKNESS);
+        darkness.touchOfDarkness = emerge ? 100.0F : 0.0F;
+        darkness.expectedTouchOfDarkness = 0;
+        darkness.touchOfDarknessFalloffDelay = 0;
+        var well = player.getData(MalumAttachmentTypes.WEEPING_WELL_INFO);
+        well.isInRejectedState = emerge;
+        well.voidRejection = emerge ? 60 : 0;
+        well.primordialGoopTimer = 0;
+        well.isNearWeepingWell = false;
+        var gravity = player.getAttribute(Attributes.GRAVITY);
+        if (gravity != null) gravity.removeModifier(WeepingWellRejectionHandler.GRAVITY_MODIFIER_ID);
     }
 
     private static Vec3 fallback(ServerPlayer player, ServerLevel level) {
         if (level.dimension().equals(player.getRespawnDimension()) && player.getRespawnPosition() != null) {
-            var spawn = Player.findRespawnPositionAndUseSpawnBlock(level, player.getRespawnPosition(),
-                    player.getRespawnAngle(), player.isRespawnForced(), false);
-            if (spawn.isPresent() && WellPlacement.safe(level, player, spawn.get())) return spawn.get();
+            var spawn = player.findRespawnPositionAndUseSpawnBlock(false,
+                    net.minecraft.world.level.portal.DimensionTransition.DO_NOTHING);
+            if (!spawn.missingRespawnBlock() && spawn.newLevel() == level
+                    && WellPlacement.safe(level, player, spawn.pos())) return spawn.pos();
         }
         BlockPos sharedSpawn = level.getSharedSpawnPos();
         BlockPos spawn = level.getWorldBorder().clampToBounds(sharedSpawn.getX(), sharedSpawn.getY(), sharedSpawn.getZ());

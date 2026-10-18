@@ -37,6 +37,6 @@ public final class AgeOfEnlightenmentCurioRenderer implements ICurioRenderer {
         }
         ICurioRenderer.followHeadRotations(slotContext.entity(), model.mask());
         VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(TEXTURE));
-        model.renderToBuffer(poseStack, consumer, light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        model.renderToBuffer(poseStack, consumer, light, OverlayTexture.NO_OVERLAY, -1);
     }
 }

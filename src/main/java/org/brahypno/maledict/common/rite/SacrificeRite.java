@@ -1,19 +1,18 @@
 package org.brahypno.maledict.common.rite;
 
 import com.sammy.malum.common.block.curiosities.totem.TotemBaseBlockEntity;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
-import com.sammy.malum.registry.common.SpiritRiteRegistry;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
-import com.sammy.malum.registry.common.item.ItemRegistry;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
+import com.sammy.malum.registry.common.item.MalumItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.effect.SacrificeSchedule;
 import org.brahypno.maledict.registry.MaledictMobEffects;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * <p>它不召唤任何东西，只在图腾四周 {@link #SELECTION_RADIUS} 格以内找主手持提尔锋的玩家，把「献祭」
  * 按在他们身上。已经拿到「智慧的牺牲」的人跳过——那枚成就就是免选凭据，见 {@link WisdomSacrifice}。
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class SacrificeRite {
     /**
      * 仪式在 Malum 仪式表里的 identifier，同时也是 lang 与图标回退的键。
@@ -42,33 +40,8 @@ public final class SacrificeRite {
      * 五根柱子自下而上的精魂。Malum 的邪术仪式一律「邪术垫底、其余往上」，本仪式照办；列表末尾即
      * Malum 认定的辨识精魂（狱火），仪式图标取的就是它的脉动。
      */
-    private static final MalumSpiritType[] SPIRITS = {
-            SpiritTypeRegistry.ELDRITCH_SPIRIT,
-            SpiritTypeRegistry.EARTHEN_SPIRIT,
-            SpiritTypeRegistry.AQUEOUS_SPIRIT,
-            SpiritTypeRegistry.AERIAL_SPIRIT,
-            SpiritTypeRegistry.INFERNAL_SPIRIT,
-    };
-
-    @SubscribeEvent
-    public static void onCommonSetup(FMLCommonSetupEvent event) {
-        // 仪式表是纯静态状态，这里只要排在 Malum 自己的类初始化之后即可。
-        event.enqueueWork(SacrificeRite::install);
-    }
-
-    public static void install() {
-        if (SpiritRiteRegistry.getRite(IDENTIFIER) != null){
-            return;
-        }
-        SpiritRiteRegistry.create(new SacrificeRiteType(IDENTIFIER, SPIRITS));
-    }
-
-    /**
-     * 已安装的牺牲仪式，未安装时为 null；Codex 的配方页要用它。
-     */
-    @Nullable
     public static SacrificeRiteType rite() {
-        return SpiritRiteRegistry.getRite(IDENTIFIER) instanceof SacrificeRiteType rite ? rite : null;
+        return org.brahypno.maledict.registry.MaledictRites.CORRUPTED_SACRIFICE.get();
     }
 
     /**
@@ -81,12 +54,12 @@ public final class SacrificeRite {
      * <p>{@code addEffect} 返回 false（被别的模组用 {@code MobEffectEvent.Applicable} 挡下、或目标免疫）
      * 时不留凭据：效果根本没加上去，谈不上「带着它熬九天」。
      */
-    static void offer(TotemBaseBlockEntity totem, ServerLevel level) {
+    public static void offer(TotemBaseBlockEntity totem, ServerLevel level) {
         for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, reach(totem))) {
             if (!bearsTyrving(player) || WisdomSacrifice.hasEarned(player)){
                 continue;
             }
-            MobEffectInstance mark = new MobEffectInstance(MaledictMobEffects.SACRIFICE.get(),
+            MobEffectInstance mark = new MobEffectInstance(MaledictMobEffects.SACRIFICE,
                                                            SacrificeSchedule.DURATION_TICKS, 0, false, true, true);
             if (player.addEffect(mark)) {
                 WisdomSacrifice.markOffered(player);
@@ -99,7 +72,7 @@ public final class SacrificeRite {
      */
     static boolean bearsTyrving(ServerPlayer player) {
         ItemStack held = player.getMainHandItem();
-        return !held.isEmpty() && held.is(ItemRegistry.TYRVING.get());
+        return !held.isEmpty() && held.is(MalumItems.TYRVING.get());
     }
 
     private static AABB reach(TotemBaseBlockEntity totem) {

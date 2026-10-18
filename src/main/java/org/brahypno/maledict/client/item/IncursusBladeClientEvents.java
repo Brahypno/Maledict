@@ -1,17 +1,17 @@
 package org.brahypno.maledict.client.item;
 
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
 import org.brahypno.maledict.network.MaledictNetwork;
@@ -20,7 +20,7 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 /** 神侵恶刃的客户端交互与物品提示。 */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class IncursusBladeClientEvents {
 
     @SubscribeEvent
@@ -85,28 +85,28 @@ public final class IncursusBladeClientEvents {
 
         tooltip.add(index++, Component.translatable("tooltip.maledict.incursus_blade.infusion")
                 .withStyle(ChatFormatting.GRAY));
-        index = addSpiritLine(event, tooltip, index, SpiritTypeRegistry.EARTHEN_SPIRIT,
+        index = addSpiritLine(event, tooltip, index, MalumSpiritTypes.EARTHEN_SPIRIT,
                 IncursusBladeItem.ATTACK_DAMAGE, "earthen");
-        index = addSpiritLine(event, tooltip, index, SpiritTypeRegistry.AQUEOUS_SPIRIT,
+        index = addSpiritLine(event, tooltip, index, MalumSpiritTypes.AQUEOUS_SPIRIT,
                 IncursusBladeItem.POWDER_SNOW_DAMAGE, "aqueous");
-        index = addSpiritLine(event, tooltip, index, SpiritTypeRegistry.ARCANE_SPIRIT,
+        index = addSpiritLine(event, tooltip, index, MalumSpiritTypes.ARCANE_SPIRIT,
                 IncursusBladeItem.MAGIC_DAMAGE, "arcane");
-        index = addSpiritLine(event, tooltip, index, SpiritTypeRegistry.AERIAL_SPIRIT,
+        index = addSpiritLine(event, tooltip, index, MalumSpiritTypes.AERIAL_SPIRIT,
                 IncursusBladeItem.AERIAL_PROGRESS, "aerial");
-        index = addSpiritLine(event, tooltip, index, SpiritTypeRegistry.SACRED_SPIRIT,
+        index = addSpiritLine(event, tooltip, index, MalumSpiritTypes.SACRED_SPIRIT,
                 IncursusBladeItem.SACRED_POWER, "sacred");
-        index = addSpiritLine(event, tooltip, index, SpiritTypeRegistry.INFERNAL_SPIRIT,
+        index = addSpiritLine(event, tooltip, index, MalumSpiritTypes.INFERNAL_SPIRIT,
                 IncursusBladeItem.INFERNAL_POWER, "infernal");
-        index = addSpiritLine(event, tooltip, index, SpiritTypeRegistry.ELDRITCH_SPIRIT,
+        index = addSpiritLine(event, tooltip, index, MalumSpiritTypes.ELDRITCH_SPIRIT,
                 IncursusBladeItem.ELDRITCH_ABSORPTION, "eldritch");
-        addSpiritLine(event, tooltip, index, SpiritTypeRegistry.WICKED_SPIRIT,
+        addSpiritLine(event, tooltip, index, MalumSpiritTypes.WICKED_SPIRIT,
                 IncursusBladeItem.WICKED_CRITICAL_DAMAGE, "wicked");
     }
 
     private static int addSpiritLine(ItemTooltipEvent event,
                                      List<Component> tooltip,
                                      int index,
-                                     MalumSpiritType spiritType,
+                                     com.sammy.malum.core.systems.spirit.type.SpiritLike spiritType,
                                      String statKey,
                                      String translationSuffix) {
         double value = IncursusBladeItem.getStat(event.getItemStack(), statKey);

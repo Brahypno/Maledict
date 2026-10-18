@@ -1,18 +1,18 @@
 package org.brahypno.maledict.common.combat;
 
-import com.sammy.malum.registry.common.item.ItemTagRegistry;
+import com.sammy.malum.registry.common.MalumTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.registry.MaledictEnchantments;
 
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class EctoplasmEnchantmentEffect {
     private static final double SPEED_INCREASE_PER_LEVEL = 0.08D;
     private static final String PROCESSED_TAG = Maledict.MODID + ":ectoplasm_processed";
@@ -32,7 +32,7 @@ public final class EctoplasmEnchantmentEffect {
             return;
         }
 
-        int level = bow.getEnchantmentLevel(MaledictEnchantments.ECTOPLASM.get());
+        int level = org.brahypno.maledict.registry.MaledictEnchantments.level(bow, MaledictEnchantments.ECTOPLASM);
         if (level <= 0){
             return;
         }
@@ -54,7 +54,7 @@ public final class EctoplasmEnchantmentEffect {
         int found = 0;
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
-            if (stack.is(ItemTagRegistry.ASPECTED_SPIRITS)){
+            if (stack.is(MalumTags.ItemTags.ASPECTED_SPIRITS)){
                 found += stack.getCount();
                 if (found >= required){
                     return true;
@@ -67,7 +67,7 @@ public final class EctoplasmEnchantmentEffect {
     private static void consumeSpirits(Player player, int amount) {
         for (int slot = 0; slot < player.getInventory().getContainerSize() && amount > 0; slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
-            if (!stack.is(ItemTagRegistry.ASPECTED_SPIRITS)){
+            if (!stack.is(MalumTags.ItemTags.ASPECTED_SPIRITS)){
                 continue;
             }
 

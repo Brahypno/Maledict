@@ -4,10 +4,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.event.tick.*;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.vicissitude.music.VicissitudeBossMusic;
 import org.brahypno.maledict.client.vicissitude.vfx.FirstVicissitudeEffects;
@@ -24,7 +25,7 @@ import java.util.List;
  * <p>同一趟扫描顺带驱动 {@link VicissitudeBossMusic}——阶段本来就在同步数据里，
  * 音乐不需要额外的网络包，见那个类的注释。
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE,
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME,
         value = Dist.CLIENT)
 public final class VicissitudeClientTickEvents {
     private static final double MARKER_SEARCH_RADIUS = 96.0D;
@@ -33,10 +34,7 @@ public final class VicissitudeClientTickEvents {
     private static final List<FirstVicissitudeBossEntity> BOSSES = new ArrayList<>();
 
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+    public static void onClientTick(ClientTickEvent.Post event) {
         MARKERS.clear();
         BOSSES.clear();
         ClientLevel level = Minecraft.getInstance().level;

@@ -1,11 +1,10 @@
 {
   "block": "maledict:mnemonic_obelisk",
   "stats": {
-    "maxEterna": 30,
-    "eterna": 10,
+    "maxEterna": 60,
+    "eterna": 20,
     "quanta": 10,
     "arcana": 5,
-    "rectification": 0,
     "clues": 1
   }
 }

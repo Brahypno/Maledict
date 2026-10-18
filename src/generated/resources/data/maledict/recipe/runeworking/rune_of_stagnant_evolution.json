@@ -1,0 +1,16 @@
+{
+  "type": "malum:runeworking",
+  "input": {
+    "count": 1,
+    "item": "maledict:malignant_pewter_tablet"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:rune_of_stagnant_evolution"
+  },
+  "secondaryInput": {
+    "count": 2,
+    "item": "malum:fused_consciousness"
+  },
+  "soundType": "malum:runic_workbench_shapes_something"
+}

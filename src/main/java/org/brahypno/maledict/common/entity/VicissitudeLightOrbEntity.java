@@ -1,8 +1,9 @@
 package org.brahypno.maledict.common.entity;
 
+import net.minecraft.network.syncher.SynchedEntityData;
 import com.sammy.malum.common.entity.FloatingEntity;
-import com.sammy.malum.registry.common.SoundRegistry;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import com.sammy.malum.registry.common.MalumSoundEvents;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import com.sammy.malum.visual_effects.SpiritLightSpecs;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -42,9 +43,9 @@ public final class VicissitudeLightOrbEntity extends FloatingEntity {
                                      Vec3 position) {
         this(MaledictEntities.VICISSITUDE_LIGHT_ORB.get(), level);
         setCaster(caster);
-        setOwner(target.getUUID());
+        setDestination(new com.sammy.malum.common.entity.FloatingItemDestinationData(target));
         setPos(position);
-        Vec3 forward = getDestination().subtract(position).normalize().scale(0.12D);
+        Vec3 forward = getDestination().getDestination(level).orElse(position).subtract(position).normalize().scale(0.12D);
         setDeltaMovement(forward.add(
                 random.triangle(0.0D, 0.12D),
                 random.triangle(0.05D, 0.02D),
@@ -52,31 +53,32 @@ public final class VicissitudeLightOrbEntity extends FloatingEntity {
     }
 
     @Override
-    protected void defineSynchedData() {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
     }
 
     @Override
     public void tick() {
-        if (!level().isClientSide && (owner == null || !owner.isAlive())) {
+        if (level() instanceof ServerLevel level && (getDestination() == null
+                || getDestination().getEntityCollector(level).isEmpty())) {
             discard();
             return;
         }
         super.tick();
+        if (level().isClientSide) {
+            Vec3 pos = getOffsetPosition(0.5F);
+            spawnParticles(pos.x, pos.y, pos.z);
+        }
     }
 
     @Override
-    public void collect() {
-        if (level().isClientSide || owner == null || !owner.isAlive()) {
+    public void collect(ServerLevel level) {
+        LivingEntity owner = getDestination().getEntityCollector(level).orElse(null);
+        if (owner == null || !owner.isAlive()) {
             return;
         }
         owner.setHealth(Math.min(owner.getHealth(), 1.0F));
-        playSound((SoundEvent) SoundRegistry.SPIRIT_PICKUP.get(), 0.4F,
+        playSound((SoundEvent) MalumSoundEvents.SPIRIT_PICKUP.get(), 0.4F,
                 Mth.nextFloat(random, 0.8F, 1.1F));
-    }
-
-    @Override
-    public float getMotionCoefficient() {
-        return 0.04F;
     }
 
     @Override
@@ -84,11 +86,10 @@ public final class VicissitudeLightOrbEntity extends FloatingEntity {
         return 0.9F;
     }
 
-    @Override
-    public void spawnParticles(double x, double y, double z) {
+    private void spawnParticles(double x, double y, double z) {
         Vec3 motion = getDeltaMovement().normalize().scale(0.05D);
         ParticleEffectSpawner particles = SpiritLightSpecs.spiritLightSpecs(
-                level(), new Vec3(x, y, z), SpiritTypeRegistry.ELDRITCH_SPIRIT);
+                level(), new Vec3(x, y, z), MalumSpiritTypes.ELDRITCH_SPIRIT);
         particles.getBuilder().setMotion(motion);
         particles.getBloomBuilder().setMotion(motion);
         particles.spawnParticles();

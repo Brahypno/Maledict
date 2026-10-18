@@ -24,12 +24,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.FakePlayerFactory;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.entity.ProjectileImpactEvent;
-import net.minecraftforge.gametest.GameTestHolder;
-import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.common.curio.VicissitudeCurioLedger;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.rig.VicissitudeRig;
@@ -291,7 +291,7 @@ public final class FirstVicissitudeEntityTest {
         CompoundTag curio = new CompoundTag();
         curio.putString("Slot", "charm");
         curio.putInt("Index", 0);
-        curio.put("Stack", new ItemStack(Items.DIAMOND).save(new CompoundTag()));
+        curio.put("Stack", new ItemStack(Items.DIAMOND).save(org.brahypno.maledict.TestSupport.registries()));
         ListTag items = new ListTag(); items.add(curio);
         CompoundTag player = new CompoundTag(); player.putUUID("Player", owner); player.put("Items", items);
         ListTag players = new ListTag(); players.add(player); setup.put("ConfiscatedCurios", players);
@@ -323,7 +323,7 @@ public final class FirstVicissitudeEntityTest {
         Vec3 collision = new Vec3(head.centerX(), head.centerY(), head.centerZ());
         Arrow arrow = new Arrow(EntityType.ARROW, helper.getLevel());
         arrow.setPos(boss.position().add(0, -5, -5));
-        MinecraftForge.EVENT_BUS.post(new ProjectileImpactEvent(arrow, new EntityHitResult(boss, collision)));
+        NeoForge.EVENT_BUS.post(new ProjectileImpactEvent(arrow, new EntityHitResult(boss, collision)));
         helper.assertTrue(boss.incomingHitWeight(boss.damageSources().arrow(arrow, null)) == 1.25F,
                 "Recorded head impact must take the head cap even when the arrow origin is elsewhere");
         helper.succeed();
@@ -333,6 +333,9 @@ public final class FirstVicissitudeEntityTest {
     @SuppressWarnings("unchecked")
     public static void playerPartFollowsLookRayRatherThanAttackerFeet(GameTestHelper helper) throws Exception {
         FirstVicissitudeBossEntity boss = spawn(helper, phaseTwoTag());
+        boss.setPos(128.5, 128, 128.5);
+        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++)
+            helper.getLevel().getChunk((128 >> 4) + dx, 8 + dz);
         invoke(boss, "refreshPose", new Class<?>[0], new Object[0]);
         List<VicissitudeRig.SegmentVolume> volumes = (List<VicissitudeRig.SegmentVolume>)
                 invoke(boss, "segmentVolumes", new Class<?>[0], new Object[0]);
@@ -348,12 +351,12 @@ public final class FirstVicissitudeEntityTest {
         // begin in front of every volume so looking away cannot begin inside an animated wing.
         double front = volumes.stream().mapToDouble(volume -> volume.box().minZ()).min().orElseThrow() - 0.25;
         player.setPos(head.centerX(), head.maxY() - 0.1 - player.getEyeHeight(), front);
-        player.getAttribute(net.minecraftforge.common.ForgeMod.ENTITY_REACH.get())
+        player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE)
                 .setBaseValue(Math.max(3, head.centerZ() - front + 1));
         float contactWeight = boss.incomingHitWeight(boss.damageSources().playerAttack(player));
         helper.assertTrue(contactWeight == 1.25F || contactWeight == 0.75F,
                 "Head/occluding-wing ray: eye=" + player.getEyePosition() + ", look=" + player.getLookAngle()
-                        + ", reach=" + player.getAttributeValue(net.minecraftforge.common.ForgeMod.ENTITY_REACH.get())
+                        + ", reach=" + player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE)
                         + ", volumes=" + volumes + ", weight=" + boss.incomingHitWeight(boss.damageSources().playerAttack(player)));
         player.setYRot(180);
         helper.assertTrue(boss.incomingHitWeight(boss.damageSources().playerAttack(player)) == 1.0F,
@@ -391,6 +394,9 @@ public final class FirstVicissitudeEntityTest {
     @GameTest(template = "test_empty", batch = "collision")
     public static void worldUnstickSearchEscapesThePreviouslyExhaustedNegativeSide(GameTestHelper helper) throws Exception {
         FirstVicissitudeBossEntity boss = spawn(helper, phaseTwoTag());
+        boss.setPos(256.5, 128, 128.5);
+        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++)
+            helper.getLevel().getChunk((256 >> 4) + dx, 8 + dz);
         Map<BlockPos, BlockState> restore = new LinkedHashMap<>();
         int checked = 0;
         for (int dx = -4; dx <= 4 && checked < 64; dx += 2)

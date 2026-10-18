@@ -2,17 +2,15 @@ package org.brahypno.maledict.common.realm;
 
 import com.sammy.malum.common.block.curiosities.weeping_well.PrimordialSoupBlock;
 import com.sammy.malum.common.block.curiosities.weeping_well.VoidConduitBlock;
-import com.sammy.malum.registry.common.block.BlockRegistry;
+import com.sammy.malum.registry.common.block.MalumBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
@@ -20,7 +18,6 @@ import java.util.Optional;
 
 final class WellPlacement {
     private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
-    private static final ResourceLocation TEMPLATE = ResourceLocation.fromNamespaceAndPath("malum", "weeping_well");
     private static final int[][] SITES = {{0, 0}, {32, 0}, {0, 32}, {-32, 0}, {0, -32},
             {32, 32}, {-32, 32}, {32, -32}, {-32, -32}, {64, 0}, {0, 64}, {-64, 0}, {0, -64}};
 
@@ -109,38 +106,25 @@ final class WellPlacement {
 
     static Optional<WeepingWellLinks.Endpoint> build(ServerLevel level, LivingEntity player,
                                                    BlockPos target, WeepingWellLinks links) {
-        var template = level.getStructureManager().get(TEMPLATE);
-        if (template.isEmpty()) return Optional.empty();
-        var settings = new StructurePlaceSettings().setIgnoreEntities(true).setKeepLiquids(false);
-        var cores = template.get().filterBlocks(BlockPos.ZERO, settings, BlockRegistry.VOID_CONDUIT.get());
-        if (cores.size() != 1) return Optional.empty();
-        var coreOffset = cores.get(0).pos();
-        var size = template.get().getSize();
         for (int[] offset : SITES) {
             int x = target.getX() + offset[0];
             int z = target.getZ() + offset[1];
             BlockPos center = new BlockPos(x, 0, z);
-            if (!level.getWorldBorder().isWithinBounds(center.offset(-size.getX(), 0, -size.getZ()))
-                    || !level.getWorldBorder().isWithinBounds(center.offset(size.getX(), 0, size.getZ()))
+            if (!level.getWorldBorder().isWithinBounds(center.offset(-7, 0, -7))
+                    || !level.getWorldBorder().isWithinBounds(center.offset(7, 0, 7))
                     || links.hasWellNear(level.dimension(), center, 20)) continue;
-            // Level#getHeight returns min build height for an unloaded chunk; generate before sampling it.
             level.getChunk(x >> 4, z >> 4);
             int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             while (surface > level.getMinBuildHeight() + 16
                     && level.getBlockState(new BlockPos(x, surface - 1, z)).is(BlockTags.LOGS)) surface--;
-            // The native template is 13x15x13; bury its basin and leave its upper pillars above ground.
-            int floorY = surface - coreOffset.getY() - 1;
-            // A shallow/flat world cannot bury the native basin through bedrock; raise the whole well instead.
-            for (int depth = 1; depth <= coreOffset.getY() + 1; depth++) {
-                if (level.getBlockState(new BlockPos(x, surface - depth, z)).is(Blocks.BEDROCK)) {
-                    floorY = Math.max(floorY, surface - depth + 1);
-                }
-            }
-            BlockPos origin = new BlockPos(x - coreOffset.getX(), floorY,
-                    z - coreOffset.getZ());
-            if (origin.getY() <= level.getMinBuildHeight() || origin.getY() + size.getY() >= level.getMaxBuildHeight()) continue;
+            // Native geometry extends 12 blocks below its mouth and at most 7 above it.
+            int mouthY = Math.max(surface, level.getMinBuildHeight() + 13);
+            BlockPos mouth = new BlockPos(x, mouthY, z);
+            BlockPos min = mouth.offset(-7, -12, -7);
+            BlockPos max = mouth.offset(7, 7, 7);
+            if (max.getY() >= level.getMaxBuildHeight()) continue;
             boolean free = true;
-            for (BlockPos pos : BlockPos.betweenClosed(origin, origin.offset(size.getX() - 1, size.getY() - 1, size.getZ() - 1))) {
+            for (BlockPos pos : BlockPos.betweenClosed(min, max)) {
                 if (!natural(level.getBlockState(pos)) || level.getBlockEntity(pos) != null) {
                     LOGGER.debug("Well site {} blocked by {} at {}", center, level.getBlockState(pos), pos.immutable());
                     free = false;
@@ -148,8 +132,12 @@ final class WellPlacement {
                 }
             }
             if (!free) continue;
-            if (!template.get().placeInWorld(level, origin, origin, settings, level.random, 3)) continue;
-            BlockPos core = origin.offset(coreOffset);
+            var bounds = net.minecraft.world.level.levelgen.structure.BoundingBox.fromCorners(min, max);
+            // A tiny subclass exposes the supported protected constructor; the native piece owns all geometry.
+            new NativeWell(mouth, bounds).postProcess(level, level.structureManager(),
+                    level.getChunkSource().getGenerator(), level.random, bounds,
+                    new net.minecraft.world.level.ChunkPos(mouth), mouth);
+            BlockPos core = mouth.below(2);
             var landing = near(level, player, core.above(2), 8);
             if (landing.isPresent()) return Optional.of(new WeepingWellLinks.Endpoint(level.dimension(), core, landing.get()));
             LOGGER.debug("Well at {} has no safe rim for {}", core, player.getUUID());
@@ -161,13 +149,19 @@ final class WellPlacement {
         return state.isAir() || state.canBeReplaced() || !state.getFluidState().isEmpty()
                 || state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.DIRT) || state.is(BlockTags.SAND)
                 || state.is(BlockTags.LOGS) || state.is(BlockTags.LEAVES) || state.is(Blocks.GRAVEL)
-                || state.is(net.minecraftforge.common.Tags.Blocks.ORES)
+                || state.is(net.neoforged.neoforge.common.Tags.Blocks.ORES)
                 || state.is(Blocks.CLAY) || state.is(Blocks.SNOW_BLOCK) || state.is(Blocks.ICE)
-                || state.is(Blocks.PACKED_ICE) || state.is(BlockRegistry.BLIGHTED_EARTH.get())
-                || state.is(BlockRegistry.BLIGHTED_SOIL.get()) || state.is(BlockRegistry.BLIGHTED_GROWTH.get())
-                || state.is(BlockRegistry.CLINGING_BLIGHT.get()) || state.is(BlockRegistry.TAINTED_ROCK.get())
-                || state.is(BlockRegistry.TWISTED_ROCK.get())
-                || state.is(BlockRegistry.BLIGHTED_SOULWOOD.get());
+                || state.is(Blocks.PACKED_ICE) || state.is(MalumBlocks.BLIGHTED_EARTH.get())
+                || state.is(MalumBlocks.BLIGHTED_GROWTH.get())
+                || state.is(MalumBlocks.CLINGING_BLIGHT.get()) || state.is(MalumBlocks.TAINTED_ROCK.get())
+                || state.is(MalumBlocks.TWISTED_ROCK.get())
+                || state.is(MalumBlocks.BLIGHTED_SOULWOOD.get());
+    }
+
+    private static final class NativeWell extends com.sammy.malum.common.worldgen.well.WeepingWellStructurePiece {
+        NativeWell(BlockPos mouth, net.minecraft.world.level.levelgen.structure.BoundingBox bounds) {
+            super(mouth, bounds);
+        }
     }
 
     private WellPlacement() {

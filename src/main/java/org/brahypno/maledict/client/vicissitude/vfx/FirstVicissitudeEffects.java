@@ -1,7 +1,7 @@
 package org.brahypno.maledict.client.vicissitude.vfx;
 
-import com.sammy.malum.registry.client.ParticleRegistry;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import com.sammy.malum.registry.common.MalumParticles;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
@@ -9,14 +9,14 @@ import net.minecraft.world.phys.Vec3;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.rig.VicissitudeRig;
 import org.brahypno.maledict.rig.VicissitudeRigData;
-import team.lodestar.lodestone.registry.common.particle.LodestoneParticleRegistry;
+import team.lodestar.lodestone.registry.common.particle.LodestoneParticleTypes;
 import team.lodestar.lodestone.systems.easing.Easing;
 import team.lodestar.lodestone.systems.particle.builder.WorldParticleBuilder;
 import team.lodestar.lodestone.systems.particle.data.GenericParticleData;
 import team.lodestar.lodestone.systems.particle.data.color.ColorParticleData;
 import team.lodestar.lodestone.systems.particle.data.spin.SpinParticleData;
 import team.lodestar.lodestone.systems.particle.render_types.LodestoneWorldParticleRenderType;
-import team.lodestar.lodestone.systems.particle.world.behaviors.components.DirectionalBehaviorComponent;
+import team.lodestar.lodestone.systems.particle.world.behaviors.DirectionalParticleBehavior;
 
 import java.awt.Color;
 import java.util.List;
@@ -204,8 +204,8 @@ public final class FirstVicissitudeEffects {
      */
     private static void spawnRune(Level level, Vec3 position, float scale, float alpha,
                                   SpinParticleData spin, int lifetime) {
-        WorldParticleBuilder.create(ParticleRegistry.RITUAL_CIRCLE,
-                        new DirectionalBehaviorComponent(GROUND_UP))
+        WorldParticleBuilder.create(MalumParticles.RADIAL_DISPLAY)
+                .setBehavior(DirectionalParticleBehavior.directional(GROUND_UP))
                 .setRenderType(LodestoneWorldParticleRenderType.LUMITRANSPARENT)
                 .setColorData(ColorParticleData.create(SIGIL_BLACK, SIGIL_BLACK).build())
                 .setTransparencyData(GenericParticleData.create(alpha * 0.45F, alpha, 0.0F)
@@ -223,7 +223,7 @@ public final class FirstVicissitudeEffects {
         double radians = Math.toRadians(angleDegrees);
         Vec3 position = new Vec3(center.x + Math.cos(radians) * radius, center.y,
                 center.z + Math.sin(radians) * radius);
-        WorldParticleBuilder.create(LodestoneParticleRegistry.SPARKLE_PARTICLE)
+        WorldParticleBuilder.create(LodestoneParticleTypes.SPARKLE_PARTICLE)
                 .setRenderType(LodestoneWorldParticleRenderType.LUMITRANSPARENT)
                 .setColorData(ColorParticleData.create(COLD_WHITE, COLD_BONE).build())
                 .setTransparencyData(GenericParticleData.create(alpha, 0.0F)
@@ -267,7 +267,7 @@ public final class FirstVicissitudeEffects {
                 ? VicissitudeRigData.Joint.WING_LEFT_ATTACK_ANCHOR
                 : VicissitudeRigData.Joint.WING_RIGHT_ATTACK_ANCHOR;
         Vec3 point = anchor(entity, anchor, partialTick, pose);
-        WorldParticleBuilder.create(LodestoneParticleRegistry.WISP_PARTICLE)
+        WorldParticleBuilder.create(LodestoneParticleTypes.WISP_PARTICLE)
                 .setColorData(ColorParticleData.create(COLD_WHITE, DARK_VIOLET).build())
                 .setTransparencyData(GenericParticleData.create(0.65F, 0.0F).build())
                 .setScaleData(GenericParticleData.create(0.18F + build * 0.5F, 0.0F).build())
@@ -278,7 +278,7 @@ public final class FirstVicissitudeEffects {
             Vec3 tip = anchor(entity, left
                     ? VicissitudeRigData.Joint.WING_LEFT_TIP
                     : VicissitudeRigData.Joint.WING_RIGHT_TIP, partialTick, pose);
-            WorldParticleBuilder.create(LodestoneParticleRegistry.STAR_PARTICLE)
+            WorldParticleBuilder.create(LodestoneParticleTypes.STAR_PARTICLE)
                     .setColorData(ColorParticleData.create(COLD_WHITE, COLD_BONE).build())
                     .setTransparencyData(GenericParticleData.create(0.8F, 0.0F).build())
                     .setScaleData(GenericParticleData.create(0.12F, 0.0F).build())
@@ -291,7 +291,7 @@ public final class FirstVicissitudeEffects {
     public static void spawnReleaseBurst(Level level, Vec3 position, boolean phaseTwo) {
         Color bright = phaseTwo ? COLD_BONE : COLD_WHITE;
         for (int i = 0; i < 8; i++) {
-            WorldParticleBuilder.create(LodestoneParticleRegistry.SPARKLE_PARTICLE)
+            WorldParticleBuilder.create(LodestoneParticleTypes.SPARKLE_PARTICLE)
                     .setColorData(ColorParticleData.create(bright, DARK_VIOLET).build())
                     .setTransparencyData(GenericParticleData.create(0.9F, 0.0F).build())
                     .setScaleData(GenericParticleData.create(0.2F, 0.0F).build())
@@ -304,7 +304,7 @@ public final class FirstVicissitudeEffects {
 
     public static void spawnGatherFlash(Level level, Vec3 position, int count) {
         for (int i = 0; i < count; i++) {
-            WorldParticleBuilder.create(LodestoneParticleRegistry.TWINKLE_PARTICLE)
+            WorldParticleBuilder.create(LodestoneParticleTypes.TWINKLE_PARTICLE)
                     .setColorData(ColorParticleData.create(COLD_WHITE, DEEP_BLACK).build())
                     .setTransparencyData(GenericParticleData.create(0.85F, 0.0F).build())
                     .setScaleData(GenericParticleData.create(0.25F, 0.0F).build())
@@ -323,7 +323,7 @@ public final class FirstVicissitudeEffects {
         float fade = Mth.clamp((ticks - 36.0F) / 44.0F, 0.0F, 1.0F);
         float scale = Math.max(0.02F, 0.5F * (1.0F - fade));
         Vec3 core = anchor(entity, VicissitudeRigData.Joint.HEAD_EFFECT_ANCHOR, partialTick, pose);
-        WorldParticleBuilder.create(LodestoneParticleRegistry.WISP_PARTICLE)
+        WorldParticleBuilder.create(LodestoneParticleTypes.WISP_PARTICLE)
                 .setColorData(ColorParticleData.create(COLD_WHITE, DEEP_BLACK).build())
                 .setTransparencyData(GenericParticleData.create(0.7F * (1.0F - fade), 0.0F).build())
                 .setScaleData(GenericParticleData.create(scale, 0.0F).build())
@@ -332,7 +332,7 @@ public final class FirstVicissitudeEffects {
                 .setMotion(0.0D, 0.02D, 0.0D)
                 .spawn(level, core.x, core.y, core.z);
         Vec3 chest = anchor(entity, VicissitudeRigData.Joint.CHEST_EFFECT_ANCHOR, partialTick, pose);
-        WorldParticleBuilder.create(LodestoneParticleRegistry.SMOKE_PARTICLE)
+        WorldParticleBuilder.create(LodestoneParticleTypes.SMOKE_PARTICLE)
                 .setColorData(ColorParticleData.create(DARK_VIOLET, DEEP_BLACK).build())
                 .setTransparencyData(GenericParticleData.create(0.5F * (1.0F - fade), 0.0F).build())
                 .setScaleData(GenericParticleData.create(scale * 1.4F, 0.0F).build())
@@ -343,7 +343,7 @@ public final class FirstVicissitudeEffects {
 
     public static void spawnCoreGlimmer(Level level, Vec3 position) {
         var particles = com.sammy.malum.visual_effects.SpiritLightSpecs.spiritLightSpecs(
-                level, position, SpiritTypeRegistry.ELDRITCH_SPIRIT);
+                level, position, MalumSpiritTypes.ELDRITCH_SPIRIT);
         particles.spawnParticles();
     }
 }

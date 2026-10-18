@@ -1,6 +1,6 @@
 package org.brahypno.maledict.client.jei;
 
-import com.sammy.malum.compability.jei.JEIHandler;
+import com.sammy.malum.compat.jei.JEIHandler;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.recipe.IRecipeManager;

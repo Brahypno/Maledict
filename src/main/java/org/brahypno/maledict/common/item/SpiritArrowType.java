@@ -1,28 +1,29 @@
 package org.brahypno.maledict.common.item;
 
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import net.minecraft.core.Holder;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 
 import java.util.function.Supplier;
 
 public enum SpiritArrowType {
-    SACRED(() -> SpiritTypeRegistry.SACRED_SPIRIT),
-    WICKED(() -> SpiritTypeRegistry.WICKED_SPIRIT),
-    ARCANE(() -> SpiritTypeRegistry.ARCANE_SPIRIT),
-    ELDRITCH(() -> SpiritTypeRegistry.ELDRITCH_SPIRIT),
-    AERIAL(() -> SpiritTypeRegistry.AERIAL_SPIRIT),
-    AQUEOUS(() -> SpiritTypeRegistry.AQUEOUS_SPIRIT),
-    EARTHEN(() -> SpiritTypeRegistry.EARTHEN_SPIRIT),
-    INFERNAL(() -> SpiritTypeRegistry.INFERNAL_SPIRIT);
+    SACRED(() -> MalumSpiritTypes.SACRED_SPIRIT),
+    WICKED(() -> MalumSpiritTypes.WICKED_SPIRIT),
+    ARCANE(() -> MalumSpiritTypes.ARCANE_SPIRIT),
+    ELDRITCH(() -> MalumSpiritTypes.ELDRITCH_SPIRIT),
+    AERIAL(() -> MalumSpiritTypes.AERIAL_SPIRIT),
+    AQUEOUS(() -> MalumSpiritTypes.AQUEOUS_SPIRIT),
+    EARTHEN(() -> MalumSpiritTypes.EARTHEN_SPIRIT),
+    INFERNAL(() -> MalumSpiritTypes.INFERNAL_SPIRIT);
 
     private static final SpiritArrowType[] VALUES = values();
-    private final Supplier<MalumSpiritType> spiritType;
+    private final Supplier<com.sammy.malum.core.systems.registry.SpiritHolder<SpiritArcanaType>> spiritType;
 
-    SpiritArrowType(Supplier<MalumSpiritType> spiritType) {
+    SpiritArrowType(Supplier<com.sammy.malum.core.systems.registry.SpiritHolder<SpiritArcanaType>> spiritType) {
         this.spiritType = spiritType;
     }
 
-    public MalumSpiritType getSpiritType() {
+    public com.sammy.malum.core.systems.registry.SpiritHolder<SpiritArcanaType> getSpiritType() {
         return spiritType.get();
     }
 

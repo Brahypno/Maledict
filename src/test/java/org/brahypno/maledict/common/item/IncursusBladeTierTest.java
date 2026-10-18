@@ -9,14 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class IncursusBladeTierTest {
 
     @Test
-    void everyTierGoesUpExactlyOneRung() {
+    void blissRaisesOneTierAndStopsAtFinal() {
         assertEquals(DamageTier.MEDIUM, DamageTier.LIGHT.raised());
         assertEquals(DamageTier.FINAL, DamageTier.MEDIUM.raised());
-    }
-
-    /** 终档没有更高的地方可去，抬了还是终档（不溢出、不回绕）。 */
-    @Test
-    void theTopTierStaysAtTheTop() {
         assertEquals(DamageTier.FINAL, DamageTier.FINAL.raised());
     }
 }

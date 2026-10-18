@@ -1,0 +1,23 @@
+{
+  "type": "malum:spirit_infusion",
+  "input": {
+    "count": 1,
+    "item": "ars_nouveau:source_gem"
+  },
+  "spirits": [
+    {
+      "type": "malum:sacred",
+      "count": 3
+    }
+  ],
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "ars_nouveau"
+    }
+  ],
+  "result": {
+    "id": "ars_nouveau:abjuration_essence"
+  },
+  "extraInputs": []
+}

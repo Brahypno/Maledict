@@ -1,7 +1,7 @@
 package org.brahypno.maledict.data;
 
 import net.minecraft.data.PackOutput;
-import net.minecraftforge.common.data.LanguageProvider;
+import net.neoforged.neoforge.common.data.LanguageProvider;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.registry.MaledictBlocks;
 import org.brahypno.maledict.registry.MaledictItems;

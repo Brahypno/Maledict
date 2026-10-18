@@ -1,19 +1,15 @@
 package org.brahypno.maledict.common.corruption;
 
+import net.minecraft.core.HolderLookup;
+import org.brahypno.maledict.registry.MaledictAttachments;
+import net.neoforged.neoforge.common.util.INBTSerializable;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.common.capabilities.AutoRegisterCapability;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilitySerializable;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,34 +21,21 @@ import org.jetbrains.annotations.Nullable;
  * 没腐败过的实体不留对象、存的也是一个空 CompoundTag，所以「给每个生物挂一个 capability」的代价
  * 只有一次对象分配。
  */
-@AutoRegisterCapability
-@Mod.EventBusSubscriber(modid = Maledict.MODID)
-public final class CorruptionData implements ICapabilitySerializable<CompoundTag> {
+public final class CorruptionData implements INBTSerializable<CompoundTag> {
 
-    public static final Capability<CorruptionData> CAPABILITY =
-            CapabilityManager.get(new CapabilityToken<>() {});
 
     private static final ResourceLocation KEY =
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "corruption");
 
     /** 缓存下来复用：{@code getCapability} 会被问得非常频繁。 */
-    private final LazyOptional<CorruptionData> optional = LazyOptional.of(() -> this);
 
     @Nullable
     private CorruptionState state;
 
-    @SubscribeEvent
-    public static void attach(AttachCapabilitiesEvent<Entity> event) {
-        if (event.getObject() instanceof LivingEntity) {
-            CorruptionData provider = new CorruptionData();
-            event.addCapability(KEY, provider);
-            event.addListener(provider.optional::invalidate);
-        }
-    }
 
     @Nullable
     public static CorruptionData get(Entity entity) {
-        return entity.getCapability(CAPABILITY).orElse(null);
+        return entity instanceof LivingEntity ? entity.getData(MaledictAttachments.CORRUPTION) : null;
     }
 
     /** 要写账目时用这个：没账目就当场开一个。 */
@@ -69,18 +52,14 @@ public final class CorruptionData implements ICapabilitySerializable<CompoundTag
         return state;
     }
 
-    @Override
-    public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side) {
-        return capability == CAPABILITY ? optional.cast() : LazyOptional.empty();
-    }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
         return state == null ? new CompoundTag() : state.save();
     }
 
     @Override
-    public void deserializeNBT(CompoundTag tag) {
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag tag) {
         if (!tag.isEmpty()) {
             state = CorruptionState.load(tag);
         }

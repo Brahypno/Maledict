@@ -1,9 +1,9 @@
 package org.brahypno.maledict.common.combat;
 
-import com.sammy.malum.core.helpers.ParticleHelper;
-import com.sammy.malum.registry.common.DamageTypeRegistry;
-import com.sammy.malum.registry.common.ParticleEffectTypeRegistry;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import com.sammy.malum.visual_effects.networked.MalumNetworkedWeaponParticleEffectType;
+import com.sammy.malum.registry.common.MalumDamageTypes;
+import com.sammy.malum.registry.common.MalumParticleEffectTypes;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -12,7 +12,6 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -20,15 +19,14 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.event.entity.player.CriticalHitEvent;
+import net.neoforged.neoforge.common.CommonHooks;
+import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
 import org.brahypno.maledict.common.item.IncursusBladeItem;
 import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.helpers.SoundHelper;
-import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
+import team.lodestar.lodestone.registry.common.LodestoneAttributes;
 
 import java.util.Comparator;
 import java.util.List;
@@ -50,7 +48,7 @@ public final class IncursusBladeAttack {
     private static final double RING_HEIGHT = 0.5;
 
     /**
-     * 正在结算的那次近战命中打的是谁、有没有走到 {@link IncursusBladeItem#hurtEvent}；只在服务端
+     * 正在结算的那次近战命中打的是谁、有没有走到 {@link IncursusBladeItem#outgoingDamageEvent}；只在服务端
      * 主线程用，不需要同步，窗口由 {@link #applyScytheMeleeDamage} 成对开关。
      */
     private static int pendingMeleeTargetId = NO_PENDING_TARGET;
@@ -69,8 +67,8 @@ public final class IncursusBladeAttack {
         }
         player.getPersistentData().putLong(LAST_ATTACK_TICK, gameTime);
 
-        int sweepingLevel = weapon.getEnchantmentLevel(Enchantments.SWEEPING_EDGE);
-        double reach = player.getAttributeValue(ForgeMod.ENTITY_REACH.get()) + 0.5
+        int sweepingLevel = org.brahypno.maledict.registry.MaledictEnchantments.level(weapon, Enchantments.SWEEPING_EDGE);
+        double reach = player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE) + 0.5
                        + sweepingLevel * 0.25;
         Vec3 attackOffset = player.getLookAngle().scale(0.4);
         Vec3 attackOrigin = player.position().add(attackOffset);
@@ -96,12 +94,12 @@ public final class IncursusBladeAttack {
                 if (target instanceof LivingEntity livingTarget){
                     weapon.hurtEnemy(livingTarget, player);
                     IncursusBladeEffects.applySacredEffect(player, livingTarget, weapon);
-                    if (!reachedHurtEvent){
+                    if (!reachedHurtEvent && !livingTarget.isDeadOrDying()){
                         IncursusBladeItem.applyTieredDamage(
                                 weapon,
                                 livingTarget,
                                 DamageTypeHelper.create(player.level(), DamageTypes.MAGIC, player),
-                                channels.magic());
+                                channels.magic() * player.getAttackStrengthScale(0.0F));
                     }
                     // 细雪通道跟主伤害一起结算，不取决于事件链。
                     IncursusBladeItem.applyTieredDamage(
@@ -142,12 +140,12 @@ public final class IncursusBladeAttack {
     public static DamageChannels damageChannels(LivingEntity attacker, ItemStack weapon) {
         return new DamageChannels(
                 (float) attacker.getAttributeValue(Attributes.ATTACK_DAMAGE),
-                (float) attacker.getAttributeValue(LodestoneAttributeRegistry.MAGIC_DAMAGE.get()),
+                (float) attacker.getAttributeValue(LodestoneAttributes.MAGIC_DAMAGE),
                 (float) IncursusBladeItem.getStat(weapon, IncursusBladeItem.POWDER_SNOW_DAMAGE));
     }
 
     /**
-     * 结算近战主伤害并探测它有没有走进 {@link IncursusBladeItem#hurtEvent}；探针走回退路径
+     * 结算近战主伤害并探测它有没有走进 {@link IncursusBladeItem#outgoingDamageEvent}；探针走回退路径
      * （无敌帧、免疫、setHealth 兜底）时事件没发生，返回 false。
      */
     private static boolean applyScytheMeleeDamage(
@@ -158,7 +156,7 @@ public final class IncursusBladeAttack {
             IncursusBladeItem.applyTieredDamage(
                     weapon,
                     target,
-                    DamageTypeHelper.create(player.level(), DamageTypeRegistry.SCYTHE_MELEE, player),
+                    DamageTypeHelper.create(player.level(), MalumDamageTypes.SCYTHE_MELEE, player),
                     damage);
             return pendingMeleeHurtEventSeen;
         }
@@ -169,11 +167,11 @@ public final class IncursusBladeAttack {
     }
 
     /**
-     * 由 {@link IncursusBladeItem#hurtEvent} 调用。只认「同一个目标 + scythe_melee」，
+     * 由 {@link IncursusBladeItem#outgoingDamageEvent} 调用。只认「同一个目标 + scythe_melee」，
      * Lodestone 补打的 {@code minecraft:magic} 伤害不会把自己算成主伤害。
      */
     public static void markMeleeHurtEvent(LivingEntity target, DamageSource source) {
-        if (pendingMeleeTargetId == target.getId() && source.is(DamageTypeRegistry.SCYTHE_MELEE)){
+        if (pendingMeleeTargetId == target.getId() && source.is(MalumDamageTypes.SCYTHE_MELEE)){
             pendingMeleeHurtEventSeen = true;
         }
     }
@@ -181,10 +179,9 @@ public final class IncursusBladeAttack {
     private static Swing calculateDamage(
             ServerPlayer player, ItemStack weapon, Entity target,
             float baseDamage, float attackStrength, int sweepingLevel) {
-        MobType mobType = target instanceof LivingEntity livingTarget
-                          ? livingTarget.getMobType()
-                          : MobType.UNDEFINED;
-        float enchantmentDamage = EnchantmentHelper.getDamageBonus(weapon, mobType);
+        float enchantmentDamage = EnchantmentHelper.modifyDamage(
+                player.serverLevel(), weapon, target,
+                DamageTypeHelper.create(player.level(), MalumDamageTypes.SCYTHE_MELEE, player), baseDamage) - baseDamage;
         baseDamage *= 0.2f + attackStrength * attackStrength * 0.8f;
         enchantmentDamage *= attackStrength;
         float sweepingDamageMultiplier = 1.0f + (float) sweepingLevel / (sweepingLevel + 4.0f);
@@ -199,12 +196,12 @@ public final class IncursusBladeAttack {
                                   && !player.isPassenger()
                                   && !player.isSprinting();
         CriticalHitEvent criticalHit =
-                ForgeHooks.getCriticalHit(player, target, vanillaCritical, vanillaCritical ? 1.5f : 1.0f);
-        if (criticalHit != null){
-            damage *= criticalHit.getDamageModifier();
+                CommonHooks.fireCriticalHit(player, target, vanillaCritical, vanillaCritical ? 1.5f : 1.0f);
+        if (criticalHit.isCriticalHit()){
+            damage *= criticalHit.getDamageMultiplier();
             player.crit(target);
         }
-        return new Swing(damage, criticalHit != null);
+        return new Swing(damage, criticalHit.isCriticalHit());
     }
 
     private static void playSlashEffect(ServerPlayer player) {
@@ -236,10 +233,10 @@ public final class IncursusBladeAttack {
                                   .add(left.cross(direction).scale(-RING_ARC_OFFSET));
             Vec3 position = player.position()
                                   .add(offset.x, player.getBbHeight() * RING_HEIGHT, offset.z);
-            ParticleHelper.createSlashingEffect(ParticleEffectTypeRegistry.SCYTHE_SLASH)
-                          .setSpiritType(SpiritTypeRegistry.UMBRAL_SPIRIT)
-                          .setSlashAngle(segment.slashAngle())
-                          .spawnSlashingParticle(player.level(), position, direction);
+            MalumParticleEffectTypes.SCYTHE_SLASH.createEffect()
+                          .color(MalumSpiritTypes.UMBRAL_SPIRIT)
+                          .slashRotation(segment.slashAngle())
+                          .at(position).aimedAt(direction).spawn(player.serverLevel());
         }
     }
 

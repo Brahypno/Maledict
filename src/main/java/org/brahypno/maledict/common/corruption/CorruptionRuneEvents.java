@@ -6,11 +6,11 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingHealEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingHealEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.RuneOfTheFallenItem;
 import org.brahypno.maledict.registry.MaledictMobEffects;
@@ -31,7 +31,7 @@ import java.util.UUID;
  * </ol>
  *
  * <p>为什么两个都挂在 {@code LivingDamageEvent} 这一档、以及为什么收在写血之前：{@code LivingDamageEvent}
- * 发在护甲、附魔、吸收都算完之后、**写血之前**，所以在这里直写血量得到的顺序天然是「先收后打」——
+ * 在 1.21.1 使用 Pre，护甲、附魔已结算，黄心尚未结算，仍在**写血之前**，所以在这里直写血量得到的顺序天然是「先收后打」——
  * 我们改完血量，原版紧接着 {@code setHealth(getHealth() - f1)}，读到的是收完之后的值。
  *
  * <p>被取消的命中不结算：注解上的 {@code receiveCanceled} 默认 {@code false}，被取消的事件根本进不来
@@ -41,7 +41,7 @@ import java.util.UUID;
  * 被别的模组减伤/取消、会触发图腾、也会递归触发我们自己。代价与抑郁符文的延迟池一样：不吃图腾、
  * 不续无敌帧、没有受伤演出 —— 而「收不致死」保证了这个代价不会变成击杀。
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class CorruptionRuneEvents {
 
     /** 一记有效回血折算成多少腐败（点）。先按 1:1 起手，进游戏再调。 */
@@ -91,7 +91,7 @@ public final class CorruptionRuneEvents {
         if (target.level().isClientSide() || event.isCanceled()) {
             return;
         }
-        if (!target.hasEffect(MaledictMobEffects.FALLEN.get())) {
+        if (!target.hasEffect(MaledictMobEffects.FALLEN)) {
             return;
         }
         float effective = effectiveHeal(event.getAmount(), target.getHealth(), target.getMaxHealth());
@@ -111,9 +111,9 @@ public final class CorruptionRuneEvents {
 
     /** 命中：先收、再落标记、最后夹取。顺序见类注释。 */
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onLivingDamage(LivingDamageEvent event) {
+    public static void onLivingDamage(LivingDamageEvent.Pre event) {
         LivingEntity victim = event.getEntity();
-        if (victim.level().isClientSide() || event.isCanceled()) {
+        if (victim.level().isClientSide()) {
             return;
         }
         CorruptionData data = CorruptionData.get(victim);
@@ -143,7 +143,7 @@ public final class CorruptionRuneEvents {
 
         // 这一记接下来真会从血量里扣掉的量：原版在事件之后才写血量。
         if (state != null) {
-            state.clamp(health - event.getAmount());
+            state.clamp(health - Math.max(0.0F, event.getNewDamage() - victim.getAbsorptionAmount()));
         }
     }
 
@@ -157,9 +157,9 @@ public final class CorruptionRuneEvents {
      * {@code maxAmplifier} 参数负责（既不会超过 {@link #FALLEN_MAX_AMPLIFIER}，也不会把等级压下去）。
      */
     private static void mark(LivingEntity victim) {
-        MobEffectInstance current = victim.getEffect(MaledictMobEffects.FALLEN.get());
+        MobEffectInstance current = victim.getEffect(MaledictMobEffects.FALLEN);
         if (current == null) {
-            victim.addEffect(new MobEffectInstance(MaledictMobEffects.FALLEN.get(),
+            victim.addEffect(new MobEffectInstance(MaledictMobEffects.FALLEN,
                                                    FALLEN_DURATION_TICKS, 0, false, true));
             return;
         }

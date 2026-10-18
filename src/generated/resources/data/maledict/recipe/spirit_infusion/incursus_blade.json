@@ -1,0 +1,63 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 6,
+      "item": "minecraft:nether_star"
+    },
+    {
+      "count": 6,
+      "item": "malum:fused_consciousness"
+    },
+    {
+      "count": 6,
+      "item": "minecraft:ender_eye"
+    },
+    {
+      "count": 1,
+      "item": "malum:umbral_spirit"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "malum:edge_of_deliverance"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:incursus_blade"
+  },
+  "spirits": [
+    {
+      "type": "malum:sacred",
+      "count": 64
+    },
+    {
+      "type": "malum:wicked",
+      "count": 64
+    },
+    {
+      "type": "malum:arcane",
+      "count": 64
+    },
+    {
+      "type": "malum:eldritch",
+      "count": 64
+    },
+    {
+      "type": "malum:aerial",
+      "count": 64
+    },
+    {
+      "type": "malum:aqueous",
+      "count": 64
+    },
+    {
+      "type": "malum:earthen",
+      "count": 64
+    },
+    {
+      "type": "malum:infernal",
+      "count": 64
+    }
+  ]
+}

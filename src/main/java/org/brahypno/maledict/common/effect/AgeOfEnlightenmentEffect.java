@@ -1,15 +1,15 @@
 package org.brahypno.maledict.common.effect;
 
-import com.sammy.malum.registry.common.AttributeRegistry;
+import com.sammy.malum.registry.common.MalumAttributes;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 
 /**
- * 启蒙之年：佩戴启蒙之年的玩家击杀敌人后获得的增益，持续期间近战伤害翻倍，每级额外 +1 法杖暂存弹数。
+ * 启蒙之年：佩戴启蒙之年的玩家击杀敌人后获得的增益，持续期间近战伤害翻倍，每级 +1 CHARGE_CAPACITY（3 个 Spell Charges）。
  * 与 Malum 的 {@code grim_certainty} 不同，这里命中后不消耗效果；{@code addAttributeModifiers} 结算时会自乘 {@code (amplifier + 1)}。
  */
 public final class AgeOfEnlightenmentEffect extends MobEffect {
@@ -18,15 +18,14 @@ public final class AgeOfEnlightenmentEffect extends MobEffect {
     /** 每级额外给的法杖暂存弹数，等级乘数由原版补上。 */
     public static final double RESERVE_STAFF_CHARGES_PER_LEVEL = 1.0D;
 
-    /** UUID 必须固定：原版移除属性修饰符时按 UUID 认，否则效果到期摘不干净。 */
-    private static final UUID RESERVE_STAFF_CHARGES_MODIFIER_ID = UUID.nameUUIDFromBytes(
-            "maledict:age_of_enlightenment/reserve_staff_charges".getBytes(StandardCharsets.UTF_8));
+    /** ResourceLocation 必须固定：原版移除属性修饰符时按 ResourceLocation 认，否则效果到期摘不干净。 */
+    private static final ResourceLocation RESERVE_STAFF_CHARGES_MODIFIER_ID = ResourceLocation.parse("maledict:age_of_enlightenment/reserve_staff_charges");
 
     public AgeOfEnlightenmentEffect() {
         super(MobEffectCategory.BENEFICIAL, COLOR);
-        addAttributeModifier(AttributeRegistry.RESERVE_STAFF_CHARGES.get(),
-                RESERVE_STAFF_CHARGES_MODIFIER_ID.toString(),
+        addAttributeModifier(MalumAttributes.CHARGE_CAPACITY,
+                RESERVE_STAFF_CHARGES_MODIFIER_ID,
                 RESERVE_STAFF_CHARGES_PER_LEVEL,
-                AttributeModifier.Operation.ADDITION);
+                AttributeModifier.Operation.ADD_VALUE);
     }
 }

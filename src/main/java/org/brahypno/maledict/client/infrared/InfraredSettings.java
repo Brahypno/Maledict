@@ -1,12 +1,12 @@
 package org.brahypno.maledict.client.infrared;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import org.brahypno.maledict.config.MaledictConfig;
 
 /**
  * 微光视觉的四个客户端可调项，见 {@code config/maledict-client.toml} 的 {@code [infrared]} 段。
  *
- * <p>配置还没加载时 {@code ForgeConfigSpec.ConfigValue#get()} 会抛（不是返回默认值），
+ * <p>配置还没加载时 {@code ModConfigSpec.ConfigValue#get()} 会抛（不是返回默认值），
  * 而这几项在菜单、读盘、甚至数据生成里都可能被问到，所以这里每一条都带写死的退路——
  * 和 {@code AgeOfEnlightenmentEvents} 里读冷却倍率是同一个理由。
  */
@@ -38,7 +38,7 @@ final class InfraredSettings {
         return read(MaledictConfig.INFRARED_GRAYSCALE_SOFTNESS, DEFAULT_GRAYSCALE_SOFTNESS);
     }
 
-    private static boolean read(ForgeConfigSpec.BooleanValue value, boolean fallback) {
+    private static boolean read(ModConfigSpec.BooleanValue value, boolean fallback) {
         try {
             return value.get();
         } catch (RuntimeException exception) {
@@ -46,7 +46,7 @@ final class InfraredSettings {
         }
     }
 
-    private static float read(ForgeConfigSpec.DoubleValue value, float fallback) {
+    private static float read(ModConfigSpec.DoubleValue value, float fallback) {
         try {
             return value.get().floatValue();
         } catch (RuntimeException exception) {

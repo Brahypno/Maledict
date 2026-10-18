@@ -1,0 +1,27 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 4,
+      "item": "malum:hex_ash"
+    },
+    {
+      "count": 3,
+      "item": "malum:fused_consciousness"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "maledict:bleeding_eye"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:hangman_fool"
+  },
+  "spirits": [
+    {
+      "type": "malum:eldritch",
+      "count": 6
+    }
+  ]
+}

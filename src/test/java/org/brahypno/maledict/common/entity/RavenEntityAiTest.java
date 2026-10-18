@@ -9,12 +9,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.gametest.GameTestHolder;
-import net.minecraftforge.gametest.PrefixGameTestTemplate;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.BabyEntitySpawnEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.BabyEntitySpawnEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.registry.MaledictEntities;
 
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
-@Mod.EventBusSubscriber(modid = "maledict")
+@EventBusSubscriber(modid = "maledict")
 public final class RavenEntityAiTest {
     private static final Map<UUID, Parents> PARENTS = new HashMap<>();
 
@@ -60,7 +60,7 @@ public final class RavenEntityAiTest {
     }
 
     @SubscribeEvent
-    public static void recordFixtureDamage(LivingAttackEvent event) {
+    public static void recordFixtureDamage(LivingIncomingDamageEvent event) {
         if (event.getEntity() instanceof RavenEntity raven
                 && raven.getPersistentData().getBoolean("RavenAiTestFixture")) {
             raven.getPersistentData().putString("RavenAiTestLastAttack", event.getSource().getMsgId()

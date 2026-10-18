@@ -3,10 +3,10 @@ package org.brahypno.maledict.data;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.client.model.generators.BlockStateProvider;
-import net.minecraftforge.client.model.generators.ModelFile;
-import net.minecraftforge.common.data.ExistingFileHelper;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.client.model.generators.BlockStateProvider;
+import net.neoforged.neoforge.client.model.generators.ModelFile;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.registry.MaledictBlocks;
 
@@ -44,7 +44,7 @@ public final class MaledictBlockStates extends BlockStateProvider {
     }
 
     private void leadOre(Block block, String host) {
-        var model = models().getBuilder(ForgeRegistries.BLOCKS.getKey(block).getPath())
+        var model = models().getBuilder(BuiltInRegistries.BLOCK.getKey(block).getPath())
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("block/block")))
                 .renderType("cutout_mipped")
                 .texture("particle", ResourceLocation.fromNamespaceAndPath("malum", "block/arcane_rock/" + host))

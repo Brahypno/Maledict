@@ -59,7 +59,7 @@ public record LootFoodExpectation(
      * because a burning victim smelts its meat. A datapack reload must call {@link #clearCache()}.
      */
     public static LootFoodExpectation of(ServerLevel level, LivingEntity victim, int lootingLevel) {
-        ResourceLocation lootTable = victim.getLootTable();
+        ResourceLocation lootTable = victim.getLootTable().location();
         if (lootTable == null){
             return NONE;
         }
@@ -112,8 +112,8 @@ public record LootFoodExpectation(
                 continue;
             }
 
-            int nutrition = food.getNutrition();
-            double itemSaturation = food.getSaturationModifier() * nutrition * 2.0D;
+            int nutrition = food.nutrition();
+            double itemSaturation = food.saturation();
             List<Pair<MobEffectInstance, Float>> effects = effectsOf(food);
             if (nutrition <= 0 && itemSaturation <= 0.0D && effects.isEmpty()){
                 continue;
@@ -143,9 +143,9 @@ public record LootFoodExpectation(
      */
     private static List<Pair<MobEffectInstance, Float>> effectsOf(FoodProperties food) {
         List<Pair<MobEffectInstance, Float>> effects = new ArrayList<>();
-        for (Pair<MobEffectInstance, Float> effect : food.getEffects()) {
-            if (effect.getFirst() != null){
-                effects.add(effect);
+        for (FoodProperties.PossibleEffect effect : food.effects()) {
+            if (effect.effect() != null){
+                effects.add(Pair.of(effect.effect(), effect.probability()));
             }
         }
         return effects;

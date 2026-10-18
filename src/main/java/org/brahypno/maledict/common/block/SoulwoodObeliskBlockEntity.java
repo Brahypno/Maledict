@@ -22,7 +22,7 @@ public final class SoulwoodObeliskBlockEntity extends ObeliskCoreBlockEntity imp
 
     @Override
     public AltarAcceleratorType getAcceleratorType() {
-        return RunewoodObeliskBlockEntity.OBELISK;
+        return new AltarAcceleratorType(4, "obelisk");
     }
 
     @Override

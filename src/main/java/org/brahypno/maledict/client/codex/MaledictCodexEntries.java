@@ -1,13 +1,15 @@
 package org.brahypno.maledict.client.codex;
 
+import net.minecraft.core.Holder;
 import com.sammy.malum.client.screen.codex.BookEntry;
-import com.sammy.malum.client.screen.codex.BookWidgetStyle;
+import com.sammy.malum.client.screen.codex.WidgetDesign;
+import com.sammy.malum.client.screen.codex.WidgetDesignType;
+import org.brahypno.maledict.registry.MaledictRites;
 import com.sammy.malum.client.screen.codex.PlacedBookEntry;
 import com.sammy.malum.client.screen.codex.PlacedBookEntryBuilder;
 import com.sammy.malum.client.screen.codex.objects.progression.IconObject;
 import com.sammy.malum.client.screen.codex.objects.progression.RiteEntryObject;
 import com.sammy.malum.client.screen.codex.pages.EntryReference;
-import com.sammy.malum.client.screen.codex.pages.EntrySelectorPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.RuneworkingPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.SpiritInfusionPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.SpiritRiteRecipePage;
@@ -16,17 +18,16 @@ import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextItemPage;
 import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextPage;
 import com.sammy.malum.client.screen.codex.pages.text.SpiritRiteTextPage;
 import com.sammy.malum.client.screen.codex.pages.text.TextPage;
-import com.sammy.malum.client.screen.codex.screens.ArcanaProgressionScreen;
-import com.sammy.malum.client.screen.codex.screens.VoidProgressionScreen;
-import com.sammy.malum.common.events.SetupMalumCodexEntriesEvent;
-import com.sammy.malum.common.spiritrite.TotemicRiteType;
+import com.sammy.malum.client.screen.codex.screens.progression.ArcanaProgressionScreen;
+import com.sammy.malum.client.screen.codex.screens.progression.VoidProgressionScreen;
+import com.sammy.malum.core.systems.events.SetupMalumCodexEntriesEvent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.common.item.SpiritArrowType;
@@ -38,7 +39,7 @@ import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.List;
 
-@Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class MaledictCodexEntries {
     private static final String SPIRIT_ARROWS_ENTRY = "maledict.spirit_arrows";
     // 思念弓 (2,13) 正上方；Malum 的节点按 top - y * 40 排布。
@@ -126,8 +127,12 @@ public final class MaledictCodexEntries {
 
     @SubscribeEvent
     public static void setupEntries(SetupMalumCodexEntriesEvent event) {
-        addSpiritArrowsEntry();
-        addRemembranceBowEntry();
+        var entries = new MaledictCodexEntries(event.getScreen().getEntries());
+        if (event.getScreen() instanceof ArcanaProgressionScreen) entries.setupArcana();
+        else if (event.getScreen() instanceof VoidProgressionScreen) entries.setupVoid();
+    }
+
+    private void setupVoid() {
         addElegyBowEntry();
         addObelisksEntry();
         addIncursusBladeEntry();
@@ -136,15 +141,20 @@ public final class MaledictCodexEntries {
         addBleedingEyeEntry();
         addVoidRuneworkingEntry();
         addUmbralExperimentEntry();
+    }
+
+    private void setupArcana() {
+        addSpiritArrowsEntry();
+        addRemembranceBowEntry();
 
         PlacedBookEntry satiationRune = addRuneEntry(RUNE_OF_SATIATION_ENTRY, MaledictItems.RUNE_OF_SATIATION,
-                                                     RUNE_COLUMN_X, RUNE_OF_SATIATION_Y, BookWidgetStyle.SOULWOOD);
+                                                     RUNE_COLUMN_X, RUNE_OF_SATIATION_Y, WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER));
         PlacedBookEntry decayRune = addRuneEntry(RUNE_OF_DECAY_ENTRY, MaledictItems.RUNE_OF_DECAY,
-                                                 RUNE_COLUMN_X, RUNE_OF_DECAY_Y, BookWidgetStyle.RUNEWOOD);
+                                                 RUNE_COLUMN_X, RUNE_OF_DECAY_Y, WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.RUNEWOOD, WidgetDesignType.FillingType.PAPER));
         PlacedBookEntry packRune = addRuneEntry(RUNE_OF_THE_PACK_ENTRY, MaledictItems.RUNE_OF_THE_PACK,
-                                                RUNE_COLUMN_X, RUNE_OF_THE_PACK_Y, BookWidgetStyle.SOULWOOD);
+                                                RUNE_COLUMN_X, RUNE_OF_THE_PACK_Y, WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER));
         PlacedBookEntry ripeningRune = addRuneEntry(RUNE_OF_RIPENING_ENTRY, MaledictItems.RUNE_OF_RIPENING,
-                                                    RUNE_OF_RIPENING_X, RUNE_OF_RIPENING_Y, BookWidgetStyle.SOULWOOD);
+                                                    RUNE_OF_RIPENING_X, RUNE_OF_RIPENING_Y, WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER));
         addTotemicRunesContinuedEntry(List.of(
                 new EntryReference(MaledictItems.RUNE_OF_SATIATION, satiationRune),
                 new EntryReference(MaledictItems.RUNE_OF_DECAY, decayRune),
@@ -152,32 +162,32 @@ public final class MaledictCodexEntries {
                 new EntryReference(MaledictItems.RUNE_OF_RIPENING, ripeningRune)));
     }
 
-    private static void addSpiritArrowsEntry() {
-        if (containsEntry(ArcanaProgressionScreen.ENTRIES, SPIRIT_ARROWS_ENTRY)){
+    private void addSpiritArrowsEntry() {
+        if (containsEntry(entries, SPIRIT_ARROWS_ENTRY)){
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(SPIRIT_ARROWS_ENTRY, SPIRIT_ARROWS_X, SPIRIT_ARROWS_Y);
+        PlacedBookEntryBuilder builder = BookEntry.create(SPIRIT_ARROWS_ENTRY, SPIRIT_ARROWS_X, SPIRIT_ARROWS_Y);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.ELDRITCH_SPIRIT_ARROW)
-                .setStyle(BookWidgetStyle.RUNEWOOD));
+                .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.RUNEWOOD, WidgetDesignType.FillingType.PAPER)));
         builder.addPage(new HeadlineTextPage(SPIRIT_ARROWS_ENTRY, SPIRIT_ARROWS_ENTRY + ".1"));
-        builder.addPage(new EntrySelectorPage(MaledictCodexEntries::spiritArrowEntry, SpiritArrowType.values()));
-        ArcanaProgressionScreen.ENTRIES.add(builder.build());
+        for (SpiritArrowType type : SpiritArrowType.values()) builder.addReference(spiritArrowEntry(type));
+        entries.add(builder.build());
     }
 
-    private static EntryReference spiritArrowEntry(SpiritArrowType type) {
-        RegistryObject<Item> arrow = MaledictItems.getSpiritArrow(type);
+    private EntryReference spiritArrowEntry(SpiritArrowType type) {
+        DeferredHolder<Item, Item> arrow = MaledictItems.getSpiritArrow(type);
         String identifier = "maledict." + arrow.getId().getPath();
-        return new EntryReference(arrow, BookEntry.build(identifier)
+        return new EntryReference(arrow, BookEntry.create(identifier)
                 .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
                 .addPage(new CraftingPage(arrow.get(),
-                        Items.AIR, type.getSpiritType().spiritShard.get(), Items.AIR,
+                        Items.AIR, type.getSpiritType().getSpiritShard(), Items.AIR,
                         Items.AIR, Items.STICK, Items.AIR,
                         Items.AIR, Items.FEATHER, Items.AIR)));
     }
 
-    private static void addVoidRuneworkingEntry() {
+    private void addVoidRuneworkingEntry() {
         EntryReference stagnantEvolution = voidRuneEntry(
                 RUNE_OF_STAGNANT_EVOLUTION_ENTRY, MaledictItems.RUNE_OF_STAGNANT_EVOLUTION);
         EntryReference rottenBone = voidRuneEntry(
@@ -185,14 +195,14 @@ public final class MaledictCodexEntries {
         EntryReference fallen = voidRuneEntry(
                 RUNE_OF_THE_FALLEN_ENTRY, MaledictItems.RUNE_OF_THE_FALLEN);
 
-        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, VOID_RUNEWORKING_ENTRY)){
+        if (containsEntry(entries, VOID_RUNEWORKING_ENTRY)){
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(VOID_RUNEWORKING_ENTRY, VOID_RUNEWORKING_X, VOID_RUNEWORKING_Y);
+        PlacedBookEntryBuilder builder = BookEntry.create(VOID_RUNEWORKING_ENTRY, VOID_RUNEWORKING_X, VOID_RUNEWORKING_Y);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.MALIGNANT_PEWTER_TABLET)
-                .setStyle(BookWidgetStyle.SOULWOOD));
+                .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER)));
         builder.addPage(new HeadlineTextItemPage(
                 VOID_RUNEWORKING_ENTRY,
                 VOID_RUNEWORKING_ENTRY + ".1",
@@ -200,10 +210,10 @@ public final class MaledictCodexEntries {
         // 续页：英文十六行，首页放不下，故与中文同一处分段。
         builder.addPage(new TextPage(VOID_RUNEWORKING_ENTRY + ".2"));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
-        builder.addPage(new EntrySelectorPage(List.of(stagnantEvolution, rottenBone, fallen)));
+        List.of(stagnantEvolution, rottenBone, fallen).forEach(builder::addReference);
         builder.afterUmbralCrystal();
 
-        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+        entries.add(builder.build());
     }
 
     /**
@@ -211,52 +221,52 @@ public final class MaledictCodexEntries {
      * 做自由创作；两枚成品（抑郁、无忧）用同一个选择页挂上去，页内各自「标题正文 + 符文工艺配方」，
      * 与抑郁符文当初的写法一模一样。
      */
-    private static void addUmbralExperimentEntry() {
+    private void addUmbralExperimentEntry() {
         EntryReference melancholia = voidRuneEntry(RUNE_OF_MELANCHOLIA_ENTRY, MaledictItems.RUNE_OF_MELANCHOLIA);
         EntryReference bliss = voidRuneEntry(RUNE_OF_BLISS_ENTRY, MaledictItems.RUNE_OF_BLISS);
 
-        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, UMBRAL_EXPERIMENT_ENTRY)){
+        if (containsEntry(entries, UMBRAL_EXPERIMENT_ENTRY)){
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(
+        PlacedBookEntryBuilder builder = BookEntry.create(
                 UMBRAL_EXPERIMENT_ENTRY, UMBRAL_EXPERIMENT_X, UMBRAL_EXPERIMENT_Y);
         // 纹理图标只能换掉部件供应商（ProgressionEntryObject 的 setIcon 只收物品），
         // 这里用 Malum 自己那枚幽影碎片，「研究：精魂晶体」与「幽影奥术能量」章节用的就是它。
         builder.setWidgetSupplier((entry, x, y) -> new IconObject(entry, x, y, UMBRAL_SHARD_ICON));
-        builder.configureWidget(widget -> widget.setStyle(BookWidgetStyle.DARK_SOULWOOD));
+        builder.configureWidget(widget -> widget.setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.DARK)));
         builder.addPage(new HeadlineTextPage(
                 UMBRAL_EXPERIMENT_ENTRY,
                 UMBRAL_EXPERIMENT_ENTRY + ".1"));
-        builder.addPage(new EntrySelectorPage(List.of(melancholia, bliss)));
+        List.of(melancholia, bliss).forEach(builder::addReference);
         builder.afterUmbralCrystal();
 
-        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+        entries.add(builder.build());
     }
 
-    private static void addVicissitudeRiteEntry() {
+    private void addVicissitudeRiteEntry() {
         VicissitudeRiteType simple = SummoningRite.rite(BossDifficulty.SIMPLE);
         VicissitudeRiteType difficult = SummoningRite.rite(BossDifficulty.DIFFICULT);
         VicissitudeRiteType complete = SummoningRite.rite(BossDifficulty.COMPLETE);
         VicissitudeRiteType extreme = SummoningRite.rite(BossDifficulty.EXTREME);
         if (simple == null || difficult == null || complete == null || extreme == null
-            || containsEntry(VoidProgressionScreen.VOID_ENTRIES, RITE_ENTRY)){
+            || containsEntry(entries, RITE_ENTRY)){
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(RITE_ENTRY, 8, 13);
+        PlacedBookEntryBuilder builder = BookEntry.create(RITE_ENTRY, 8, 13);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.AGE_OF_ENLIGHTENMENT)
-                .setStyle(BookWidgetStyle.DARK_SOULWOOD));
+                .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.DARK)));
         builder.addPage(new HeadlineTextPage(RITE_ENTRY, RITE_ENTRY + ".1"));
-        builder.addPage(new SpiritRiteRecipePage(simple));
-        builder.addPage(new SpiritRiteRecipePage(difficult));
+        builder.addPage(new SpiritRiteRecipePage(MaledictRites.holder(simple)));
+        builder.addPage(new SpiritRiteRecipePage(MaledictRites.holder(difficult)));
         builder.addPage(new TextPage(RITE_ENTRY + ".2"));
-        builder.addPage(new SpiritRiteRecipePage(complete));
-        builder.addPage(new SpiritRiteRecipePage(extreme));
+        builder.addPage(new SpiritRiteRecipePage(MaledictRites.holder(complete)));
+        builder.addPage(new SpiritRiteRecipePage(MaledictRites.holder(extreme)));
         builder.afterUmbralCrystal();
 
-        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+        entries.add(builder.build());
     }
 
     /**
@@ -269,35 +279,35 @@ public final class MaledictCodexEntries {
      * <p>这里有意不挂 {@code afterUmbralCrystal()}：本模组其它虚空条目都挂了，但这一条不加门槛，
      * 免得玩家在书里又找不到它。
      */
-    private static void addSacrificeRiteEntry() {
+    private void addSacrificeRiteEntry() {
         SacrificeRiteType rite = SacrificeRite.rite();
-        if (rite == null || containsEntry(VoidProgressionScreen.VOID_ENTRIES, SACRIFICE_RITE_ENTRY)){
+        if (rite == null || containsEntry(entries, SACRIFICE_RITE_ENTRY)){
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(
+        PlacedBookEntryBuilder builder = BookEntry.create(
                 SACRIFICE_RITE_ENTRY, SACRIFICE_RITE_X, SACRIFICE_RITE_Y);
         // 不给 setIcon：RiteEntryObject 自己会把仪式图标画在节点上，再塞一个物品图标会叠在一起。
         builder.setWidgetSupplier(RiteEntryObject::new);
-        builder.configureWidget(widget -> widget.setStyle(BookWidgetStyle.DARK_TOTEMIC_SOULWOOD));
+        builder.configureWidget(widget -> widget.setDesign(WidgetDesignType.TOTEMIC.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.DARK)));
         // 仪式页：正文取问句，中央是发光的仪式图标；鼠标停在图标上会出「属极：灵魂木」「效果：…」，
         // 那条效果文案就是语言文件里的 ...corrupt_sacrifice_rite.hover。
-        builder.addPage(new SpiritRiteTextPage(rite, SACRIFICE_RITE_PAGE));
+        builder.addPage(new SpiritRiteTextPage(MaledictRites.holder(rite)));
         builder.addPage(new TextPage(SACRIFICE_RITE_PAGE + ".2"));
-        builder.addPage(new SoulwoodSpiritRiteRecipePage(rite));
+        builder.addPage(new SpiritRiteRecipePage(MaledictRites.holder(rite)));
 
-        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+        entries.add(builder.build());
     }
 
-    private static void addBleedingEyeEntry() {
-        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, BLEEDING_EYE_ENTRY)){
+    private void addBleedingEyeEntry() {
+        if (containsEntry(entries, BLEEDING_EYE_ENTRY)){
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(BLEEDING_EYE_ENTRY, BLEEDING_EYE_X, BLEEDING_EYE_Y);
+        PlacedBookEntryBuilder builder = BookEntry.create(BLEEDING_EYE_ENTRY, BLEEDING_EYE_X, BLEEDING_EYE_Y);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.BLEEDING_EYE)
-                .setStyle(BookWidgetStyle.DARK_SOULWOOD));
+                .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.DARK)));
 
         builder.addPage(new HeadlineTextItemPage(
                 BLEEDING_EYE_ENTRY, BLEEDING_EYE_ENTRY + ".1", MaledictItems.BLEEDING_EYE.get()));
@@ -311,79 +321,64 @@ public final class MaledictCodexEntries {
         builder.addPage(SpiritInfusionPage.fromId(ResourceLocation.fromNamespaceAndPath(
                 Maledict.MODID, "spirit_infusion/hangman_fool_stage_2")));
 
-        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+        entries.add(builder.build());
     }
 
-    /**
-     * 灵魂木版配方页：Malum 的 {@code SpiritRiteRecipePage} 看的是**条目 identifier** 里有没有 "corrupt"，
-     * 而 identifier 是键名、随时可能被改；这里干脆钉死成灵魂木那一套辉光，与本仪式只在灵魂木上兑现一致。
-     */
-    private static final class SoulwoodSpiritRiteRecipePage extends SpiritRiteRecipePage {
-        private SoulwoodSpiritRiteRecipePage(TotemicRiteType rite) {
-            super(rite);
-        }
-
-        @Override
-        public boolean isCorrupted() {
-            return true;
-        }
-    }
-
-    private static PlacedBookEntry addRuneEntry(
-            String identifier, RegistryObject<Item> rune, int x, int y,
-            BookWidgetStyle style) {
-        PlacedBookEntry existing = findEntry(ArcanaProgressionScreen.ENTRIES, identifier);
+    private PlacedBookEntry addRuneEntry(
+            String identifier, DeferredHolder<Item, Item> rune, int x, int y,
+            WidgetDesign style) {
+        PlacedBookEntry existing = findEntry(entries, identifier);
         if (existing != null){
             return existing;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(identifier, x, y);
-        builder.configureWidget(widget -> widget.setIcon(rune).setStyle(style));
+        PlacedBookEntryBuilder builder = BookEntry.create(identifier, x, y);
+        builder.configureWidget(widget -> widget.setIcon(rune).setDesign(style));
         builder.addPage(new HeadlineTextPage(identifier, identifier + ".1"));
         builder.addPage(RuneworkingPage.fromOutput(rune.get()));
 
         PlacedBookEntry entry = builder.build();
-        ArcanaProgressionScreen.ENTRIES.add(entry);
+        entries.add(entry);
         return entry;
     }
 
-    private static EntryReference voidRuneEntry(String identifier, RegistryObject<Item> rune) {
-        return new EntryReference(rune, BookEntry.build(identifier)
+    private EntryReference voidRuneEntry(String identifier, DeferredHolder<Item, Item> rune) {
+        return new EntryReference(rune, BookEntry.create(identifier)
                                                  .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
                                                  .addPage(RuneworkingPage.fromOutput(rune.get())));
     }
 
-    private static void addTotemicRunesContinuedEntry(List<EntryReference> runes) {
-        if (containsEntry(ArcanaProgressionScreen.ENTRIES, TOTEMIC_RUNES_CONTINUED_ENTRY)){
+    private void addTotemicRunesContinuedEntry(List<EntryReference> runes) {
+        if (containsEntry(entries, TOTEMIC_RUNES_CONTINUED_ENTRY)){
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(
+        PlacedBookEntryBuilder builder = BookEntry.create(
                 TOTEMIC_RUNES_CONTINUED_ENTRY, TOTEMIC_RUNES_CONTINUED_X, TOTEMIC_RUNES_CONTINUED_Y);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.RUNE_OF_SATIATION)
-                .setStyle(BookWidgetStyle.SOULWOOD));
+                .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER)));
         builder.addPage(new HeadlineTextItemPage(
                 TOTEMIC_RUNES_CONTINUED_ENTRY,
                 TOTEMIC_RUNES_CONTINUED_ENTRY + ".1",
                 MaledictItems.RUNE_OF_SATIATION.get()));
         // 续页：英文正文的行数差不多是中文的两倍，首页的九行只够放下第一句。
         builder.addPage(new TextPage(TOTEMIC_RUNES_CONTINUED_ENTRY + ".2"));
-        builder.addPage(new EntrySelectorPage(runes));
+        runes.forEach(builder::addReference);
 
-        ArcanaProgressionScreen.ENTRIES.add(builder.build());
+        entries.add(builder.build());
     }
 
-    private static void addRemembranceBowEntry() {
-        if (containsEntry(ArcanaProgressionScreen.ENTRIES, REMEMBRANCE_BOW_ENTRY)){
+    private void addRemembranceBowEntry() {
+        if (containsEntry(entries, REMEMBRANCE_BOW_ENTRY)){
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(
+        PlacedBookEntryBuilder builder = BookEntry.create(
                 REMEMBRANCE_BOW_ENTRY, REMEMBRANCE_BOW_X, REMEMBRANCE_BOW_Y);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.REMEMBRANCE_BOW)
-                .setStyle(BookWidgetStyle.SOULWOOD));
+                .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER)));
         builder.addPage(new HeadlineTextItemPage(
                 REMEMBRANCE_BOW_ENTRY,
                 REMEMBRANCE_BOW_ENTRY + ".1",
@@ -392,19 +387,19 @@ public final class MaledictCodexEntries {
         builder.addPage(new TextPage(REMEMBRANCE_BOW_ENTRY + ".2"));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.REMEMBRANCE_BOW.get()));
 
-        ArcanaProgressionScreen.ENTRIES.add(builder.build());
+        entries.add(builder.build());
     }
 
-    private static void addElegyBowEntry() {
-        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, ELEGY_BOW_ENTRY)){
+    private void addElegyBowEntry() {
+        if (containsEntry(entries, ELEGY_BOW_ENTRY)){
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(
+        PlacedBookEntryBuilder builder = BookEntry.create(
                 ELEGY_BOW_ENTRY, REMEMBRANCE_BOW_X, REMEMBRANCE_BOW_Y);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.ELEGY_BOW)
-                .setStyle(BookWidgetStyle.SOULWOOD));
+                .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER)));
         builder.addPage(new HeadlineTextItemPage(
                 ELEGY_BOW_ENTRY,
                 ELEGY_BOW_ENTRY + ".1",
@@ -414,18 +409,18 @@ public final class MaledictCodexEntries {
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.ELEGY_BOW.get()));
         builder.afterUmbralCrystal();
 
-        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+        entries.add(builder.build());
     }
 
-    private static void addObelisksEntry() {
-        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, OBELISKS_ENTRY)){
+    private void addObelisksEntry() {
+        if (containsEntry(entries, OBELISKS_ENTRY)){
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(OBELISKS_ENTRY, -1, 8);
+        PlacedBookEntryBuilder builder = BookEntry.create(OBELISKS_ENTRY, -1, 8);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.SOULWOOD_OBELISK)
-                .setStyle(BookWidgetStyle.SOULWOOD));
+                .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER)));
         builder.addPage(new HeadlineTextPage(
                 SOULWOOD_OBELISK_PAGE,
                 SOULWOOD_OBELISK_PAGE + ".1"));
@@ -435,18 +430,18 @@ public final class MaledictCodexEntries {
                 MNEMONIC_OBELISK_PAGE + ".1"));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.MNEMONIC_OBELISK.get()));
 
-        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+        entries.add(builder.build());
     }
 
-    private static void addIncursusBladeEntry() {
-        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, INCURSUS_BLADE_ENTRY)){
+    private void addIncursusBladeEntry() {
+        if (containsEntry(entries, INCURSUS_BLADE_ENTRY)){
             return;
         }
 
-        PlacedBookEntryBuilder builder = BookEntry.build(INCURSUS_BLADE_ENTRY, 6, 11);
+        PlacedBookEntryBuilder builder = BookEntry.create(INCURSUS_BLADE_ENTRY, 6, 11);
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.INCURSUS_BLADE)
-                .setStyle(BookWidgetStyle.SOULWOOD));
+                .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER)));
         // HeadlineTextItemPage 的正文从 y+75 起排、只放得下约十行，故这段文案拆成四页（同 Malum 的 Malignant Pewter）。
         builder.addPage(new HeadlineTextItemPage(
                 INCURSUS_BLADE_ENTRY,
@@ -458,14 +453,14 @@ public final class MaledictCodexEntries {
         builder.addPage(new TextPage(INCURSUS_BLADE_ENTRY + ".4"));
         builder.afterUmbralCrystal();
 
-        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
+        entries.add(builder.build());
     }
 
-    private static boolean containsEntry(Iterable<? extends BookEntry> entries, String identifier) {
+    private boolean containsEntry(Iterable<? extends BookEntry> entries, String identifier) {
         return findEntry(entries, identifier) != null;
     }
 
-    private static <T extends BookEntry> T findEntry(Iterable<T> entries, String identifier) {
+    private <T extends BookEntry> T findEntry(Iterable<T> entries, String identifier) {
         for (T entry : entries) {
             if (identifier.equals(entry.identifier)){
                 return entry;
@@ -474,6 +469,9 @@ public final class MaledictCodexEntries {
         return null;
     }
 
-    private MaledictCodexEntries() {
+    private final List<PlacedBookEntry> entries;
+
+    private MaledictCodexEntries(List<PlacedBookEntry> entries) {
+        this.entries = entries;
     }
 }

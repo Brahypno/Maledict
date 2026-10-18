@@ -1,7 +1,9 @@
 package org.brahypno.maledict.common.item;
 
+import static com.sammy.malum.core.helpers.ComponentHelper.*;
+import net.minecraft.core.Holder;
 import com.sammy.malum.common.item.curiosities.curios.runes.AbstractRuneCurioItem;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
@@ -20,8 +22,8 @@ public final class RuneOfTheFallenItem extends AbstractRuneCurioItem {
 
     private static final String EFFECT_SUFFIX = "maledict.fallen";
 
-    public RuneOfTheFallenItem(Item.Properties properties, MalumSpiritType spiritType) {
-        super(properties, spiritType);
+    public RuneOfTheFallenItem(Item.Properties properties, com.sammy.malum.core.systems.registry.SpiritHolder<SpiritArcanaType> spiritType) {
+        super(properties, spiritType, MalumTrinketType.RUNE);
     }
 
     @Override

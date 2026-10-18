@@ -5,14 +5,13 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHealEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.*;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingHealEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.RuneOfMelancholiaItem;
 import org.brahypno.maledict.network.MaledictNetwork;
@@ -25,7 +24,7 @@ import org.brahypno.maledict.network.MaledictNetwork;
  *
  * <p>符文只是开关（入队要戴着），池子本身不绑符文 —— 摘下来、被没收都照常结算，只有死亡才清。
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class DelayedVitalsEvents {
 
     /** 低频校正间隔（tick）：客户端自己推演，服务端每 2 秒对一次表。 */
@@ -34,26 +33,26 @@ public final class DelayedVitalsEvents {
     /**
      * 适应：连着挨同一种伤害越来越钝。
      *
-     * <p>挂 {@code LivingHurtEvent} 而不是 {@code LivingDamageEvent}，与仓库其它减伤逻辑一致；
-     * 代价是这里的比例是护甲**前**的比例。
+     * <p>1.21.1 使用 LivingDamageEvent.Pre（用户确认）。
+     * 适应倍率现在作用于护甲后的伤害。
      */
-    @SubscribeEvent
-    public static void onLivingHurt(LivingHurtEvent event) {
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOW)
+    public static void onLivingHurt(LivingDamageEvent.Pre event) {
         LivingEntity victim = event.getEntity();
-        if (victim.level().isClientSide() || event.getAmount() <= 0.0F) {
+        if (victim.level().isClientSide() || event.getNewDamage() <= 0.0F) {
             return;
         }
         if (!(victim instanceof Player player)) {
             return;
         }
-        event.setAmount(event.getAmount() * RuneOfMelancholiaItem.adaptationMultiplier(player, event.getSource()));
+        event.setNewDamage(event.getNewDamage() * RuneOfMelancholiaItem.adaptationMultiplier(player, event.getSource()));
     }
 
-    /** 伤害入队：护甲、附魔、吸收都算完之后，入队的就是这一刻真要扣的血。 */
-    @SubscribeEvent
-    public static void onLivingDamage(LivingDamageEvent event) {
+    /** 伤害入队：Pre 中先结算黄心，再把剩余伤害入队。 */
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
+    public static void onLivingDamage(LivingDamageEvent.Pre event) {
         LivingEntity victim = event.getEntity();
-        if (victim.level().isClientSide() || event.getAmount() <= 0.0F) {
+        if (victim.level().isClientSide() || event.getNewDamage() <= 0.0F) {
             return;
         }
         // 穿无敌的伤害（/kill、掉出世界）不排队，立即结算，判断与朽骨符文一致。
@@ -67,10 +66,22 @@ public final class DelayedVitalsEvents {
         if (vitals == null) {
             return;
         }
-        vitals.queueDamage(event.getAmount(), event.getSource());
+        // NeoForge Pre runs before absorption. Consume the yellow hearts first;
+        // only the remaining damage enters DelayedVitalsPool.
+        float absorbed = Math.min(player.getAbsorptionAmount(), event.getNewDamage());
+        float remaining = event.getNewDamage() - absorbed;
+        player.setAbsorptionAmount(player.getAbsorptionAmount() - absorbed);
+        if (absorbed > 0.0F) {
+            player.awardStat(net.minecraft.stats.Stats.DAMAGE_ABSORBED, Math.round(absorbed * 10.0F));
+        }
+        event.setNewDamage(0.0F);
+        if (remaining <= 0.0F) {
+            return;
+        }
+        vitals.queueDamage(remaining, event.getSource());
         // 原版是在 setHealth 那一段里扣饱食度的，入队把那段跳过了，这里补上，免得白吃一份便宜。
         player.causeFoodExhaustion(event.getSource().getFoodExhaustion());
-        event.setAmount(0.0F);
+        event.setNewDamage(0.0F);
     }
 
     /** 治疗入队：满血时释放出来的那部分会被夹掉，不囤积。 */
@@ -93,11 +104,8 @@ public final class DelayedVitalsEvents {
 
     /** 每 tick 结算：先治疗、再伤害，让治疗有机会把死亡那一线拉回来。 */
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-        if (!(event.player instanceof ServerPlayer player)) {
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
         DelayedVitals vitals = DelayedVitals.get(player);

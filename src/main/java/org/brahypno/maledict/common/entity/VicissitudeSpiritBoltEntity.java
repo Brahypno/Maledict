@@ -57,8 +57,8 @@ public final class VicissitudeSpiritBoltEntity extends Projectile {
     }
 
     @Override
-    protected void defineSynchedData() {
-        entityData.define(DATA_PRESS_HEALTH, true);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_PRESS_HEALTH, true);
     }
 
     public boolean pressesHealth() {

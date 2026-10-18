@@ -10,14 +10,15 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.material.FogType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.event.tick.*;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.realm.BlightedRealm;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -40,7 +41,7 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
  * 不依赖后处理强度，所以亮处或有夜视时仍能看穿失明、水、岩浆与细雪。
  * 黑暗另外会周期性压暗光照图；视界槽对黑暗的免疫在服务端效果事件里处理。
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class InfraredClientHandler {
 
     /** 眼槽的 Curios 标识，见 {@code data/maledict/curios/slots/delusion.json}。 */
@@ -51,10 +52,7 @@ public final class InfraredClientHandler {
     private static final double GAMMA_UPPER_BOUND = 1.0001D;
 
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+    public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         ClientLevel level = minecraft.level;
@@ -106,7 +104,7 @@ public final class InfraredClientHandler {
         // intensity 是淡入之后能到的上限：调低它是"整层效果轻一点"，不是"慢一点"。
         float target = InfraredClientState.isRequested() ? InfraredSettings.intensity() : 0.0F;
         // 帧时长按真实时间换算：掉帧时不会比高帧率时淡得慢。
-        float deltaSeconds = Minecraft.getInstance().getDeltaFrameTime() / 20.0F;
+        float deltaSeconds = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks() / 20.0F;
         float strength = InfraredCurve.approach(InfraredClientState.strength(), target, deltaSeconds);
         InfraredClientState.setStrength(strength);
 

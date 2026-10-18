@@ -1,7 +1,9 @@
 package org.brahypno.maledict.common.item;
 
+import static com.sammy.malum.core.helpers.ComponentHelper.*;
+import net.minecraft.core.Holder;
 import com.sammy.malum.common.item.curiosities.curios.runes.AbstractRuneCurioItem;
-import com.sammy.malum.core.systems.spirit.MalumSpiritType;
+import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -26,8 +28,8 @@ public final class RuneOfBlissItem extends AbstractRuneCurioItem {
     /** tooltip 第二行：强制命中。 */
     private static final String FORCED_HIT_EFFECT = "maledict.bliss.forced_hit";
 
-    public RuneOfBlissItem(Item.Properties properties, MalumSpiritType spiritType) {
-        super(properties, spiritType);
+    public RuneOfBlissItem(Item.Properties properties, com.sammy.malum.core.systems.registry.SpiritHolder<SpiritArcanaType> spiritType) {
+        super(properties, spiritType, MalumTrinketType.RUNE);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package org.brahypno.maledict.data;
 
-import com.sammy.malum.registry.common.item.ItemRegistry;
+import com.sammy.malum.registry.common.item.MalumItems;
 import net.minecraft.data.loot.LootTableSubProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -19,6 +19,7 @@ import java.util.function.BiConsumer;
  * {@code maledict:entities/first_vicissitude}，其余三档已被存档、{@code /loot} 与文档引用，不能合并。
  */
 public final class MaledictEntityLoot implements LootTableSubProvider {
+    public MaledictEntityLoot(net.minecraft.core.HolderLookup.Provider registries) {}
 
     /** 深岩珍金块的块数：两块即 18 个珍金锭。 */
     private static final float CTHONIC_GOLD_BLOCKS = 2.0F;
@@ -28,18 +29,18 @@ public final class MaledictEntityLoot implements LootTableSubProvider {
     private static final float VOID_SALTS = 6.0F;
 
     @Override
-    public void generate(BiConsumer<ResourceLocation, LootTable.Builder> output) {
+    public void generate(BiConsumer<net.minecraft.resources.ResourceKey<LootTable>, LootTable.Builder> output) {
         output.accept(MaledictEntities.RAVEN.get().getDefaultLootTable(), LootTable.lootTable());
         for (BossDifficulty difficulty : BossDifficulty.values()) {
-            output.accept(difficulty.lootTable(), table());
+            output.accept(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, difficulty.lootTable()), table());
         }
     }
 
     private static LootTable.Builder table() {
         return LootTable.lootTable()
-                .withPool(pool(ItemRegistry.BLOCK_OF_CTHONIC_GOLD.get(), CTHONIC_GOLD_BLOCKS))
-                .withPool(pool(ItemRegistry.NULL_SLATE.get(), NULL_SLATE))
-                .withPool(pool(ItemRegistry.VOID_SALTS.get(), VOID_SALTS));
+                .withPool(pool(MalumItems.BLOCK_OF_CTHONIC_GOLD.get(), CTHONIC_GOLD_BLOCKS))
+                .withPool(pool(MalumItems.NULL_SLATE.get(), NULL_SLATE))
+                .withPool(pool(MalumItems.VOID_SALTS.get(), VOID_SALTS));
     }
 
     private static LootPool.Builder pool(Item item, float count) {

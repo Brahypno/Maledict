@@ -1,5 +1,7 @@
 package org.brahypno.maledict.common.item;
 
+import static com.sammy.malum.core.helpers.ComponentHelper.*;
+import net.minecraft.core.Holder;
 import com.google.common.collect.Multimap;
 import com.sammy.malum.common.item.IVoidItem;
 import com.sammy.malum.common.item.curiosities.curios.MalumCurioItem;
@@ -14,9 +16,9 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.curio.EnlightenmentLevel;
 import org.brahypno.maledict.registry.MaledictItems;
@@ -28,7 +30,6 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
 
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -38,9 +39,9 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
 
     private static final String CURIO_SLOT = "curio";
 
-    /** 槽位修饰符的 UUID 由物品名算死：跨存档一致，重复加载不会叠加成两条修饰符。 */
-    private static final UUID SLOT_MODIFIER_ID =
-            UUID.nameUUIDFromBytes("maledict:age_of_enlightenment/curio_slot".getBytes(StandardCharsets.UTF_8));
+    /** 槽位修饰符的 ResourceLocation 由物品名算死：跨存档一致，重复加载不会叠加成两条修饰符。 */
+    private static final ResourceLocation SLOT_MODIFIER_ID =
+            ResourceLocation.parse("maledict:age_of_enlightenment/curio_slot");
 
     /** 只是后缀：Malum 的 {@link #positiveEffect} 会自己拼上 {@code malum.gui.curio.effect.}。 */
     private static final String EFFECT_PREFIX = "maledict.age_of_enlightenment.";
@@ -59,10 +60,10 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
     /** tooltip 里那行「+1 护符槽位」由 Curios 生成，不要覆盖 {@code getSlotsTooltip}，否则会出两行。 */
     @Override
     public void addAttributeModifiers(
-            Multimap<Attribute, AttributeModifier> attributeMap,
+            Multimap<Holder<Attribute>, AttributeModifier> attributeMap,
             SlotContext slotContext, ItemStack stack) {
         CuriosApi.addSlotModifier(attributeMap, CURIO_SLOT, SLOT_MODIFIER_ID, 1.0D,
-                                  AttributeModifier.Operation.ADDITION);
+                                  AttributeModifier.Operation.ADD_VALUE);
     }
 
     @Override
@@ -87,7 +88,7 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
             return false;
         }
         Player player = Minecraft.getInstance().player;
-        return player != null && player.hasEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT.get());
+        return player != null && player.hasEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT);
     }
 
     public static boolean isEquipped(LivingEntity entity) {
@@ -101,13 +102,13 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
 
     public static ItemStack create(int level) {
         ItemStack stack = new ItemStack(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
-        stack.getOrCreateTag().putInt(EnlightenmentLevel.TAG,
-                                      Math.max(EnlightenmentLevel.FALLBACK, level));
+        MaledictItemData.update(stack, tag -> tag.putInt(EnlightenmentLevel.TAG,
+                                      Math.max(EnlightenmentLevel.FALLBACK, level)));
         return stack;
     }
 
     public static int equippedLevel(LivingEntity entity) {
-        return EnlightenmentLevel.fromTag(equippedStack(entity).getTag());
+        return EnlightenmentLevel.fromTag(MaledictItemData.read(equippedStack(entity)));
     }
 
     private static ItemStack equippedStack(LivingEntity entity) {

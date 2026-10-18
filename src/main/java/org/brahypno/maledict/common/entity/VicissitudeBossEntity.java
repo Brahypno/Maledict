@@ -10,14 +10,13 @@ import net.minecraft.stats.Stats;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.event.ForgeEventFactory;
+import net.neoforged.neoforge.common.CommonHooks;
+import net.neoforged.neoforge.event.EventHooks;
 import org.brahypno.changelib.HealthHelper.HealthProtectionLevel;
 import org.brahypno.changelib.HealthHelper.SetHealthProtection;
 
@@ -32,7 +31,6 @@ import java.util.Deque;
  * Do not call ChangeLib's DamageProbe from hurt(): its basic handler calls hurt again.
  */
 public abstract class VicissitudeBossEntity extends PathfinderMob {
-    public static final MobType VICISSITUDE = new MobType();
     /** Default MAX_HEALTH; difficulty tables express their pool as a delta against this. */
     public static final double BASE_MAX_HEALTH = 1000.0D;
     private static final EntityDataAccessor<Float> DISPLAY_VITALITY =
@@ -54,24 +52,19 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        entityData.define(DISPLAY_VITALITY, 1.0F);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DISPLAY_VITALITY, 1.0F);
     }
 
-    @Override
-    public final MobType getMobType() {
-        return VICISSITUDE;
-    }
 
     @Override
-    public void onAddedToWorld() {
-        super.onAddedToWorld();
+    public void onAddedToLevel() {
+        super.onAddedToLevel();
         if (level() instanceof ServerLevel serverLevel && !vitality.joined) {
             vitality.identity = getUUID();
             vitality.ledger = VicissitudeVitalityLedger.get(serverLevel);
-            vitality.capability = getCapability(VicissitudeVitalityCapability.CAPABILITY)
-                    .orElseThrow(() -> new IllegalStateException("Missing Vicissitude vitality capability"));
+            vitality.capability = getData(org.brahypno.maledict.registry.MaledictAttachments.VICISSITUDE_VITALITY);
             VicissitudeVitality saved = vitality.ledger.find(vitality.identity);
             if (saved == null) {
                 // Captured once per UUID; reloading must not heal wounds or recapture attributes.
@@ -227,20 +220,23 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
             return;
         }
         frame.resolved = true;
-        // Forge 1.20.1 LivingEntity#actuallyHurt order, with the health write committed to our ledger.
-        // No setter transaction is opened around mod callbacks; a callback's setHealth cannot spend it.
-        amount = ForgeHooks.onLivingHurt(this, source, amount);
-        if (!Float.isFinite(amount) || amount <= 0.0F) return;
-        amount = getDamageAfterArmorAbsorb(source, amount);
-        amount = getDamageAfterMagicAbsorb(source, amount);
-        float finalAmount = Math.max(amount - getAbsorptionAmount(), 0.0F);
-        setAbsorptionAmount(getAbsorptionAmount() - (amount - finalAmount));
-        float absorbed = amount - finalAmount;
+        // Native NeoForge order, with health committed to the authoritative vitality ledger.
+        var container = damageContainers.peek();
+        container.setReduction(net.neoforged.neoforge.common.damagesource.DamageContainer.Reduction.ARMOR,
+                container.getNewDamage() - getDamageAfterArmorAbsorb(source, container.getNewDamage()));
+        getDamageAfterMagicAbsorb(source, container.getNewDamage());
+        float damage = CommonHooks.onLivingDamagePre(this, container);
+        if (!Float.isFinite(damage)) return;
+        container.setReduction(net.neoforged.neoforge.common.damagesource.DamageContainer.Reduction.ABSORPTION,
+                Math.min(getAbsorptionAmount(), damage));
+        float absorbed = Math.min(damage, container.getReduction(
+                net.neoforged.neoforge.common.damagesource.DamageContainer.Reduction.ABSORPTION));
+        setAbsorptionAmount(Math.max(0.0F, getAbsorptionAmount() - absorbed));
         if (absorbed > 0.0F && absorbed < 3.4028235E37F && source.getEntity() instanceof ServerPlayer player) {
             player.awardStat(Stats.DAMAGE_DEALT_ABSORBED, Math.round(absorbed * 10.0F));
         }
-        finalAmount = ForgeHooks.onLivingDamage(this, source, finalAmount);
-        if (!Float.isFinite(finalAmount) || finalAmount <= 0.0F) return;
+        float finalAmount = container.getNewDamage();
+        if (!Float.isFinite(finalAmount) || finalAmount < 0.0F) return;
         frame.finalLoss = Math.min(frame.limit, finalAmount);
         float additionalLoss = Math.max(0.0F, frame.finalLoss - tickLargestLoss);
         tickLargestLoss = Math.max(tickLargestLoss, frame.finalLoss);
@@ -249,10 +245,12 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
             if (loss > 0.0F) {
                 getCombatTracker().recordDamage(source, loss);
                 commitVitality(verifiedVitality().afterDamage(loss));
-                setAbsorptionAmount(getAbsorptionAmount() - loss);
                 gameEvent(GameEvent.ENTITY_DAMAGE);
+                onDamageTaken(container);
             }
         }
+        container.setNewDamage(additionalLoss);
+        CommonHooks.onLivingDamagePost(this, container);
     }
 
     @Override
@@ -261,7 +259,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
                 || !vitality.frames.isEmpty() || !Float.isFinite(amount) || amount <= 0.0F) {
             return;
         }
-        amount = ForgeEventFactory.onLivingHeal(this, amount);
+        amount = EventHooks.onLivingHeal(this, amount);
         if (Float.isFinite(amount) && amount > 0.0F) {
             VicissitudeVitality state = verifiedVitality();
             if (state.current() > 0.0F) {
@@ -323,12 +321,12 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
     }
 
     @Override
-    protected final void dropAllDeathLoot(DamageSource source) {
+    protected final void dropAllDeathLoot(ServerLevel level, DamageSource source) {
         // DamageProbe's post-zero finalizer also tries a reflective loot fallback.
         // Only the genuine death transaction may issue rewards, once.
         if (vitality.finishing && !vitality.lootHandled && getHealth() <= 0.0F) {
             vitality.lootHandled = true;
-            super.dropAllDeathLoot(source);
+            super.dropAllDeathLoot(level, source);
         }
     }
 

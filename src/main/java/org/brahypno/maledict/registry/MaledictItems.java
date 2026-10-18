@@ -1,6 +1,7 @@
 package org.brahypno.maledict.registry;
 
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
+import net.minecraft.core.Holder;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
@@ -9,10 +10,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.ForgeSpawnEggItem;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.common.DeferredSpawnEggItem;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
@@ -20,41 +21,41 @@ import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDiffic
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossSpawnPhase;
 import org.brahypno.maledict.common.item.*;
 import org.jetbrains.annotations.Nullable;
-import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
+import team.lodestar.lodestone.registry.common.LodestoneAttributes;
 import team.lodestar.lodestone.systems.multiblock.MultiBlockItem;
 
 import java.util.List;
 
 public final class MaledictItems {
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Maledict.MODID);
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, Maledict.MODID);
 
-    public static final RegistryObject<Item> TAINTED_MALIGNANT_LEAD_ORE = ITEMS.register("tainted_malignant_lead_ore",
+    public static final DeferredHolder<Item, Item> TAINTED_MALIGNANT_LEAD_ORE = ITEMS.register("tainted_malignant_lead_ore",
             () -> new BlockItem(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), new Item.Properties()));
-    public static final RegistryObject<Item> TWISTED_MALIGNANT_LEAD_ORE = ITEMS.register("twisted_malignant_lead_ore",
+    public static final DeferredHolder<Item, Item> TWISTED_MALIGNANT_LEAD_ORE = ITEMS.register("twisted_malignant_lead_ore",
             () -> new BlockItem(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(), new Item.Properties()));
-    public static final RegistryObject<Item> MALIGNANT_LEAD_FRAGMENT = ITEMS.register("malignant_lead_fragment",
+    public static final DeferredHolder<Item, Item> MALIGNANT_LEAD_FRAGMENT = ITEMS.register("malignant_lead_fragment",
             () -> new Item(new Item.Properties()));
 
-    public static final RegistryObject<Item> RAVEN_SPAWN_EGG = ITEMS.register("raven_spawn_egg", () ->
-            new ForgeSpawnEggItem(MaledictEntities.RAVEN, 0x151820, 0xB80F22, new Item.Properties()));
-    public static final RegistryObject<Item> RAVEN_FEATHER = ITEMS.register("raven_feather", () ->
+    public static final DeferredHolder<Item, Item> RAVEN_SPAWN_EGG = ITEMS.register("raven_spawn_egg", () ->
+            new DeferredSpawnEggItem(MaledictEntities.RAVEN, 0x151820, 0xB80F22, new Item.Properties()));
+    public static final DeferredHolder<Item, Item> RAVEN_FEATHER = ITEMS.register("raven_feather", () ->
             new Item(new Item.Properties()));
 
-    public static final RegistryObject<Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
-            new IncursusBladeItem(MaledictItemTiers.INCURSUS, new Item.Properties().rarity(Rarity.EPIC)));
-    public static final RegistryObject<Item> LOVER_AXE = ITEMS.register("lover_axe", LoverAxeItem::new);
-    public static final RegistryObject<Item> REMEMBRANCE_BOW = ITEMS.register("remembrance_bow", () ->
+    public static final DeferredHolder<Item, Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
+            new IncursusBladeItem(MaledictItemTiers.INCURSUS, new team.lodestar.lodestone.systems.item.LodestoneItemProperties().rarity(Rarity.EPIC)));
+    public static final DeferredHolder<Item, Item> LOVER_AXE = ITEMS.register("lover_axe", LoverAxeItem::new);
+    public static final DeferredHolder<Item, Item> REMEMBRANCE_BOW = ITEMS.register("remembrance_bow", () ->
             new RemembranceBowItem(new Item.Properties().durability(384).rarity(Rarity.RARE), false));
-    public static final RegistryObject<Item> ELEGY_BOW = ITEMS.register("elegy_bow", () ->
+    public static final DeferredHolder<Item, Item> ELEGY_BOW = ITEMS.register("elegy_bow", () ->
             new RemembranceBowItem(new Item.Properties().durability(1111).rarity(Rarity.RARE), true));
 
     /**
      * Curio amulet (charm slot) that renders a skull mask over the wearer's face.
      */
-    public static final RegistryObject<Item> AGE_OF_ENLIGHTENMENT = ITEMS.register("age_of_enlightenment", AgeOfEnlightenmentItem::new);
-    public static final RegistryObject<Item> HANGMAN_FOOL = ITEMS.register("hangman_fool", HangmanFoolItem::new);
+    public static final DeferredHolder<Item, Item> AGE_OF_ENLIGHTENMENT = ITEMS.register("age_of_enlightenment", AgeOfEnlightenmentItem::new);
+    public static final DeferredHolder<Item, Item> HANGMAN_FOOL = ITEMS.register("hangman_fool", HangmanFoolItem::new);
 
-    public static final RegistryObject<Item> BLEEDING_EYE = ITEMS.register("bleeding_eye", () ->
+    public static final DeferredHolder<Item, Item> BLEEDING_EYE = ITEMS.register("bleeding_eye", () ->
             new Item(new Item.Properties()) {
                 @Override
                 public Component getName(ItemStack stack) {
@@ -62,7 +63,7 @@ public final class MaledictItems {
                 }
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+                public void appendHoverText(ItemStack stack, net.minecraft.world.item.Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
                     tooltip.add(Component.translatable("tooltip.maledict.bleeding_eye").withStyle(style -> style.withColor(0xCF210A)));
                 }
             });
@@ -70,85 +71,85 @@ public final class MaledictItems {
     /**
      * Claim ticket for confiscated curios that could not be delivered automatically.
      */
-    public static final RegistryObject<Item> CURIO_RETURN_TOKEN = ITEMS.register("curio_return_token", CurioReturnTokenItem::new);
+    public static final DeferredHolder<Item, Item> CURIO_RETURN_TOKEN = ITEMS.register("curio_return_token", CurioReturnTokenItem::new);
 
-    public static final RegistryObject<Item> MALIGNANT_PEWTER_TABLET = ITEMS.register("malignant_pewter_tablet",
+    public static final DeferredHolder<Item, Item> MALIGNANT_PEWTER_TABLET = ITEMS.register("malignant_pewter_tablet",
                                                                                       () -> new Item(new Item.Properties()));
 
     /**
      * Curio rune (rune slot) that keeps the Blessing of Life on its wearer.
      */
-    public static final RegistryObject<Item> RUNE_OF_SATIATION = ITEMS.register("rune_of_satiation",
+    public static final DeferredHolder<Item, Item> RUNE_OF_SATIATION = ITEMS.register("rune_of_satiation",
                                                                                 () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
-                                                                                                        SpiritTypeRegistry.SACRED_SPIRIT,
+                                                                                                        MalumSpiritTypes.SACRED_SPIRIT,
                                                                                                         MaledictMobEffects.BLESSING_OF_LIFE,
                                                                                                         "maledict.blessing_of_life"));
 
     /**
      * Curio rune (rune slot): level I pulse that grinds nearby hostiles down but never kills them.
      */
-    public static final RegistryObject<Item> RUNE_OF_DECAY = ITEMS.register("rune_of_decay",
+    public static final DeferredHolder<Item, Item> RUNE_OF_DECAY = ITEMS.register("rune_of_decay",
                                                                             () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
-                                                                                                    SpiritTypeRegistry.WICKED_SPIRIT,
+                                                                                                    MalumSpiritTypes.WICKED_SPIRIT,
                                                                                                     MaledictMobEffects.DECAY, "maledict.decay"));
 
     /**
      * Curio rune (rune slot) buffing the wearer's own companions; it hands the effects out itself
      * instead of going through a mob effect, see {@link PackRuneItem}.
      */
-    public static final RegistryObject<Item> RUNE_OF_THE_PACK = ITEMS.register("rune_of_the_pack",
+    public static final DeferredHolder<Item, Item> RUNE_OF_THE_PACK = ITEMS.register("rune_of_the_pack",
                                                                                () -> new PackRuneItem(new Item.Properties().stacksTo(1),
-                                                                                                      SpiritTypeRegistry.WICKED_SPIRIT,
+                                                                                                      MalumSpiritTypes.WICKED_SPIRIT,
                                                                                                       "maledict.pack_boon"));
 
     /**
      * Curio rune (rune slot) raising every share of experience the wearer earns by a quarter.
      */
-    public static final RegistryObject<Item> RUNE_OF_RIPENING = ITEMS.register("rune_of_ripening",
+    public static final DeferredHolder<Item, Item> RUNE_OF_RIPENING = ITEMS.register("rune_of_ripening",
                                                                                () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
-                                                                                                       SpiritTypeRegistry.SACRED_SPIRIT,
+                                                                                                       MalumSpiritTypes.SACRED_SPIRIT,
                                                                                                        MaledictMobEffects.RIPENING, "maledict.ripening"));
 
     /**
      * Curio rune (rune slot) carrying an attribute modifier instead of a mob effect, see
      * {@link AttributeRuneItem}.
      */
-    public static final RegistryObject<Item> RUNE_OF_STAGNANT_EVOLUTION =
+    public static final DeferredHolder<Item, Item> RUNE_OF_STAGNANT_EVOLUTION =
             ITEMS.register("rune_of_stagnant_evolution",
                            () -> new AttributeRuneItem(new Item.Properties().stacksTo(1),
-                                                       SpiritTypeRegistry.ELDRITCH_SPIRIT,
-                                                       LodestoneAttributeRegistry.MAGIC_RESISTANCE,
+                                                       MalumSpiritTypes.ELDRITCH_SPIRIT,
+                                                       LodestoneAttributes.MAGIC_RESISTANCE,
                                                        "Curio Magic Resistance",
                                                        1.0D,
-                                                       AttributeModifier.Operation.MULTIPLY_TOTAL));
+                                                       AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 
     /**
      * 虚空线符文：替佩戴者去死，最多四次，每次从生命上限抽走四分之一；抽走的骨头摘下符文也不还，
      * 只有真正死一次才清账。
      */
-    public static final RegistryObject<Item> RUNE_OF_ROTTEN_BONE =
+    public static final DeferredHolder<Item, Item> RUNE_OF_ROTTEN_BONE =
             ITEMS.register("rune_of_rotten_bone",
                            () -> new RuneOfRottenBoneItem(new Item.Properties().stacksTo(1),
-                                                          SpiritTypeRegistry.ELDRITCH_SPIRIT));
+                                                          MalumSpiritTypes.ELDRITCH_SPIRIT));
 
     /**
      * 抑郁符文：污染石档 + 幽影精魂。适应的账目写在物品自己的 NBT 上，延迟池挂在玩家身上，
      * 见 {@link RuneOfMelancholiaItem} 与 {@code DelayedVitalsEvents}。
      */
-    public static final RegistryObject<Item> RUNE_OF_MELANCHOLIA =
+    public static final DeferredHolder<Item, Item> RUNE_OF_MELANCHOLIA =
             ITEMS.register("rune_of_melancholia",
                            () -> new RuneOfMelancholiaItem(new Item.Properties().stacksTo(1),
-                                                           SpiritTypeRegistry.UMBRAL_SPIRIT));
+                                                           MalumSpiritTypes.UMBRAL_SPIRIT));
 
     /**
      * 无忧符文：抑郁符文的另一半，虚空石符板 + 32 幽影精魂。把自己的命运和对手绑在一起 ——
      * 血量比例差多少这一击就重多少、双方都躲不掉，佩戴者手里的神侵恶刃还整体抬一档。
      * 见 {@link RuneOfBlissItem}、{@code BlissRuneEvents} 与 {@code IncursusBladeItem.DamageTier}。
      */
-    public static final RegistryObject<Item> RUNE_OF_BLISS =
+    public static final DeferredHolder<Item, Item> RUNE_OF_BLISS =
             ITEMS.register("rune_of_bliss",
                            () -> new RuneOfBlissItem(new Item.Properties().stacksTo(1),
-                                                     SpiritTypeRegistry.UMBRAL_SPIRIT));
+                                                     MalumSpiritTypes.UMBRAL_SPIRIT));
 
     /**
      * 堕落符文：白镴档（恶念白镴符板）的第三枚，与演进凝滞、朽骨同一档。命中给目标落下 {@code Fallen}
@@ -156,45 +157,45 @@ public final class MaledictItems {
      * 腐败收走 —— 收永远不致死，致命的那一下仍旧由这一记普通攻击完成。
      * 见 {@link RuneOfTheFallenItem} 与 {@code CorruptionRuneEvents}。
      */
-    public static final RegistryObject<Item> RUNE_OF_THE_FALLEN =
+    public static final DeferredHolder<Item, Item> RUNE_OF_THE_FALLEN =
             ITEMS.register("rune_of_the_fallen",
                            () -> new RuneOfTheFallenItem(new Item.Properties().stacksTo(1),
-                                                         SpiritTypeRegistry.ELDRITCH_SPIRIT));
+                                                         MalumSpiritTypes.ELDRITCH_SPIRIT));
 
-    public static final RegistryObject<Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
+    public static final DeferredHolder<Item, Item> MNEMONIC_OBELISK = ITEMS.register("mnemonic_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.MNEMONIC_OBELISK.get(), new Item.Properties(), MnemonicObeliskBlockEntity.STRUCTURE));
-    public static final RegistryObject<Item> SOULWOOD_OBELISK = ITEMS.register("soulwood_obelisk", () ->
+    public static final DeferredHolder<Item, Item> SOULWOOD_OBELISK = ITEMS.register("soulwood_obelisk", () ->
             new MultiBlockItem(MaledictBlocks.SOULWOOD_OBELISK.get(), new Item.Properties(), SoulwoodObeliskBlockEntity.STRUCTURE));
 
     /**
      * 调试用刷怪蛋：只做简单档（换难度请用祭坛），一颗直接开始一阶段、一颗直接落到二阶段。
      */
-    public static final RegistryObject<Item> FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG =
+    public static final DeferredHolder<Item, Item> FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG =
             ITEMS.register("first_vicissitude_phase_one_spawn_egg", () ->
                     new VicissitudeSpawnEggItem(MaledictEntities.FIRST_VICISSITUDE,
                                                 BossDifficulty.SIMPLE, BossSpawnPhase.PHASE_ONE,
                                                 0x1B1A24, 0xE6EDF5, new Item.Properties()));
-    public static final RegistryObject<Item> FIRST_VICISSITUDE_PHASE_TWO_SPAWN_EGG =
+    public static final DeferredHolder<Item, Item> FIRST_VICISSITUDE_PHASE_TWO_SPAWN_EGG =
             ITEMS.register("first_vicissitude_phase_two_spawn_egg", () ->
                     new VicissitudeSpawnEggItem(MaledictEntities.FIRST_VICISSITUDE,
                                                 BossDifficulty.SIMPLE, BossSpawnPhase.PHASE_TWO,
                                                 0x1B1A24, 0x8A5CF6, new Item.Properties()));
 
-    public static final RegistryObject<Item> SACRED_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.SACRED);
-    public static final RegistryObject<Item> WICKED_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.WICKED);
-    public static final RegistryObject<Item> ARCANE_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.ARCANE);
-    public static final RegistryObject<Item> ELDRITCH_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.ELDRITCH);
-    public static final RegistryObject<Item> AERIAL_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.AERIAL);
-    public static final RegistryObject<Item> AQUEOUS_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.AQUEOUS);
-    public static final RegistryObject<Item> EARTHEN_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.EARTHEN);
-    public static final RegistryObject<Item> INFERNAL_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.INFERNAL);
+    public static final DeferredHolder<Item, Item> SACRED_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.SACRED);
+    public static final DeferredHolder<Item, Item> WICKED_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.WICKED);
+    public static final DeferredHolder<Item, Item> ARCANE_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.ARCANE);
+    public static final DeferredHolder<Item, Item> ELDRITCH_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.ELDRITCH);
+    public static final DeferredHolder<Item, Item> AERIAL_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.AERIAL);
+    public static final DeferredHolder<Item, Item> AQUEOUS_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.AQUEOUS);
+    public static final DeferredHolder<Item, Item> EARTHEN_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.EARTHEN);
+    public static final DeferredHolder<Item, Item> INFERNAL_SPIRIT_ARROW = registerSpiritArrow(SpiritArrowType.INFERNAL);
 
-    private static RegistryObject<Item> registerSpiritArrow(SpiritArrowType arrowType) {
+    private static DeferredHolder<Item, Item> registerSpiritArrow(SpiritArrowType arrowType) {
         return ITEMS.register(arrowType.name().toLowerCase() + "_spirit_arrow", () ->
                 new SpiritArrowItem(arrowType, new Item.Properties()));
     }
 
-    public static RegistryObject<Item> getSpiritArrow(SpiritArrowType arrowType) {
+    public static DeferredHolder<Item, Item> getSpiritArrow(SpiritArrowType arrowType) {
         return switch (arrowType) {
             case SACRED -> SACRED_SPIRIT_ARROW;
             case WICKED -> WICKED_SPIRIT_ARROW;

@@ -1,33 +1,33 @@
 package org.brahypno.maledict.common.realm;
 
-import com.sammy.malum.registry.common.block.BlockRegistry;
+import com.sammy.malum.registry.common.block.MalumBlocks;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.MobSpawnEvent;
-import net.minecraftforge.event.entity.living.LivingFallEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.entity.player.PlayerSetSpawnEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.*;
+import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerSetSpawnEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 
 import java.util.Set;
 
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class BlightedRealmEvents {
     // These plains animals all use Animal.checkAnimalSpawnRules; other species keep their own rules.
     private static final Set<EntityType<?>> FARM_ANIMALS = Set.of(EntityType.COW, EntityType.SHEEP,
             EntityType.PIG, EntityType.CHICKEN, EntityType.HORSE, EntityType.DONKEY);
 
     @SubscribeEvent
-    public static void weather(TickEvent.LevelTickEvent event) {
-        if (event.phase == TickEvent.Phase.END && !event.level.isClientSide() && BlightedRealm.is(event.level)
-                && event.level instanceof net.minecraft.server.level.ServerLevel level) {
+    public static void weather(LevelTickEvent.Post event) {
+        if (!event.getLevel().isClientSide() && BlightedRealm.is(event.getLevel())
+                && event.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
             // Other dimensions can share the overworld's weather data; clear only this level's interpolation.
             level.setRainLevel(0);
             level.setThunderLevel(0);
@@ -36,12 +36,12 @@ public final class BlightedRealmEvents {
 
     @SubscribeEvent
     public static void animalGround(MobSpawnEvent.SpawnPlacementCheck event) {
-        if (!BlightedRealm.is(event.getLevel().getLevel()) || event.getResult() != Event.Result.DEFAULT
+        if (!BlightedRealm.is(event.getLevel().getLevel()) || event.getResult() != MobSpawnEvent.SpawnPlacementCheck.Result.DEFAULT
                 || event.getDefaultResult() || !FARM_ANIMALS.contains(event.getEntityType())) return;
         var ground = event.getLevel().getBlockState(event.getPos().below());
-        if ((ground.is(BlockRegistry.BLIGHTED_EARTH.get()) || ground.is(BlockRegistry.BLIGHTED_SOIL.get()))
+        if (ground.is(MalumBlocks.BLIGHTED_EARTH.get())
                 && event.getLevel().getRawBrightness(event.getPos(), 0) > 8) {
-            event.setResult(Event.Result.ALLOW);
+            event.setResult(MobSpawnEvent.SpawnPlacementCheck.Result.SUCCEED);
         }
     }
 

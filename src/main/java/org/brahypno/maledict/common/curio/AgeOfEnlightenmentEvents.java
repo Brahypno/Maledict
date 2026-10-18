@@ -1,5 +1,7 @@
 package org.brahypno.maledict.common.curio;
 
+import net.minecraft.core.Holder;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import com.sammy.malum.common.entity.activator.SpiritCollectionActivatorEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffect;
@@ -10,11 +12,10 @@ import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.*;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.config.MaledictConfig;
@@ -28,7 +29,7 @@ import javax.annotation.Nullable;
 /**
  * 启蒙之年的玩法钩子。常驻加速、半血刷魂息虚空、击杀续效果都要求护符在饰品栏里；传染与近战翻倍只看启蒙之年这个效果本身。
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class AgeOfEnlightenmentEvents {
 
     private static final double DEFAULT_COOLDOWN_SPEED = 2.0D;
@@ -51,11 +52,8 @@ public final class AgeOfEnlightenmentEvents {
 
     /** 常驻冷却加速：每个服务端 tick 让玩家身上的冷却多走一格，之后新进入冷却的物品同样享受。 */
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-        Player player = event.player;
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        Player player = event.getEntity();
         if (player.level().isClientSide()) {
             return;
         }
@@ -82,7 +80,7 @@ public final class AgeOfEnlightenmentEvents {
 
     /** 攻击半血生物时刷魂息虚空；{@code LivingHurtEvent} 里 {@code getHealth()} 还是受伤前的值，正是出手时目标剩的血。 */
     @SubscribeEvent
-    public static void onLivingHurt(LivingHurtEvent event) {
+    public static void onLivingHurt(LivingDamageEvent.Pre event) {
         LivingEntity target = event.getEntity();
         if (target.level().isClientSide()) {
             return;
@@ -109,18 +107,18 @@ public final class AgeOfEnlightenmentEvents {
      * 携带者自己那份不动，等级取伤害源的启蒙之年而不是受击者的。
      */
     @SubscribeEvent
-    public static void onDarknessBearerHurt(LivingHurtEvent event) {
+    public static void onDarknessBearerHurt(LivingDamageEvent.Pre event) {
         LivingEntity carrier = event.getEntity();
         if (carrier.level().isClientSide()) {
             return;
         }
-        if (carrier.getEffect(MaledictMobEffects.AGE_OF_DARKNESS.get()) == null) {
+        if (carrier.getEffect(MaledictMobEffects.AGE_OF_DARKNESS) == null) {
             return;
         }
         if (!(event.getSource().getEntity() instanceof LivingEntity source)) {
             return;
         }
-        MobEffectInstance enlightenment = source.getEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT.get());
+        MobEffectInstance enlightenment = source.getEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT);
         if (enlightenment == null) {
             return;
         }
@@ -132,7 +130,7 @@ public final class AgeOfEnlightenmentEvents {
         if (next != null) {
             // 夹一次负数：等级乘数是 amplifier + 1，负等级会把减益翻成增益。
             int level = Math.max(EnlightenmentLevel.FALLBACK, enlightenment.getAmplifier());
-            grant(next, MaledictMobEffects.AGE_OF_DARKNESS.get(), level);
+            grant(next, MaledictMobEffects.AGE_OF_DARKNESS, level);
         }
     }
 
@@ -151,7 +149,7 @@ public final class AgeOfEnlightenmentEvents {
         }
 
         int level = AgeOfEnlightenmentItem.equippedLevel(player);
-        grant(player, MaledictMobEffects.AGE_OF_ENLIGHTENMENT.get(), level);
+        grant(player, MaledictMobEffects.AGE_OF_ENLIGHTENMENT, level);
         if (victim.level() instanceof ServerLevel serverLevel) {
             markNearestEnemy(serverLevel, player, victim, level);
         }
@@ -164,16 +162,16 @@ public final class AgeOfEnlightenmentEvents {
      * direct / causing 两个位子，而法术通道、箭矢、爆炸的直接来源另有其人（或为空），不吃这一份。
      * 横扫也走 {@code player_attack}、直接来源同样是玩家，所以一起翻倍。
      *
-     * <p>挂在 {@link LivingHurtEvent} 上而不是 {@code CriticalHitEvent} 上：这里拿到的是护甲前的伤害，
+     * <p>挂在 {@code LivingDamageEvent.Pre} 上而不是 {@code CriticalHitEvent} 上：这里拿到的是护甲后的伤害，
      * 与暴击倍率同一条口径，但不再强迫原版暴击——暴击粒子与音效没了，镰刀的横扫也不会再被压掉。
      * 真落下来的原版暴击（下落攻击那种）照旧先乘 1.5，再被这一份放大。
      */
-    @SubscribeEvent
-    public static void onMeleeHurt(LivingHurtEvent event) {
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOW)
+    public static void onMeleeHurt(LivingDamageEvent.Pre event) {
         if (event.getEntity().level().isClientSide()) {
             return;
         }
-        if (event.getAmount() <= 0.0F) {
+        if (event.getNewDamage() <= 0.0F) {
             return;
         }
         if (!(event.getSource().getDirectEntity() instanceof Player attacker)) {
@@ -182,18 +180,18 @@ public final class AgeOfEnlightenmentEvents {
         if (event.getSource().getEntity() != attacker) {
             return;
         }
-        if (!attacker.hasEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT.get())) {
+        if (!attacker.hasEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT)) {
             return;
         }
 
-        event.setAmount(event.getAmount() * meleeDamageMultiplier());
+        event.setNewDamage(event.getNewDamage() * meleeDamageMultiplier());
     }
 
     /**
      * 挂效果或续时，等级只升不降。抬级时传入的时间必须长于剩余时间，否则原版会把旧实例存成
      * {@code hiddenEffect}，结束时再把等级降回去；等级不高于现有的时候走 {@link EntityHelper#extendEffect}。
      */
-    private static void grant(LivingEntity target, MobEffect effect, int amplifier) {
+    private static void grant(LivingEntity target, Holder<MobEffect> effect, int amplifier) {
         MobEffectInstance active = target.getEffect(effect);
         if (active == null) {
             target.addEffect(new MobEffectInstance(effect, EFFECT_DURATION_TICKS, amplifier));
@@ -211,7 +209,7 @@ public final class AgeOfEnlightenmentEvents {
                                          int amplifier) {
         LivingEntity nearest = nearestEnemy(level, player, victim);
         if (nearest != null) {
-            grant(nearest, MaledictMobEffects.AGE_OF_DARKNESS.get(), amplifier);
+            grant(nearest, MaledictMobEffects.AGE_OF_DARKNESS, amplifier);
         }
     }
 
@@ -266,14 +264,13 @@ public final class AgeOfEnlightenmentEvents {
             SpiritCollectionActivatorEntity spiritVoid = new SpiritCollectionActivatorEntity(
                     level,
                     wearer.getUUID(),
-                    origin.x,
-                    origin.y,
-                    origin.z,
+                    origin,
+                    new Vec3(
                     RandomHelper.randomBetween(level.getRandom(), -VOID_SPREAD, VOID_SPREAD),
                     RandomHelper.randomBetween(level.getRandom(), VOID_UPWARD_MIN, VOID_UPWARD_MAX),
-                    RandomHelper.randomBetween(level.getRandom(), -VOID_SPREAD, VOID_SPREAD));
+                    RandomHelper.randomBetween(level.getRandom(), -VOID_SPREAD, VOID_SPREAD)));
             level.addFreshEntity(spiritVoid);
-            spiritVoid.collect();
+            spiritVoid.collect(level);
         }
     }
 

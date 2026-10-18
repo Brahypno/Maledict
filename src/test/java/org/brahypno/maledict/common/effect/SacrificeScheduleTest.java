@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * 「献祭」的时间表：九天九夜 = 216000 tick，每 1200 tick 抽一次，共 180 次。
@@ -16,43 +15,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SacrificeScheduleTest {
 
     @Test
-    void nineDaysIsNineTimesTwentyMinutes() {
-        assertEquals(24000, SacrificeSchedule.TICKS_PER_DAY);
+    void nineDaysPulseImmediatelyThenEveryMinuteUntilTheFinalMinute() {
         assertEquals(216000, SacrificeSchedule.DURATION_TICKS);
-        assertEquals(SacrificeSchedule.TICKS_PER_DAY * SacrificeSchedule.DAYS,
-                     SacrificeSchedule.DURATION_TICKS);
-    }
-
-    @Test
-    void oneHitPerMinuteAcrossTheWholeNineDays() {
-        assertEquals(9 * 20, SacrificeSchedule.pulses());
-    }
-
-    /** 扣除顺序：先判定再递减，于是施加效果的当 tick 就是第一下。 */
-    @Test
-    void theTickTheEffectLandsIsTheFirstHit() {
-        assertTrue(SacrificeSchedule.isPulse(SacrificeSchedule.DURATION_TICKS));
-    }
-
-    @Test
-    void theLastHitLandsOneMinuteBeforeTheEnd() {
         int hits = 0;
         int lastHitAt = 0;
-        for (int duration = SacrificeSchedule.DURATION_TICKS; duration > 0; duration--) {
-            if (SacrificeSchedule.isPulse(duration)) {
+        for (int remaining = SacrificeSchedule.DURATION_TICKS; remaining > 0; remaining--) {
+            boolean expectedPulse = remaining % 1200 == 0;
+            assertEquals(expectedPulse, SacrificeSchedule.isPulse(remaining));
+            if (SacrificeSchedule.isPulse(remaining)) {
                 hits++;
-                lastHitAt = duration;
+                lastHitAt = remaining;
             }
         }
-
-        assertEquals(SacrificeSchedule.pulses(), hits);
-        assertEquals(SacrificeSchedule.INTERVAL_TICKS, lastHitAt);
-    }
-
-    /** 熬满九天九夜的代价：180 下 × 6 点 = 1080 点，也就是 54 条命。 */
-    @Test
-    void theWholeRiteCostsNineDaysOfBlood() {
-        assertEquals(1080.0F, SacrificeSchedule.DAMAGE * SacrificeSchedule.pulses(), 0.0001F);
+        assertEquals(180, hits);
+        assertEquals(hits, SacrificeSchedule.pulses());
+        assertEquals(1200, lastHitAt);
+        assertEquals(1080.0F, SacrificeSchedule.DAMAGE * hits, 0.0001F);
     }
 
     @Test

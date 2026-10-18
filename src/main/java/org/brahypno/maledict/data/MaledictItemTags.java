@@ -1,6 +1,6 @@
 package org.brahypno.maledict.data;
 
-import com.sammy.malum.registry.common.item.ItemTagRegistry;
+import com.sammy.malum.registry.common.MalumTags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.ItemTagsProvider;
@@ -10,7 +10,7 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.common.data.ExistingFileHelper;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import org.brahypno.changelib.equipment.EquipmentProtectionTags;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.MaledictTags;
@@ -56,18 +56,19 @@ public final class MaledictItemTags extends ItemTagsProvider {
                 .add(MaledictItems.AQUEOUS_SPIRIT_ARROW.get())
                 .add(MaledictItems.EARTHEN_SPIRIT_ARROW.get())
                 .add(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
+        tag(ItemTags.BOW_ENCHANTABLE).add(MaledictItems.REMEMBRANCE_BOW.get(), MaledictItems.ELEGY_BOW.get());
         tag(FORGE_SCYTHE).add(MaledictItems.INCURSUS_BLADE.get());
-        tag(ItemTagRegistry.SCYTHE)
+        tag(MalumTags.ItemTags.SCYTHES)
                 .add(MaledictItems.INCURSUS_BLADE.get())
                 .addOptionalTag(GOETY_GRAVE_GLOVE)
                 .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "death_scythe"))
                 .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "dark_metal_scythe"))
                 .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "dark_scythe"));
-        tag(ItemTagRegistry.SOUL_HUNTER_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());
-        tag(ItemTagRegistry.MAGIC_CAPABLE_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());
-        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.INCURSUS_BLADE.get());
-        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.ELEGY_BOW.get());
-        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
+        tag(MalumTags.ItemTags.SOUL_SHATTER_CAPABLE_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(MalumTags.ItemTags.MAGIC_CAPABLE_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(MalumTags.ItemTags.HIDDEN_UNTIL_VOID).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(MalumTags.ItemTags.HIDDEN_UNTIL_VOID).add(MaledictItems.ELEGY_BOW.get());
+        tag(MalumTags.ItemTags.HIDDEN_UNTIL_VOID).add(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
         tag(GOETY_GRAVE_GLOVE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(L2_NO_SEAL)
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(),

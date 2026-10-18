@@ -17,20 +17,20 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.gametest.GameTestHolder;
-import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.entity.living.LivingEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.entity.VicissitudeBossStage;
 import org.brahypno.maledict.registry.MaledictEntities;
 import top.theillusivec4.curios.api.CuriosApi;
-import top.theillusivec4.curios.api.event.CurioEquipEvent;
+import top.theillusivec4.curios.api.event.CurioCanEquipEvent;
 import top.theillusivec4.curios.api.type.capability.ICurio;
 import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
@@ -193,11 +193,11 @@ public final class VicissitudeCurioReturnsTest {
             VicissitudeCurioReturns.claim(f.player);
             f.inventory.setEquippedCurio("head", 0, occupant.copy());
         });
-        MinecraftForge.EVENT_BUS.register(listener);
+        NeoForge.EVENT_BUS.register(listener);
         try {
             helper.assertTrue(!VicissitudeCurioReturns.deliverAll(f.player), "Validation callback must prevent this attempt from overwriting its occupant");
         } finally {
-            MinecraftForge.EVENT_BUS.unregister(listener);
+            NeoForge.EVENT_BUS.unregister(listener);
         }
         helper.assertTrue(ItemStack.matches(occupant, f.stack("head", 0)) && f.stack("head", 1).isEmpty(), "Callback's equipped stack must survive");
         helper.assertTrue(f.ledger.entries(f.player.getUUID()).size() == 1, "Reentrant claim must neither deliver nor duplicate the debt");
@@ -288,9 +288,9 @@ public final class VicissitudeCurioReturnsTest {
         int[] channels = {0};
         helper.assertTrue(boss.getHealth() == 1500, "Registered extreme encounter must really have its authored health pool");
         float[] finalDamage = {6, 14, 14};
-        events.damage = event -> event.setAmount(finalDamage[channels[0]++]);
+        events.damage = event -> event.setNewDamage(finalDamage[channels[0]++]);
         float initialHealth = boss.getHealth();
-        MinecraftForge.EVENT_BUS.register(events);
+        NeoForge.EVENT_BUS.register(events);
         try {
             helper.assertTrue(boss.hurt(source, 6), "First channel must reach actual damage resolution");
             helper.assertTrue(Math.abs(boss.getHealth() - (initialHealth - 6)) < 0.001F, "First channel must debit six health");
@@ -300,7 +300,7 @@ public final class VicissitudeCurioReturnsTest {
                             + ", maximum health=" + boss.getMaxHealth());
             helper.assertTrue(boss.hurt(source, 14), "Repeated equal channel must also resolve");
         } finally {
-            MinecraftForge.EVENT_BUS.unregister(events);
+            NeoForge.EVENT_BUS.unregister(events);
         }
         helper.assertTrue(channels[0] == 3 && Math.abs(boss.getHealth() - (initialHealth - 14)) < 0.001F,
                 "Three actual final-damage events must cost fourteen health in total");
@@ -340,17 +340,17 @@ public final class VicissitudeCurioReturnsTest {
         int[] nestedCalls = {0};
         events.hurt = event -> {
             if (event.getSource() == outer) {
-                helper.assertTrue(boss.hurt(inner, amounts[1]), "LivingHurtEvent's nested hit must be accepted");
+                helper.assertTrue(boss.hurt(inner, amounts[1]), "LivingDamageEvent.Pre's nested hit must be accepted");
                 nestedCalls[0]++;
             }
         };
-        events.damage = event -> event.setAmount(event.getSource() == outer ? amounts[0] : amounts[1]);
+        events.damage = event -> event.setNewDamage(event.getSource() == outer ? amounts[0] : amounts[1]);
         float initialHealth = boss.getHealth();
-        MinecraftForge.EVENT_BUS.register(events);
+        NeoForge.EVENT_BUS.register(events);
         try {
             helper.assertTrue(boss.hurt(outer, 2), "Outer hit must finish after the nested hit");
         } finally {
-            MinecraftForge.EVENT_BUS.unregister(events);
+            NeoForge.EVENT_BUS.unregister(events);
         }
         helper.assertTrue(nestedCalls[0] == 1 && Math.abs(boss.getHealth() - (initialHealth - 10)) < 0.001F,
                 "Outer two and inner ten must cost ten health");
@@ -360,13 +360,13 @@ public final class VicissitudeCurioReturnsTest {
             f.player.setPos(boss.position());
             amounts[0] = 10; amounts[1] = 2;
             float before = boss.getHealth();
-            MinecraftForge.EVENT_BUS.register(events);
+            NeoForge.EVENT_BUS.register(events);
             try {
                 helper.assertTrue(boss.hurt(outer, 10), "Reverse-order batch must be accepted after cooldown: stage="
                         + boss.getStage() + ", health=" + boss.getHealth() + ", iframe=" + boss.invulnerableTime
                         + ", nested calls=" + nestedCalls[0] + ", world tick=" + helper.getLevel().getGameTime());
             } finally {
-                MinecraftForge.EVENT_BUS.unregister(events);
+                NeoForge.EVENT_BUS.unregister(events);
             }
             helper.assertTrue(nestedCalls[0] == 2 && Math.abs(boss.getHealth() - (before - 10)) < 0.001F,
                     "Outer ten and inner two must also cost ten health");
@@ -385,19 +385,21 @@ public final class VicissitudeCurioReturnsTest {
         DamageSource source = boss.damageSources().indirectMagic(null, f.player);
         float initialHealth = boss.getHealth();
         DamageEvents events = new DamageEvents(boss);
-        events.damage = event -> event.setCanceled(true);
-        MinecraftForge.EVENT_BUS.register(events);
+        events.damage = event -> event.setNewDamage(0.0F);
+        NeoForge.EVENT_BUS.register(events);
         try {
             helper.assertTrue(!boss.hurt(source, 6), "Cancelled final-damage event must reject the hit");
         } finally {
-            MinecraftForge.EVENT_BUS.unregister(events);
+            NeoForge.EVENT_BUS.unregister(events);
         }
+        boss.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_ABSORPTION).setBaseValue(1000);
         boss.setAbsorptionAmount(100);
         helper.assertTrue(!boss.hurt(source, 6) && boss.getAbsorptionAmount() < 100,
                 "Fully absorbed hit must consume real absorption without accepting health damage");
         helper.assertTrue(boss.getHealth() == initialHealth && heldCount(boss) == 3
                 && f.stack("head", 0).isEmpty() && !f.ledger.hasPending(f.player.getUUID()),
                 "Cancellation and full absorption must neither debit health nor release an item");
+        boss.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_ABSORPTION).setBaseValue(1000);
         boss.setAbsorptionAmount(0);
         helper.assertTrue(boss.hurt(source, 6) && boss.hurt(source, 14), "Later positive channels in the same tick must still resolve");
         helper.assertTrue(boss.getHealth() < initialHealth && heldCount(boss) == 2
@@ -413,20 +415,20 @@ public final class VicissitudeCurioReturnsTest {
         FirstVicissitudeBossEntity boss = spawnWithHeld(helper, f.player.getUUID(), held, "extreme");
         DamageSource outer = boss.damageSources().playerAttack(f.player), inner = boss.damageSources().indirectMagic(null, f.player);
         DamageEvents damage = new DamageEvents(boss);
-        damage.damage = event -> event.setAmount(event.getSource() == outer ? 6 : 14);
+        damage.damage = event -> event.setNewDamage(event.getSource() == outer ? 6 : 14);
         int[] callbacks = {0};
         EquipEvents equip = new EquipEvents(event -> {
             if (event.getEntity() == f.player && callbacks[0]++ == 0)
                 helper.assertTrue(boss.hurt(inner, 14), "Real Curios validation must be able to trigger a nested hit");
         });
         float initialHealth = boss.getHealth();
-        MinecraftForge.EVENT_BUS.register(damage);
-        MinecraftForge.EVENT_BUS.register(equip);
+        NeoForge.EVENT_BUS.register(damage);
+        NeoForge.EVENT_BUS.register(equip);
         try {
             helper.assertTrue(boss.hurt(outer, 6), "Original hit must finish its return callback");
         } finally {
-            MinecraftForge.EVENT_BUS.unregister(equip);
-            MinecraftForge.EVENT_BUS.unregister(damage);
+            NeoForge.EVENT_BUS.unregister(equip);
+            NeoForge.EVENT_BUS.unregister(damage);
         }
         helper.assertTrue(callbacks[0] > 0 && Math.abs(boss.getHealth() - (initialHealth - 14)) < 0.001F,
                 "Validation callback's larger hit must top up the same batch to fourteen health");
@@ -484,7 +486,7 @@ public final class VicissitudeCurioReturnsTest {
         for (var entry : held) {
             CompoundTag item = new CompoundTag();
             item.putString("Slot", entry.slotIdentifier()); item.putInt("Index", entry.slotIndex());
-            item.put("Stack", entry.stack().save(new CompoundTag())); items.add(item);
+            item.put("Stack", entry.stack().save(org.brahypno.maledict.TestSupport.registries())); items.add(item);
         }
         CompoundTag player = new CompoundTag(); player.putUUID("Player", owner); player.put("Items", items);
         ListTag players = new ListTag(); players.add(player); setup.put("ConfiscatedCurios", players);
@@ -518,32 +520,31 @@ public final class VicissitudeCurioReturnsTest {
     }
 
     public static final class EquipEvents {
-        private final Consumer<CurioEquipEvent> action;
-        EquipEvents(Consumer<CurioEquipEvent> action) { this.action = action; }
-        @SubscribeEvent public void equip(CurioEquipEvent event) { action.accept(event); }
+        private final Consumer<CurioCanEquipEvent> action;
+        EquipEvents(Consumer<CurioCanEquipEvent> action) { this.action = action; }
+        @SubscribeEvent public void equip(CurioCanEquipEvent event) { action.accept(event); }
     }
 
     public static final class DamageEvents {
         private final FirstVicissitudeBossEntity boss;
-        Consumer<LivingHurtEvent> hurt = event -> {};
-        Consumer<LivingDamageEvent> damage = event -> {};
+        Consumer<LivingDamageEvent.Pre> hurt = event -> {};
+        Consumer<LivingDamageEvent.Pre> damage = event -> {};
         DamageEvents(FirstVicissitudeBossEntity boss) { this.boss = boss; }
-        @SubscribeEvent public void hurt(LivingHurtEvent event) { if (event.getEntity() == boss) hurt.accept(event); }
-        @SubscribeEvent public void damage(LivingDamageEvent event) { if (event.getEntity() == boss) damage.accept(event); }
+        @SubscribeEvent public void damage(LivingDamageEvent.Pre event) { if (event.getEntity() == boss) { hurt.accept(event); damage.accept(event); } }
     }
 
     private static ItemStack marked(String identity) {
         ItemStack stack = new ItemStack(Items.DIAMOND);
-        stack.getOrCreateTag().putString("ReturnIdentity", identity);
-        stack.setHoverName(Component.literal(identity));
-        stack.enchant(Enchantments.UNBREAKING, 2);
+        org.brahypno.maledict.common.item.MaledictItemData.update(stack, data -> data.putString("ReturnIdentity", identity));
+        stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal(identity));
+        stack.enchant(org.brahypno.maledict.TestSupport.enchantment(Enchantments.UNBREAKING), 2);
         return stack;
     }
 
     private static ItemStack provider(String identity, String equippedIn, String grants, int amount) {
         ItemStack stack = marked(identity);
-        CuriosApi.addSlotModifier(stack, grants, identity, UUID.randomUUID(), amount,
-                AttributeModifier.Operation.ADDITION, equippedIn);
+        CuriosApi.addSlotModifier(stack, grants, org.brahypno.maledict.TestSupport.modifierId(UUID.randomUUID()), amount,
+                AttributeModifier.Operation.ADD_VALUE, equippedIn);
         return stack;
     }
 
@@ -575,7 +576,8 @@ public final class VicissitudeCurioReturnsTest {
 
         void tickCurios() {
             // FakePlayer.tick is a no-op; this is the actual Forge event dispatched by living entity ticks.
-            MinecraftForge.EVENT_BUS.post(new LivingEvent.LivingTickEvent(player));
+            NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.EntityTickEvent.Pre(player));
+            NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.EntityTickEvent.Post(player));
         }
 
         void fillEquipment() {
@@ -628,7 +630,7 @@ public final class VicissitudeCurioReturnsTest {
         }
 
         void roundTripLedger() {
-            var loaded = VicissitudeCurioLedger.load(ledger.save(new CompoundTag()));
+            var loaded = VicissitudeCurioLedger.load(ledger.save(new CompoundTag(), org.brahypno.maledict.TestSupport.registries()), org.brahypno.maledict.TestSupport.registries());
             ledger.replace(player.getUUID(), loaded.entries(player.getUUID()));
         }
     }

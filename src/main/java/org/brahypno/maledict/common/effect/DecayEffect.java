@@ -1,9 +1,8 @@
 package org.brahypno.maledict.common.effect;
 
-import com.sammy.malum.registry.common.DamageTypeRegistry;
-import com.sammy.malum.registry.common.ParticleEffectTypeRegistry;
-import com.sammy.malum.registry.common.SpiritTypeRegistry;
-import com.sammy.malum.visual_effects.networked.data.ColorEffectData;
+import com.sammy.malum.registry.common.MalumDamageTypes;
+import com.sammy.malum.registry.common.MalumParticleEffectTypes;
+import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -39,26 +38,26 @@ public final class DecayEffect extends MobEffect {
 
     /** 原版按 {@code duration % n == 0} 判定；符文每 40 tick 把时长刷回 200，故恰好每 40 tick 出手一次。 */
     @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         return duration % INTERVAL_TICKS == 0;
     }
 
     @Override
-    public void applyEffectTick(LivingEntity wearer, int amplifier) {
+    public boolean applyEffectTick(LivingEntity wearer, int amplifier) {
         if (wearer.level().isClientSide) {
-            return;
+            return true;
         }
 
-        DamageSource source = DamageTypeHelper.create(wearer.level(), DamageTypeRegistry.VOODOO, wearer);
+        DamageSource source = DamageTypeHelper.create(wearer.level(), MalumDamageTypes.VOODOO, wearer);
         float damage = DAMAGE_PER_LEVEL * (amplifier + 1);
         for (LivingEntity victim : wearer.level().getEntitiesOfClass(LivingEntity.class, witheringArea(wearer))) {
             if (!canWither(wearer, victim)) {
                 continue;
             }
-            ParticleEffectTypeRegistry.HEXING_SMOKE.createEntityEffect(victim,
-                    new ColorEffectData(SpiritTypeRegistry.WICKED_SPIRIT.getPrimaryColor()));
+            MalumParticleEffectTypes.ENTITY_RITE_EFFECT.createEffect(victim).color(MalumSpiritTypes.WICKED_SPIRIT.getPrimaryColor()).spawn((net.minecraft.server.level.ServerLevel) victim.level());
             victim.hurt(source, damage);
         }
+        return true;
     }
 
     private static AABB witheringArea(LivingEntity wearer) {

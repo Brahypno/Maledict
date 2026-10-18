@@ -53,7 +53,7 @@ public final class AgeOfEnlightenmentModel extends EntityModel<Player> {
 
     @Override
     public void renderToBuffer(PoseStack poseStack, VertexConsumer consumer, int packedLight,
-                               int packedOverlay, float red, float green, float blue, float alpha) {
-        mask.render(poseStack, consumer, packedLight, packedOverlay, red, green, blue, alpha);
+                               int packedOverlay, int color) {
+        mask.render(poseStack, consumer, packedLight, packedOverlay, color);
     }
 }

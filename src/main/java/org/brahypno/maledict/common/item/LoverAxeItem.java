@@ -23,21 +23,21 @@ import org.brahypno.maledict.registry.MaledictAttributes;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.UUID;
 
 /** One reward and one wound per completed probe, including its fallback damage. */
 public final class LoverAxeItem extends AxeItem {
     public static final ResourceLocation COLOR_PROPERTY =
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "lover_axe_color");
-    public static final UUID WOUND_ID = UUID.fromString("7fc0c676-3a3f-4886-980c-873c900b1826");
+    public static final ResourceLocation WOUND_ID = ResourceLocation.parse("maledict:lover_axe_wound");
     private static final String COLOR_TAG = "LoverAxeLavender";
 
     public LoverAxeItem() {
-        super(Tiers.NETHERITE, 5.0F, -3.0F, new Properties().rarity(Rarity.EPIC).fireResistant());
+        super(Tiers.NETHERITE, new Properties().rarity(Rarity.EPIC).fireResistant()
+                .attributes(AxeItem.createAttributes(Tiers.NETHERITE, 5.0F, -3.0F)));
     }
 
     public static boolean isLavender(ItemStack stack) {
-        return stack.hasTag() && stack.getTag().getBoolean(COLOR_TAG);
+        return MaledictItemData.read(stack).getBoolean(COLOR_TAG);
     }
 
     @Override
@@ -69,13 +69,13 @@ public final class LoverAxeItem extends AxeItem {
             wound(victim);
         }
         if (fullyCharged) {
-            AttributeInstance descent = attacker.getAttribute(MaledictAttributes.DESCENT.get());
+            AttributeInstance descent = attacker.getAttribute(MaledictAttributes.DESCENT);
             if (descent != null) {
                 descent.setBaseValue(descent.getBaseValue() + 2.0D);
             }
         }
         if (attacker.getRandom().nextBoolean()) {
-            weapon.getOrCreateTag().putBoolean(COLOR_TAG, !isLavender(weapon));
+            MaledictItemData.update(weapon, tag -> tag.putBoolean(COLOR_TAG, !isLavender(weapon)));
         }
         return true;
     }
@@ -84,17 +84,16 @@ public final class LoverAxeItem extends AxeItem {
         AttributeInstance health = victim.getAttribute(Attributes.MAX_HEALTH);
         if (health == null) return;
         AttributeModifier old = health.getModifier(WOUND_ID);
-        double remaining = old == null ? 1.0D : 1.0D + old.getAmount();
+        double remaining = old == null ? 1.0D : 1.0D + old.amount();
         health.removeModifier(WOUND_ID);
-        health.addPermanentModifier(new AttributeModifier(WOUND_ID, "Lover's axe wound",
-                remaining * 0.98D - 1.0D, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        health.addPermanentModifier(new AttributeModifier(WOUND_ID, remaining * 0.98D - 1.0D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
         if (victim.getHealth() > victim.getMaxHealth()) {
             victim.setHealth(victim.getMaxHealth());
         }
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, net.minecraft.world.item.Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.maledict.lover_axe.wound").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.maledict.lover_axe.descent").withStyle(ChatFormatting.DARK_PURPLE));
         tooltip.add(Component.translatable("tooltip.maledict.lover_axe.charged").withStyle(ChatFormatting.DARK_PURPLE));

@@ -1,8 +1,10 @@
 package org.brahypno.maledict.common.item;
 
+import static com.sammy.malum.core.helpers.ComponentHelper.*;
+import net.minecraft.core.Holder;
 import com.google.common.collect.Multimap;
 import com.sammy.malum.common.item.curiosities.curios.MalumCurioItem;
-import com.sammy.malum.compability.irons_spellbooks.IronsSpellsCompat;
+import com.sammy.malum.compat.irons_spellbooks.IronsSpellsCompat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
@@ -15,12 +17,12 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.UseAnim;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.rite.WisdomSacrifice;
 import org.brahypno.maledict.registry.MaledictItems;
-import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
+import team.lodestar.lodestone.registry.common.LodestoneAttributes;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
 
@@ -40,7 +42,7 @@ public final class HangmanFoolItem extends MalumCurioItem {
     }
 
     public static int stage(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = MaledictItemData.read(stack);
         if (tag == null) {
             return 0;
         }
@@ -58,9 +60,9 @@ public final class HangmanFoolItem extends MalumCurioItem {
         if (!(stack.getItem() instanceof HangmanFoolItem) || stage == MAX_STAGE) {
             return false;
         }
-        CompoundTag stages = stack.getOrCreateTag().getCompound(STAGES_TAG);
+        CompoundTag stages = MaledictItemData.read(stack).getCompound(STAGES_TAG);
         stages.putBoolean("stage_" + (stage + 1), true);
-        stack.getOrCreateTag().put(STAGES_TAG, stages);
+        MaledictItemData.update(stack, root -> root.put(STAGES_TAG, stages));
         return true;
     }
 
@@ -95,18 +97,18 @@ public final class HangmanFoolItem extends MalumCurioItem {
     }
 
     @Override
-    public void addAttributeModifiers(Multimap<Attribute, AttributeModifier> attributes,
+    public void addAttributeModifiers(Multimap<Holder<Attribute>, AttributeModifier> attributes,
                                       SlotContext context, ItemStack stack) {
         if (!WisdomSacrifice.DELUSION_SLOT.equals(context.identifier())) {
             return;
         }
         addAttributeModifier(attributes, Attributes.ATTACK_DAMAGE,
-                id -> new AttributeModifier(id, "Hangman's attack", -0.5D,
-                        AttributeModifier.Operation.MULTIPLY_TOTAL));
-        addAttributeModifier(attributes, LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get(),
-                id -> new AttributeModifier(id, "Hangman's magic proficiency", 0.5D,
-                        AttributeModifier.Operation.MULTIPLY_TOTAL));
-        IronsSpellsCompat.addSpellPowerToCurio(this, attributes, 0.5F);
+                new AttributeModifier(ResourceLocation.parse("maledict:hangman_fool/attack"), -0.5D,
+                        AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        addAttributeModifier(attributes, LodestoneAttributes.MAGIC_PROFICIENCY,
+                new AttributeModifier(ResourceLocation.parse("maledict:hangman_fool/magic_proficiency"), 0.5D,
+                        AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        IronsSpellsCompat.addSpellPowerToCurio(this, attributes, ResourceLocation.parse("maledict:hangman_fool/spell_power"), 0.5F);
     }
 
     @Override
@@ -122,8 +124,8 @@ public final class HangmanFoolItem extends MalumCurioItem {
     }
 
     @Override
-    public List<Component> getAttributesTooltip(List<Component> tooltip, ItemStack stack) {
-        List<Component> lines = super.getAttributesTooltip(tooltip, stack);
+    public List<Component> getAttributesTooltip(List<Component> tooltip, TooltipContext tooltipContext, ItemStack stack) {
+        List<Component> lines = super.getAttributesTooltip(tooltip, tooltipContext, stack);
         int stage = stage(stack);
         if (stage >= 1) {
             lines.add(positiveEffect(EFFECT_PREFIX + "trap"));

@@ -6,7 +6,7 @@
       "layer0": "maledict:item/lover_axe_lavender_huge"
     }
   },
-  "loader": "forge:separate_transforms",
+  "loader": "neoforge:separate_transforms",
   "perspectives": {
     "fixed": {
       "parent": "minecraft:item/handheld",

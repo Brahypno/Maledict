@@ -22,7 +22,7 @@ public final class WellAdmission {
     public static boolean isVisionOnly(Player player, ItemStack stack) {
         if (stack.isEmpty()) return false;
         var slots = CuriosApi.getItemStackSlots(stack, player);
-        var curio = CuriosApi.getCurio(stack).resolve();
+        var curio = CuriosApi.getCurio(stack);
         boolean vision = false;
         for (String slot : slots.keySet()) {
             if (curio.isPresent() && !curio.get().canEquip(new SlotContext(slot, player, 0, false, true))) continue;

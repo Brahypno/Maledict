@@ -12,10 +12,10 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.item.HangmanFoolItem;
@@ -26,7 +26,7 @@ import org.brahypno.maledict.common.item.RemembranceBowItem;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 
-@Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class MaledictItemProperties {
     @SubscribeEvent
     public static void registerItemProperties(FMLClientSetupEvent event) {
@@ -50,7 +50,7 @@ public final class MaledictItemProperties {
         ItemProperties.register(item, AgeOfEnlightenmentItem.ENLIGHTENED_PROPERTY,
                 (stack, level, entity, seed) -> {
                     Player player = entity instanceof Player holder ? holder : Minecraft.getInstance().player;
-                    return player != null && player.hasEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT.get())
+                    return player != null && player.hasEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT)
                             ? 1.0F : 0.0F;
                 });
     }
@@ -98,7 +98,7 @@ public final class MaledictItemProperties {
                             || !(stack.getItem() instanceof RemembranceBowItem bow)) {
                         return 0.0F;
                     }
-                    int usedTicks = stack.getUseDuration() - entity.getUseItemRemainingTicks();
+                    int usedTicks = stack.getUseDuration(entity) - entity.getUseItemRemainingTicks();
                     return Mth.clamp(
                             usedTicks * bow.getDrawSpeedMultiplier(stack) / BowItem.MAX_DRAW_DURATION,
                             0.0F, 1.0F);

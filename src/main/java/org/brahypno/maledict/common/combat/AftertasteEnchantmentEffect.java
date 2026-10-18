@@ -1,8 +1,7 @@
 package org.brahypno.maledict.common.combat;
 
 import com.mojang.datafixers.util.Pair;
-import com.sammy.malum.registry.common.DamageTypeTagRegistry;
-import com.sammy.malum.registry.common.item.ItemTagRegistry;
+import com.sammy.malum.registry.common.MalumTags;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -14,12 +13,12 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.common.CommonHooks;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.enchantment.AftertasteEnchantment;
 import org.brahypno.maledict.registry.MaledictEnchantments;
@@ -28,16 +27,16 @@ import org.brahypno.maledict.registry.MaledictEnchantments;
  * Feeds a scythe's wielder with whatever the victim's corpse was going to feed them; the drop list
  * is only a value here, so nothing is spawned, removed or rolled.
  */
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class AftertasteEnchantmentEffect {
     /** Fraction of a hunger point carried over until it is worth a whole point. */
     private static final String HUNGER_CARRY_TAG = Maledict.MODID + ":aftertaste_hunger_carry";
     private static final int MAX_HUNGER = 20;
 
     @SubscribeEvent
-    public static void restoreFromDamage(LivingDamageEvent event) {
+    public static void restoreFromDamage(LivingDamageEvent.Post event) {
         LivingEntity victim = event.getEntity();
-        if (event.getAmount() <= 0.0F || !(victim.level() instanceof ServerLevel level)){
+        if (event.getNewDamage() <= 0.0F || !(victim.level() instanceof ServerLevel level)){
             return;
         }
 
@@ -50,8 +49,8 @@ public final class AftertasteEnchantmentEffect {
         }
 
         ItemStack scythe = player.getMainHandItem();
-        int enchantmentLevel = scythe.is(ItemTagRegistry.SCYTHE)
-                               ? scythe.getEnchantmentLevel(MaledictEnchantments.AFTERTASTE.get())
+        int enchantmentLevel = scythe.is(MalumTags.ItemTags.SCYTHES)
+                               ? org.brahypno.maledict.registry.MaledictEnchantments.level(scythe, MaledictEnchantments.AFTERTASTE)
                                : 0;
         if (enchantmentLevel <= 0){
             return;
@@ -64,11 +63,13 @@ public final class AftertasteEnchantmentEffect {
 
         // Only the share of the corpse this hit claimed is tasted, so overkill cannot pay out more
         // than the whole creature.
-        double claimedShare = Mth.clamp(event.getAmount() / (double) maxHealth, 0.0D, 1.0D);
+        double claimedShare = Mth.clamp(event.getNewDamage() / (double) maxHealth, 0.0D, 1.0D);
         double restoreShare = AftertasteEnchantment.getRestoreShare(enchantmentLevel) * claimedShare;
 
         LootFoodExpectation expectation = LootFoodExpectation.of(
-                level, victim, ForgeHooks.getLootingLevel(victim, player, source));
+                level, victim, net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(
+                        level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                                .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING), player));
         double hunger = expectation.hungerAt(enchantmentLevel) * restoreShare;
         double saturation = expectation.saturationAt(enchantmentLevel) * restoreShare;
         if (hunger <= 0.0D && saturation <= 0.0D && expectation.effectSources().isEmpty()){
@@ -89,7 +90,7 @@ public final class AftertasteEnchantmentEffect {
             return false;
         }
         Entity direct = source.getDirectEntity();
-        return direct == player || source.is(DamageTypeTagRegistry.IS_SCYTHE);
+        return direct == player || source.is(MalumTags.DamageTypeTags.IS_SCYTHE);
     }
 
     /**
