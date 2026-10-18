@@ -22,6 +22,9 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.ELEGY_BOW.get());
                                output.accept(MaledictItems.MNEMONIC_OBELISK.get());
                                output.accept(MaledictItems.SOULWOOD_OBELISK.get());
+                               output.accept(MaledictItems.TAINTED_MALIGNANT_LEAD_ORE.get());
+                               output.accept(MaledictItems.TWISTED_MALIGNANT_LEAD_ORE.get());
+                               output.accept(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get());
                                output.accept(MaledictItems.RAVEN_SPAWN_EGG.get());
                                output.accept(MaledictItems.RAVEN_FEATHER.get());
                                output.accept(MaledictItems.SACRED_SPIRIT_ARROW.get());

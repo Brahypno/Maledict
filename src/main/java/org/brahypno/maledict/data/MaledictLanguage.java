@@ -19,6 +19,9 @@ public final class MaledictLanguage extends LanguageProvider {
         if ("zh_cn".equals(locale)){
             add("dimension.maledict.blighted_realm", "腐枯界");
             add("biome.maledict.blighted_wastes", "腐枯荒原");
+            addBlock(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE, "污秽石恶念之铅矿石");
+            addBlock(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE, "扭曲石恶念之铅矿石");
+            addItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT, "恶念之铅碎片");
             add("message.maledict.well_unavailable", "彼端无处落足，深井将你拒回。");
             add("message.maledict.realm_no_respawn", "此界无法安置你的归处。");
             addItem(MaledictItems.HANGMAN_FOOL, "倒吊人的愚见");
@@ -321,6 +324,9 @@ public final class MaledictLanguage extends LanguageProvider {
         }else {
             add("dimension.maledict.blighted_realm", "The Blighted Realm");
             add("biome.maledict.blighted_wastes", "Blighted Wastes");
+            addBlock(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE, "Tainted Malignant Lead Ore");
+            addBlock(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE, "Twisted Malignant Lead Ore");
+            addItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT, "Malignant Lead Fragment");
             add("message.maledict.well_unavailable", "There is no safe passage beyond. The well rejects you.");
             add("message.maledict.realm_no_respawn", "You cannot bind your return to this realm.");
             addItem(MaledictItems.HANGMAN_FOOL, "Hangman`s fool");

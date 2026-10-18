@@ -22,6 +22,10 @@ public final class MaledictBlockTags extends BlockTagsProvider {
         tag(BlockTags.STONE_ORE_REPLACEABLES).add(BlockRegistry.TAINTED_ROCK.get());
         tag(BlockTags.DEEPSLATE_ORE_REPLACEABLES).add(BlockRegistry.TWISTED_ROCK.get());
         tag(BlockTags.BASE_STONE_OVERWORLD).add(BlockRegistry.TAINTED_ROCK.get(), BlockRegistry.TWISTED_ROCK.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(),
+                MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(),
+                MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get());
         tag(BlockTags.MINEABLE_WITH_AXE)
                 .add(MaledictBlocks.MNEMONIC_OBELISK.get())
                 .add(MaledictBlocks.MNEMONIC_OBELISK_COMPONENT.get())

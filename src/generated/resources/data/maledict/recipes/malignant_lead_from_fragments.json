@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "maledict:malignant_lead_fragment"
+    },
+    {
+      "item": "maledict:malignant_lead_fragment"
+    },
+    {
+      "item": "maledict:malignant_lead_fragment"
+    },
+    {
+      "item": "maledict:malignant_lead_fragment"
+    },
+    {
+      "item": "maledict:malignant_lead_fragment"
+    },
+    {
+      "item": "maledict:malignant_lead_fragment"
+    },
+    {
+      "item": "maledict:malignant_lead_fragment"
+    },
+    {
+      "item": "maledict:malignant_lead_fragment"
+    }
+  ],
+  "result": {
+    "item": "malum:malignant_lead"
+  }
+}

@@ -12,6 +12,7 @@ import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
@@ -31,6 +32,11 @@ public final class MaledictRecipes extends RecipeProvider {
 
     @Override
     protected void buildRecipes(Consumer<FinishedRecipe> recipes) {
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ItemRegistry.MALIGNANT_LEAD.get())
+                .requires(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 8)
+                .unlockedBy("has_malignant_lead_fragment", has(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()))
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "malignant_lead_from_fragments"));
+
         for (SpiritArrowType arrowType : SpiritArrowType.values()) {
             ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, MaledictItems.getSpiritArrow(arrowType).get(), 1)
                                .define('S', arrowType.getSpiritType().spiritShard.get())

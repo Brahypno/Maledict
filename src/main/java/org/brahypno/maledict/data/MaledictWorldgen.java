@@ -24,12 +24,15 @@ import net.minecraft.world.level.levelgen.*;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.*;
+import net.minecraft.world.level.levelgen.structure.templatesystem.BlockMatchTest;
 import net.minecraftforge.common.data.DatapackBuiltinEntriesProvider;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.realm.BlightedRealm;
+import org.brahypno.maledict.registry.MaledictBlocks;
 
 import java.util.List;
 import java.util.OptionalLong;
@@ -43,6 +46,9 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
     public static final ResourceKey<ConfiguredFeature<?, ?>> GROWTH = ResourceKey.create(Registries.CONFIGURED_FEATURE, GROWTH_ID);
     public static final ResourceKey<PlacedFeature> PLACED_TREES = ResourceKey.create(Registries.PLACED_FEATURE, TREES_ID);
     public static final ResourceKey<PlacedFeature> PLACED_GROWTH = ResourceKey.create(Registries.PLACED_FEATURE, GROWTH_ID);
+    public static final ResourceKey<ConfiguredFeature<?, ?>> LEAD_ORE = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("ore_malignant_lead"));
+    public static final ResourceKey<PlacedFeature> PLACED_LEAD_ORE = ResourceKey.create(Registries.PLACED_FEATURE, id("ore_malignant_lead"));
+    public static final ResourceKey<PlacedFeature> PLACED_LEAD_ORE_LOWER = ResourceKey.create(Registries.PLACED_FEATURE, id("ore_malignant_lead_lower"));
 
     public MaledictWorldgen(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
         super(output, registries, new RegistrySetBuilder()
@@ -58,6 +64,13 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
         context.register(TREES, new ConfiguredFeature<>(FeatureRegistry.SOULWOOD_TREE.get(), NoneFeatureConfiguration.INSTANCE));
         context.register(GROWTH, new ConfiguredFeature<>(Feature.SIMPLE_BLOCK,
                 new SimpleBlockConfiguration(BlockStateProvider.simple(BlockRegistry.BLIGHTED_GROWTH.get()))));
+        // Match vanilla ORE_GOLD_BURIED; registry holders cannot be dereferenced during this bootstrap.
+        context.register(LEAD_ORE, new ConfiguredFeature<>(Feature.ORE, new OreConfiguration(List.of(
+                OreConfiguration.target(new BlockMatchTest(BlockRegistry.TAINTED_ROCK.get()),
+                        MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get().defaultBlockState()),
+                OreConfiguration.target(new BlockMatchTest(BlockRegistry.TWISTED_ROCK.get()),
+                        MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get().defaultBlockState())),
+                9, 0.5F)));
     }
 
     private static void placements(BootstapContext<PlacedFeature> context) {
@@ -70,6 +83,15 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
         context.register(PLACED_GROWTH, new PlacedFeature(features.getOrThrow(GROWTH), List.of(
                 CountPlacement.of(24), InSquarePlacement.spread(),
                 HeightmapPlacement.onHeightmap(Heightmap.Types.WORLD_SURFACE_WG), BiomeFilter.biome())));
+        // Match vanilla ORE_GOLD / ORE_GOLD_LOWER, changing only the configured feature.
+        context.register(PLACED_LEAD_ORE, new PlacedFeature(features.getOrThrow(LEAD_ORE),
+                List.of(CountPlacement.of(4), InSquarePlacement.spread(),
+                        HeightRangePlacement.triangle(VerticalAnchor.absolute(-64), VerticalAnchor.absolute(32)),
+                        BiomeFilter.biome())));
+        context.register(PLACED_LEAD_ORE_LOWER, new PlacedFeature(features.getOrThrow(LEAD_ORE),
+                List.of(CountPlacement.of(UniformInt.of(0, 1)), InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(VerticalAnchor.absolute(-64), VerticalAnchor.absolute(-48)),
+                        BiomeFilter.biome())));
     }
 
     private static void biomes(BootstapContext<Biome> context) {
@@ -83,7 +105,18 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
         generation.addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, OrePlacements.ORE_GRAVEL);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.GLOW_LICHEN);
         BiomeDefaultFeatures.addDefaultSprings(generation);
-        BiomeDefaultFeatures.addDefaultOres(generation);
+        // Retain the complete default ore list, substituting only its two gold placements in this biome.
+        var defaultOres = new BiomeGenerationSettings.Builder(context.lookup(Registries.PLACED_FEATURE),
+                context.lookup(Registries.CONFIGURED_CARVER));
+        BiomeDefaultFeatures.addDefaultOres(defaultOres);
+        var oreSteps = defaultOres.build().features();
+        var placements = context.lookup(Registries.PLACED_FEATURE);
+        for (int step = 0; step < oreSteps.size(); step++) {
+            for (var feature : oreSteps.get(step)) {
+                generation.addFeature(step, feature.is(OrePlacements.ORE_GOLD) ? placements.getOrThrow(PLACED_LEAD_ORE)
+                        : feature.is(OrePlacements.ORE_GOLD_LOWER) ? placements.getOrThrow(PLACED_LEAD_ORE_LOWER) : feature);
+            }
+        }
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, PLACED_TREES);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, PLACED_GROWTH);
         var mobs = new MobSpawnSettings.Builder();

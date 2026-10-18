@@ -41,6 +41,7 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerHangmanFoolModels();
 
         basicItem(MaledictItems.BLEEDING_EYE.get());
+        basicItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get());
 
         withExistingParent("raven_feather", mcLoc("item/generated"))
                 .texture("layer0", modLoc("entity/raven_feather"));
