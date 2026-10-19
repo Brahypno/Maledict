@@ -37,16 +37,17 @@ import org.brahypno.maledict.common.rite.VicissitudeRiteType;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.List;
+import java.util.Arrays;
 
 @EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class MaledictCodexEntries {
     private static final String SPIRIT_ARROWS_ENTRY = "maledict.spirit_arrows";
     // 思念弓 (2,13) 正下方；1.8.2 的 aqueous_rites 已占用原位置 (2,14)。
-    private static final int SPIRIT_ARROWS_X = 2;
+    private static final int SPIRIT_ARROWS_X = 6;
     private static final int SPIRIT_ARROWS_Y = 12;
     private static final String REMEMBRANCE_BOW_ENTRY = "maledict.remembrance_bow";
     private static final String ELEGY_BOW_ENTRY = "void.maledict.elegy_bow";
-    private static final int REMEMBRANCE_BOW_X = 2;
+    private static final int REMEMBRANCE_BOW_X = 6;
     private static final int REMEMBRANCE_BOW_Y = 13;
     private static final String INCURSUS_BLADE_ENTRY = "void.maledict.incursus_blade";
     private static final String OBELISKS_ENTRY = "void.maledict.obelisks";
@@ -153,8 +154,10 @@ public final class MaledictCodexEntries {
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.ELDRITCH_SPIRIT_ARROW)
                 .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.RUNEWOOD, WidgetDesignType.FillingType.PAPER)));
-        builder.addPage(new HeadlineTextPage(SPIRIT_ARROWS_ENTRY, SPIRIT_ARROWS_ENTRY + ".1"));
-        for (SpiritArrowType type : SpiritArrowType.values()) builder.addReference(spiritArrowEntry(type));
+        var arrows = Arrays.stream(SpiritArrowType.values()).map(this::spiritArrowEntry).toList();
+        builder.addPage(new ReadableTextPage(SPIRIT_ARROWS_ENTRY, List.of(SPIRIT_ARROWS_ENTRY + ".1"),
+                arrows.stream().map(reference -> reference.icon).toList()));
+        builder.addPage(new EntryIndexPage("maledict.codex.arrow_index", arrows));
         entries.add(builder.build());
     }
 
@@ -162,7 +165,7 @@ public final class MaledictCodexEntries {
         DeferredHolder<Item, Item> arrow = MaledictItems.getSpiritArrow(type);
         String identifier = "maledict." + arrow.getId().getPath();
         return new EntryReference(arrow, BookEntry.create(identifier)
-                .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
+                .addPage(new ReadableTextPage(identifier, identifier + ".1"))
                 .addPage(new CraftingPage(arrow.get(),
                         Items.AIR, type.getSpiritType().getSpiritShard(), Items.AIR,
                         Items.AIR, Items.STICK, Items.AIR,
@@ -308,7 +311,7 @@ public final class MaledictCodexEntries {
 
     private EntryReference runeEntry(String identifier, DeferredHolder<Item, Item> rune) {
         return new EntryReference(rune, BookEntry.create(identifier)
-                                                 .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
+                                                 .addPage(new ReadableTextPage(identifier, identifier + ".1"))
                                                  .addPage(RuneworkingPage.fromOutput(rune.get())));
     }
 
@@ -322,13 +325,9 @@ public final class MaledictCodexEntries {
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.RUNE_OF_SATIATION)
                 .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER)));
-        builder.addPage(new HeadlineTextItemPage(
-                TOTEMIC_RUNES_CONTINUED_ENTRY,
-                TOTEMIC_RUNES_CONTINUED_ENTRY + ".1",
-                MaledictItems.RUNE_OF_SATIATION.get()));
-        // 续页：英文正文的行数差不多是中文的两倍，首页的九行只够放下第一句。
-        builder.addPage(new TextPage(TOTEMIC_RUNES_CONTINUED_ENTRY + ".2"));
-        runes.forEach(builder::addReference);
+        builder.addPage(new ReadableTextPage(TOTEMIC_RUNES_CONTINUED_ENTRY,
+                List.of(TOTEMIC_RUNES_CONTINUED_ENTRY + ".1", TOTEMIC_RUNES_CONTINUED_ENTRY + ".2"), List.of()));
+        builder.addPage(new EntryIndexPage("maledict.codex.rune_index", runes));
 
         entries.add(builder.build());
     }

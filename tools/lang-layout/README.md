@@ -1,6 +1,6 @@
 # lang-layout — 法典正文排版核算
 
-`check-lang-layout.mjs` 复刻 Malum `ArcanaCodexHelper#renderWrappingText` 的换行算法，把
+`check-lang-layout.mjs` 复刻 Malum `CodexTextHelper#wrapText` 的换行算法，把
 `src/generated/resources/assets/maledict/lang/en_us.json` 与 `zh_cn.json` 里每一页法典正文的
 行数算出来，报告哪些页超出了页容量、哪些中文断句违反了 13 字规则。
 
@@ -11,15 +11,18 @@ node tools/lang-layout/check-lang-layout.mjs   # 退出码 0 = 全部放得下
 `MaledictLanguage` 或 `MaledictCodexEntries` 改动、跑完 `runData` 之后跑一次即可。新增法典
 页时，把新的 `...page.text.*` 键按页面类型补进脚本里的 `PAGES` 表。
 
-## 排版模型（取自 Malum 1.20.1-1.6.7 反编译源码，不是猜的）
+## 排版模型（对照 Malum 1.21.1-1.8.2 源码）
 
 | 项 | 值 |
 | --- | --- |
-| 单页贴图 | 142 × 172（`EntryScreen` 画在 `guiLeft + 9 | 161`、`guiTop + 8`） |
+| 单页布局范围 | 142 × 172（`CodexEntryScreen` 页面内容画在 `guiLeft + 9 | 161`、`guiTop + 11`） |
 | 折行宽度 | 130 px，按空格断词；`\n` 强制换行；行内每个词后面都补一个空格并计入宽度 |
 | 行高 | `font.lineHeight + 1` = 10 px；画在第 i 行的字形占 `[y0 + 10i, y0 + 10i + 9)` |
 | 正文起点 | `TextPage` y0=5、`HeadlineTextPage` y0=25、`HeadlineTextItemPage` y0=75、`SpiritRiteTextPage` y0=78 |
 | 页容量 | TextPage 16 行、HeadlineTextPage 14 行、HeadlineTextItemPage 9 行、SpiritRiteTextPage 9 行 |
+
+`ReadableTextPage` 使用同样的折行和行高，但直接绘制无重影的正文。精魂箭简介底部有物品展示，
+因此 `headlineIllustrations` 限制为 12 行；符文汇总左页合并 `.1` 与 `.2`，按 14 行一起检查。
 
 正文没有任何裁剪：行数超了就直接画到页框外面（Malum 自己的英文页也有 17–19 行的）。
 

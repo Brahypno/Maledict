@@ -17,6 +17,8 @@ public final class MaledictLanguage extends LanguageProvider {
     @Override
     protected void addTranslations() {
         if ("zh_cn".equals(locale)){
+            add("maledict.codex.arrow_index", "精魂箭目录");
+            add("maledict.codex.rune_index", "符文目录");
             add("dimension.maledict.blighted_realm", "腐枯界");
             add("biome.maledict.blighted_wastes", "腐枯荒原");
             addBlock(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE, "污秽石恶念之铅矿石");
@@ -144,7 +146,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.MNEMONIC_OBELISK_COMPONENT, "回忆方尖碑");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK_COMPONENT, "灵魂木方尖碑");
             addCodexEntry("maledict.spirit_arrows", "精魂箭", "以精魂为锋",
-                          "我试着以精魂代替燧石，制成 了八种箭矢。它们可以用弓或 弩射出，命中时也能暴露生物 的灵魂。不同精魂的性质仍留 在箭头上，选对箭矢，便能省 去不少麻烦。");
+                          "我试着以精魂代替燧石，制成 了八种箭矢。它们可以用弓或 弩射出，命中时也能暴露生物 的灵魂。\n不同精魂的性质仍留在箭头上 ，选对箭矢，便能省去不少麻 烦。");
             addCodexEntry("maledict.sacred_spirit_arrow", "神圣精魂箭", "驱逐亡者",
                           "神圣精魂排斥死而不息之物。 对亡灵生物造成的箭矢伤害提 高一半。");
             addCodexEntry("maledict.wicked_spirit_arrow", "邪恶精魂箭", "侵蚀生者",
@@ -328,6 +330,8 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text." + HANGMAN_FOOL_PAGE + ".2",
                 "让灵知踏过七重长阶，\n借以倒映纯粹的真知。\n 我的功业将成。");
         }else {
+            add("maledict.codex.arrow_index", "Arrow Index");
+            add("maledict.codex.rune_index", "Rune Index");
             add("dimension.maledict.blighted_realm", "The Blighted Realm");
             add("biome.maledict.blighted_wastes", "Blighted Wastes");
             addBlock(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE, "Tainted Malignant Lead Ore");
@@ -481,7 +485,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.MNEMONIC_OBELISK_COMPONENT, "Mnemonic Obelisk");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK_COMPONENT, "Soulwood Obelisk");
             addCodexEntry("maledict.spirit_arrows", "Spirit Arrows", "Spirits for arrowheads",
-                          "I tried replacing flint with spirits and made eight kinds of arrows. They can be fired from bows or crossbows, and expose the souls of creatures they strike. Each spirit retains its nature in the arrowhead. Choosing the right arrow can spare me a good deal of trouble.");
+                          "I tried replacing flint with spirits and made eight kinds of arrows. They can be fired from bows or crossbows, and expose the souls of creatures they strike.\nEach spirit retains its nature in the arrowhead. Choosing the right arrow can spare me a good deal of trouble.");
             addCodexEntry("maledict.sacred_spirit_arrow", "Sacred Spirit Arrow", "Driving back the dead",
                           "Sacred spirits reject those who persist beyond death. Arrow damage against undead creatures is increased by half.");
             addCodexEntry("maledict.wicked_spirit_arrow", "Wicked Spirit Arrow", "Preying on the living",

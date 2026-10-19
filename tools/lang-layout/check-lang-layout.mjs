@@ -97,13 +97,14 @@ function capacity(y0) {
 const PAGE_TYPES = {
   headlineItem: { y0: 75, capacity: capacity(75) },
   headline: { y0: 25, capacity: capacity(25) },
+  headlineIllustrations: { y0: 25, capacity: 12 }, // item strip starts at y=152
   text: { y0: 5, capacity: capacity(5) },
   spiritRite: { y0: 78, capacity: capacity(78) },
 };
 
 // page text key -> page type, as wired up in client/codex/MaledictCodexEntries.java
 const PAGES = {
-  "malum.gui.book.entry.page.text.maledict.spirit_arrows.1": "headline",
+  "malum.gui.book.entry.page.text.maledict.spirit_arrows.1": "headlineIllustrations",
   "malum.gui.book.entry.page.text.maledict.sacred_spirit_arrow.1": "headline",
   "malum.gui.book.entry.page.text.maledict.wicked_spirit_arrow.1": "headline",
   "malum.gui.book.entry.page.text.maledict.arcane_spirit_arrow.1": "headline",
@@ -116,8 +117,7 @@ const PAGES = {
   "malum.gui.book.entry.page.text.maledict.remembrance_bow.2": "text",
   "malum.gui.book.entry.page.text.void.maledict.elegy_bow.1": "headlineItem",
   "malum.gui.book.entry.page.text.void.maledict.elegy_bow.2": "text",
-  "malum.gui.book.entry.page.text.maledict.totemic_runes_continued.1": "headlineItem",
-  "malum.gui.book.entry.page.text.maledict.totemic_runes_continued.2": "text",
+  "malum.gui.book.entry.page.text.maledict.totemic_runes_continued.combined": "headline",
   "malum.gui.book.entry.page.text.void.maledict.runeworking.1": "headlineItem",
   "malum.gui.book.entry.page.text.void.maledict.runeworking.2": "text",
   "malum.gui.book.entry.page.text.void.maledict.incursus_blade.1": "headlineItem",
@@ -177,7 +177,9 @@ for (const [key, type] of Object.entries(PAGES)) {
   const cap = PAGE_TYPES[type].capacity;
   const row = [];
   for (const [locale, table] of Object.entries(langs)) {
-    const text = table[key];
+    const text = key.endsWith("totemic_runes_continued.combined")
+      ? table[key.replace(/combined$/, "1")] + "\n" + table[key.replace(/combined$/, "2")]
+      : table[key];
     if (text === undefined) {
       row.push(`${locale}: MISSING`);
       failures++;
