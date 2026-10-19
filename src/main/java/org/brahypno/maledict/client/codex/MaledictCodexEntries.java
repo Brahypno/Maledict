@@ -1,11 +1,9 @@
 package org.brahypno.maledict.client.codex;
 
-import net.minecraft.core.Holder;
 import com.sammy.malum.client.screen.codex.BookEntry;
-import com.sammy.malum.client.screen.codex.WidgetDesignType;
-import org.brahypno.maledict.registry.MaledictRites;
 import com.sammy.malum.client.screen.codex.PlacedBookEntry;
 import com.sammy.malum.client.screen.codex.PlacedBookEntryBuilder;
+import com.sammy.malum.client.screen.codex.WidgetDesignType;
 import com.sammy.malum.client.screen.codex.objects.progression.IconObject;
 import com.sammy.malum.client.screen.codex.objects.progression.RiteEntryObject;
 import com.sammy.malum.client.screen.codex.pages.EntryReference;
@@ -35,11 +33,12 @@ import org.brahypno.maledict.common.rite.SacrificeRiteType;
 import org.brahypno.maledict.common.rite.SummoningRite;
 import org.brahypno.maledict.common.rite.VicissitudeRiteType;
 import org.brahypno.maledict.registry.MaledictItems;
+import org.brahypno.maledict.registry.MaledictRites;
 
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class MaledictCodexEntries {
     private static final String SPIRIT_ARROWS_ENTRY = "maledict.spirit_arrows";
     // 思念弓 (2,13) 正下方；1.8.2 的 aqueous_rites 已占用原位置 (2,14)。
@@ -119,8 +118,10 @@ public final class MaledictCodexEntries {
     @SubscribeEvent
     public static void setupEntries(SetupMalumCodexEntriesEvent event) {
         var entries = new MaledictCodexEntries(event.getScreen().getEntries());
-        if (event.getScreen() instanceof ArcanaProgressionScreen) entries.setupArcana();
-        else if (event.getScreen() instanceof VoidProgressionScreen) entries.setupVoid();
+        if (event.getScreen() instanceof ArcanaProgressionScreen)
+            entries.setupArcana();
+        else if (event.getScreen() instanceof VoidProgressionScreen)
+            entries.setupVoid();
     }
 
     private void setupVoid() {
@@ -156,7 +157,7 @@ public final class MaledictCodexEntries {
                 .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.RUNEWOOD, WidgetDesignType.FillingType.PAPER)));
         var arrows = Arrays.stream(SpiritArrowType.values()).map(this::spiritArrowEntry).toList();
         builder.addPage(new ReadableTextPage(SPIRIT_ARROWS_ENTRY, List.of(SPIRIT_ARROWS_ENTRY + ".1"),
-                arrows.stream().map(reference -> reference.icon).toList()));
+                                             arrows.stream().map(reference -> reference.icon).toList()));
         builder.addPage(new EntryIndexPage("maledict.codex.arrow_index", arrows));
         entries.add(builder.build());
     }
@@ -165,11 +166,11 @@ public final class MaledictCodexEntries {
         DeferredHolder<Item, Item> arrow = MaledictItems.getSpiritArrow(type);
         String identifier = "maledict." + arrow.getId().getPath();
         return new EntryReference(arrow, BookEntry.create(identifier)
-                .addPage(new ReadableTextPage(identifier, identifier + ".1"))
-                .addPage(new CraftingPage(arrow.get(),
-                        Items.AIR, type.getSpiritType().getSpiritShard(), Items.AIR,
-                        Items.AIR, Items.STICK, Items.AIR,
-                        Items.AIR, Items.FEATHER, Items.AIR)));
+                                                  .addPage(new ReadableTextPage(identifier, identifier + ".1"))
+                                                  .addPage(new CraftingPage(arrow.get(),
+                                                                            Items.AIR, type.getSpiritType().getSpiritShard(), Items.AIR,
+                                                                            Items.AIR, Items.STICK, Items.AIR,
+                                                                            Items.AIR, Items.FEATHER, Items.AIR)));
     }
 
     private void addVoidRuneworkingEntry() {
@@ -219,7 +220,8 @@ public final class MaledictCodexEntries {
         // 纹理图标只能换掉部件供应商（ProgressionEntryObject 的 setIcon 只收物品），
         // 这里用 Malum 自己那枚幽影碎片，「研究：精魂晶体」与「幽影奥术能量」章节用的就是它。
         builder.setWidgetSupplier((entry, x, y) -> new IconObject(entry, x, y, UMBRAL_SHARD_ICON));
-        builder.configureWidget(widget -> widget.setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.DARK)));
+        builder.configureWidget(
+                widget -> widget.setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.DARK)));
         builder.addPage(new HeadlineTextPage(
                 UMBRAL_EXPERIMENT_ENTRY,
                 UMBRAL_EXPERIMENT_ENTRY + ".1"));
@@ -274,7 +276,8 @@ public final class MaledictCodexEntries {
                 SACRIFICE_RITE_ENTRY, SACRIFICE_RITE_X, SACRIFICE_RITE_Y);
         // 不给 setIcon：RiteEntryObject 自己会把仪式图标画在节点上，再塞一个物品图标会叠在一起。
         builder.setWidgetSupplier(RiteEntryObject::new);
-        builder.configureWidget(widget -> widget.setDesign(WidgetDesignType.TOTEMIC.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.DARK)));
+        builder.configureWidget(
+                widget -> widget.setDesign(WidgetDesignType.TOTEMIC.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.DARK)));
         // 仪式页：正文取问句，中央是发光的仪式图标；鼠标停在图标上会出「属极：灵魂木」「效果：…」，
         // 那条效果文案就是语言文件里的 ...corrupt_sacrifice_rite.hover。
         builder.addPage(new SpiritRiteTextPage(MaledictRites.holder(rite)));
@@ -326,7 +329,7 @@ public final class MaledictCodexEntries {
                 .setIcon(MaledictItems.RUNE_OF_SATIATION)
                 .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER)));
         builder.addPage(new ReadableTextPage(TOTEMIC_RUNES_CONTINUED_ENTRY,
-                List.of(TOTEMIC_RUNES_CONTINUED_ENTRY + ".1", TOTEMIC_RUNES_CONTINUED_ENTRY + ".2"), List.of()));
+                                             List.of(TOTEMIC_RUNES_CONTINUED_ENTRY + ".1", TOTEMIC_RUNES_CONTINUED_ENTRY + ".2"), List.of()));
         builder.addPage(new EntryIndexPage("maledict.codex.rune_index", runes));
 
         entries.add(builder.build());
