@@ -64,6 +64,8 @@ public final class IncursusBladeItem extends MagicScytheItem {
     public static final String INFERNAL_POWER = "infernal_power";
     public static final String ELDRITCH_ABSORPTION = "eldritch_absorption";
     public static final String WICKED_CRITICAL_DAMAGE = "wicked_critical_damage";
+    public static final ResourceLocation ABSORPTION_CAPACITY_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "incursus_blade/absorption_capacity");
 
     /** 物品栏里眨眼用的模型覆盖谓词：{@code 1.0} 表示这一帧闭眼。 */
     public static final ResourceLocation BLINK_PROPERTY =
@@ -104,7 +106,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
                 .add(LodestoneAttributes.MAGIC_DAMAGE, new AttributeModifier(LodestoneAttributes.BASE_MAGIC_DAMAGE,
                         getStat(stack, MAGIC_DAMAGE), AttributeModifier.Operation.ADD_VALUE), slot)
                 .add(Attributes.MAX_ABSORPTION, new AttributeModifier(
-                        ResourceLocation.parse("maledict:incursus_blade/absorption_capacity"),
+                        ABSORPTION_CAPACITY_MODIFIER_ID,
                         1000.0D, AttributeModifier.Operation.ADD_VALUE), slot)
                 .build();
     }

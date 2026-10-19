@@ -21,7 +21,8 @@ public final class VicissitudeRiteType extends SpiritRiteType {
     public BossDifficulty difficulty() { return difficulty; }
     @Override
     public ResourceLocation getIcon() {
-        return ResourceLocation.fromNamespaceAndPath("malum", "textures/vfx/rite/arcane.png");
+        return com.sammy.malum.registry.common.magic.rite.MalumSpiritRiteTypes
+                .UNDIRECTED_RITE.value().getIcon();
     }
 
     @Override

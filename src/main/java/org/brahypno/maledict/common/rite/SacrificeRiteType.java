@@ -17,7 +17,8 @@ public final class SacrificeRiteType extends SpiritRiteType {
 
     @Override
     public ResourceLocation getIcon() {
-        return ResourceLocation.fromNamespaceAndPath("malum", "textures/vfx/rite/infernal.png");
+        return com.sammy.malum.registry.common.magic.rite.MalumSpiritRiteTypes
+                .RITE_OF_THE_BURNING_FERVOR.value().getIcon();
     }
 
     @Override

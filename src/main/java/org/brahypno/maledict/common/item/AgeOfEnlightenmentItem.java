@@ -43,7 +43,7 @@ public final class AgeOfEnlightenmentItem extends MalumCurioItem implements IVoi
     private static final ResourceLocation SLOT_MODIFIER_ID =
             ResourceLocation.parse("maledict:age_of_enlightenment/curio_slot");
 
-    /** 只是后缀：Malum 的 {@link #positiveEffect} 会自己拼上 {@code malum.gui.curio.effect.}。 */
+    /** 只是后缀：Malum 的 {@link #positiveEffect} 会自己拼上 {@code malum.effect.}。 */
     private static final String EFFECT_PREFIX = "maledict.age_of_enlightenment.";
     private static final String HOLD_SHIFT = "tooltip.maledict.age_of_enlightenment.hold_shift";
     private static final String SHIFT_LINE = "tooltip.maledict.age_of_enlightenment.shift";

@@ -2,7 +2,6 @@ package org.brahypno.maledict.client.codex;
 
 import net.minecraft.core.Holder;
 import com.sammy.malum.client.screen.codex.BookEntry;
-import com.sammy.malum.client.screen.codex.WidgetDesign;
 import com.sammy.malum.client.screen.codex.WidgetDesignType;
 import org.brahypno.maledict.registry.MaledictRites;
 import com.sammy.malum.client.screen.codex.PlacedBookEntry;
@@ -42,9 +41,9 @@ import java.util.List;
 @EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class MaledictCodexEntries {
     private static final String SPIRIT_ARROWS_ENTRY = "maledict.spirit_arrows";
-    // 思念弓 (2,13) 正上方；Malum 的节点按 top - y * 40 排布。
+    // 思念弓 (2,13) 正下方；1.8.2 的 aqueous_rites 已占用原位置 (2,14)。
     private static final int SPIRIT_ARROWS_X = 2;
-    private static final int SPIRIT_ARROWS_Y = 14;
+    private static final int SPIRIT_ARROWS_Y = 12;
     private static final String REMEMBRANCE_BOW_ENTRY = "maledict.remembrance_bow";
     private static final String ELEGY_BOW_ENTRY = "void.maledict.elegy_bow";
     private static final int REMEMBRANCE_BOW_X = 2;
@@ -82,8 +81,8 @@ public final class MaledictCodexEntries {
     /**
      * 接在「虚空符文工艺：拾遗」(6,10) 与「神侵恶刃」(6,11) 下面，凑成 x=6 的一列。
      *
-     * <p>坐标是硬碰硬的：{@code SetupMalumCodexEntriesEvent} 只负责让你往 {@code VOID_ENTRIES} 里
-     * 塞一个带 x/y 的条目，屏幕照着坐标画，**没有任何重叠判断**。虚空页上 Malum 自己占了 25 个
+     * <p>坐标是硬碰硬的：{@code SetupMalumCodexEntriesEvent} 让你往当前屏幕的 {@code getEntries()} 里
+     * 塞一个带 x/y 的条目，屏幕照着坐标画，**没有任何重叠判断**。1.8.2 虚空页上 Malum 自己占了 29 个
      * 坐标（(4,10) 是 weight_of_worlds、(5,10) 是 edge_of_deliverance、(3,9) 是 malignant_pewter…），
      * 挪这一页之前先反汇编一遍 {@code VoidProgressionScreen} 把占用表列出来。
      */
@@ -96,18 +95,9 @@ public final class MaledictCodexEntries {
     private static final ResourceLocation UMBRAL_SHARD_ICON =
             ResourceLocation.fromNamespaceAndPath("malum", "textures/gui/book/icons/umbral_shard.png");
 
-    private static final int TOTEMIC_RUNES_CONTINUED_X = 4;
-    private static final int TOTEMIC_RUNES_CONTINUED_Y = 15;
-
-    /**
-     * 避开 Malum 符文条目占着的 (-15..-12, 7..10)：三枚竖排在左列 (-15, 7..9)，熟成落在 (-12, 8)。
-     */
-    private static final int RUNE_COLUMN_X = -15;
-    private static final int RUNE_OF_DECAY_Y = 7;
-    private static final int RUNE_OF_SATIATION_Y = 8;
-    private static final int RUNE_OF_THE_PACK_Y = 9;
-    private static final int RUNE_OF_RIPENING_X = -12;
-    private static final int RUNE_OF_RIPENING_Y = 8;
+    // 四枚符文只在汇总条目内部列出；地图节点使用原饱足符文的位置。
+    private static final int TOTEMIC_RUNES_CONTINUED_X = -17;
+    private static final int TOTEMIC_RUNES_CONTINUED_Y = 8;
 
     private static final int VOID_RUNEWORKING_X = 6;
     private static final int VOID_RUNEWORKING_Y = 10;
@@ -147,19 +137,11 @@ public final class MaledictCodexEntries {
         addSpiritArrowsEntry();
         addRemembranceBowEntry();
 
-        PlacedBookEntry satiationRune = addRuneEntry(RUNE_OF_SATIATION_ENTRY, MaledictItems.RUNE_OF_SATIATION,
-                                                     RUNE_COLUMN_X, RUNE_OF_SATIATION_Y, WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER));
-        PlacedBookEntry decayRune = addRuneEntry(RUNE_OF_DECAY_ENTRY, MaledictItems.RUNE_OF_DECAY,
-                                                 RUNE_COLUMN_X, RUNE_OF_DECAY_Y, WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.RUNEWOOD, WidgetDesignType.FillingType.PAPER));
-        PlacedBookEntry packRune = addRuneEntry(RUNE_OF_THE_PACK_ENTRY, MaledictItems.RUNE_OF_THE_PACK,
-                                                RUNE_COLUMN_X, RUNE_OF_THE_PACK_Y, WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER));
-        PlacedBookEntry ripeningRune = addRuneEntry(RUNE_OF_RIPENING_ENTRY, MaledictItems.RUNE_OF_RIPENING,
-                                                    RUNE_OF_RIPENING_X, RUNE_OF_RIPENING_Y, WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER));
         addTotemicRunesContinuedEntry(List.of(
-                new EntryReference(MaledictItems.RUNE_OF_SATIATION, satiationRune),
-                new EntryReference(MaledictItems.RUNE_OF_DECAY, decayRune),
-                new EntryReference(MaledictItems.RUNE_OF_THE_PACK, packRune),
-                new EntryReference(MaledictItems.RUNE_OF_RIPENING, ripeningRune)));
+                runeEntry(RUNE_OF_SATIATION_ENTRY, MaledictItems.RUNE_OF_SATIATION),
+                runeEntry(RUNE_OF_DECAY_ENTRY, MaledictItems.RUNE_OF_DECAY),
+                runeEntry(RUNE_OF_THE_PACK_ENTRY, MaledictItems.RUNE_OF_THE_PACK),
+                runeEntry(RUNE_OF_RIPENING_ENTRY, MaledictItems.RUNE_OF_RIPENING)));
     }
 
     private void addSpiritArrowsEntry() {
@@ -188,11 +170,11 @@ public final class MaledictCodexEntries {
     }
 
     private void addVoidRuneworkingEntry() {
-        EntryReference stagnantEvolution = voidRuneEntry(
+        EntryReference stagnantEvolution = runeEntry(
                 RUNE_OF_STAGNANT_EVOLUTION_ENTRY, MaledictItems.RUNE_OF_STAGNANT_EVOLUTION);
-        EntryReference rottenBone = voidRuneEntry(
+        EntryReference rottenBone = runeEntry(
                 RUNE_OF_ROTTEN_BONE_ENTRY, MaledictItems.RUNE_OF_ROTTEN_BONE);
-        EntryReference fallen = voidRuneEntry(
+        EntryReference fallen = runeEntry(
                 RUNE_OF_THE_FALLEN_ENTRY, MaledictItems.RUNE_OF_THE_FALLEN);
 
         if (containsEntry(entries, VOID_RUNEWORKING_ENTRY)){
@@ -222,8 +204,8 @@ public final class MaledictCodexEntries {
      * 与抑郁符文当初的写法一模一样。
      */
     private void addUmbralExperimentEntry() {
-        EntryReference melancholia = voidRuneEntry(RUNE_OF_MELANCHOLIA_ENTRY, MaledictItems.RUNE_OF_MELANCHOLIA);
-        EntryReference bliss = voidRuneEntry(RUNE_OF_BLISS_ENTRY, MaledictItems.RUNE_OF_BLISS);
+        EntryReference melancholia = runeEntry(RUNE_OF_MELANCHOLIA_ENTRY, MaledictItems.RUNE_OF_MELANCHOLIA);
+        EntryReference bliss = runeEntry(RUNE_OF_BLISS_ENTRY, MaledictItems.RUNE_OF_BLISS);
 
         if (containsEntry(entries, UMBRAL_EXPERIMENT_ENTRY)){
             return;
@@ -317,32 +299,14 @@ public final class MaledictCodexEntries {
         builder.addPage(new TextPage(HANGMAN_FOOL_PAGE + ".2"));
         // 0、2 阶段共用物品 ID，按配方 ID 选择；1 阶段的井配方仍保持隐藏。
         builder.addPage(SpiritInfusionPage.fromId(ResourceLocation.fromNamespaceAndPath(
-                Maledict.MODID, "spirit_infusion/hangman_fool")));
+                Maledict.MODID, "hangman_fool")));
         builder.addPage(SpiritInfusionPage.fromId(ResourceLocation.fromNamespaceAndPath(
-                Maledict.MODID, "spirit_infusion/hangman_fool_stage_2")));
+                Maledict.MODID, "hangman_fool_stage_2")));
 
         entries.add(builder.build());
     }
 
-    private PlacedBookEntry addRuneEntry(
-            String identifier, DeferredHolder<Item, Item> rune, int x, int y,
-            WidgetDesign style) {
-        PlacedBookEntry existing = findEntry(entries, identifier);
-        if (existing != null){
-            return existing;
-        }
-
-        PlacedBookEntryBuilder builder = BookEntry.create(identifier, x, y);
-        builder.configureWidget(widget -> widget.setIcon(rune).setDesign(style));
-        builder.addPage(new HeadlineTextPage(identifier, identifier + ".1"));
-        builder.addPage(RuneworkingPage.fromOutput(rune.get()));
-
-        PlacedBookEntry entry = builder.build();
-        entries.add(entry);
-        return entry;
-    }
-
-    private EntryReference voidRuneEntry(String identifier, DeferredHolder<Item, Item> rune) {
+    private EntryReference runeEntry(String identifier, DeferredHolder<Item, Item> rune) {
         return new EntryReference(rune, BookEntry.create(identifier)
                                                  .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
                                                  .addPage(RuneworkingPage.fromOutput(rune.get())));

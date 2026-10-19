@@ -23,9 +23,6 @@ public final class MaledictItemTags extends ItemTagsProvider {
     private static final TagKey<Item> GOETY_GRAVE_GLOVE =
             ItemTags.create(ResourceLocation.fromNamespaceAndPath("goety", "grave_glove_boost"));
 
-    private static final TagKey<Item> FORGE_SCYTHE =
-            ItemTags.create(ResourceLocation.fromNamespaceAndPath("forge", "scythe"));
-
     private static final TagKey<Item> L2_NO_SEAL =
             ItemTags.create(ResourceLocation.fromNamespaceAndPath("l2hostility", "no_seal"));
 
@@ -57,7 +54,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
                 .add(MaledictItems.EARTHEN_SPIRIT_ARROW.get())
                 .add(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
         tag(ItemTags.BOW_ENCHANTABLE).add(MaledictItems.REMEMBRANCE_BOW.get(), MaledictItems.ELEGY_BOW.get());
-        tag(FORGE_SCYTHE).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(MalumTags.ItemTags.SCYTHES_COMMON).add(MaledictItems.INCURSUS_BLADE.get());
         tag(MalumTags.ItemTags.SCYTHES)
                 .add(MaledictItems.INCURSUS_BLADE.get())
                 .addOptionalTag(GOETY_GRAVE_GLOVE)

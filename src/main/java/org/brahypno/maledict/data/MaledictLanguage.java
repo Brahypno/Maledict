@@ -31,10 +31,14 @@ public final class MaledictLanguage extends LanguageProvider {
             add("tooltip.maledict.hangman_fool.flavor.3", "");
             add("tooltip.maledict.hangman_fool.flavor.4", "");
             add("entity.maledict.hangman_trap", "倒吊人的陷阱法阵");
-            add("malum.gui.curio.effect.maledict.hangman_fool.trap", "弹射物落到方块上留下陷阱法阵，接触生物时触发原有命中效果");
-            add("malum.gui.curio.effect.maledict.hangman_fool.reflect", "有概率反弹弹射物，生命越低概率越高");
-            add("malum.gui.curio.effect.maledict.hangman_fool.relay", "弹射物从自身16格内的法阵按近到远轮流射出，瞄准视线64格内的首个实体或方块，不消耗法阵");
-            add("malum.gui.curio.effect.maledict.hangman_fool.restrictions", "无法举盾或触发不死图腾");
+            add("entity.maledict.spirit_arrow", "精魂箭");
+            add("entity.maledict.vicissitude_spirit_bolt", "无常的精魂弹");
+            add("entity.maledict.vicissitude_scythe", "无常的镰刃");
+            add("entity.maledict.vicissitude_light_orb", "无常的光球");
+            add("malum.effect.maledict.hangman_fool.trap", "弹射物落到方块上留下陷阱法阵，接触生物时触发原有命中效果");
+            add("malum.effect.maledict.hangman_fool.reflect", "有概率反弹弹射物，生命越低概率越高");
+            add("malum.effect.maledict.hangman_fool.relay", "弹射物从自身16格内的法阵按近到远轮流射出，瞄准视线64格内的首个实体或方块，不消耗法阵");
+            add("malum.effect.maledict.hangman_fool.restrictions", "无法举盾或触发不死图腾");
             add("itemGroup.maledict", "咒邪");
             add("entity.maledict.raven", "渡鸦");
             add("entity.maledict.raven_feather", "渡鸦飞羽");
@@ -137,6 +141,8 @@ public final class MaledictLanguage extends LanguageProvider {
                 "由金中的金，究极的神圣堕落 为原始而沉重的铅。所谓的恶 意即是这种痛苦的具现化。我 精制了这份恶念，制作成了这 一份符文。它会将这份恶念施 加在对方身上，使每一次回复 生命堕化为一次苦痛。");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "回忆方尖碑");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "灵魂木方尖碑");
+            addBlock(MaledictBlocks.MNEMONIC_OBELISK_COMPONENT, "回忆方尖碑");
+            addBlock(MaledictBlocks.SOULWOOD_OBELISK_COMPONENT, "灵魂木方尖碑");
             addCodexEntry("maledict.spirit_arrows", "精魂箭", "以精魂为锋",
                           "我试着以精魂代替燧石，制成 了八种箭矢。它们可以用弓或 弩射出，命中时也能暴露生物 的灵魂。不同精魂的性质仍留 在箭头上，选对箭矢，便能省 去不少麻烦。");
             addCodexEntry("maledict.sacred_spirit_arrow", "神圣精魂箭", "驱逐亡者",
@@ -188,7 +194,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.age_of_enlightenment", "启蒙之年");
             add("effect.maledict.age_of_darkness", "黑暗时代");
             add("effect.maledict.age_of_enlightenment.description",
-                "人们把蒙昧与黑暗错认为神圣，你的近战攻击伤害翻倍；每级额外给予 1 点法杖暂存弹数。");
+                "人们把蒙昧与黑暗错认为神圣，你的近战攻击伤害翻倍；每级额外给予 3 次法杖施法充能。");
             add("effect.maledict.age_of_darkness.description",
                 "任由野蛮焚烧文明的黑暗时代啊，每级降低 20% 魔法抗性、灵魂护盾容量与灵魂护盾稳固度。");
             add("effect.maledict.blessing_of_life", "生灵之祝");
@@ -213,22 +219,22 @@ public final class MaledictLanguage extends LanguageProvider {
                 "生命回复会堕落成伤口");
             add("curios.identifier.delusion", "视界");
             add("curios.modifiers.delusion", "装备于视界槽位时：");
-            add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown", "佩戴时冷却速度加倍");
-            add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void", "攻击半生命值目标时触发收获精魂时的效果");
-            add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment", "击杀敌人时获得启蒙之年，已有则延长时间");
-            add("malum.gui.curio.effect.maledict.blessing_of_life", "自然回复生命时额外回复等量的一份。");
-            add("malum.gui.curio.effect.maledict.decay", "身边敌对之物每两秒被磨去半颗心，永不致命。");
-            add("malum.gui.curio.effect.maledict.ripening", "获得的经验多出四分之一。");
-            add("malum.gui.curio.effect.maledict.pack_boon", "十六格内属于自己的随从获得抗性提升、力量与迅捷各 I 级。");
-            add("malum.gui.curio.effect.maledict.rotten_bone",
+            add("malum.effect.maledict.age_of_enlightenment.cooldown", "佩戴时冷却速度加倍");
+            add("malum.effect.maledict.age_of_enlightenment.spirit_void", "攻击半生命值目标时触发收获精魂时的效果");
+            add("malum.effect.maledict.age_of_enlightenment.enlightenment", "击杀敌人时获得启蒙之年，已有则延长时间");
+            add("malum.effect.maledict.blessing_of_life", "自然回复生命时额外回复等量的一份。");
+            add("malum.effect.maledict.decay", "身边敌对之物每两秒被磨去半颗心，永不致命。");
+            add("malum.effect.maledict.ripening", "获得的经验多出四分之一。");
+            add("malum.effect.maledict.pack_boon", "十六格内属于自己的随从获得抗性提升、力量与迅捷各 I 级。");
+            add("malum.effect.maledict.rotten_bone",
                 "若生命上限大于1点，则死亡时以25%最大生命值为代价逃离死亡");
-            add("malum.gui.curio.effect.maledict.melancholia",
+            add("malum.effect.maledict.melancholia",
                 "会逐渐获得同类伤害的抗性。治疗和伤害对你来说都很麻木。");
-            add("malum.gui.curio.effect.maledict.bliss.damage",
+            add("malum.effect.maledict.bliss.damage",
                 "增加对血量比例不同的造成、受到的伤害。");
-            add("malum.gui.curio.effect.maledict.bliss.forced_hit",
+            add("malum.effect.maledict.bliss.forced_hit",
                 "强制使双方的攻击可以命中。");
-            add("malum.gui.curio.effect.maledict.fallen",
+            add("malum.effect.maledict.fallen",
                 "使对方的生命回复堕落成伤口");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "按住 Shift 追问一个不该问的问题");
             add("tooltip.maledict.age_of_enlightenment.shift", "黑暗的时代曾经存在过吗");
@@ -336,11 +342,15 @@ public final class MaledictLanguage extends LanguageProvider {
             add("tooltip.maledict.hangman_fool.flavor.3", "");
             add("tooltip.maledict.hangman_fool.flavor.4", "");
             add("entity.maledict.hangman_trap", "Hangman's Trap Circle");
-            add("malum.gui.curio.effect.maledict.hangman_fool.trap", "Projectiles leave a trap on blocks, triggering their original hit effects on contact");
-            add("malum.gui.curio.effect.maledict.hangman_fool.reflect", "Chance to reflect projectiles increases as health falls");
-            add("malum.gui.curio.effect.maledict.hangman_fool.relay",
+            add("entity.maledict.spirit_arrow", "Spirit Arrow");
+            add("entity.maledict.vicissitude_spirit_bolt", "Vicissitude's Spirit Bolt");
+            add("entity.maledict.vicissitude_scythe", "Vicissitude's Scythe");
+            add("entity.maledict.vicissitude_light_orb", "Vicissitude's Light Orb");
+            add("malum.effect.maledict.hangman_fool.trap", "Projectiles leave a trap on blocks, triggering their original hit effects on contact");
+            add("malum.effect.maledict.hangman_fool.reflect", "Chance to reflect projectiles increases as health falls");
+            add("malum.effect.maledict.hangman_fool.relay",
                 "Shots cycle through your circles within 16 blocks, nearest first, aiming at the first entity or block within 64 blocks of your gaze without consuming circles");
-            add("malum.gui.curio.effect.maledict.hangman_fool.restrictions", "Cannot raise shields or activate totems of undying");
+            add("malum.effect.maledict.hangman_fool.restrictions", "Cannot raise shields or activate totems of undying");
             add("itemGroup.maledict", "Maledict");
             add("enchantment.maledict.ectoplasm", "Ectoplasm");
             add("enchantment.maledict.reminiscence", "Reminiscence");
@@ -468,6 +478,8 @@ public final class MaledictLanguage extends LanguageProvider {
                 + "the other, so that every recovery of life decays into a pang of pain.");
             addBlock(MaledictBlocks.MNEMONIC_OBELISK, "Mnemonic Obelisk");
             addBlock(MaledictBlocks.SOULWOOD_OBELISK, "Soulwood Obelisk");
+            addBlock(MaledictBlocks.MNEMONIC_OBELISK_COMPONENT, "Mnemonic Obelisk");
+            addBlock(MaledictBlocks.SOULWOOD_OBELISK_COMPONENT, "Soulwood Obelisk");
             addCodexEntry("maledict.spirit_arrows", "Spirit Arrows", "Spirits for arrowheads",
                           "I tried replacing flint with spirits and made eight kinds of arrows. They can be fired from bows or crossbows, and expose the souls of creatures they strike. Each spirit retains its nature in the arrowhead. Choosing the right arrow can spare me a good deal of trouble.");
             addCodexEntry("maledict.sacred_spirit_arrow", "Sacred Spirit Arrow", "Driving back the dead",
@@ -524,7 +536,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("effect.maledict.age_of_darkness", "Age of Darkness");
             add("effect.maledict.age_of_enlightenment.description",
                 "People mistake ignorance and darkness for the sacred. Your melee attacks deal double "
-                + "damage; each level also grants 1 additional Reserve Staff Charge.");
+                + "damage; each level also grants 3 additional Spell Charges.");
             add("effect.maledict.age_of_darkness.description",
                 "O dark age that lets barbarism burn civilization: each level reduces magic resistance, Soul Ward "
                 + "capacity and Soul Ward integrity by 20%.");
@@ -554,30 +566,30 @@ public final class MaledictLanguage extends LanguageProvider {
                 "Healing decays into wounds.");
             add("curios.identifier.delusion", "Vision");
             add("curios.modifiers.delusion", "When equipped in a vision slot:");
-            add("malum.gui.curio.effect.maledict.age_of_enlightenment.cooldown",
+            add("malum.effect.maledict.age_of_enlightenment.cooldown",
                 "Cooldowns recover twice as fast while worn");
-            add("malum.gui.curio.effect.maledict.age_of_enlightenment.spirit_void",
+            add("malum.effect.maledict.age_of_enlightenment.spirit_void",
                 "Attacking targets at half health triggers spirit-harvesting effects");
-            add("malum.gui.curio.effect.maledict.age_of_enlightenment.enlightenment",
+            add("malum.effect.maledict.age_of_enlightenment.enlightenment",
                 "Slaying an enemy grants Age of Enlightenment, or extends its duration if already active");
-            add("malum.gui.curio.effect.maledict.blessing_of_life",
+            add("malum.effect.maledict.blessing_of_life",
                 "Natural health regeneration restores an additional equal amount.");
-            add("malum.gui.curio.effect.maledict.decay",
+            add("malum.effect.maledict.decay",
                 "Nearby hostile creatures lose half a heart every two seconds. This damage is never fatal.");
-            add("malum.gui.curio.effect.maledict.ripening",
+            add("malum.effect.maledict.ripening",
                 "Gain a quarter more experience.");
-            add("malum.gui.curio.effect.maledict.pack_boon",
+            add("malum.effect.maledict.pack_boon",
                 "Your companions within sixteen blocks gain Resistance I, Strength I and Speed I.");
-            add("malum.gui.curio.effect.maledict.rotten_bone",
+            add("malum.effect.maledict.rotten_bone",
                 "If your maximum health is greater than 1, escape death at the cost of 25% of your maximum health.");
-            add("malum.gui.curio.effect.maledict.melancholia",
+            add("malum.effect.maledict.melancholia",
                 "You gradually become resistant to repeated damage of the same kind. Healing and harm alike leave you "
                 + "numb.");
-            add("malum.gui.curio.effect.maledict.bliss.damage",
+            add("malum.effect.maledict.bliss.damage",
                 "Increases the damage dealt to and taken from those whose proportion of health differs from yours.");
-            add("malum.gui.curio.effect.maledict.bliss.forced_hit",
+            add("malum.effect.maledict.bliss.forced_hit",
                 "Forces both sides' attacks to be able to land.");
-            add("malum.gui.curio.effect.maledict.fallen",
+            add("malum.effect.maledict.fallen",
                 "Makes the target's healing decay into wounds.");
             add("tooltip.maledict.age_of_enlightenment.hold_shift", "Hold Shift to ask a question better left unasked");
             add("tooltip.maledict.age_of_enlightenment.shift",
@@ -704,6 +716,11 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text." + HANGMAN_FOOL_PAGE + ".2",
                 "Let gnosis traverse the sevenfold stair,\nthat it may reflect the purest truth.\n"
                 + "My Great Work is nigh upon completion.");
+        }
+        for (String rite : java.util.List.of(VICISSITUDE_RITE_ID, GREATER_RITE_ID, ELDRITCH_RITE_ID, GREATER_ELDRITCH_RITE_ID)) {
+            String effect = "zh_cn".equals(locale) ? "召唤无常。" : "Summons Vicissitude.";
+            add("malum.gui.rite." + rite + ".effect", effect);
+            add("malum.gui.rite.corrupted_" + rite + ".effect", effect);
         }
     }
 

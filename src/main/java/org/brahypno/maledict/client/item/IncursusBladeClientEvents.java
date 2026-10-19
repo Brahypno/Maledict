@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.GatherSkippedAttributeTooltipsEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -22,6 +23,13 @@ import java.util.List;
 /** 神侵恶刃的客户端交互与物品提示。 */
 @EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class IncursusBladeClientEvents {
+
+    @SubscribeEvent
+    public static void hideAbsorptionCapacityTooltip(GatherSkippedAttributeTooltipsEvent event) {
+        if (event.getStack().getItem() instanceof IncursusBladeItem) {
+            event.skipId(IncursusBladeItem.ABSORPTION_CAPACITY_MODIFIER_ID);
+        }
+    }
 
     @SubscribeEvent
     public static void onInteractionKey(InputEvent.InteractionKeyMappingTriggered event) {

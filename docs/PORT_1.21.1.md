@@ -20,7 +20,7 @@ ChangeLib 使用本机 Maven 中的 `org.brahypno:changelib-1.21:21.1.5-SNAPSHOT
 | Incursus MAGIC_DAMAGE | 新 Lodestone 的 Post 行为，按蓄力缩放，跳过已死亡目标；未进入原生事件时保留补打 |
 | Infernal Looting | GetEnchantmentLevelEvent，所有游戏查询计入，存储附魔不变 |
 | 增强投掷 / Ascension | isEnhanced，只认 Necklace of the Narrow Edge |
-| Incursus 黄心容量 | 主手提供 MAX_ABSORPTION +1000，卸下时接受原生截断；刀自身收益与积累上限不变 |
+| Incursus 黄心容量 | 主手提供 MAX_ABSORPTION +1000，卸下时接受原生截断；仅隐藏这条 modifier 的物品提示，刀自身收益与积累上限不变 |
 | Age of Enlightenment 法杖容量 | 每级 CHARGE_CAPACITY +1，即 3 个 Spell Charges |
 | Light Orb、震屏 | 使用新版追踪与震屏算法 |
 | 出井表现 | 新版 rejection 60 tick 与接触条件 |
