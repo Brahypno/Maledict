@@ -6,60 +6,73 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * 「献祭」的时间表：九天九夜 = 216000 tick，每 1200 tick 抽一次，共 180 次。
- *
- * <p>原版 {@code MobEffectInstance#tick} 先按当前剩余时长判定、再递减，所以第一 tick 就出手，
- * 最后一次落在剩余 1200，之后 1200 tick 只是把时长耗完——那一段的尽头才是发成就的
- * {@code MobEffectEvent.Expired}。
- */
 class SacrificeScheduleTest {
-
     @Test
-    void nineDaysIsNineTimesTwentyMinutes() {
-        assertEquals(24000, SacrificeSchedule.TICKS_PER_DAY);
-        assertEquals(216000, SacrificeSchedule.DURATION_TICKS);
-        assertEquals(SacrificeSchedule.TICKS_PER_DAY * SacrificeSchedule.DAYS,
-                     SacrificeSchedule.DURATION_TICKS);
-    }
-
-    @Test
-    void oneHitPerMinuteAcrossTheWholeNineDays() {
-        assertEquals(9 * 20, SacrificeSchedule.pulses());
-    }
-
-    /** 扣除顺序：先判定再递减，于是施加效果的当 tick 就是第一下。 */
-    @Test
-    void theTickTheEffectLandsIsTheFirstHit() {
-        assertTrue(SacrificeSchedule.isPulse(SacrificeSchedule.DURATION_TICKS));
-    }
-
-    @Test
-    void theLastHitLandsOneMinuteBeforeTheEnd() {
-        int hits = 0;
-        int lastHitAt = 0;
-        for (int duration = SacrificeSchedule.DURATION_TICKS; duration > 0; duration--) {
-            if (SacrificeSchedule.isPulse(duration)) {
-                hits++;
-                lastHitAt = duration;
-            }
+    void normalRiteStillPaysSixImmediatelyAndOncePerMinute() {
+        int initial = SacrificeSchedule.DURATION_TICKS;
+        double paid = 0.0D;
+        for (int elapsed = 0; elapsed < initial; elapsed += SacrificeSchedule.INTERVAL_TICKS) {
+            double target = SacrificeSchedule.targetDamage(initial, initial - elapsed);
+            assertEquals(6.0D, target - paid, 0.000001D);
+            paid = target;
         }
-
-        assertEquals(SacrificeSchedule.pulses(), hits);
-        assertEquals(SacrificeSchedule.INTERVAL_TICKS, lastHitAt);
-    }
-
-    /** 熬满九天九夜的代价：180 下 × 6 点 = 1080 点，也就是 54 条命。 */
-    @Test
-    void theWholeRiteCostsNineDaysOfBlood() {
-        assertEquals(1080.0F, SacrificeSchedule.DAMAGE * SacrificeSchedule.pulses(), 0.0001F);
+        assertEquals(1080.0D, paid);
+        assertEquals(paid, SacrificeSchedule.targetDamage(initial, 0));
     }
 
     @Test
-    void nothingPulsesOffBeatOrAfterTheEffectIsGone() {
-        assertFalse(SacrificeSchedule.isPulse(SacrificeSchedule.INTERVAL_TICKS - 1));
-        assertFalse(SacrificeSchedule.isPulse(SacrificeSchedule.INTERVAL_TICKS + 1));
-        assertFalse(SacrificeSchedule.isPulse(0));
-        assertFalse(SacrificeSchedule.isPulse(-1));
+    void halfInitialDurationDoublesTheDamage() {
+        int initial = SacrificeSchedule.DURATION_TICKS / 2;
+        assertEquals(12.0D, SacrificeSchedule.targetDamage(initial, initial));
+        assertEquals(24.0D, SacrificeSchedule.targetDamage(initial, initial - 1200));
+        assertEquals(1080.0D, SacrificeSchedule.targetDamage(initial, 0));
+    }
+
+    @Test
+    void tenServerSecondsConsumingThirtyEffectSecondsTriplesTheDamageRate() {
+        int initial = SacrificeSchedule.DURATION_TICKS;
+        double first = SacrificeSchedule.targetDamage(initial, initial);
+        double normal = SacrificeSchedule.targetDamage(initial, initial - 10 * 20) - first;
+        double accelerated = SacrificeSchedule.targetDamage(initial, initial - 30 * 20) - first;
+        assertEquals(1.0D, normal);
+        assertEquals(3.0D, accelerated);
+        assertEquals(normal * 3.0D, accelerated);
+    }
+
+    @Test
+    void shortInitialDurationAndAccelerationMultiply() {
+        int initial = SacrificeSchedule.DURATION_TICKS / 2;
+        double first = SacrificeSchedule.targetDamage(initial, initial);
+        assertEquals(36.0D, SacrificeSchedule.targetDamage(initial, initial - 3 * 1200) - first);
+    }
+
+    @Test
+    void speedChangesOnlyChargeTheProgressActuallyConsumed() {
+        int initial = SacrificeSchedule.DURATION_TICKS;
+        // First ten seconds consume thirty, then the remaining fifty consume fifty.
+        assertEquals(8.0D, SacrificeSchedule.targetDamage(initial, initial - 80 * 20)
+                - SacrificeSchedule.targetDamage(initial, initial));
+    }
+
+    @Test
+    void expirySettlesSkippedAndFractionalIntervalsWithoutExceedingTheBudget() {
+        for (int initial : new int[]{1, 1000, 1234, 108001, SacrificeSchedule.DURATION_TICKS}) {
+            double paid = 0.0D;
+            for (int remaining = initial; remaining > 0; remaining -= 3 * 1200) {
+                double target = SacrificeSchedule.targetDamage(initial, remaining);
+                assertTrue(target >= paid && target <= 1080.0D);
+                paid = target;
+            }
+            paid += SacrificeSchedule.targetDamage(initial, 0) - paid;
+            assertEquals(1080.0D, paid);
+            assertEquals(1080.0D, SacrificeSchedule.targetDamage(initial, -100));
+        }
+    }
+
+    @Test
+    void completionRequiresTheWholeDamageBudget() {
+        assertFalse(SacrificeSchedule.isComplete(0.0D));
+        assertFalse(SacrificeSchedule.isComplete(1079.0D));
+        assertTrue(SacrificeSchedule.isComplete(1080.0D));
     }
 }
