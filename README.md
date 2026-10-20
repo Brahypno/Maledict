@@ -23,15 +23,24 @@ conveniences.
 ```
 src/main/java/org/brahypno/maledict/
   registry/    DeferredRegisters: items, blocks, entities, effects, enchantments, sounds, tabs
-  common/      gameplay — items, combat, curios, effects, corruption, vitals, entities, blocks, rites
-  client/      renderers, models, HUD overlays, particles, post-processing
+  common/
+    raven/          raven entity, AI, feeding, trust and flight
+    vicissitude/    boss entities and vitality; rig/, rite/ and curio/ support the encounter
+    weapon/         incursus/, lover/ and remembrance/ items, attacks and projectiles
+    rune/           rune items and their combat hooks
+    curio/          enlightenment/ and hangman/ charms and their supporting logic
+    wisdom/         sacrifice rite, effect, advancement and vision slot
+    combat/         damage adaptation shared by the boss and melancholia rune
+    attribute/, block/, corruption/, effect/, enchantment/, item/, realm/, vitals/
+  client/      matching feature packages for rendering, input, HUD and effects;
+               item/ holds cross-feature model predicates, MaledictClientSetup registers client content
   data/        data generators
   network/     packets
-  mixin/       the two mixins
+  mixin/       platform hooks configured in maledict.mixins.json
   config/      common and client config specs
 src/main/resources/   hand-written assets
 src/generated/        data generator output — regenerate with runData, never edit by hand
-src/test/             pure-logic unit tests
+src/test/             JUnit and Forge entity tests, following production package paths
 docs/design/          per-feature design and verification notes
 ```
 
@@ -40,7 +49,7 @@ docs/design/          per-feature design and verification notes
 ```shell
 ./gradlew build        # Windows: .\gradlew.bat build
 ./gradlew runData      # regenerate src/generated
-./gradlew test         # unit tests; not wired into build or check
+./gradlew test         # Forge entity tests, then JUnit; not wired into build or check
 ```
 
 `runClient`, `runServer` and `gameTestServer` are the standard Forge run configs. The distributable jar is the jarJar

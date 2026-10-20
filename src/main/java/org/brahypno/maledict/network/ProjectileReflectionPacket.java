@@ -7,7 +7,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import org.brahypno.maledict.client.item.HangmanReflectionClient;
+import org.brahypno.maledict.client.curio.hangman.HangmanReflectionClient;
 
 import java.util.function.Supplier;
 

@@ -9,11 +9,11 @@ import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.client.model.generators.loaders.SeparateTransformsModelBuilder;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
-import org.brahypno.maledict.common.item.HangmanFoolItem;
-import org.brahypno.maledict.common.item.IncursusBladeItem;
-import org.brahypno.maledict.common.item.LoverAxeItem;
-import org.brahypno.maledict.common.item.SpiritArrowType;
+import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.weapon.lover.LoverAxeItem;
+import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
 
 public final class MaledictItemModels extends ItemModelProvider {

@@ -110,7 +110,7 @@ minecraft {
         gameTestServer {
             property 'forge.enabledGameTestNamespaces', mod_id
             workingDirectory project.file('build/tests')
-            // Forge uses the main classpath; add only the JUnit libraries needed by these tests.
+            // Mixed JUnit/GameTest classes need JUnit annotations during Forge test discovery.
             lazyToken 'minecraft_classpath', {
                 configurations.testRuntimeClasspath.resolvedConfiguration.resolvedArtifacts
                         .findAll { it.moduleVersion.id.group in ['org.junit.platform', 'org.junit.jupiter', 'org.opentest4j', 'org.apiguardian'] }
@@ -211,8 +211,6 @@ dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.10.3'
-    testImplementation 'org.junit.platform:junit-platform-launcher:1.10.3'
 
 }
 

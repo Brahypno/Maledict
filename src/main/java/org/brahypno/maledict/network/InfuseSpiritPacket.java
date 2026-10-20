@@ -6,7 +6,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
 import com.sammy.malum.common.item.spirit.SpiritShardItem;
-import org.brahypno.maledict.common.item.IncursusBladeItem;
+import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
 
 import java.util.function.Supplier;
 

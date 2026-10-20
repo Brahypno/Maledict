@@ -377,7 +377,7 @@ Invariant B 又要求「第一次增益通常仍然有用」。若把新 gain �
 | `common/corruption/CorruptionState.java` | D/A 账目：50% 转化（用**旧 D**）、先夹 D、收（账上有的／单次上限／不致死三重约束）、**惰性净化**、NBT |
 | `common/corruption/CorruptionData.java` | 挂在所有 `LivingEntity` 上的 capability；账目惰性创建，没腐败过的实体不留对象、存的也是空 tag |
 | `common/corruption/CorruptionRuneEvents.java` | `LivingHealEvent` 记账（有效回血量）+ `LivingDamageEvent` 收 → 落标记 → 夹取；收的粒子反馈；**这枚符文所有预设值都在这** |
-| `common/item/RuneOfTheFallenItem.java` | 堕落符文 `maledict:rune_of_the_fallen`（**白镴档**，邪术精魂） |
+| `common/rune/RuneOfTheFallenItem.java` | 堕落符文 `maledict:rune_of_the_fallen`（**白镴档**，邪术精魂） |
 
 `fallen` 效果**没有自己的类**：它没有行为，只有预设值 + 一条属性修饰符声明，所以是 `MaledictMobEffects`
 里的匿名子类（实例初始化块里调 `addAttributeModifier`，因为那是 `protected`，跨包只有子类体能调），

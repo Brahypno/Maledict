@@ -232,8 +232,8 @@ shellheart 是**额外血池**，所以它另起一行、并给 `gui.leftHeight`
 
 | 文件 | 作用 |
 | --- | --- |
-| `common/item/RuneOfMelancholiaItem.java` | 符文物品；适应账本读写 stack NBT；消息键构造 |
-| `common/entity/DamageAdaptation.java` | 复用无常的窗口算法，新增「连次数一起恢复」的重载（旧行为不变） |
+| `common/rune/RuneOfMelancholiaItem.java` | 符文物品；适应账本读写 stack NBT；消息键构造 |
+| `common/combat/DamageAdaptation.java` | 复用无常的窗口算法，新增「连次数一起恢复」的重载（旧行为不变） |
 | `common/vitals/DelayedVitalsPool.java` | 两个池子的纯数学 |
 | `common/vitals/DelayedVitalsHearts.java` | 血条染色段的半心数学 |
 | `common/vitals/DelayedVitals.java` | 挂在玩家身上的 capability（池子、来源、脏标记、`releasing`） |

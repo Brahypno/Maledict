@@ -15,9 +15,9 @@
 ```powershell
 $out = "build/rig-probe-out"
 javac -encoding UTF-8 -d $out `
-  src/main/java/org/brahypno/maledict/rig/VicissitudeRigData.java `
-  src/main/java/org/brahypno/maledict/rig/VicissitudeRig.java `
-  src/main/java/org/brahypno/maledict/rig/VicissitudeMeshGeometry.java `
+  src/main/java/org/brahypno/maledict/common/vicissitude/rig/VicissitudeRigData.java `
+  src/main/java/org/brahypno/maledict/common/vicissitude/rig/VicissitudeRig.java `
+  src/main/java/org/brahypno/maledict/common/vicissitude/rig/VicissitudeMeshGeometry.java `
   tools/rig-probe/RigProbe.java
 java -cp $out RigProbe
 ```

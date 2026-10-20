@@ -22,7 +22,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
-import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
@@ -37,7 +36,7 @@ import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
-import org.brahypno.maledict.common.item.HangmanFoolItem;
+import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.data.MaledictWorldgen;
 import org.brahypno.maledict.registry.MaledictItems;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -193,6 +192,8 @@ public final class BlightedRealmTest {
         check(helper, player.position().distanceTo(Vec3.atCenterOf(core)) < 12,
                 "Return must emerge at the paired source, rather than the dimension spawn");
         player.discard();
+        // Test ordering changes the scene's X/Z. Provide a valid rebuild site even in a mangrove swamp.
+        prepareRebuildSite(helper.getLevel(), core.offset(-64, 0, 0));
         helper.getLevel().setBlockAndUpdate(core, Blocks.AIR.defaultBlockState());
         var realm = helper.getLevel().getServer().getLevel(BlightedRealm.LEVEL);
         FakePlayer stranded = player(realm);
@@ -303,6 +304,16 @@ public final class BlightedRealmTest {
         helper.getLevel().setBlockAndUpdate(core, BlockRegistry.VOID_CONDUIT.get().defaultBlockState());
         player.setPos(Vec3.atBottomCenterOf(core));
         return core;
+    }
+
+    private static void prepareRebuildSite(ServerLevel level, BlockPos center) {
+        int surface = level.getMaxBuildHeight() - 32;
+        for (BlockPos pos : BlockPos.betweenClosed(
+                new BlockPos(center.getX() - 8, surface - 15, center.getZ() - 8),
+                new BlockPos(center.getX() + 8, level.getMaxBuildHeight() - 1, center.getZ() + 8))) {
+            level.setBlockAndUpdate(pos, pos.getY() <= surface
+                    ? Blocks.DIRT.defaultBlockState() : Blocks.AIR.defaultBlockState());
+        }
     }
 
     private static WeepingWellLinks.Endpoint endpoint(net.minecraft.resources.ResourceKey<Level> dimension, int x, int y, int z) {

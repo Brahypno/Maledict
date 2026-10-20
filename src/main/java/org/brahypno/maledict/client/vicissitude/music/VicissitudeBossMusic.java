@@ -6,15 +6,15 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.sounds.SoundEvent;
 import org.brahypno.maledict.client.vicissitude.VicissitudeClientTickEvents;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
-import org.brahypno.maledict.common.entity.VicissitudeBossStage;
+import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.vicissitude.VicissitudeBossStage;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.registry.MaledictSounds;
 import org.slf4j.Logger;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * 无常 Boss 战的背景乐调度。

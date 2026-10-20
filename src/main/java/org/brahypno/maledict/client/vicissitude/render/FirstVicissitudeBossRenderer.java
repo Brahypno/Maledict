@@ -5,7 +5,6 @@ import com.mojang.math.Axis;
 import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -17,10 +16,10 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.vicissitude.model.FirstVicissitudeBossModel;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
-import org.brahypno.maledict.common.rite.VicissitudeSummoning;
+import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.vicissitude.rite.VicissitudeSummoning;
 import org.brahypno.maledict.registry.MaledictItems;
-import org.brahypno.maledict.rig.VicissitudeRigData;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRigData;
 
 /**
  * First Vicissitude boss 的渲染器：基础贴图、叠加自发光层、右手真武器与特效入口。

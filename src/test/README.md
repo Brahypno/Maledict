@@ -7,6 +7,10 @@
 .\gradlew.bat test --tests '*DamageAdaptationTest'   # 只跑一个类
 ```
 
+测试包跟随生产代码：`common/raven`、`common/vicissitude`（含 `rig`、`rite`、`curio`）、
+`common/weapon`（`incursus`、`lover`、`remembrance`）、`common/rune`、`common/curio`、
+`common/wisdom` 等。跨功能伤害适应算法在 `common/combat`；客户端测试跟随各自的功能包。
+
 `test` 先用已有 `runGameTestServer` 配置启动真实 Forge 服务端，运行同一目录中标注 `@GameTest` 的实体场景；
 随后执行 JUnit 逻辑用例。没有独立 GameTest 目录或 source set，测试内容不会打入正式包。
 `--tests` 只过滤 JUnit 用例；游戏场景仍会执行。游戏报告保存在 `build/tests/game-environment.log`，
@@ -16,7 +20,7 @@
 首次运行需要下载测试依赖，缓存齐全后可以加 `--offline`。
 
 JUnit 公式断言只证明被调用的生产函数满足断言；实体场景另在真实 Forge 世界中验证执行链。
-现有无常 JUnit 用例也在已加载游戏内执行一次，但单纯换运行环境不会扩大其断言的覆盖范围。
+JUnit 只执行一次；Forge 场景直接验证实体和事件流程，不再嵌套启动 JUnit 重跑同一组断言。
 
 本次无常体系检视逐项检查了测试的覆盖边界：
 
@@ -32,9 +36,10 @@ JUnit 公式断言只证明被调用的生产函数满足断言；实体场景�
 | VicissitudeFeatherShedTest | 羽翼曲线及静态网格边界 | 渲染层与实体碰撞是否使用同一姿态 |
 | VicissitudeRenderOptimizationTest | 矩阵缓存与祖先变换等价、发光掩码选择 | 实际渲染两层及 GPU 输出 |
 | VicissitudeThemeTest | 输入 Participant 后的选曲规则 | 实体到 Participant 的转换、客户端同步与实际播放 |
-| FirstVicissitudeSpiritDataTest | 精魂 JSON 内容 | Malum 加载该资源、真实死亡时结算精魂 |
 
 修正了旧测试中超出其覆盖范围的名称和注释，并移除了渲染测试里不参与计算的重复 layer 循环。
+已移除只复述精魂 JSON 固定值的 `FirstVicissitudeSpiritDataTest`，以及渡鸦飞行测试中只计算测试自带
+近战公式、比较常数的用例；保留调用生产函数验证飞行高度与行为边界的断言。
 已加入真实服务端场景：伤害事件取消、双向嵌套伤害、最终限伤、取消死亡、致命追加命中、
 真实护甲与吸收后的批次扣血、真实实体 NBT 与卸载重载、三次强制击杀、虚拟武器恢复与重载、
 真实手持武器与虚拟武器攻击强度对照、实际适应存档、饰品死亡交接、投射物碰撞部位与玩家视线部位、
@@ -56,6 +61,7 @@ FakePlayer 没有网络握手，离线交接场景直接调用本模组的真实
 这些场景验证服务端执行链；实际视觉、客户端同步与玩家操作手感仍需客户端验证。
 渡鸦繁殖测试使用独立封闭场地，通过真实 `BabyEntitySpawnEvent` 追踪指定父母的后代，并检查双方繁殖冷却。
 台阶场景只是人工搭建的一级台阶，不代表加载或完整复现用户存档。
+井口重建场景在候选位置准备可建造的土质地面，避免测试位置变化后被天然红树林阻挡；生产建造规则不变。
 繁殖场景不允许无关伤害；失败信息包含血量和最近一次伤害来源，测试前后会清理本批次的渡鸦。
 新极难 Boss 的场景检查真实初始血量 1500、身体百分比限伤实际扣 15 血、服务器血条显示 1485/1500、
 实体卸载重载保留 1485/1500、治疗可回到 1500；已有 900/1024 的世界账本仍保持原值。

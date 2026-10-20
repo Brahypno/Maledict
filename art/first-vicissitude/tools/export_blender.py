@@ -77,10 +77,10 @@ def export(root, bounds_only=False):
     for joint,points in bone_bounds.items():
         values=[min(p[k] for p in points) for k in range(3)]+[max(p[k] for p in points) for k in range(3)]
         bare_bounds.append('            new Bounds(Joint.'+joint.upper()+', '+', '.join('%.5fF'%v for v in values)+')')
-    java = '''package org.brahypno.maledict.rig;
+    java = '''package org.brahypno.maledict.common.vicissitude.rig;
 
 import java.util.List;
-import org.brahypno.maledict.rig.VicissitudeRigData.Joint;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRigData.Joint;
 
 /** Blender-exported wing bounds; regenerate with art/first-vicissitude/tools/build_blender.py. */
 public final class VicissitudeMeshGeometry {
@@ -93,7 +93,7 @@ public final class VicissitudeMeshGeometry {
     private VicissitudeMeshGeometry() {}
 }
 '''
-    (ROOT/'src/main/java/org/brahypno/maledict/rig/VicissitudeMeshGeometry.java').write_text(java)
+    (ROOT/'src/main/java/org/brahypno/maledict/common/vicissitude/rig/VicissitudeMeshGeometry.java').write_text(java)
     if bounds_only:
         print('Updated phase-specific wing bounds', flush=True)
         return

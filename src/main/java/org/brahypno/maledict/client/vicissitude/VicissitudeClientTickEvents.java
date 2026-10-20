@@ -12,7 +12,7 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.vicissitude.music.VicissitudeBossMusic;
 import org.brahypno.maledict.client.vicissitude.vfx.FirstVicissitudeEffects;
 import org.brahypno.maledict.client.vicissitude.vfx.VicissitudeSummoningEffects;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -56,6 +56,6 @@
 | 近战打到多远 | [02 §1、§6](02_ANIMATION_AND_HITBOX.md) | `VicissitudeRig.BLADE_*` |
 | 难度、血量、时长 | [01 §1](01_SPEC.md) | `BossDifficulty` |
 | 掉落 | [01 §8](01_SPEC.md) | `MaledictEntityLoot` + `runData` |
-| 模型、贴图、UV | [01 §3](01_SPEC.md) | `art/first-vicissitude/` + `rig/VicissitudeRigData` |
+| 模型、贴图、UV | [01 §3](01_SPEC.md) | `art/first-vicissitude/` + `common/vicissitude/rig/VicissitudeRigData` |
 | 特效、粒子、震动 | [01 §3](01_SPEC.md) | `client/vicissitude/vfx/FirstVicissitudeEffects` |
 | 饰品没收与返还 | [01 §9](01_SPEC.md) | `VicissitudeCurioReturns`、`VicissitudeCurioLedger` |

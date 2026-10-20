@@ -12,13 +12,12 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.entity.VicissitudeBossEvent;
+import org.brahypno.maledict.common.vicissitude.VicissitudeBossEvent;
 import org.brahypno.maledict.network.BossBarStylePacket;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 /**
  * 无常的自定义血条。

@@ -1,7 +1,7 @@
 package org.brahypno.maledict.client.vicissitude.model;
 
-import org.brahypno.maledict.rig.VicissitudeRig;
-import org.brahypno.maledict.rig.VicissitudeRigData.Joint;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRig;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRigData.Joint;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;

@@ -28,12 +28,12 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDifficulty;
-import org.brahypno.maledict.common.item.SpiritArrowType;
-import org.brahypno.maledict.common.rite.SacrificeRite;
-import org.brahypno.maledict.common.rite.SacrificeRiteType;
-import org.brahypno.maledict.common.rite.SummoningRite;
-import org.brahypno.maledict.common.rite.VicissitudeRiteType;
+import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowType;
+import org.brahypno.maledict.common.wisdom.SacrificeRite;
+import org.brahypno.maledict.common.wisdom.SacrificeRiteType;
+import org.brahypno.maledict.common.vicissitude.rite.SummoningRite;
+import org.brahypno.maledict.common.vicissitude.rite.VicissitudeRiteType;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.List;

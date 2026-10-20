@@ -88,9 +88,9 @@ addBox(-5F, -9F, -5F, 10F, 10F, 5F)   // x -5~5, y -9~1, z -5~0
 
 | 路径 | 说明 |
 | --- | --- |
-| `common/item/AgeOfEnlightenmentItem.java` | 物品（`ICurioItem`，`stacksTo(1)`，RARE） |
-| `client/item/AgeOfEnlightenmentModel.java` | 面具模型，层名 `maledict:age_of_enlightenment` |
-| `client/item/AgeOfEnlightenmentCurioRenderer.java` | `ICurioRenderer`，`followHeadRotations` + `entityTranslucent` |
+| `common/curio/enlightenment/AgeOfEnlightenmentItem.java` | 物品（`ICurioItem`，`stacksTo(1)`，RARE） |
+| `client/curio/enlightenment/AgeOfEnlightenmentModel.java` | 面具模型，层名 `maledict:age_of_enlightenment` |
+| `client/curio/enlightenment/AgeOfEnlightenmentCurioRenderer.java` | `ICurioRenderer`，`followHeadRotations` + `entityTranslucent` |
 | `client/MaledictClientSetup.java` | `CuriosRendererRegistry.register` 绑定 |
 | `client/MaledictClientSetup.java` | 注册 layer definition + `AddLayers` 烘焙 |
 | `data/MaledictItemModels.java` | 物品模型（`item/generated`） |

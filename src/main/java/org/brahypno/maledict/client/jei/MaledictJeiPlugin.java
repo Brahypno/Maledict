@@ -10,7 +10,7 @@ import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.HangmanFoolItem;
+import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.function.Function;

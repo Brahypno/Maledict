@@ -150,7 +150,7 @@ Blender 时间轴只保留一阶段、二阶段、死亡三个检查姿态。
 
 ### 关节层级
 
-单一来源是 `rig/VicissitudeRigData.java` 的 `Joint` 枚举，父在前、子在后，
+单一来源是 `common/vicissitude/rig/VicissitudeRigData.java` 的 `Joint` 枚举，父在前、子在后，
 构造参数是相对父枢轴的偏移。以下是实际层级（不是示意图）：
 
 ```text
@@ -421,7 +421,7 @@ e⁻¹ ≈ 0.368 的第一档太浅，几乎每记被适应的命中都过线）
 同一个人 **10 秒（200 tick）**内只听得见一条，计时在回到未参战时清掉；创造与旁观不开口。
 
 NBT 写 `DamageAdaptation` 列表（`Message` + `Hits`，顺序即最新在前）；
-重载恢复时每条算「刚挨过一次」，次数不跟存档走。类：`common/entity/DamageAdaptation`。
+重载恢复时每条算「刚挨过一次」，次数不跟存档走。类：`common/combat/DamageAdaptation`。
 
 ### 压血
 
@@ -662,10 +662,10 @@ NBT 写 `DamageAdaptation` 列表（`Message` + `Hits`，顺序即最新在前�
 | 类 / 文件 | 作用 |
 | --- | --- |
 | `common/MaledictTags.java` | 免没收标签 |
-| `common/curio/VicissitudeCurioReturns.java` | 没收、原位恢复、等待栏位更新、背包回退、最终箱子交付 + 四个事件订阅 + 20 tick 队列 |
-| `common/curio/VicissitudeCurioLedger.java` | 世界级 `SavedData`，`FILE_ID = "maledict_vicissitude_curios"` |
-| `common/item/CurioReturnTokenItem.java` | 凭证物品，右键调用 `VicissitudeCurioReturns.claim` |
-| `common/entity/FirstVicissitudeBossEntity.java` | 持有 `confiscated`，真死或实际删除时移交账本并记录最终交付位置 |
+| `common/vicissitude/curio/VicissitudeCurioReturns.java` | 没收、原位恢复、等待栏位更新、背包回退、最终箱子交付 + 四个事件订阅 + 20 tick 队列 |
+| `common/vicissitude/curio/VicissitudeCurioLedger.java` | 世界级 `SavedData`，`FILE_ID = "maledict_vicissitude_curios"` |
+| `common/vicissitude/curio/CurioReturnTokenItem.java` | 凭证物品，右键调用 `VicissitudeCurioReturns.claim` |
+| `common/vicissitude/FirstVicissitudeBossEntity.java` | 持有 `confiscated`，真死或实际删除时移交账本并记录最终交付位置 |
 
 **没有配置键**：饰品没收与返还不可通过配置开关，唯一可调项是数据包标签。
 

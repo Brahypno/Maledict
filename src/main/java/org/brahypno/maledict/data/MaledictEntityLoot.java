@@ -9,7 +9,7 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.registry.MaledictEntities;
 
 import java.util.function.BiConsumer;

@@ -51,7 +51,7 @@ public final class FirstVicissitudeClientEvents {
 
         Entity entity = level.getEntity(packet.entityId());
         Vec3 position = packet.position();
-        boolean phaseTwo = entity instanceof org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity boss
+        boolean phaseTwo = entity instanceof org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity boss
                            && boss.isPhaseTwoVisual();
         switch (packet.eventId()) {
             case VicissitudeEffectPacket.EVENT_SUMMON_CONSUME ->

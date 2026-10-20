@@ -34,12 +34,12 @@ Blender 导出器输出。旧 `RigArtGenerator.java` 是早期方块预览工具
 - `../../src/main/resources/assets/maledict/textures/entity/first_vicissitude.png`：基础贴图（512×512）。
 - `../../src/main/resources/assets/maledict/textures/entity/first_vicissitude_emissive.png`：
   同 UV 的自发光层，只有头核、能量与部分环片被绘制。
-- `../../src/main/java/org/brahypno/maledict/rig/VicissitudeMeshGeometry.java`：导出的逐关节翼部包围盒。
+- `../../src/main/java/org/brahypno/maledict/common/vicissitude/rig/VicissitudeMeshGeometry.java`：导出的逐关节翼部包围盒。
 
 ## 重新生成
 
 ```powershell
-javac -encoding UTF-8 -d build/rig-tool src/main/java/org/brahypno/maledict/rig/VicissitudeRigData.java src/main/java/org/brahypno/maledict/rig/VicissitudeRig.java src/main/java/org/brahypno/maledict/rig/VicissitudeMeshGeometry.java art/first-vicissitude/tools/RigPoseExporter.java
+javac -encoding UTF-8 -d build/rig-tool src/main/java/org/brahypno/maledict/common/vicissitude/rig/VicissitudeRigData.java src/main/java/org/brahypno/maledict/common/vicissitude/rig/VicissitudeRig.java src/main/java/org/brahypno/maledict/common/vicissitude/rig/VicissitudeMeshGeometry.java art/first-vicissitude/tools/RigPoseExporter.java
 java -cp build/rig-tool RigPoseExporter
 & 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python art/first-vicissitude/tools/build_blender.py
 ```
@@ -61,7 +61,7 @@ java -cp build/rig-tool RigPoseExporter
 检查脚本验证法线、UV、胸洞和头核遮挡，并生成 `build/rig-tool/wing-vertices.csv`，用于独立 Java 检查：
 
 ```powershell
-javac -encoding UTF-8 -d build/rig-tool src/main/java/org/brahypno/maledict/rig/VicissitudeRigData.java src/main/java/org/brahypno/maledict/rig/VicissitudeRig.java src/main/java/org/brahypno/maledict/rig/VicissitudeMeshGeometry.java art/first-vicissitude/tools/RigMeshCheck.java
+javac -encoding UTF-8 -d build/rig-tool src/main/java/org/brahypno/maledict/common/vicissitude/rig/VicissitudeRigData.java src/main/java/org/brahypno/maledict/common/vicissitude/rig/VicissitudeRig.java src/main/java/org/brahypno/maledict/common/vicissitude/rig/VicissitudeMeshGeometry.java art/first-vicissitude/tools/RigMeshCheck.java
 java -cp build/rig-tool RigMeshCheck
 ```
 

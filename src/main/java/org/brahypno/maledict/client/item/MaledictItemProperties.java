@@ -17,12 +17,12 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
-import org.brahypno.maledict.common.item.HangmanFoolItem;
-import org.brahypno.maledict.common.item.IncursusBladeBlink;
-import org.brahypno.maledict.common.item.IncursusBladeItem;
-import org.brahypno.maledict.common.item.LoverAxeItem;
-import org.brahypno.maledict.common.item.RemembranceBowItem;
+import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.common.weapon.incursus.IncursusBladeBlink;
+import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.weapon.lover.LoverAxeItem;
+import org.brahypno.maledict.common.weapon.remembrance.RemembranceBowItem;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 

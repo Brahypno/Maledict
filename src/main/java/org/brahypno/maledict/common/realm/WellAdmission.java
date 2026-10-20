@@ -2,7 +2,7 @@ package org.brahypno.maledict.common.realm;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import org.brahypno.maledict.common.rite.WisdomSacrifice;
+import org.brahypno.maledict.common.wisdom.WisdomSacrifice;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
 

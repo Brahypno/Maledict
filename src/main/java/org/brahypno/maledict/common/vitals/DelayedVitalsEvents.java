@@ -14,7 +14,7 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.RuneOfMelancholiaItem;
+import org.brahypno.maledict.common.rune.RuneOfMelancholiaItem;
 import org.brahypno.maledict.network.MaledictNetwork;
 
 /**

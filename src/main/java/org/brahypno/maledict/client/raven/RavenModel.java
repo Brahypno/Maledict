@@ -8,7 +8,7 @@ import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.entity.RavenEntity;
+import org.brahypno.maledict.common.raven.RavenEntity;
 
 /**
  * Original geometry, following Alex's Mobs ModelCrow's root/body/head/beak/wing/leg/tail

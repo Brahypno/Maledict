@@ -1,5 +1,5 @@
-import org.brahypno.maledict.rig.VicissitudeRig;
-import org.brahypno.maledict.rig.VicissitudeRigData;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRig;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRigData;
 
 import javax.imageio.ImageIO;
 import java.awt.BasicStroke;

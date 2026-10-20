@@ -5,7 +5,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.entity.RavenEntity;
+import org.brahypno.maledict.common.raven.RavenEntity;
 
 public final class RavenRenderer extends MobRenderer<RavenEntity, RavenModel> {
     public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(

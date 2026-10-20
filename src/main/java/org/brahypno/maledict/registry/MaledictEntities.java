@@ -12,14 +12,14 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
-import org.brahypno.maledict.common.entity.RavenEntity;
-import org.brahypno.maledict.common.entity.RavenFeatherEntity;
-import org.brahypno.maledict.common.entity.SpiritArrowEntity;
-import org.brahypno.maledict.common.entity.HangmanTrapEntity;
-import org.brahypno.maledict.common.entity.VicissitudeLightOrbEntity;
-import org.brahypno.maledict.common.entity.VicissitudeScytheProjectileEntity;
-import org.brahypno.maledict.common.entity.VicissitudeSpiritBoltEntity;
+import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.raven.RavenEntity;
+import org.brahypno.maledict.common.raven.RavenFeatherEntity;
+import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowEntity;
+import org.brahypno.maledict.common.curio.hangman.HangmanTrapEntity;
+import org.brahypno.maledict.common.vicissitude.VicissitudeLightOrbEntity;
+import org.brahypno.maledict.common.vicissitude.VicissitudeScytheProjectileEntity;
+import org.brahypno.maledict.common.vicissitude.VicissitudeSpiritBoltEntity;
 
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class MaledictEntities {

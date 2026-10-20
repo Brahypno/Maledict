@@ -1,6 +1,6 @@
-import org.brahypno.maledict.rig.VicissitudeRig;
-import org.brahypno.maledict.rig.VicissitudeRig.Action;
-import org.brahypno.maledict.rig.VicissitudeRigData.Joint;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRig;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRig.Action;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRigData.Joint;
 
 import java.util.Locale;
 

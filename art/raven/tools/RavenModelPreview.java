@@ -1,7 +1,7 @@
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.geom.ModelPart;
-import org.brahypno.maledict.client.model.RavenModel;
+import org.brahypno.maledict.client.raven.RavenModel;
 
 import javax.imageio.ImageIO;
 import java.awt.*;

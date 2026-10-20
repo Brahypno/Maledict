@@ -12,7 +12,7 @@ import org.brahypno.maledict.common.corruption.CorruptionRuneEvents;
 import org.brahypno.maledict.common.effect.AgeOfDarknessEffect;
 import org.brahypno.maledict.common.effect.AgeOfEnlightenmentEffect;
 import org.brahypno.maledict.common.effect.DecayEffect;
-import org.brahypno.maledict.common.effect.SacrificeEffect;
+import org.brahypno.maledict.common.wisdom.SacrificeEffect;
 import org.brahypno.maledict.common.effect.ThinningEffect;
 
 public final class MaledictMobEffects {

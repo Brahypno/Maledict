@@ -160,12 +160,12 @@ tooltip 两行（`positiveEffect`，键前缀 `malum.gui.curio.effect.`）：
 
 | 文件 | 作用 |
 | --- | --- |
-| `common/item/RuneOfBlissItem.java` | 符文物品：两行 tooltip + `isEquipped` |
-| `common/curio/SharedFate.java` | 倍率与血量比的纯数学 |
-| `common/curio/BlissRuneEvents.java` | 三个事件（LOWEST）、倍率落点、取消补打、防重入闸 |
-| `common/item/IncursusBladeItem.java` | `DamageTier`、`damageTier`、`raisedByBliss`、`dealTieredDamage` |
-| `common/entity/IncursusScytheBoomerangEntity.java` | 投掷返程撞人那一记走抬档 |
-| `common/combat/IncursusBladeEnchantments.java` | 飞升横扫那一记走抬档 |
+| `common/rune/RuneOfBlissItem.java` | 符文物品：两行 tooltip + `isEquipped` |
+| `common/rune/SharedFate.java` | 倍率与血量比的纯数学 |
+| `common/rune/BlissRuneEvents.java` | 三个事件（LOWEST）、倍率落点、取消补打、防重入闸 |
+| `common/weapon/incursus/IncursusBladeItem.java` | `DamageTier`、`damageTier`、`raisedByBliss`、`dealTieredDamage` |
+| `common/weapon/incursus/IncursusScytheBoomerangEntity.java` | 投掷返程撞人那一记走抬档 |
+| `common/weapon/incursus/IncursusBladeEnchantments.java` | 飞升横扫那一记走抬档 |
 | `registry/MaledictItems.java`、`registry/MaledictCreativeTabs.java` | 注册与创造栏 |
 | `data/MaledictRecipes.java`、`MaledictItemTags.java`、`MaledictItemModels.java`、`MaledictLanguage.java` | 配方 / `curios:rune` 标签 / 模型 / 中英文案 |
 | `client/codex/MaledictCodexEntries.java` | 「幽影精魂的实验」选择页加上第二枚 |

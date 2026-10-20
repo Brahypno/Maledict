@@ -14,9 +14,9 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import org.brahypno.maledict.client.vicissitude.model.FirstVicissitudeBossModel;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
-import org.brahypno.maledict.rig.VicissitudeRig;
-import org.brahypno.maledict.rig.VicissitudeRigData.Joint;
+import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRig;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRigData.Joint;
 import org.joml.Quaternionf;
 
 /**

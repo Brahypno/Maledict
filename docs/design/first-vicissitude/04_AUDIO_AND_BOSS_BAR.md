@@ -52,7 +52,7 @@
 | 客户端播放器 | `client/vicissitude/music/VicissitudeBossMusic.java` + `client/vicissitude/music/VicissitudeMusicSound.java` |
 | 挂载点 | `client/vicissitude/VicissitudeClientTickEvents.java`（复用它已有的 96 格扫描） |
 | 血条样式同步 | `network/BossBarStylePacket.java` + `MaledictNetwork#sendBossBarStyle` |
-| 带皮肤号的血条 | `common/entity/VicissitudeBossEvent.java` |
+| 带皮肤号的血条 | `common/vicissitude/VicissitudeBossEvent.java` |
 | 客户端重绘 | `client/vicissitude/VicissitudeBossBarOverlay.java` |
 | 接线 | `FirstVicissitudeBossEntity`（字段类型、`completeTransition()`、`readAdditionalSaveData()`） |
 | 配置 | `MaledictConfig.CLIENT_SPEC` 的 `bossMusic` / `bossMusicVolume` |
@@ -364,7 +364,7 @@ Java 居中偏移、血槽位置及叠放间距已随图稿更新，具体见 §
 ### 2.2 服务端：`VicissitudeBossEvent`
 
 ```java
-package org.brahypno.maledict.common.entity;
+package org.brahypno.maledict.common.vicissitude;
 
 /** 带样式号的血条：样式号只在服务端是真值，客户端由 BossBarStylePacket 镜像。 */
 public final class VicissitudeBossEvent extends ServerBossEvent {

@@ -10,8 +10,8 @@ import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.rig.VicissitudeFeatherShed;
-import org.brahypno.maledict.rig.VicissitudeRigData.Joint;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeFeatherShed;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRigData.Joint;
 
 import java.io.IOException;
 import java.util.*;

@@ -198,16 +198,19 @@ UV/法线、胸洞 12 条射线和环内缘 32 条射线检查通过；报告在
 
 | 类 | 覆盖 | `@Test` |
 | --- | --- | ---: |
-| `common/entity/VicissitudeVitalityTest` | 真生命、击杀计数与世界存档 | 6 |
-| `common/entity/DamageAdaptationTest` | 适应效果：按 damage message 记账与自然指数递减 | 19 |
-| `common/curio/HalfHealthTest` | 启蒙之年的半血判定 | 7 |
-| `common/curio/EnlightenmentLevelTest` | 护符 NBT 上的等级读取 | 6 |
-| `common/effect/BlessedRegenerationTest` | 生命祝福的额外自然回血量 | 7 |
-| `common/effect/RipeningBonusTest` | 熟成之赐的经验加成取整 | 8 |
-| `rig/VicissitudeRigTest` | 动作曲线、姿态连续性、刀刃可达范围与高度、手部间距 | 12 |
-| `rig/VicissitudeFeatherShedTest` | 转场落羽的错时曲线与二阶段碰撞组 | 3 |
-| `data/FirstVicissitudeSpiritDataTest` | Malum 精魂表（手写资源） | 5 |
-| `common/item/IncursusBladeBlinkTest` | 物品栏眨眼的纯换算规律 | 4 |
+| `common/vicissitude/VicissitudeVitalityTest` | 真生命、击杀计数与世界存档 | 6 |
+| `common/combat/DamageAdaptationTest` | 适应效果：按 damage message 记账与自然指数递减 | 19 |
+| `common/curio/enlightenment/HalfHealthTest` | 启蒙之年的半血判定 | 3 |
+| `common/curio/enlightenment/EnlightenmentLevelTest` | 护符 NBT 上的等级读取 | 3 |
+| `common/effect/BlessedRegenerationTest` | 生命祝福的额外自然回血量 | 3 |
+| `common/effect/RipeningBonusTest` | 熟成之赐的经验加成取整 | 4 |
+| `common/vicissitude/rig/VicissitudeRigTest` | 动作曲线、姿态连续性、刀刃可达范围与高度、手部间距 | 12 |
+| `common/vicissitude/rig/VicissitudeFeatherShedTest` | 转场落羽的错时曲线与二阶段碰撞组 | 3 |
+| `common/weapon/incursus/IncursusBladeBlinkTest` | 物品栏眨眼的纯换算规律 | 4 |
+
+测试包与生产包保持一致；伤害适应算法由无常与忧郁符文共用，放在 `common/combat`。
+已删除仅复述精魂表常数的测试，以及在 Forge 内重跑同一组 JUnit 的反射入口；
+真实实体场景继续由 `runGameTestServer` 执行，JUnit 逻辑用例由 `test` 执行一次。
 
 钉住的关键规则：
 
@@ -225,8 +228,6 @@ UV/法线、胸洞 12 条射线和环内缘 32 条射线检查通过；报告在
   wind 在最后一帧归零、strike 峰值恰在命中帧、命中窗口包含命中帧且落在动作内、
   刀刃可达范围在 [4.0, 5.75]、任意 tick 手离躯干 ≥0.75 格、
   动作最后一帧离静息 ≤0.45 格、线段距离在端点处截断。
-- `FirstVicissitudeSpiritDataTest`——`registry_name` 正确、`primary_type` 是九种真精魂之一、
-  八种各 6 加幽影 1 不重不漏、合计 49 点、幽影只发一枚。
 
 ### 运行方式
 
@@ -249,17 +250,17 @@ HTML 报告在 `build/reports/tests/test/index.html`，日志在 `build/tests`�
 
 ### 实现轮（M1–M7）
 
-新增：`rig/VicissitudeRigData.java`、`rig/VicissitudeRig.java`、`rig/VicissitudeMeshGeometry.java`；
-`common/entity/VicissitudeBossEntity.java`、`common/entity/FirstVicissitudeBossEntity.java`、
-`common/entity/VicissitudeBossStage.java`、`common/entity/VicissitudeSpiritBoltEntity.java`、
-`common/entity/VicissitudeScytheProjectileEntity.java`、`common/entity/VicissitudeLightOrbEntity.java`；
-`common/curio/VicissitudeCurioLedger.java`、`common/curio/VicissitudeCurioReturns.java`、
-`common/item/CurioReturnTokenItem.java`、`common/MaledictTags.java`；
+新增：`common/vicissitude/rig/VicissitudeRigData.java`、`common/vicissitude/rig/VicissitudeRig.java`、`common/vicissitude/rig/VicissitudeMeshGeometry.java`；
+`common/vicissitude/VicissitudeBossEntity.java`、`common/vicissitude/FirstVicissitudeBossEntity.java`、
+`common/vicissitude/VicissitudeBossStage.java`、`common/vicissitude/VicissitudeSpiritBoltEntity.java`、
+`common/vicissitude/VicissitudeScytheProjectileEntity.java`、`common/vicissitude/VicissitudeLightOrbEntity.java`；
+`common/vicissitude/curio/VicissitudeCurioLedger.java`、`common/vicissitude/curio/VicissitudeCurioReturns.java`、
+`common/vicissitude/curio/CurioReturnTokenItem.java`、`common/MaledictTags.java`；
 `client/vicissitude/model/FirstVicissitudeBossModel.java`、`client/vicissitude/model/VicissitudeBlenderMesh.java`、
 `client/vicissitude/render/FirstVicissitudeBossRenderer.java`、`client/vicissitude/vfx/FirstVicissitudeEffects.java`、
 `client/vicissitude/vfx/FirstVicissitudeClientEvents.java`、`client/vicissitude/render/VicissitudeSpiritBoltRenderer.java`、
 `client/vicissitude/render/VicissitudeScytheRenderer.java`、`client/vicissitude/render/VicissitudeLightOrbRenderer.java`；
-`network/VicissitudeEffectPacket.java`；`common/rite/VicissitudeRiteType.java`、`common/rite/SummoningRite.java`；
+`network/VicissitudeEffectPacket.java`；`common/vicissitude/rite/VicissitudeRiteType.java`、`common/vicissitude/rite/SummoningRite.java`；
 资产 `assets/maledict/textures/entity/first_vicissitude.png`、`_emissive.png`、
 `assets/maledict/textures/item/curio_return_token.png`、`models/entity/first_vicissitude.mesh.json`。
 
@@ -472,7 +473,7 @@ HTML 报告在 `build/reports/tests/test/index.html`，日志在 `build/tests`�
     Malum 是否真的加载 `spirit_data`（目录、主键、命名空间）只能进游戏验证；
     `DamageAdaptation` 的配置读取、清账时机与减伤档位在实体层，只能进游戏验证；
     适应台词（是否只在该触发时出现、10 秒冷却的手感、动作栏是否读得清）同样只在实体层。
-14. **`rig/VicissitudeRigTest` 的连续性断言是静态采样，不是动画播放**：
+14. **`common/vicissitude/rig/VicissitudeRigTest` 的连续性断言是静态采样，不是动画播放**：
     它证明姿态在数学上连续，不证明在实际帧率与插值下看起来连续。
 
 ---

@@ -1,5 +1,5 @@
-import org.brahypno.maledict.rig.VicissitudeRig;
-import org.brahypno.maledict.rig.VicissitudeRigData.Joint;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRig;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRigData.Joint;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
