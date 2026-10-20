@@ -57,7 +57,7 @@ public final class VicissitudeLightOrbEntity extends FloatingEntity {
 
     @Override
     public void tick() {
-        if (!level().isClientSide && (owner == null || !owner.isAlive())) {
+        if (!level().isClientSide && !hasValidVictim()) {
             discard();
             return;
         }
@@ -66,12 +66,17 @@ public final class VicissitudeLightOrbEntity extends FloatingEntity {
 
     @Override
     public void collect() {
-        if (level().isClientSide || owner == null || !owner.isAlive()) {
+        if (level().isClientSide || !hasValidVictim()) {
             return;
         }
         owner.setHealth(Math.min(owner.getHealth(), 1.0F));
         playSound((SoundEvent) SoundRegistry.SPIRIT_PICKUP.get(), 0.4F,
                 Mth.nextFloat(random, 0.8F, 1.1F));
+    }
+
+    private boolean hasValidVictim() {
+        return owner != null && caster() instanceof FirstVicissitudeBossEntity boss
+               && boss.isValidCombatParticipant(owner);
     }
 
     @Override

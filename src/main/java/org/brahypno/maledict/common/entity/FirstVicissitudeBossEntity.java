@@ -149,6 +149,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_PHASE_TWO_REACHED =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_COMBAT_ACTIVE =
+            SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_WING_FOLD =
             SynchedEntityData.defineId(FirstVicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_CORE_GLOW =
@@ -387,6 +389,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         entityData.define(DATA_HURT_TICKS, 0);
         entityData.define(DATA_TRANSITION_TICKS, 0);
         entityData.define(DATA_PHASE_TWO_REACHED, false);
+        entityData.define(DATA_COMBAT_ACTIVE, false);
         entityData.define(DATA_WING_FOLD, 0.0F);
         entityData.define(DATA_CORE_GLOW, 0.55F);
         entityData.define(DATA_GROUND_X, 0.0F);
@@ -647,9 +650,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return;
         }
         tickFacing();
-        if (tickCount % 10 == 0){
-            forgetDeadParticipants();
-        }
+        forgetDeadParticipants();
         if (tickCount % WEAPON_GUARD_INTERVAL == 0){
             tickWeaponGuard(true);
         }
@@ -657,6 +658,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         suppressHeldItemAttributes();
         tickCooldowns();
         tickStage();
+        syncCombatState();
         tickAction();
         refreshPose();
         tickWingCollision();
@@ -843,7 +845,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             }
             return dropAbsentParticipant(identity, serverLevel, deathRecords);
         }
-        if (player.level() != level()){
+        if (player.isCreative() || player.level() != level()){
             deathRecords.remove(identity);
             clearTargetIf(identity);
             return true;
@@ -1636,7 +1638,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      * The encounter's only damage entry point for combat participants.
      */
     public boolean hurtParticipant(LivingEntity victim, DamageSource source, float damage) {
-        if (damage <= 0.0F || victim.level().isClientSide){
+        if (damage <= 0.0F || victim.level().isClientSide || !isValidCombatParticipant(victim)){
             return false;
         }
         // Every skill hit lands: an attack is one authored instance, not a stream of ticks.
@@ -2383,6 +2385,22 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             return phaseTwoParticipants.contains(living.getUUID());
         }
         return phaseOneTargets.contains(living.getUUID());
+    }
+
+    /** Nearby listeners may hear the fight, including players who are not combat participants. */
+    public boolean hasCombatOpponent() {
+        return entityData.get(DATA_COMBAT_ACTIVE);
+    }
+
+    private void syncCombatState() {
+        if (level() instanceof ServerLevel serverLevel){
+            Set<UUID> roster = isPhaseTwo() ? phaseTwoParticipants : phaseOneTargets;
+            boolean active = roster.stream()
+                                   .map(identity -> resolveParticipant(serverLevel, identity))
+                                   .anyMatch(member -> member != null && isValidCombatParticipant(member)
+                                                       && distanceToSqr(member) <= engagementRangeSqr());
+            entityData.set(DATA_COMBAT_ACTIVE, active);
+        }
     }
 
     /**
