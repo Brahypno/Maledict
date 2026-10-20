@@ -31,7 +31,7 @@ final class WellPlacement {
         BlockPos nearest = null;
         double distance = Double.MAX_VALUE;
         for (BlockPos pos : BlockPos.betweenClosed(contact.offset(-8, -8, -8), contact.offset(8, 8, 8))) {
-            if (level.hasChunkAt(pos) && level.getBlockState(pos).getBlock() instanceof VoidConduitBlock
+            if (level.isLoaded(pos) && level.getBlockState(pos).getBlock() instanceof VoidConduitBlock
                     && pos.distSqr(contact) < distance) {
                 nearest = pos.immutable();
                 distance = pos.distSqr(contact);
@@ -52,7 +52,7 @@ final class WellPlacement {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) continue;
                     for (int dy = 6; dy >= -8; dy--) {
                         BlockPos ground = center.offset(dx, dy, dz);
-                        if (!level.hasChunkAt(ground) || !level.isInWorldBounds(ground)) continue;
+                        if (!level.isLoaded(ground) || !level.isInWorldBounds(ground)) continue;
                         BlockState state = level.getBlockState(ground);
                         if (hazard(state) || !state.getFluidState().isEmpty()) continue;
                         var shape = state.getCollisionShape(level, ground, CollisionContext.of(player));

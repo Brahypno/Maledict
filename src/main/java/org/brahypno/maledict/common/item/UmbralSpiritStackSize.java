@@ -8,7 +8,7 @@ import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import org.brahypno.maledict.Maledict;
 
 /** Keep umbral spirits stackable to 64 for the runeworking recipes. */
-@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID)
 public final class UmbralSpiritStackSize {
     @SubscribeEvent
     public static void modifyComponents(ModifyDefaultComponentsEvent event) {

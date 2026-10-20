@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.sammy.malum.client.RenderUtils;
 import com.sammy.malum.client.SpiritBasedWorldVFXBuilder;
-import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import com.sammy.malum.registry.client.MalumRenderTypeTokens;
 import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.client.Minecraft;
@@ -12,10 +11,10 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
-import org.brahypno.maledict.common.entity.VicissitudeScytheProjectileEntity;
+import org.brahypno.maledict.common.entity.vicissitude.VicissitudeScytheProjectileEntity;
 import team.lodestar.lodestone.registry.client.LodestoneRenderTypes;
 import team.lodestar.lodestone.systems.rendering.LodestoneRenderType;
 import team.lodestar.lodestone.systems.rendering.VFXBuilders;
@@ -58,6 +57,6 @@ public final class VicissitudeScytheRenderer
 
     @Override
     public ResourceLocation getTextureLocation(VicissitudeScytheProjectileEntity entity) {
-        return TextureAtlas.LOCATION_BLOCKS;
+        return InventoryMenu.BLOCK_ATLAS;
     }
 }

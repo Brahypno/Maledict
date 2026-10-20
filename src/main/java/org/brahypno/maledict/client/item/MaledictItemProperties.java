@@ -17,16 +17,16 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
-import org.brahypno.maledict.common.item.HangmanFoolItem;
-import org.brahypno.maledict.common.item.IncursusBladeBlink;
-import org.brahypno.maledict.common.item.IncursusBladeItem;
-import org.brahypno.maledict.common.item.LoverAxeItem;
-import org.brahypno.maledict.common.item.RemembranceBowItem;
+import org.brahypno.maledict.common.item.curio.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.curio.HangmanFoolItem;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeBlink;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.item.weapon.axe.LoverAxeItem;
+import org.brahypno.maledict.common.item.weapon.bow.RemembranceBowItem;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class MaledictItemProperties {
     @SubscribeEvent
     public static void registerItemProperties(FMLClientSetupEvent event) {

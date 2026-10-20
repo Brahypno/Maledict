@@ -51,8 +51,8 @@
 | 声音定义 | `assets/maledict/sounds.json` + `sounds/music/vicissitude_phase_{one,two}.ogg` |
 | 客户端播放器 | `client/vicissitude/music/VicissitudeBossMusic.java` + `client/vicissitude/music/VicissitudeMusicSound.java` |
 | 挂载点 | `client/vicissitude/VicissitudeClientTickEvents.java`（复用它已有的 96 格扫描） |
-| 血条样式同步 | `network/BossBarStylePacket.java` + `MaledictNetwork#sendBossBarStyle` |
-| 带皮肤号的血条 | `common/entity/VicissitudeBossEvent.java` |
+| 血条样式同步 | `network/clientbound/BossBarStylePacket.java` + `MaledictNetwork#sendBossBarStyle` |
+| 带皮肤号的血条 | `common/entity/vicissitude/VicissitudeBossEvent.java` |
 | 客户端重绘 | `client/vicissitude/VicissitudeBossBarOverlay.java` |
 | 接线 | `FirstVicissitudeBossEntity`（字段类型、`completeTransition()`、`readAdditionalSaveData()`） |
 | 配置 | `MaledictConfig.CLIENT_SPEC` 的 `bossMusic` / `bossMusicVolume` |
@@ -434,8 +434,7 @@ public record BossBarStylePacket(UUID bar, int style) {
 ### 2.4 客户端渲染
 
 ```java
-@Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE,
-        value = Dist.CLIENT)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class VicissitudeBossBarOverlay {
     private static final Map<UUID, Integer> STYLES = new HashMap<>();
 

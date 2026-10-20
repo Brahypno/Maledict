@@ -421,7 +421,7 @@ e⁻¹ ≈ 0.368 的第一档太浅，几乎每记被适应的命中都过线）
 同一个人 **10 秒（200 tick）**内只听得见一条，计时在回到未参战时清掉；创造与旁观不开口。
 
 NBT 写 `DamageAdaptation` 列表（`Message` + `Hits`，顺序即最新在前）；
-重载恢复时每条算「刚挨过一次」，次数不跟存档走。类：`common/entity/DamageAdaptation`。
+重载恢复时每条算「刚挨过一次」，次数不跟存档走。类：`common/entity/vicissitude/DamageAdaptation`。
 
 ### 压血
 
@@ -614,7 +614,7 @@ NBT 写 `DamageAdaptation` 列表（`Message` + `Hits`，顺序即最新在前�
 免没收 item tag：`maledict:vicissitude_confiscation_immune`
 （`common/MaledictTags.java` 的 `VICISSITUDE_CONFISCATION_IMMUNE`）。
 每次实际没收前检查 `stack.is(tag)`，命中则留在原槽、不入队列、不触发摘下回调。
-标签由 `data/MaledictItemTags.java` 生成，默认是空标签；整合包可以用数据包扩充：
+标签由 `data/tags/MaledictItemTags.java` 生成，默认是空标签；整合包可以用数据包扩充：
 
 ```json
 {"replace": false, "values": [{"id": "examplemod:protected_curio", "required": false}]}
@@ -662,10 +662,10 @@ NBT 写 `DamageAdaptation` 列表（`Message` + `Hits`，顺序即最新在前�
 | 类 / 文件 | 作用 |
 | --- | --- |
 | `common/MaledictTags.java` | 免没收标签 |
-| `common/curio/VicissitudeCurioReturns.java` | 没收、原位恢复、等待栏位更新、背包回退、最终箱子交付 + 四个事件订阅 + 20 tick 队列 |
-| `common/curio/VicissitudeCurioLedger.java` | 世界级 `SavedData`，`FILE_ID = "maledict_vicissitude_curios"` |
-| `common/item/CurioReturnTokenItem.java` | 凭证物品，右键调用 `VicissitudeCurioReturns.claim` |
-| `common/entity/FirstVicissitudeBossEntity.java` | 持有 `confiscated`，真死或实际删除时移交账本并记录最终交付位置 |
+| `common/curio/vicissitude/VicissitudeCurioReturns.java` | 没收、原位恢复、等待栏位更新、背包回退、最终箱子交付 + 四个事件订阅 + 20 tick 队列 |
+| `common/curio/vicissitude/VicissitudeCurioLedger.java` | 世界级 `SavedData`，`FILE_ID = "maledict_vicissitude_curios"` |
+| `common/item/curio/CurioReturnTokenItem.java` | 凭证物品，右键调用 `VicissitudeCurioReturns.claim` |
+| `common/entity/vicissitude/FirstVicissitudeBossEntity.java` | 持有 `confiscated`，真死或实际删除时移交账本并记录最终交付位置 |
 
 **没有配置键**：饰品没收与返还不可通过配置开关，唯一可调项是数据包标签。
 

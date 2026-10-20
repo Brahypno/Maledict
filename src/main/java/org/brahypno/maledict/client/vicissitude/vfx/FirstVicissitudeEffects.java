@@ -6,7 +6,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.rig.VicissitudeRig;
 import org.brahypno.maledict.rig.VicissitudeRigData;
 import team.lodestar.lodestone.registry.common.particle.LodestoneParticleTypes;

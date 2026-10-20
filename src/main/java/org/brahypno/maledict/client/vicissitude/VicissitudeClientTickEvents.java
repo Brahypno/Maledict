@@ -13,7 +13,7 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.vicissitude.music.VicissitudeBossMusic;
 import org.brahypno.maledict.client.vicissitude.vfx.FirstVicissitudeEffects;
 import org.brahypno.maledict.client.vicissitude.vfx.VicissitudeSummoningEffects;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +25,7 @@ import java.util.List;
  * <p>同一趟扫描顺带驱动 {@link VicissitudeBossMusic}——阶段本来就在同步数据里，
  * 音乐不需要额外的网络包，见那个类的注释。
  */
-@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME,
+@EventBusSubscriber(modid = Maledict.MODID,
         value = Dist.CLIENT)
 public final class VicissitudeClientTickEvents {
     private static final double MARKER_SEARCH_RADIUS = 96.0D;

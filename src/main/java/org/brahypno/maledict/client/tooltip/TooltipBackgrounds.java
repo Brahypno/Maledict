@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Pure client renderer; combinations are supplied through RegisterTooltipBackgroundsEvent. */
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class TooltipBackgrounds {
     private static List<RegisterTooltipBackgroundsEvent.Registration> backgrounds = List.of();
 
@@ -56,7 +56,7 @@ public final class TooltipBackgrounds {
         return null;
     }
 
-    @EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+    @EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
     public static final class ClientRegistration {
         private ClientRegistration() {}
 

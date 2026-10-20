@@ -41,7 +41,7 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
  * 不依赖后处理强度，所以亮处或有夜视时仍能看穿失明、水、岩浆与细雪。
  * 黑暗另外会周期性压暗光照图；视界槽对黑暗的免疫在服务端效果事件里处理。
  */
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class InfraredClientHandler {
 
     /** 眼槽的 Curios 标识，见 {@code data/maledict/curios/slots/delusion.json}。 */

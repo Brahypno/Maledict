@@ -1,6 +1,6 @@
 # 客户端物品 Tooltip 背景
 
-Minecraft 1.20.1 / Forge 47.4.23。使用 `RenderTooltipEvent.Color`，无额外 Mixin、网络包或服务端逻辑。
+Minecraft 1.21.1 / NeoForge。使用 `RenderTooltipEvent.Color`，无额外 Mixin、网络包或服务端逻辑。
 此事件发生在原版背景绘制前，提供物品、最终位置、实际字体和已经换行的组件。
 因此不用重新推算鼠标位置，也不会因后续取消 `Pre` 而留下孤立的装饰。
 
@@ -10,13 +10,12 @@ Minecraft 1.20.1 / Forge 47.4.23。使用 `RenderTooltipEvent.Color`，无额外
 事件在客户端初始化的主线程任务中向所有模组的 MOD 总线分发一次；处理器内不需要 `enqueueWork`。
 
 ```java
-@Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT,
-        bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class MyTooltipBackgrounds {
     @SubscribeEvent
     public static void register(RegisterTooltipBackgroundsEvent event) {
         var bladeFrame = new TooltipBackground(
-                new ResourceLocation("maledict", "textures/gui/tooltip/incursus_blade.png"),
+                ResourceLocation.fromNamespaceAndPath("maledict", "textures/gui/tooltip/incursus_blade.png"),
                 24, 24,
                 TooltipFrameLayout.Insets.all(8),
                 TooltipFrameLayout.Insets.all(8),

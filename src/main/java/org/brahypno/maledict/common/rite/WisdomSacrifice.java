@@ -53,7 +53,7 @@ import java.util.UUID;
  * {@code baseSize + 修饰符} 重算并存进 NBT，所以死亡重生的 {@code readTag} 与重登都带得回来；固定 UUID
  * 又让重复发放自然覆盖而不是叠加。{@code ISlotHelper#growSlotType} 那条老路已被标了删除，不再用。
  */
-@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID)
 public final class WisdomSacrifice {
     /** 成就 id，对应 {@code data/maledict/advancements/wisdom_sacrifice.json}。 */
     public static final ResourceLocation ID =

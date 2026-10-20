@@ -8,7 +8,7 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.registry.MaledictItems;
 
 /** Item-to-artwork registrations on the client MOD bus. */
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class MaledictTooltipBackgrounds {
     public static final TooltipBackground AGE_OF_ENLIGHTENMENT = new TooltipBackground(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID,

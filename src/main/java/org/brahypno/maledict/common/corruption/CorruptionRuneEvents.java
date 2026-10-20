@@ -12,7 +12,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.RuneOfTheFallenItem;
+import org.brahypno.maledict.common.item.rune.RuneOfTheFallenItem;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.helpers.EntityHelper;
@@ -41,7 +41,7 @@ import java.util.UUID;
  * 被别的模组减伤/取消、会触发图腾、也会递归触发我们自己。代价与抑郁符文的延迟池一样：不吃图腾、
  * 不续无敌帧、没有受伤演出 —— 而「收不致死」保证了这个代价不会变成击杀。
  */
-@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID)
 public final class CorruptionRuneEvents {
 
     /** 一记有效回血折算成多少腐败（点）。先按 1:1 起手，进游戏再调。 */

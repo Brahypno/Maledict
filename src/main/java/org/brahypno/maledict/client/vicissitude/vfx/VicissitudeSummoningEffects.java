@@ -17,7 +17,7 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.rite.VicissitudeSummoning;
 import org.joml.Matrix4f;
 import team.lodestar.lodestone.registry.client.LodestoneRenderTypes;

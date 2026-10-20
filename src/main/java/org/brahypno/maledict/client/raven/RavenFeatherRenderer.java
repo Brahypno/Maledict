@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.entity.RavenFeatherEntity;
+import org.brahypno.maledict.common.entity.raven.RavenFeatherEntity;
 
 /** Uses the supplied transparent pixel feather directly, with no additional item registration. */
 public final class RavenFeatherRenderer extends EntityRenderer<RavenFeatherEntity> {

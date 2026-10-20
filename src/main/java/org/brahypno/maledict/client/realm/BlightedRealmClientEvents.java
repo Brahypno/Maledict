@@ -9,7 +9,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.realm.BlightedRealm;
 
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class BlightedRealmClientEvents {
     @SubscribeEvent
     public static void weather(ClientTickEvent.Post event) {

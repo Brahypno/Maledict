@@ -7,7 +7,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.brahypno.maledict.config.MaledictConfig;
-import org.brahypno.maledict.network.VicissitudeEffectPacket;
+import org.brahypno.maledict.network.clientbound.VicissitudeEffectPacket;
 import team.lodestar.lodestone.handlers.ScreenshakeHandler;
 import team.lodestar.lodestone.systems.easing.Easing;
 import team.lodestar.lodestone.systems.screenshake.ScreenshakeBuilder;
@@ -51,7 +51,7 @@ public final class FirstVicissitudeClientEvents {
 
         Entity entity = level.getEntity(packet.entityId());
         Vec3 position = packet.position();
-        boolean phaseTwo = entity instanceof org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity boss
+        boolean phaseTwo = entity instanceof org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity boss
                            && boss.isPhaseTwoVisual();
         switch (packet.eventId()) {
             case VicissitudeEffectPacket.EVENT_SUMMON_CONSUME ->

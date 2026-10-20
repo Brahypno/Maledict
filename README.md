@@ -1,6 +1,6 @@
 # Maledict
 
-A Minecraft Forge add-on for [Malum](https://www.curseforge.com/minecraft/mc-mods/malum), continuing spirit arcana past
+A Minecraft NeoForge add-on for [Malum](https://www.curseforge.com/minecraft/mc-mods/malum), continuing spirit arcana past
 the umbral crystal. The centerpiece is the **Incursus Blade**, a magic scythe that grows as it devours spirits; around
 it sit spirit-fed bows and arrows, two shelves of runes, a charm that meddles with time and darkness, two obelisks, and
 the rites that call the First Vicissitude.
@@ -10,8 +10,8 @@ Arcana, in game; the conventions and the mechanics that were expensive to get ri
 
 ## Stack
 
-Forge 1.20.1, Java 17, Mixin, ForgeGradle. Versions live in `gradle.properties` — `build.gradle` reads them and
-`mods.toml` is expanded from them at build time.
+Minecraft 1.21.1, NeoForge, Java 21 and ModDevGradle. Versions live in `gradle.properties`;
+`build.gradle` expands `src/main/templates/META-INF/neoforge.mods.toml` at build time.
 
 Runtime dependencies are **Malum** (the parent mod, and the source of spirit types, rite and infusion systems, and the
 codex plumbing), **Lodestone** (attributes, particle and screenshake builders) and **Curios** (the rune, charm and eye
@@ -23,16 +23,24 @@ conveniences.
 ```
 src/main/java/org/brahypno/maledict/
   registry/    DeferredRegisters: items, blocks, entities, effects, enchantments, sounds, tabs
-  common/      gameplay — items, combat, curios, effects, corruption, vitals, entities, blocks, rites
-  client/      renderers, models, HUD overlays, particles, post-processing
-  data/        data generators
-  network/     packets
-  mixin/       the two mixins
+  common/
+    entity/    raven/, vicissitude/, projectile/
+    item/      weapon/incursus/, weapon/axe/, weapon/bow/, arrow/, rune/, curio/
+    curio/     enlightenment/, hangman/, rune/, vicissitude/; shared cooldown helpers
+    enchantment/  enchantments and their combat effects
+    block/, effect/, rite/, realm/, attribute/, corruption/, vitals/
+  client/      item/, raven/, vicissitude/, codex/, tooltip/, infrared/, vitals/, wisdom/, realm/, jei/
+  rig/         shared boss geometry, animation and collision calculations
+  data/        client/, loot/, recipe/, tags/, worldgen/; MaledictDataGenerators is the entry point
+  network/     clientbound/, serverbound/; MaledictNetwork registers all payloads
+  mixin/       compatibility hooks and accessors
   config/      common and client config specs
 src/main/resources/   hand-written assets
 src/generated/        data generator output — regenerate with runData, never edit by hand
-src/test/             pure-logic unit tests
+src/test/             JUnit and GameTest sources, following the production package layout
+art/                  editable source artwork and preview tools, grouped by feature
 docs/design/          per-feature design and verification notes
+tools/                developer tools, grouped by purpose
 ```
 
 ## Building
@@ -40,11 +48,13 @@ docs/design/          per-feature design and verification notes
 ```shell
 ./gradlew build        # Windows: .\gradlew.bat build
 ./gradlew runData      # regenerate src/generated
-./gradlew test         # unit tests; not wired into build or check
+./gradlew test         # JUnit tests, also included in build/check
+./gradlew runGameTestServer  # real server entity scenarios
 ```
 
-`runClient`, `runServer` and `gameTestServer` are the standard Forge run configs. The distributable jar is the jarJar
-artifact in `build/libs`.
+`runClient`, `runServer`, `runData` and `runGameTestServer` are the development launch tasks.
+The distributable jar, including ChangeLib, is written to `build/libs`.
+See [src/test/README.md](src/test/README.md) for test commands and scope.
 
 ## Documentation
 

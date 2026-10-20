@@ -1,6 +1,5 @@
 package org.brahypno.maledict.client.item;
 
-import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -14,14 +13,14 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.IncursusBladeItem;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
 import org.brahypno.maledict.network.MaledictNetwork;
 
 import java.text.DecimalFormat;
 import java.util.List;
 
 /** 神侵恶刃的客户端交互与物品提示。 */
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class IncursusBladeClientEvents {
 
     @SubscribeEvent

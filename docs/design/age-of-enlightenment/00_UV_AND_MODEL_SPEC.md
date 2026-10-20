@@ -88,14 +88,14 @@ addBox(-5F, -9F, -5F, 10F, 10F, 5F)   // x -5~5, y -9~1, z -5~0
 
 | 路径 | 说明 |
 | --- | --- |
-| `common/item/AgeOfEnlightenmentItem.java` | 物品（`ICurioItem`，`stacksTo(1)`，RARE） |
+| `common/item/curio/AgeOfEnlightenmentItem.java` | 物品（`ICurioItem`，`stacksTo(1)`，RARE） |
 | `client/item/AgeOfEnlightenmentModel.java` | 面具模型，层名 `maledict:age_of_enlightenment` |
 | `client/item/AgeOfEnlightenmentCurioRenderer.java` | `ICurioRenderer`，`followHeadRotations` + `entityTranslucent` |
 | `client/MaledictClientSetup.java` | `CuriosRendererRegistry.register` 绑定 |
 | `client/MaledictClientSetup.java` | 注册 layer definition + `AddLayers` 烘焙 |
-| `data/MaledictItemModels.java` | 物品模型（`item/generated`） |
-| `data/MaledictItemTags.java` | `curios:charm` 槽标签 |
-| `data/MaledictLanguage.java` | `启蒙之年` / `Age of Enlightenment` |
+| `data/client/MaledictItemModels.java` | 物品模型（`item/generated`） |
+| `data/tags/MaledictItemTags.java` | `curios:charm` 槽标签 |
+| `data/client/MaledictLanguage.java` | `启蒙之年` / `Age of Enlightenment` |
 | `registry/MaledictItems.java`、`MaledictCreativeTabs.java` | 注册与创造模式标签页 |
 
 数据生成产物一律走 `runData`，不要手改 `src/generated`。

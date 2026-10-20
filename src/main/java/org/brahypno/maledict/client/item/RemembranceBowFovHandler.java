@@ -9,9 +9,9 @@ import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.RemembranceBowItem;
+import org.brahypno.maledict.common.item.weapon.bow.RemembranceBowItem;
 
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class RemembranceBowFovHandler {
     @SubscribeEvent
     public static void adjustFovWhileDrawing(ComputeFovModifierEvent event) {

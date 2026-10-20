@@ -16,7 +16,8 @@ public final class MaledictEnchantments {
 
     public static int level(ItemStack stack, ResourceKey<Enchantment> key) {
         for (var entry : stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).entrySet()) {
-            if (entry.getKey().is(key)) return stack.getEnchantmentLevel(entry.getKey());
+            if (entry.getKey().is(key))
+                return stack.getEnchantmentLevel(entry.getKey());
         }
         return 0;
     }

@@ -196,52 +196,23 @@ UV/法线、胸洞 12 条射线和环内缘 32 条射线检查通过；报告在
 
 ## 3. 测试资产
 
-| 类 | 覆盖 | `@Test` |
-| --- | --- | ---: |
-| `common/entity/VicissitudeVitalityTest` | 真生命、击杀计数与世界存档 | 6 |
-| `common/entity/DamageAdaptationTest` | 适应效果：按 damage message 记账与自然指数递减 | 19 |
-| `common/curio/HalfHealthTest` | 启蒙之年的半血判定 | 7 |
-| `common/curio/EnlightenmentLevelTest` | 护符 NBT 上的等级读取 | 6 |
-| `common/effect/BlessedRegenerationTest` | 生命祝福的额外自然回血量 | 7 |
-| `common/effect/RipeningBonusTest` | 熟成之赐的经验加成取整 | 8 |
-| `rig/VicissitudeRigTest` | 动作曲线、姿态连续性、刀刃可达范围与高度、手部间距 | 12 |
-| `rig/VicissitudeFeatherShedTest` | 转场落羽的错时曲线与二阶段碰撞组 | 3 |
-| `data/FirstVicissitudeSpiritDataTest` | Malum 精魂表（手写资源） | 5 |
-| `common/item/IncursusBladeBlinkTest` | 物品栏眨眼的纯换算规律 | 4 |
+JUnit 测试与 GameTest 场景按生产包归类。Boss 的状态、伤害适应和实体场景位于
+`common/entity/vicissitude/`，饰品返还位于 `common/curio/vicissitude/`；
+`rig/` 验证骨架、刀刃可达范围与碰撞几何。
 
-钉住的关键规则：
-
-- `VicissitudeVitalityTest`——同 tick 连续 21 次只计一次；相邻尝试间隔 100 tick 继续累计，
-  超过则重新从一次开始；窗口内受伤/治疗不清 kill 计数；写真实 `.dat` 后重载保伤势、
-  最大生命、冷却与 kill 次数，不同 UUID 分开存；改 Capability 导出的 NBT 不影响已绑定副本。
-- `DamageAdaptationTest`——首击全额；第 2/3/4 下 e⁻¹/e⁻²/e⁻³；分 message 各记；
-  记满顶掉最久未命中的一条；适应 0 或负数关闭且什么都不记；null/空串不减伤不记账；
-  清账回全额；存档往返保序；坏行丢弃。
-- `HalfHealthTest`——40/100 算半血、50/100 恰好半血触发、50.1/100 与 100/100 不触发；
-  只看出手时血量；上限 0 不触发；线随上限走。
-- `EnlightenmentLevelTest`——无 NBT 或无键读作 0 级；显式 0 与无键同；负数夹回 0；
-  键类型不符当没写且不抛异常。
-- `VicissitudeRigTest`——见 [02](02_ANIMATION_AND_HITBOX.md)：
-  wind 在最后一帧归零、strike 峰值恰在命中帧、命中窗口包含命中帧且落在动作内、
-  刀刃可达范围在 [4.0, 5.75]、任意 tick 手离躯干 ≥0.75 格、
-  动作最后一帧离静息 ≤0.45 格、线段距离在端点处截断。
-- `FirstVicissitudeSpiritDataTest`——`registry_name` 正确、`primary_type` 是九种真精魂之一、
-  八种各 6 加幽影 1 不重不漏、合计 49 点、幽影只发一枚。
-
-### 运行方式
+保留已确认的适应窗口与同 tick 批次序列、真实生命账本和 NBT 往返、事件取消与重入、
+饰品所有权交接、世界碰撞脱困，以及实际图腾消耗场景。
+枚举切换、简单半血比较、等级读取、回血乘法和固定精魂 JSON 的复述测试已删除。
 
 ```powershell
-.\gradlew.bat test                                  # 全部
-.\gradlew.bat test --tests '*VicissitudeRigTest'    # 单个类
+.\gradlew.bat test
+.\gradlew.bat test --tests '*VicissitudeRigTest'
+.\gradlew.bat runGameTestServer
 ```
 
-首次运行需要下载测试依赖，缓存齐全后可加 `--offline`。
-`test` 先在真实 Forge 服务端运行 `src/test` 中的实体场景，再执行 JUnit；
-`--tests` 只过滤后者。事件、嵌套伤害、死亡取消、实体读档、飞镰、脱困、饰品交接与图腾消耗
-均有服务端场景，覆盖边界见 [测试说明](../../../src/test/README.md)。
-HTML 报告在 `build/reports/tests/test/index.html`，日志在 `build/tests`。
-临时存档由 JUnit `@TempDir` 创建和清理。
-**本项目已取消 `check` 对 `test` 的依赖**：`check` 与 `build` 不会自动跑测试，必须显式执行 `test`。
+`build` / `check` 包含 JUnit；真实服务端场景通过 `runGameTestServer` 单独执行。
+命令、目录、报告位置及覆盖边界见 [测试说明](../../../src/test/README.md)。
+历史轮次的测试数量不代表当前数量。
 
 ---
 
@@ -250,22 +221,22 @@ HTML 报告在 `build/reports/tests/test/index.html`，日志在 `build/tests`�
 ### 实现轮（M1–M7）
 
 新增：`rig/VicissitudeRigData.java`、`rig/VicissitudeRig.java`、`rig/VicissitudeMeshGeometry.java`；
-`common/entity/VicissitudeBossEntity.java`、`common/entity/FirstVicissitudeBossEntity.java`、
-`common/entity/VicissitudeBossStage.java`、`common/entity/VicissitudeSpiritBoltEntity.java`、
-`common/entity/VicissitudeScytheProjectileEntity.java`、`common/entity/VicissitudeLightOrbEntity.java`；
-`common/curio/VicissitudeCurioLedger.java`、`common/curio/VicissitudeCurioReturns.java`、
-`common/item/CurioReturnTokenItem.java`、`common/MaledictTags.java`；
+`common/entity/vicissitude/VicissitudeBossEntity.java`、`common/entity/vicissitude/FirstVicissitudeBossEntity.java`、
+`common/entity/vicissitude/VicissitudeBossStage.java`、`common/entity/vicissitude/VicissitudeSpiritBoltEntity.java`、
+`common/entity/vicissitude/VicissitudeScytheProjectileEntity.java`、`common/entity/vicissitude/VicissitudeLightOrbEntity.java`；
+`common/curio/vicissitude/VicissitudeCurioLedger.java`、`common/curio/vicissitude/VicissitudeCurioReturns.java`、
+`common/item/curio/CurioReturnTokenItem.java`、`common/MaledictTags.java`；
 `client/vicissitude/model/FirstVicissitudeBossModel.java`、`client/vicissitude/model/VicissitudeBlenderMesh.java`、
 `client/vicissitude/render/FirstVicissitudeBossRenderer.java`、`client/vicissitude/vfx/FirstVicissitudeEffects.java`、
 `client/vicissitude/vfx/FirstVicissitudeClientEvents.java`、`client/vicissitude/render/VicissitudeSpiritBoltRenderer.java`、
 `client/vicissitude/render/VicissitudeScytheRenderer.java`、`client/vicissitude/render/VicissitudeLightOrbRenderer.java`；
-`network/VicissitudeEffectPacket.java`；`common/rite/VicissitudeRiteType.java`、`common/rite/SummoningRite.java`；
+`network/clientbound/VicissitudeEffectPacket.java`；`common/rite/VicissitudeRiteType.java`、`common/rite/SummoningRite.java`；
 资产 `assets/maledict/textures/entity/first_vicissitude.png`、`_emissive.png`、
 `assets/maledict/textures/item/curio_return_token.png`、`models/entity/first_vicissitude.mesh.json`。
 
 修改：`registry/MaledictEntities.java`、`registry/MaledictItems.java`、`registry/MaledictCreativeTabs.java`、
-`client/MaledictClientSetup.java`、`config/MaledictConfig.java`、`data/MaledictItemTags.java`、
-`data/MaledictItemModels.java`、`data/MaledictEntityLoot.java`、`data/MaledictLanguage.java`、
+`client/MaledictClientSetup.java`、`config/MaledictConfig.java`、`data/tags/MaledictItemTags.java`、
+`data/client/MaledictItemModels.java`、`data/loot/MaledictEntityLoot.java`、`data/client/MaledictLanguage.java`、
 `client/codex/MaledictCodexEntries.java`、`network/MaledictNetwork.java`、`Maledict.java`。
 
 ### 用户反馈修正（按主题归并，同一主题只留结论）

@@ -13,8 +13,9 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import org.brahypno.maledict.client.vicissitude.model.FirstVicissitudeBossModel;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.rig.VicissitudeRig;
 import org.brahypno.maledict.rig.VicissitudeRigData.Joint;
 import org.joml.Quaternionf;
@@ -69,7 +70,7 @@ final class FirstVicissitudeChestCrystalLayer
         stack.translate(-.5, -.5, -.5);
         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(
                 Block.byItem(MalumItems.BLOCK_OF_CTHONIC_GOLD.get()).defaultBlockState(),
-                stack, buffers, light, OverlayTexture.NO_OVERLAY);
+                stack, buffers, light, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, null);
         stack.popPose();
     }
 }

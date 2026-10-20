@@ -1,9 +1,7 @@
 package org.brahypno.maledict.common.rite;
 
 import com.sammy.malum.common.block.curiosities.totem.TotemBaseBlockEntity;
-import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import com.sammy.malum.registry.common.MalumSoundEvents;
-import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -12,20 +10,14 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.config.MaledictConfig;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Registers the encounter's four rites in Malum's rite table and performs what they create.

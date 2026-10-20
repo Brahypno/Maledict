@@ -3,9 +3,9 @@ package org.brahypno.maledict.client.item;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.projectile.AbstractHurtingProjectile;
 import net.minecraft.world.entity.projectile.Projectile;
-import org.brahypno.maledict.common.curio.HangmanFoolProjectiles;
+import org.brahypno.maledict.common.curio.hangman.HangmanFoolProjectiles;
 import org.brahypno.maledict.mixin.ProjectileAccess;
-import org.brahypno.maledict.network.ProjectileReflectionPacket;
+import org.brahypno.maledict.network.clientbound.ProjectileReflectionPacket;
 
 public final class HangmanReflectionClient {
     public static void accept(ProjectileReflectionPacket packet) {

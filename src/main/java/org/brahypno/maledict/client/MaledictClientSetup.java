@@ -34,7 +34,7 @@ import org.brahypno.maledict.client.vicissitude.render.VicissitudeScytheRenderer
 import org.brahypno.maledict.client.vicissitude.render.VicissitudeSpiritBoltRenderer;
 import org.brahypno.maledict.client.vicissitude.vfx.VicissitudeSummoningPostProcessor;
 import org.brahypno.maledict.client.vitals.DelayedVitalsOverlay;
-import org.brahypno.maledict.common.item.SpiritArrowItem;
+import org.brahypno.maledict.common.item.arrow.SpiritArrowItem;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
 import team.lodestar.lodestone.handlers.screenparticle.ParticleEmitterHandler;
@@ -43,7 +43,7 @@ import team.lodestar.lodestone.systems.postprocess.PostProcessHandler;
 import top.theillusivec4.curios.api.client.CuriosRendererRegistry;
 
 /** 客户端 MOD 总线注册入口：实体与图层、饰品、HUD、物品颜色与粒子、后处理器。 */
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class MaledictClientSetup {
 
     @SubscribeEvent

@@ -1,6 +1,5 @@
 package org.brahypno.maledict.registry;
 
-import net.minecraft.core.Holder;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
@@ -11,7 +10,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import org.brahypno.maledict.Maledict;
 
-@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID)
 public final class MaledictAttributes {
     public static final DeferredRegister<Attribute> ATTRIBUTES =
             DeferredRegister.create(BuiltInRegistries.ATTRIBUTE, Maledict.MODID);

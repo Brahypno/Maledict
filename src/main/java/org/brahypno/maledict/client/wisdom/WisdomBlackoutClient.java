@@ -11,7 +11,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 
 /** 献祭完成时的短暂全黑；世界后处理结束后绘制，HUD 和菜单随后照常显示。 */
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class WisdomBlackoutClient {
     private static final BlackoutCountdown COUNTDOWN = new BlackoutCountdown();
 

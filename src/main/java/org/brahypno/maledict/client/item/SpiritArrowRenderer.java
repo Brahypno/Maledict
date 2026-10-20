@@ -9,9 +9,7 @@ import net.minecraft.client.renderer.entity.ArrowRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import org.brahypno.maledict.common.entity.SpiritArrowEntity;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
+import org.brahypno.maledict.common.entity.projectile.SpiritArrowEntity;
 import team.lodestar.lodestone.registry.client.LodestoneRenderTypes;
 import team.lodestar.lodestone.systems.rendering.VFXBuilders;
 

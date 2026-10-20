@@ -13,7 +13,7 @@ import net.neoforged.neoforge.event.entity.living.LivingHealEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.RuneOfMelancholiaItem;
+import org.brahypno.maledict.common.item.rune.RuneOfMelancholiaItem;
 import org.brahypno.maledict.network.MaledictNetwork;
 
 /**
@@ -24,7 +24,7 @@ import org.brahypno.maledict.network.MaledictNetwork;
  *
  * <p>符文只是开关（入队要戴着），池子本身不绑符文 —— 摘下来、被没收都照常结算，只有死亡才清。
  */
-@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID)
 public final class DelayedVitalsEvents {
 
     /** 低频校正间隔（tick）：客户端自己推演，服务端每 2 秒对一次表。 */

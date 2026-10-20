@@ -3,7 +3,7 @@ package org.brahypno.maledict.common.realm;
 import com.mojang.logging.LogUtils;
 import com.sammy.malum.registry.common.MalumAttachmentTypes;
 import com.sammy.malum.core.handlers.WeepingWellRejectionHandler;
-import org.brahypno.maledict.network.WellTravelPacket;
+import org.brahypno.maledict.network.clientbound.WellTravelPacket;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;

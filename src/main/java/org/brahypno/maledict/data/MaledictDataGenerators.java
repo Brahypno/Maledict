@@ -1,5 +1,16 @@
 package org.brahypno.maledict.data;
 
+import org.brahypno.maledict.data.worldgen.MaledictBiomeModifiers;
+import org.brahypno.maledict.data.tags.MaledictBiomeTags;
+import org.brahypno.maledict.data.loot.MaledictBlockLoot;
+import org.brahypno.maledict.data.client.MaledictBlockStates;
+import org.brahypno.maledict.data.tags.MaledictBlockTags;
+import org.brahypno.maledict.data.loot.MaledictEntityLoot;
+import org.brahypno.maledict.data.client.MaledictItemModels;
+import org.brahypno.maledict.data.tags.MaledictItemTags;
+import org.brahypno.maledict.data.client.MaledictLanguage;
+import org.brahypno.maledict.data.recipe.MaledictRecipes;
+import org.brahypno.maledict.data.worldgen.MaledictWorldgen;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.loot.LootTableProvider;
@@ -19,7 +30,7 @@ import org.brahypno.maledict.registry.MaledictItems;
 import java.util.List;
 import java.util.Set;
 
-@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID)
 public final class MaledictDataGenerators {
     @SubscribeEvent
     public static void gatherData(GatherDataEvent event) {

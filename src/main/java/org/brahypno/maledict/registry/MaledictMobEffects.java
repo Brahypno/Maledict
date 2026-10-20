@@ -1,30 +1,29 @@
 package org.brahypno.maledict.registry;
 
-import net.minecraft.core.Holder;
 import com.sammy.malum.registry.common.MalumAttributes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.neoforged.neoforge.registries.DeferredRegister;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.corruption.CorruptionRuneEvents;
-import org.brahypno.maledict.common.effect.AgeOfDarknessEffect;
-import org.brahypno.maledict.common.effect.AgeOfEnlightenmentEffect;
-import org.brahypno.maledict.common.effect.DecayEffect;
-import org.brahypno.maledict.common.effect.SacrificeEffect;
-import org.brahypno.maledict.common.effect.ThinningEffect;
+import org.brahypno.maledict.common.effect.*;
 
 public final class MaledictMobEffects {
     public static final DeferredRegister<MobEffect> MOB_EFFECTS =
             DeferredRegister.create(BuiltInRegistries.MOB_EFFECT, Maledict.MODID);
 
-    /** 启蒙之年：击杀时给佩戴者，效果是近战伤害翻倍 + 每级 1 点法杖暂存弹数。 */
+    /**
+     * 启蒙之年：击杀时给佩戴者，效果是近战伤害翻倍 + 每级 1 点法杖暂存弹数。
+     */
     public static final DeferredHolder<MobEffect, MobEffect> AGE_OF_ENLIGHTENMENT =
             MOB_EFFECTS.register("age_of_enlightenment", AgeOfEnlightenmentEffect::new);
 
-    /** 黑暗之年：击杀时给附近的一名敌人；每级 -20% 魔法抗性、灵魂护盾容量与稳固度。 */
+    /**
+     * 黑暗之年：击杀时给附近的一名敌人；每级 -20% 魔法抗性、灵魂护盾容量与稳固度。
+     */
     public static final DeferredHolder<MobEffect, MobEffect> AGE_OF_DARKNESS =
             MOB_EFFECTS.register("age_of_darkness", AgeOfDarknessEffect::new);
 
@@ -37,7 +36,9 @@ public final class MaledictMobEffects {
     public static final DeferredHolder<MobEffect, MobEffect> BLESSING_OF_LIFE =
             MOB_EFFECTS.register("blessing_of_life", () -> new MobEffect(MobEffectCategory.BENEFICIAL, BLESSING_OF_LIFE_COLOR) {});
 
-    /** 衰朽之息：等级 I 时每两秒把身边敌对之物磨掉半颗心，且永远不会因此送命。 */
+    /**
+     * 衰朽之息：等级 I 时每两秒把身边敌对之物磨掉半颗心，且永远不会因此送命。
+     */
     public static final DeferredHolder<MobEffect, MobEffect> DECAY =
             MOB_EFFECTS.register("decay", DecayEffect::new);
 

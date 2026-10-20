@@ -3,7 +3,7 @@ package org.brahypno.maledict.rig;
 import org.junit.jupiter.api.Test;
 import org.brahypno.maledict.rig.VicissitudeRig.Action;
 import org.brahypno.maledict.rig.VicissitudeRigData.Joint;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

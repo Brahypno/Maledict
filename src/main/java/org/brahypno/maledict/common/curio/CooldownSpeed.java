@@ -4,7 +4,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemCooldowns;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
-import org.brahypno.maledict.common.item.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.curio.AgeOfEnlightenmentItem;
 
 import java.lang.reflect.Field;
 import java.util.Map;

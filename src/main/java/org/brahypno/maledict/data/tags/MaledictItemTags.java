@@ -1,0 +1,94 @@
+package org.brahypno.maledict.data.tags;
+
+import com.sammy.malum.registry.common.MalumTags;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.data.PackOutput;
+import net.minecraft.data.tags.ItemTagsProvider;
+import net.minecraft.data.tags.TagsProvider;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
+import org.brahypno.changelib.equipment.EquipmentProtectionTags;
+import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.MaledictTags;
+import org.brahypno.maledict.registry.MaledictItems;
+
+import java.util.concurrent.CompletableFuture;
+
+public final class MaledictItemTags extends ItemTagsProvider {
+
+    private static final TagKey<Item> GOETY_GRAVE_GLOVE =
+            ItemTags.create(ResourceLocation.fromNamespaceAndPath("goety", "grave_glove_boost"));
+
+    private static final TagKey<Item> L2_NO_SEAL =
+            ItemTags.create(ResourceLocation.fromNamespaceAndPath("l2hostility", "no_seal"));
+
+    private static final TagKey<Item> CURIOS_CHARM =
+            ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "charm"));
+    private static final TagKey<Item> CURIOS_DELUSION =
+            ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "delusion"));
+
+    /**
+     * Curios 的符文槽；同名 tag 与 Malum 自带的合并，不会被我们顶掉。
+     */
+    private static final TagKey<Item> CURIOS_RUNE =
+            ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "rune"));
+
+    public MaledictItemTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagsProvider.TagLookup<Block>> blockTags, ExistingFileHelper existingFiles) {
+        super(output, lookupProvider, blockTags, Maledict.MODID, existingFiles);
+    }
+
+    @Override
+    protected void addTags(HolderLookup.Provider provider) {
+        tag(ItemTags.AXES).add(MaledictItems.LOVER_AXE.get());
+        tag(ItemTags.ARROWS)
+                .add(MaledictItems.SACRED_SPIRIT_ARROW.get())
+                .add(MaledictItems.WICKED_SPIRIT_ARROW.get())
+                .add(MaledictItems.ARCANE_SPIRIT_ARROW.get())
+                .add(MaledictItems.ELDRITCH_SPIRIT_ARROW.get())
+                .add(MaledictItems.AERIAL_SPIRIT_ARROW.get())
+                .add(MaledictItems.AQUEOUS_SPIRIT_ARROW.get())
+                .add(MaledictItems.EARTHEN_SPIRIT_ARROW.get())
+                .add(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
+        tag(ItemTags.BOW_ENCHANTABLE).add(MaledictItems.REMEMBRANCE_BOW.get(), MaledictItems.ELEGY_BOW.get());
+        tag(MalumTags.ItemTags.SCYTHES_COMMON).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(MalumTags.ItemTags.SCYTHES)
+                .add(MaledictItems.INCURSUS_BLADE.get())
+                .addOptionalTag(GOETY_GRAVE_GLOVE)
+                .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "death_scythe"))
+                .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "dark_metal_scythe"))
+                .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "dark_scythe"));
+        tag(MalumTags.ItemTags.SOUL_SHATTER_CAPABLE_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(MalumTags.ItemTags.MAGIC_CAPABLE_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(MalumTags.ItemTags.HIDDEN_UNTIL_VOID).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(MalumTags.ItemTags.HIDDEN_UNTIL_VOID).add(MaledictItems.ELEGY_BOW.get());
+        tag(MalumTags.ItemTags.HIDDEN_UNTIL_VOID).add(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
+        tag(GOETY_GRAVE_GLOVE).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(L2_NO_SEAL)
+                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
+                     MaledictItems.HANGMAN_FOOL.get(), MaledictItems.LOVER_AXE.get());
+        tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+        tag(CURIOS_DELUSION).add(MaledictItems.HANGMAN_FOOL.get());
+        tag(CURIOS_RUNE).add(MaledictItems.RUNE_OF_SATIATION.get(),
+                             MaledictItems.RUNE_OF_DECAY.get(),
+                             MaledictItems.RUNE_OF_THE_PACK.get(),
+                             MaledictItems.RUNE_OF_RIPENING.get(),
+                             MaledictItems.RUNE_OF_STAGNANT_EVOLUTION.get(),
+                             MaledictItems.RUNE_OF_ROTTEN_BONE.get(),
+                             MaledictItems.RUNE_OF_MELANCHOLIA.get(),
+                             MaledictItems.RUNE_OF_BLISS.get(),
+                             MaledictItems.RUNE_OF_THE_FALLEN.get());
+        tag(MaledictTags.VICISSITUDE_CONFISCATION_IMMUNE)
+                .addOptional(ResourceLocation.fromNamespaceAndPath("sophisticatedbackpacks", "backpack"));
+        tag(EquipmentProtectionTags.MAINHAND)
+                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
+        tag(EquipmentProtectionTags.OFFHAND)
+                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
+        tag(EquipmentProtectionTags.CURIOS)
+                .add(MaledictItems.HANGMAN_FOOL.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+
+    }
+}

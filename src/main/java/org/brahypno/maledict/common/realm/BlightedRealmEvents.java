@@ -18,7 +18,7 @@ import org.brahypno.maledict.Maledict;
 
 import java.util.Set;
 
-@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID)
 public final class BlightedRealmEvents {
     // These plains animals all use Animal.checkAnimalSpawnRules; other species keep their own rules.
     private static final Set<EntityType<?>> FARM_ANIMALS = Set.of(EntityType.COW, EntityType.SHEEP,

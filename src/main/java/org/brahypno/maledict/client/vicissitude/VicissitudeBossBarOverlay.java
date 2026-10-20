@@ -12,13 +12,12 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.entity.VicissitudeBossEvent;
-import org.brahypno.maledict.network.BossBarStylePacket;
+import org.brahypno.maledict.common.entity.vicissitude.VicissitudeBossEvent;
+import org.brahypno.maledict.network.clientbound.BossBarStylePacket;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 /**
  * 无常的自定义血条。
@@ -36,7 +35,7 @@ import javax.annotation.Nullable;
  * <p>一阶段不绘制底条和血量填充，覆羽间的负空间不会泄露血量。
  * 二阶段按原有进度绘制填充，中央图标和两端护甲盖在血槽之上。
  */
-@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME,
+@EventBusSubscriber(modid = Maledict.MODID,
         value = Dist.CLIENT)
 public final class VicissitudeBossBarOverlay {
 

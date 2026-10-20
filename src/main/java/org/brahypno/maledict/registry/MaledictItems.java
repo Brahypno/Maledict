@@ -1,26 +1,28 @@
 package org.brahypno.maledict.registry;
 
-import net.minecraft.core.Holder;
 import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Rarity;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.item.*;
 import net.neoforged.neoforge.common.DeferredSpawnEggItem;
-import net.neoforged.neoforge.registries.DeferredRegister;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossDifficulty;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity.BossSpawnPhase;
-import org.brahypno.maledict.common.item.*;
-import org.jetbrains.annotations.Nullable;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossSpawnPhase;
+import org.brahypno.maledict.common.item.VicissitudeSpawnEggItem;
+import org.brahypno.maledict.common.item.arrow.SpiritArrowItem;
+import org.brahypno.maledict.common.item.arrow.SpiritArrowType;
+import org.brahypno.maledict.common.item.curio.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.curio.CurioReturnTokenItem;
+import org.brahypno.maledict.common.item.curio.HangmanFoolItem;
+import org.brahypno.maledict.common.item.rune.*;
+import org.brahypno.maledict.common.item.weapon.axe.LoverAxeItem;
+import org.brahypno.maledict.common.item.weapon.bow.RemembranceBowItem;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
 import team.lodestar.lodestone.registry.common.LodestoneAttributes;
 import team.lodestar.lodestone.systems.multiblock.MultiBlockItem;
 
@@ -30,11 +32,15 @@ public final class MaledictItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, Maledict.MODID);
 
     public static final DeferredHolder<Item, Item> TAINTED_MALIGNANT_LEAD_ORE = ITEMS.register("tainted_malignant_lead_ore",
-            () -> new BlockItem(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), new Item.Properties()));
+                                                                                               () -> new BlockItem(
+                                                                                                       MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(),
+                                                                                                       new Item.Properties()));
     public static final DeferredHolder<Item, Item> TWISTED_MALIGNANT_LEAD_ORE = ITEMS.register("twisted_malignant_lead_ore",
-            () -> new BlockItem(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(), new Item.Properties()));
+                                                                                               () -> new BlockItem(
+                                                                                                       MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(),
+                                                                                                       new Item.Properties()));
     public static final DeferredHolder<Item, Item> MALIGNANT_LEAD_FRAGMENT = ITEMS.register("malignant_lead_fragment",
-            () -> new Item(new Item.Properties()));
+                                                                                            () -> new Item(new Item.Properties()));
 
     public static final DeferredHolder<Item, Item> RAVEN_SPAWN_EGG = ITEMS.register("raven_spawn_egg", () ->
             new DeferredSpawnEggItem(MaledictEntities.RAVEN, 0x151820, 0xB80F22, new Item.Properties()));
@@ -74,41 +80,41 @@ public final class MaledictItems {
     public static final DeferredHolder<Item, Item> CURIO_RETURN_TOKEN = ITEMS.register("curio_return_token", CurioReturnTokenItem::new);
 
     public static final DeferredHolder<Item, Item> MALIGNANT_PEWTER_TABLET = ITEMS.register("malignant_pewter_tablet",
-                                                                                      () -> new Item(new Item.Properties()));
+                                                                                            () -> new Item(new Item.Properties()));
 
     /**
      * Curio rune (rune slot) that keeps the Blessing of Life on its wearer.
      */
     public static final DeferredHolder<Item, Item> RUNE_OF_SATIATION = ITEMS.register("rune_of_satiation",
-                                                                                () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
-                                                                                                        MalumSpiritTypes.SACRED_SPIRIT,
-                                                                                                        MaledictMobEffects.BLESSING_OF_LIFE,
-                                                                                                        "maledict.blessing_of_life"));
+                                                                                      () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
+                                                                                                              MalumSpiritTypes.SACRED_SPIRIT,
+                                                                                                              MaledictMobEffects.BLESSING_OF_LIFE,
+                                                                                                              "maledict.blessing_of_life"));
 
     /**
      * Curio rune (rune slot): level I pulse that grinds nearby hostiles down but never kills them.
      */
     public static final DeferredHolder<Item, Item> RUNE_OF_DECAY = ITEMS.register("rune_of_decay",
-                                                                            () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
-                                                                                                    MalumSpiritTypes.WICKED_SPIRIT,
-                                                                                                    MaledictMobEffects.DECAY, "maledict.decay"));
+                                                                                  () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
+                                                                                                          MalumSpiritTypes.WICKED_SPIRIT,
+                                                                                                          MaledictMobEffects.DECAY, "maledict.decay"));
 
     /**
      * Curio rune (rune slot) buffing the wearer's own companions; it hands the effects out itself
      * instead of going through a mob effect, see {@link PackRuneItem}.
      */
     public static final DeferredHolder<Item, Item> RUNE_OF_THE_PACK = ITEMS.register("rune_of_the_pack",
-                                                                               () -> new PackRuneItem(new Item.Properties().stacksTo(1),
-                                                                                                      MalumSpiritTypes.WICKED_SPIRIT,
-                                                                                                      "maledict.pack_boon"));
+                                                                                     () -> new PackRuneItem(new Item.Properties().stacksTo(1),
+                                                                                                            MalumSpiritTypes.WICKED_SPIRIT,
+                                                                                                            "maledict.pack_boon"));
 
     /**
      * Curio rune (rune slot) raising every share of experience the wearer earns by a quarter.
      */
     public static final DeferredHolder<Item, Item> RUNE_OF_RIPENING = ITEMS.register("rune_of_ripening",
-                                                                               () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
-                                                                                                       MalumSpiritTypes.SACRED_SPIRIT,
-                                                                                                       MaledictMobEffects.RIPENING, "maledict.ripening"));
+                                                                                     () -> new PulseRuneItem(new Item.Properties().stacksTo(1),
+                                                                                                             MalumSpiritTypes.SACRED_SPIRIT,
+                                                                                                             MaledictMobEffects.RIPENING, "maledict.ripening"));
 
     /**
      * Curio rune (rune slot) carrying an attribute modifier instead of a mob effect, see

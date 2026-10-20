@@ -1,6 +1,5 @@
 package org.brahypno.maledict.registry;
 
-import net.minecraft.core.Holder;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -8,21 +7,20 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
-import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.entity.FirstVicissitudeBossEntity;
-import org.brahypno.maledict.common.entity.RavenEntity;
-import org.brahypno.maledict.common.entity.RavenFeatherEntity;
-import org.brahypno.maledict.common.entity.SpiritArrowEntity;
-import org.brahypno.maledict.common.entity.HangmanTrapEntity;
-import org.brahypno.maledict.common.entity.VicissitudeLightOrbEntity;
-import org.brahypno.maledict.common.entity.VicissitudeScytheProjectileEntity;
-import org.brahypno.maledict.common.entity.VicissitudeSpiritBoltEntity;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.entity.raven.RavenEntity;
+import org.brahypno.maledict.common.entity.raven.RavenFeatherEntity;
+import org.brahypno.maledict.common.entity.projectile.SpiritArrowEntity;
+import org.brahypno.maledict.common.entity.projectile.HangmanTrapEntity;
+import org.brahypno.maledict.common.entity.vicissitude.VicissitudeLightOrbEntity;
+import org.brahypno.maledict.common.entity.vicissitude.VicissitudeScytheProjectileEntity;
+import org.brahypno.maledict.common.entity.vicissitude.VicissitudeSpiritBoltEntity;
 
-@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Maledict.MODID)
 public final class MaledictEntities {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
             DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, Maledict.MODID);

@@ -11,7 +11,7 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.registry.MaledictAttributes;
 
 /** Descent scales post-mitigation damage; attribute sources own its value and lifetime. */
-@EventBusSubscriber(modid = Maledict.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID)
 public final class DescentDamageEvents {
     private DescentDamageEvents() {}
 

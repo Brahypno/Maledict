@@ -11,7 +11,7 @@ import org.brahypno.maledict.registry.MaledictItems;
 /**
  * Item-specific tooltip colors on the client Forge bus.
  */
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class MaledictTooltipColors {
     /**
      * 殷红色，沿用原版提示框的透明度。

@@ -10,7 +10,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.vitals.DelayedVitals;
 import org.brahypno.maledict.common.vitals.DelayedVitalsPool;
-import org.brahypno.maledict.network.DelayedVitalsPacket;
+import org.brahypno.maledict.network.clientbound.DelayedVitalsPacket;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * {@code LocalPlayer#hurtTo} 把「血量同步值变低」一律当成挨打，顺手点亮受伤动画。见
  * {@link #suppressDrainHurtReaction}。
  */
-@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class DelayedVitalsClient {
 
     /** 上一帧的血量，用来认出「这一下掉血是我们池子漏的」。 */
