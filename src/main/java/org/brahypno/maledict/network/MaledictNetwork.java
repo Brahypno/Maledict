@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class MaledictNetwork {
-    private static final String PROTOCOL = "1";
+    private static final String PROTOCOL = "2";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "main"),
             () -> PROTOCOL,
@@ -62,10 +62,18 @@ public final class MaledictNetwork {
         CHANNEL.registerMessage(6, WisdomBlackoutPacket.class,
                 WisdomBlackoutPacket::encode, WisdomBlackoutPacket::decode,
                 WisdomBlackoutPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(7, IncursusSlashPacket.class,
+                IncursusSlashPacket::encode, IncursusSlashPacket::decode,
+                IncursusSlashPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendRadialAttack() {
         CHANNEL.sendToServer(new RadialAttackPacket());
+    }
+
+    public static void sendIncursusSlash(ServerPlayer player, float scale) {
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
+                new IncursusSlashPacket(player.position().add(0, player.getBbHeight() * 0.5, 0), scale));
     }
 
     public static void sendProjectileReflection(net.minecraft.world.entity.projectile.Projectile projectile) {
