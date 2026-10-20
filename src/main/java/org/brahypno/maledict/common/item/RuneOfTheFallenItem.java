@@ -1,6 +1,6 @@
 package org.brahypno.maledict.common.item;
 
-import static com.sammy.malum.core.helpers.ComponentHelper.*;
+import static org.brahypno.maledict.common.item.EffectTooltipComponents.*;
 import net.minecraft.core.Holder;
 import com.sammy.malum.common.item.curiosities.curios.runes.AbstractRuneCurioItem;
 import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
