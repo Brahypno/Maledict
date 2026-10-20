@@ -2,7 +2,6 @@ package org.brahypno.maledict.common.rite;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.advancements.AdvancementHolder;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,7 +15,7 @@ import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.effect.SacrificeSchedule;
+import org.brahypno.maledict.common.effect.SacrificeEffect;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 import org.jetbrains.annotations.Nullable;
@@ -33,22 +32,22 @@ import java.util.UUID;
  * 仪式由这里发放成就；额外栏位在获得成就时发放，包括指令授予。
  * 无 display 的独立父进度负责隐藏整个页签；仅靠 hidden 标记无法在完成后继续隐藏。
  *
- * <h2>发放条件：印记得是仪式按的，而且真的自然到期</h2>
+ * <h2>发放条件：仪式来源、完整伤害、自然到期</h2>
  * 只认「{@code maledict:sacrifice} 到期」是不够的：{@code /effect give}、别的模组的随机效果、清洗与
- * 转移效果之类的机制都能凭空塞一枚进来，一 tick 后到期就白送成就与两枚栏位。所以这里要两样东西同时成立：
+ * 转移效果之类的机制都能凭空塞一枚进来，所以这里要三项条件同时成立：
  *
  * <ol>
  *     <li><b>凭据</b>：仪式真的把印记按上去时（{@link #markOffered}，只在 {@code addEffect} 返回 true 后
- *     调用）在玩家的 ForgeData 里记一个<b>期限</b>——按下那一刻的世界时间 + 九天九夜。</li>
+ *     调用）在玩家的 ForgeData 里记下仪式来源，并以实际效果时长开始记录伤害。</li>
+ *     <li><b>完整伤害</b>：由 {@link SacrificeEffect} 按效果进度结算，总计承受 1080 点；不再要求
+ *     服务器时间走满九天九夜。</li>
  *     <li><b>自然到期</b>：{@code MobEffectEvent.Expired} 只在 {@code LivingEntity#tickEffects} 里
  *     {@code MobEffectInstance#tick()} 返回 false 的那一步发；死亡重生根本不复制 {@code activeEffects}，
  *     牛奶与 {@code /effect clear} 走的是 {@code Remove}。</li>
  * </ol>
  *
- * <p>于是凭空来的效果到期时没有凭据、有凭据但期限没到（比如被人清掉后又被塞了个短效果）也都不发；
- * 凭据会在三处收走：自然到期发完成就（{@link #onEffectExpired}）、被非自然移除（{@link #onEffectRemoved}）、
- * 以及死亡（{@link #onDeath}）。世界时间只会前进，被延长或重登都不会让期限判错，故正常走完九天九夜
- * 永远不会被这条期限挡下。
+ * <p>凭空来的效果没有仪式凭据，不发成就。自然到期、非自然移除和死亡都会清除凭据与伤害记录；
+ * 初始时长缩短或倒计时加速可以提前完成，但不能省略对应的伤害。
  *
  * <p>栏位走 Curios 的永久槽位修饰符：它落在 {@code CurioStacksHandler} 的 persistentModifiers 上，尺寸由
  * {@code baseSize + 修饰符} 重算并存进 NBT，所以死亡重生的 {@code readTag} 与重登都带得回来；固定 UUID
@@ -70,8 +69,7 @@ public final class WisdomSacrifice {
     public static final String DELUSION_SLOT = "delusion";
 
     /**
-     * 「这枚印记是仪式按的」凭据，值是期限（按下那一刻的世界时间 + {@link SacrificeSchedule#DURATION_TICKS}）。
-     * 落点是 Forge 的 ForgeData，随玩家 .dat 一起落盘。
+     * 「这枚印记是仪式按的」凭据，随玩家 .dat 一起落盘；不再存储服务器时间期限。
      */
     private static final String OFFERED_KEY = "maledict:sacrifice_offered";
 
@@ -91,30 +89,41 @@ public final class WisdomSacrifice {
 
     /** 仪式把印记按上去之后记凭据；调用方负责只在效果真的加上去之后调用。 */
     public static void markOffered(ServerPlayer player) {
-        long deadline = player.level().getGameTime() + SacrificeSchedule.DURATION_TICKS;
-        player.getPersistentData().putLong(OFFERED_KEY, deadline);
+        MobEffectInstance effect = player.getEffect(MaledictMobEffects.SACRIFICE);
+        if (effect == null) {
+            return;
+        }
+        player.getPersistentData().putBoolean(OFFERED_KEY, true);
+        SacrificeEffect.start(player, effect.getDuration());
     }
 
-    /** 自然到期：仪式按过、且期限已到，才算熬完九天九夜。 */
+    /** 自然到期：补齐尾段伤害后，仍然活着且承受满额才算完成。 */
     @SubscribeEvent
     public static void onEffectExpired(MobEffectEvent.Expired event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !isSacrifice(event.getEffectInstance())) {
+        if (!isSacrifice(event.getEffectInstance())) {
             return;
         }
-        if (!isOfferedPastDeadline(player)) {
-            return;
+        boolean paidInFull = SacrificeEffect.finish(event.getEntity());
+        if (event.getEntity() instanceof ServerPlayer player) {
+            boolean offered = player.getPersistentData().contains(OFFERED_KEY);
+            clearOffering(player);
+            if (offered && paidInFull) {
+                award(player);
+            }
         }
-        clearOffering(player);
-        award(player);
+        SacrificeEffect.clear(event.getEntity());
     }
 
     /** 不是自然到期，而是被移除了（牛奶、{@code /effect clear}、别的模组清洗）：印记作废。 */
     @SubscribeEvent
     public static void onEffectRemoved(MobEffectEvent.Remove event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !isSacrifice(event.getEffectInstance())) {
+        if (!isSacrifice(event.getEffectInstance())) {
             return;
         }
-        clearOffering(player);
+        if (event.getEntity() instanceof ServerPlayer player) {
+            clearOffering(player);
+        }
+        SacrificeEffect.clear(event.getEntity());
     }
 
     /** 死了就是没扛过去（重生不会复制 activeEffects，这里把凭据也一并清掉）。 */
@@ -123,6 +132,7 @@ public final class WisdomSacrifice {
         if (event.getEntity() instanceof ServerPlayer player) {
             clearOffering(player);
         }
+        SacrificeEffect.clear(event.getEntity());
     }
 
     /** 拿到成就的人不再被仪式选中；仪式每次发动都要问一遍。 */
@@ -174,18 +184,8 @@ public final class WisdomSacrifice {
         return instance != null && instance.getEffect() == MaledictMobEffects.SACRIFICE;
     }
 
-    /** 有凭据，且世界时间已经走过期限。 */
-    private static boolean isOfferedPastDeadline(ServerPlayer player) {
-        CompoundTag data = player.getPersistentData();
-        return data.contains(OFFERED_KEY)
-               && player.level().getGameTime() >= data.getLong(OFFERED_KEY);
-    }
-
     private static void clearOffering(ServerPlayer player) {
-        CompoundTag data = player.getPersistentData();
-        if (data.contains(OFFERED_KEY)) {
-            data.remove(OFFERED_KEY);
-        }
+        player.getPersistentData().remove(OFFERED_KEY);
     }
 
     @Nullable

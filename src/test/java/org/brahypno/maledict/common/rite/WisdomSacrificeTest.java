@@ -8,9 +8,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.brahypno.maledict.common.effect.SacrificeSchedule;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 import org.brahypno.maledict.registry.MaledictItems;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -22,6 +27,7 @@ import top.theillusivec4.curios.common.inventory.CurioStacksHandler;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
@@ -65,14 +71,16 @@ public final class WisdomSacrificeTest {
 
     @GameTest(template = "test_empty")
     public static void naturalExpiryRemovesSacrificeBeforeAddingSixMinuteSightLoss(GameTestHelper helper) {
-        ServerPlayer player = createPlayer(helper);
+        ServerPlayer player = createResilientPlayer(helper);
+        float before = healthAndAbsorption(player);
         player.addEffect(new MobEffectInstance(MaledictMobEffects.SACRIFICE, 1));
         WisdomSacrifice.markOffered(player);
-        // Reproduce the final tick of an offering whose full ritual deadline has been reached.
-        player.getPersistentData().putLong("maledict:sacrifice_offered", player.level().getGameTime());
         player.doTick();
 
-        helper.assertTrue(WisdomSacrifice.hasEarned(player), "Natural expiry must award the advancement");
+        helper.assertTrue(before - healthAndAbsorption(player) == SacrificeSchedule.TOTAL_DAMAGE,
+                          "Even a one-tick offering must charge all 1080 damage");
+        helper.assertTrue(WisdomSacrifice.hasEarned(player),
+                          "Full damage and natural expiry must award without nine days of server time");
         helper.assertTrue(!player.hasEffect(MaledictMobEffects.SACRIFICE),
                           "Expired sacrifice must leave the effect map without interrupting its iterator");
         helper.assertTrue(!player.hasEffect(MobEffects.BLINDNESS) && !player.hasEffect(MobEffects.DARKNESS),
@@ -87,6 +95,84 @@ public final class WisdomSacrificeTest {
                     .orElseThrow(() -> new IllegalStateException("Missing real Curios capability")), 2, 1);
             helper.succeed();
         });
+    }
+
+    @GameTest(template = "test_empty")
+    public static void halfDurationDoublesFirstHitAndRemovalInvalidatesTheOffering(GameTestHelper helper) {
+        ServerPlayer player = createResilientPlayer(helper);
+        float before = healthAndAbsorption(player);
+        player.addEffect(new MobEffectInstance(MaledictMobEffects.SACRIFICE,
+                SacrificeSchedule.DURATION_TICKS / 2));
+        WisdomSacrifice.markOffered(player);
+        player.doTick();
+        helper.assertTrue(before - healthAndAbsorption(player) == 12.0F,
+                          "Half duration must double the normal six-point first hit");
+        player.removeEffect(MaledictMobEffects.SACRIFICE);
+        helper.assertTrue(!player.getPersistentData().contains("maledict:sacrifice_offered")
+                          && !player.getPersistentData().contains("maledict:sacrifice_damage"),
+                          "Removal must discard both provenance and damage progress");
+        player.addEffect(new MobEffectInstance(MaledictMobEffects.SACRIFICE, 1));
+        player.doTick();
+        helper.assertTrue(!WisdomSacrifice.hasEarned(player),
+                          "A replacement effect without a rite must not inherit eligibility");
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty")
+    public static void acceleratedExpirySettlesAllSkippedDamage(GameTestHelper helper) {
+        ServerPlayer player = createResilientPlayer(helper);
+        float before = healthAndAbsorption(player);
+        player.addEffect(new MobEffectInstance(MaledictMobEffects.SACRIFICE,
+                SacrificeSchedule.DURATION_TICKS));
+        WisdomSacrifice.markOffered(player);
+        player.doTick();
+        helper.assertTrue(before - healthAndAbsorption(player) == 6.0F, "Normal first hit must remain six");
+        // Simulate a foreign countdown modifier jumping straight to the last tick.
+        player.getActiveEffectsMap().put(MaledictMobEffects.SACRIFICE,
+                new MobEffectInstance(MaledictMobEffects.SACRIFICE, 1));
+        player.doTick();
+        helper.assertTrue(before - healthAndAbsorption(player) == SacrificeSchedule.TOTAL_DAMAGE,
+                          "Expiry must settle skipped minutes without losing or duplicating damage");
+        helper.assertTrue(WisdomSacrifice.hasEarned(player), "Accelerated full payment must complete the rite");
+        helper.assertTrue(!player.getPersistentData().contains("maledict:sacrifice_damage"),
+                          "Natural expiry must clear the finished ledger");
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty")
+    public static void cancelledDamageCannotCompleteTheRite(GameTestHelper helper) {
+        ServerPlayer player = createResilientPlayer(helper);
+        float before = healthAndAbsorption(player);
+        Consumer<LivingIncomingDamageEvent> cancel = event -> {
+            if (event.getEntity() == player) {
+                event.setCanceled(true);
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, false, LivingIncomingDamageEvent.class, cancel);
+        try {
+            player.addEffect(new MobEffectInstance(MaledictMobEffects.SACRIFICE, 1));
+            WisdomSacrifice.markOffered(player);
+            player.doTick();
+        } finally {
+            NeoForge.EVENT_BUS.unregister(cancel);
+        }
+        helper.assertTrue(healthAndAbsorption(player) == before, "Cancelled damage must not be charged");
+        helper.assertTrue(!WisdomSacrifice.hasEarned(player), "Expiry without paid damage must not award");
+        helper.succeed();
+    }
+
+    @GameTest(template = "test_empty")
+    public static void dyingDuringCompressedDamageDoesNotAward(GameTestHelper helper) {
+        ServerPlayer player = createPlayer(helper);
+        player.addEffect(new MobEffectInstance(MaledictMobEffects.SACRIFICE, 1));
+        WisdomSacrifice.markOffered(player);
+        player.doTick();
+        helper.assertTrue(!player.isAlive(), "An ordinary player must not survive 1080 damage");
+        helper.assertTrue(!WisdomSacrifice.hasEarned(player), "A lethal final payment must not award");
+        helper.assertTrue(!player.getPersistentData().contains("maledict:sacrifice_offered")
+                          && !player.getPersistentData().contains("maledict:sacrifice_damage"),
+                          "Death must clear provenance and the damage ledger");
+        helper.succeed();
     }
 
     /** 已确认：有槽即免疫，不受渲染开关、饰品和夜视影响；旧黑暗也必须清掉。 */
@@ -113,11 +199,28 @@ public final class WisdomSacrificeTest {
         helper.succeed();
     }
 
+    private static ServerPlayer createResilientPlayer(GameTestHelper helper) {
+        ServerPlayer player = createPlayer(helper);
+        player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1024.0D);
+        player.setHealth(player.getMaxHealth());
+        player.getAttribute(Attributes.MAX_ABSORPTION).setBaseValue(1000.0D);
+        player.setAbsorptionAmount(1000.0F);
+        return player;
+    }
+
+    private static float healthAndAbsorption(ServerPlayer player) {
+        return player.getHealth() + player.getAbsorptionAmount();
+    }
+
     private static ServerPlayer createPlayer(GameTestHelper helper) {
         GameProfile profile = new GameProfile(UUID.randomUUID(), "WisdomSlotTest");
         // Forge deliberately refuses to award advancements to FakePlayer.
         ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), profile, net.minecraft.server.level.ClientInformation.createDefault());
         player.connection = new FakePlayer(helper.getLevel(), profile).connection;
+        // Malum 1.21 voodoo respects the player's initial 60-tick spawn protection.
+        for (int tick = 0; tick < 60; tick++) {
+            player.tick();
+        }
         ICuriosItemHandler inventory = CuriosApi.getCuriosInventory(player)
                 .orElseThrow(() -> new IllegalStateException("Missing real Curios capability"));
         Map<String, ICurioStacksHandler> slots = new LinkedHashMap<>();

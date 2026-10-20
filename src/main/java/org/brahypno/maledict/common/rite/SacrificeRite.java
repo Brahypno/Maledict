@@ -49,7 +49,8 @@ public final class SacrificeRite {
      *
      * <p>已经带着印记的人再被点一次，印记会刷回完整的九天九夜——原版 {@code MobEffectInstance#update}
      * 对同级效果取较长的那个时长，而我们给的永远是最长的 {@link SacrificeSchedule#DURATION_TICKS}。这是
-     * 有意的：印记从「被按上」的那一刻起算九天，仪式不是把进度往后推，而是重新盖一个，凭据也一并刷新。
+     * 有意的：仪式重新盖一个印记，凭据与 1080 点伤害预算也一并刷新。若其它机制缩短实际时长，
+     * 伤害按实际时长分摊，无需等待服务器时间走满九天。
      *
      * <p>{@code addEffect} 返回 false（被别的模组用 {@code MobEffectEvent.Applicable} 挡下、或目标免疫）
      * 时不留凭据：效果根本没加上去，谈不上「带着它熬九天」。
