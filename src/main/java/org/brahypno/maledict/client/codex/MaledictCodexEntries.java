@@ -58,7 +58,7 @@ public final class MaledictCodexEntries {
      * 牺牲仪式的键名：条目用 {@code maledict.corrupt_sacrifice_rite}——{@code corrupt} 是 Malum 的灵魂木
      * 惯例，配方页与地图图标靠它判材质；页面正文用短名 {@code corrupt_sacrifice_rite}，首页与仪式页共用，
      * {@code .2} 给最后一页。**只动键名，键值（各语言文案）一个字不改。**
-     * 仪式只在灵魂木上兑现（符文木那一半是空效果，见 {@code SacrificeRiteType}）。
+     * 仪式仅限灵魂木图腾。
      */
     private static final String SACRIFICE_RITE_ENTRY = "maledict.corrupt_sacrifice_rite";
     private static final String SACRIFICE_RITE_PAGE = "corrupt_sacrifice_rite";
@@ -260,7 +260,7 @@ public final class MaledictCodexEntries {
      * 牺牲仪式：**虚空之书**里「灵魂通史」(0,0) 同一列往下第十格那一页。图标一律用仪式图标
      * （{@link RiteEntryObject} 画在地图节点上、{@code SpiritRiteTextPage} 画在书页中央），
      * 与 Malum 自己的仪式条目一致——本模组的 {@code SacrificeRiteType#getIcon()} 借的是狱火脉动图。
-     * 符文木那一半什么都不做（见 {@code SacrificeRiteType}），所以配方页钉死成灵魂木那一套辉光；
+     * 仪式仅限灵魂木，配方页使用对应的辉光；
      * 文案全部在语言文件里，键名见 {@link #SACRIFICE_RITE_ENTRY}。
      *
      * <p>这里有意不挂 {@code afterUmbralCrystal()}：本模组其它虚空条目都挂了，但这一条不加门槛，

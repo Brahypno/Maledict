@@ -20,14 +20,10 @@ public final class MaledictRites {
     public static final DeferredRiteTypes RITES = DeferredRiteTypes.create(Maledict.MODID);
     private static final Map<BossDifficulty, RiteHolder<VicissitudeRiteType>> SUMMONING = new EnumMap<>(BossDifficulty.class);
 
-    private static final com.sammy.malum.core.systems.registry.rite.RiteEffectHolder<OneShotRiteEffect> SACRIFICE_NATURAL =
-            EFFECTS.register("sacrifice_rite_natural", () -> new OneShotRiteEffect((totem, level) -> {}));
     private static final com.sammy.malum.core.systems.registry.rite.RiteEffectHolder<OneShotRiteEffect> SACRIFICE_CORRUPTED =
             EFFECTS.register("sacrifice_rite_corrupted", () -> new OneShotRiteEffect(SacrificeRite::offer));
-    public static final RiteHolder<SacrificeRiteType> SACRIFICE = RITES.register("sacrifice_rite", () ->
-            new SacrificeRiteType(SACRIFICE_NATURAL, false, sacrificeSpirits()));
     public static final RiteHolder<SacrificeRiteType> CORRUPTED_SACRIFICE = RITES.register("corrupted_sacrifice_rite", () ->
-            new SacrificeRiteType(SACRIFICE_CORRUPTED, true, sacrificeSpirits()));
+            new SacrificeRiteType(SACRIFICE_CORRUPTED, sacrificeSpirits()));
 
     static {
         registerSummoning("vicissitude_rite", BossDifficulty.SIMPLE, 3, 0);

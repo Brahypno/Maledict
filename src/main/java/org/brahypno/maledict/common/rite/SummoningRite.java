@@ -11,47 +11,19 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.registries.BuiltInRegistries;
-import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.config.MaledictConfig;
-import org.slf4j.Logger;
-import com.mojang.logging.LogUtils;
 
 
 /**
- * Registers the encounter's four rites in Malum's rite table and performs what they create.
+ * Creates the configured encounters for the registered Vicissitude rites.
  */
 public final class SummoningRite {
-    private static final Logger LOGGER = LogUtils.getLogger();
     /** Never stack creations: one is already a boss encounter. */
     private static final double SUMMON_GUARD_RADIUS = 64.0D;
     /** Candidates for the spawn height above the totem base, tried in order. */
     private static final int[] SUMMON_HEIGHTS = {3, 4, 6, 2, 8};
-
-    /**
-     * One recipe per difficulty, cheapest first; poles are read bottom first, so a recipe is written
-     * as "eldritch spirits at the bottom, then arcane spirits above". Only the eight pole spirits may
-     * be used: {@code MalumLogBLock#createTotemPole} returns false outright for {@code UMBRAL_SPIRIT}.
-     */
-    private enum Recipe {
-        SIMPLE("vicissitude_rite", BossDifficulty.SIMPLE, 3, 0),
-        DIFFICULT("greater_vicissitude_rite", BossDifficulty.DIFFICULT, 4, 0),
-        COMPLETE("eldritch_vicissitude_rite", BossDifficulty.COMPLETE, 3, 1),
-        EXTREME("greater_eldritch_vicissitude_rite", BossDifficulty.EXTREME, 3, 2);
-
-        private final String identifier;
-        private final BossDifficulty difficulty;
-        private final int arcane;
-        private final int eldritch;
-
-        Recipe(String identifier, BossDifficulty difficulty, int arcane, int eldritch) {
-            this.identifier = identifier;
-            this.difficulty = difficulty;
-            this.arcane = arcane;
-            this.eldritch = eldritch;
-        }
-    }
 
     public static VicissitudeRiteType rite(BossDifficulty difficulty) {
         return org.brahypno.maledict.registry.MaledictRites.summoning(difficulty);

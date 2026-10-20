@@ -1,8 +1,6 @@
 package org.brahypno.maledict.common.rite;
 
 import com.sammy.malum.common.block.curiosities.totem.TotemBaseBlockEntity;
-import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
-import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import com.sammy.malum.registry.common.item.MalumItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -10,27 +8,16 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.effect.SacrificeSchedule;
 import org.brahypno.maledict.registry.MaledictMobEffects;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * 牺牲仪式：五枚精魂（自下而上 邪术 / 大地 / 碧水 / 澄空 / 狱火）凑齐时发动一次，<b>只在灵魂木图腾上兑现</b>
- * ——符文木那一半是空效果，见 {@link SacrificeRiteType}。
+ * 牺牲仪式：五枚精魂（自下而上 邪术 / 大地 / 碧水 / 澄空 / 狱火）凑齐时发动一次，<b>仅限灵魂木图腾</b>。
  *
  * <p>它不召唤任何东西，只在图腾四周 {@link #SELECTION_RADIUS} 格以内找主手持提尔锋的玩家，把「献祭」
  * 按在他们身上。已经拿到「智慧的牺牲」的人跳过——那枚成就就是免选凭据，见 {@link WisdomSacrifice}。
  */
 public final class SacrificeRite {
-    /**
-     * 仪式在 Malum 仪式表里的 identifier，同时也是 lang 与图标回退的键。
-     */
-    public static final String IDENTIFIER = "sacrifice_rite";
-
     /**
      * 挑人的范围：以图腾底座方块为中心、边长 33 格的立方体。
      */

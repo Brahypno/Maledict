@@ -1,6 +1,5 @@
 package org.brahypno.maledict.common.rite;
 
-import net.minecraft.core.Holder;
 import com.sammy.malum.core.systems.registry.SpiritHolder;
 import com.sammy.malum.core.systems.registry.rite.RiteEffectHolder;
 import com.sammy.malum.core.systems.rite.SpiritRiteType;
@@ -11,8 +10,8 @@ import java.util.List;
 
 public final class SacrificeRiteType extends SpiritRiteType {
     public SacrificeRiteType(RiteEffectHolder<? extends SpiritRiteEffect> effect,
-            boolean corrupted, List<SpiritHolder<SpiritArcanaType>> spirits) {
-        super(effect, corrupted, List.copyOf(spirits));
+            List<SpiritHolder<SpiritArcanaType>> spirits) {
+        super(effect, true, List.copyOf(spirits));
     }
 
     @Override

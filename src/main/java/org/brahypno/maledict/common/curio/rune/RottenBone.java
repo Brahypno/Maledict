@@ -27,8 +27,6 @@ public final class RottenBone {
     /** 修饰符 id 的种子前缀；改它等于把旧存档上的账作废，别改。 */
     private static final String MODIFIER_ID_PREFIX = "maledict:rune_of_rotten_bone/";
 
-    private static final String MODIFIER_NAME = "Rune of Rotten Bone";
-
     private static final List<ResourceLocation> MODIFIER_IDS = buildModifierIds();
 
     public static List<ResourceLocation> modifierIds() {
@@ -37,10 +35,6 @@ public final class RottenBone {
 
     public static ResourceLocation modifierId(int stack) {
         return MODIFIER_IDS.get(stack);
-    }
-
-    public static String modifierName(int stack) {
-        return MODIFIER_NAME + " " + (stack + 1) + "/" + MAX_TRIGGERS;
     }
 
     /** 这一次该挂第几条修饰符；四条都挂上了就是 {@link OptionalInt#empty()}。 */
