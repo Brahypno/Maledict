@@ -10,8 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * 钉住"该不该放 BGM"和"放哪一首"的规则（{@link VicissitudeTheme#select}）。
  *
- * <p>要求是：**Boss 对任何生物都没有仇恨、一阶段都还没开始（{@code DORMANT}）时不放**，
- * 而且**离玩家太远也不放**。两道门缺一不可。
+ * <p>Boss 未开战、没有有效敌人或距离太远时不放；附近的旁观者可以听到。
  *
  * <p>这条规则是补出来的，初版只按"离我最近的那只"选，有两个毛病：
  *
@@ -60,6 +59,15 @@ class VicissitudeThemeTest {
     @Test
     void noBossMeansNoMusic() {
         assertEquals(VicissitudeTheme.NONE, VicissitudeTheme.select(List.of()));
+    }
+
+    @Test
+    void phaseTwoWithoutOpponentsDoesNotPlayMusic() {
+        Participant emptyPhaseTwo = new Participant(false, true, true);
+        assertEquals(VicissitudeTheme.NONE,
+                VicissitudeTheme.select(List.of(dormant(), emptyPhaseTwo)));
+        assertEquals(VicissitudeTheme.PHASE_ONE,
+                VicissitudeTheme.select(List.of(emptyPhaseTwo, phaseOne())));
     }
 
     /** 只有没被唤醒的雕像：不放音乐，否则一进区域就剧透了。 */

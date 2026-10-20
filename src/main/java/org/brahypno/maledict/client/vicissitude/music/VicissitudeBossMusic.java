@@ -19,9 +19,8 @@ import javax.annotation.Nullable;
 /**
  * 无常 Boss 战的背景乐调度。
  *
- * <p><b>这里不需要网络包。</b> 同类模组之所以要发包切歌，是因为它们的 Boss 阶段没进同步数据；
- * 无常的 {@code DATA_STAGE} 和 {@code DATA_PHASE_TWO_REACHED} 本来就在 {@code SynchedEntityData} 里，
- * 客户端直接读就行。挂载点是现成的 {@link VicissitudeClientTickEvents#onClientTick}——
+ * <p>阶段和交战状态通过 {@code SynchedEntityData} 同步，附近的参战者和旁观者都能听到。
+ * 挂载点是现成的 {@link VicissitudeClientTickEvents#onClientTick}——
  * 它每客户端 tick 扫一次 96 格内的无常。
  *
  * <p>阶段映射（见 docs/design/first-vicissitude/04 §1.1）：
@@ -143,14 +142,10 @@ public final class VicissitudeBossMusic {
     }
 
     /**
-     * 「正在打」：没死、不在垂死、也不是还没被唤醒的雕像。
-     *
-     * <p>{@code DORMANT} 就是"Boss 对任何生物都没有仇恨、一阶段都还没开始"——这时不放音乐。
-     * 注意口径是**阶段**不是仇恨：刷怪蛋直接安排到一阶段的、或者仪式召唤出来的，只要进了
-     * {@code PHASE_ONE} 就算开始，哪怕当下还没锁定目标。
+     * Boss 必须有存活且在交战范围内的敌人；只召唤而未开战时不播放。
      */
     private static boolean isEngaged(FirstVicissitudeBossEntity boss) {
-        if (boss.getHealth() <= 0.0F) {
+        if (boss.getHealth() <= 0.0F || boss.isRiteSummoning() || !boss.hasCombatOpponent()) {
             return false;
         }
         VicissitudeBossStage stage = boss.getStage();

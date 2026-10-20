@@ -17,6 +17,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.world.entity.projectile.Arrow;
@@ -45,6 +46,83 @@ import java.util.Map;
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
 public final class FirstVicissitudeEntityTest {
+    @GameTest(template = "test_empty", batch = "vicissitude_regressions")
+    public static void bystandersStaySafeAndCreativePlayersLoseAggroInBothPhases(GameTestHelper helper) throws Exception {
+        Map<UUID, ServerPlayer> online = onlinePlayers(helper);
+        for (boolean phaseTwo : new boolean[]{false, true}) {
+            FirstVicissitudeBossEntity boss = spawn(helper, phaseTwo ? phaseTwoTag() : new CompoundTag());
+            UUID identity = UUID.randomUUID();
+            FakePlayer player = new FakePlayer(helper.getLevel(), new GameProfile(identity, "NeutralTest"));
+            player.setGameMode(GameType.SURVIVAL);
+            player.setPos(boss.position().add(0, 0, 0.5));
+            online.put(identity, player);
+            try {
+                // Malum 1.21 resolves the orb's collector by UUID in the server level.
+                helper.getLevel().addNewPlayer(player);
+                float health = player.getHealth();
+                helper.assertTrue(!boss.isValidCombatParticipant(player)
+                                  && !boss.hurtParticipant(player, boss.damageSources().mobAttack(boss), 10)
+                                  && player.getHealth() == health,
+                        "An unprovoked player must be protected even at the shared skill damage entry point");
+                invoke(boss, "syncCombatState", new Class<?>[0], new Object[0]);
+                helper.assertTrue(!boss.hasCombatOpponent(),
+                        "An unprovoked encounter must not activate music for nearby listeners");
+
+                boss.hurt(boss.damageSources().playerAttack(player), 1);
+                helper.assertTrue(boss.isValidCombatParticipant(player),
+                        "An actual attack must register the player, including an immune phase-one hit");
+                invoke(boss, "syncCombatState", new Class<?>[0], new Object[0]);
+                helper.assertTrue(boss.hasCombatOpponent(),
+                        "A nearby enemy must activate music for all nearby listeners, including bystanders");
+                player.setPos(boss.position().add(300, 0, 0));
+                invoke(boss, "syncCombatState", new Class<?>[0], new Object[0]);
+                helper.assertTrue(!boss.hasCombatOpponent(),
+                        "Remembered enemies outside the engagement range must not keep music playing");
+                player.setPos(boss.position().add(0, 0, 0.5));
+
+                VicissitudeLightOrbEntity orb = new VicissitudeLightOrbEntity(
+                        MaledictEntities.VICISSITUDE_LIGHT_ORB.get(), helper.getLevel());
+                CompoundTag orbTag = new CompoundTag();
+                orbTag.putUUID("OrbCaster", boss.getUUID());
+                orb.readAdditionalSaveData(orbTag);
+                orb.setDestination(new com.sammy.malum.common.entity.FloatingItemDestinationData(player));
+                orb.collect(helper.getLevel());
+                helper.assertTrue(player.getHealth() == 1,
+                        "A homing orb must still press the health of a registered survival player");
+                player.setHealth(health);
+
+                player.setGameMode(GameType.CREATIVE);
+                orb.collect(helper.getLevel());
+                helper.assertTrue(player.getHealth() == health, "An in-flight orb must not hurt a creative player");
+                invoke(boss, "forgetDeadParticipants", new Class<?>[0], new Object[0]);
+                invoke(boss, "syncCombatState", new Class<?>[0], new Object[0]);
+                CompoundTag saved = boss.saveWithoutId(new CompoundTag());
+                helper.assertTrue(saved.getList("PhaseOneTargets", Tag.TAG_INT_ARRAY).isEmpty()
+                                  && saved.getList("PhaseTwoPlayers", Tag.TAG_INT_ARRAY).isEmpty()
+                                  && saved.getList("PhaseOneTargetDeaths", Tag.TAG_COMPOUND).isEmpty()
+                                  && saved.getList("PhaseTwoPlayerDeaths", Tag.TAG_COMPOUND).isEmpty()
+                                  && boss.getTarget() == null
+                                  && !boss.hasCombatOpponent(),
+                        "Creative mode must remove saved aggro, the current target and music eligibility");
+                player.setGameMode(GameType.SURVIVAL);
+                LivingEntity selected = (LivingEntity) invoke(boss,
+                        phaseTwo ? "selectBalancedPhaseTwoTarget" : "currentPhaseOneTarget",
+                        new Class<?>[0], new Object[0]);
+                helper.assertTrue(selected == null && !boss.isValidCombatParticipant(player),
+                        "Returning to survival must stay neutral until the player attacks again");
+                orb.collect(helper.getLevel());
+                orb.tick();
+                helper.assertTrue(player.getHealth() == health && orb.isRemoved(),
+                        "A stale homing orb must disappear without hurting a player who left the enemy roster");
+            } finally {
+                online.remove(identity);
+                player.remove(Entity.RemovalReason.DISCARDED);
+                boss.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+            }
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "test_empty", batch = "vicissitude_regressions")
     public static void closeTargetDoesNotPullPhaseOneDownButPhaseTwoStillDives(GameTestHelper helper) throws Exception {
         CompoundTag setup = new CompoundTag();

@@ -20,15 +20,14 @@ enum VicissitudeTheme {
      * <p>两道门都得过，缺一不放：
      *
      * <ol>
-     *   <li>{@code engaged}——Boss 自己这边：没死、不在垂死、**也不在 {@code DORMANT}**。
-     *       {@code DORMANT} 就是"没有任何仇恨、一阶段都还没开始"，那时它只是座雕像，
-     *       音乐一响就剧透了。</li>
+     *   <li>{@code engaged}——Boss 已开战、未死亡，且交战范围内仍有存活的敌人。
+     *       本地玩家可以是旁观者。</li>
      *   <li>{@code withinRange}——距离这边：Boss 离本地玩家不超过
      *       {@link VicissitudeBossMusic#COMBAT_RADIUS}。没有这道门的话，八十格外的
      *       一场战斗也会给你放 BGM。</li>
      * </ol>
      *
-     * @param engaged     没死、不在垂死、也不是还没被唤醒的雕像
+     * @param engaged     Boss 已开战且仍有有效的交战对象
      * @param withinRange 离本地玩家在交战半径内
      * @param phaseTwo    已经进了二阶段（{@code DATA_PHASE_TWO_REACHED}）
      */

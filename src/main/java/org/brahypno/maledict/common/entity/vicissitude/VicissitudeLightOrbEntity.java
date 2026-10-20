@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
  * An attacking variant of Malum's pneuma void: winds up, homes through terrain, applies the
  * phase-one attack on arrival.
  *
- * <p>Malum's {@code owner} is this orb's victim, not its caster; the caster lives in
+ * <p>Malum's destination identifies this orb's victim, not its caster; the caster lives in
  * {@link #casterUUID}.
  */
 public final class VicissitudeLightOrbEntity extends FloatingEntity {
@@ -57,8 +57,7 @@ public final class VicissitudeLightOrbEntity extends FloatingEntity {
 
     @Override
     public void tick() {
-        if (level() instanceof ServerLevel level && (getDestination() == null
-                || getDestination().getEntityCollector(level).isEmpty())) {
+        if (level() instanceof ServerLevel level && !hasValidVictim(victim(level))) {
             discard();
             return;
         }
@@ -71,13 +70,23 @@ public final class VicissitudeLightOrbEntity extends FloatingEntity {
 
     @Override
     public void collect(ServerLevel level) {
-        LivingEntity owner = getDestination().getEntityCollector(level).orElse(null);
-        if (owner == null || !owner.isAlive()) {
+        LivingEntity owner = victim(level);
+        if (!hasValidVictim(owner)) {
             return;
         }
         owner.setHealth(Math.min(owner.getHealth(), 1.0F));
         playSound(MalumSoundEvents.SPIRIT_PICKUP.get(), 0.4F,
                 Mth.nextFloat(random, 0.8F, 1.1F));
+    }
+
+    @Nullable
+    private LivingEntity victim(ServerLevel level) {
+        return getDestination() == null ? null : getDestination().getEntityCollector(level).orElse(null);
+    }
+
+    private boolean hasValidVictim(@Nullable LivingEntity owner) {
+        return owner != null && caster() instanceof FirstVicissitudeBossEntity boss
+               && boss.isValidCombatParticipant(owner);
     }
 
     @Override
