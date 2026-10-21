@@ -26,7 +26,6 @@ public final class Maledict {
         container.registerConfig(ModConfig.Type.CLIENT, MaledictConfig.CLIENT_SPEC);
         org.brahypno.maledict.registry.MaledictAttachments.TYPES.register(modBus);
         org.brahypno.maledict.registry.MaledictRites.EFFECTS.register(modBus);
-        org.brahypno.maledict.registry.MaledictRites.RITES.register(modBus);
         MaledictAttributes.ATTRIBUTES.register(modBus);
         MaledictEntities.ENTITY_TYPES.register(modBus);
         MaledictBlocks.BLOCKS.register(modBus);

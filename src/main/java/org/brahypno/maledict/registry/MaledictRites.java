@@ -6,6 +6,7 @@ import com.sammy.malum.core.systems.registry.rite.DeferredRiteTypes;
 import com.sammy.malum.core.systems.registry.rite.RiteHolder;
 import com.sammy.malum.core.systems.spirit.type.SpiritArcanaType;
 import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
+import com.sammy.malum.registry.common.magic.rite.MalumSpiritRiteTypes;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.common.rite.*;
@@ -17,7 +18,9 @@ import java.util.Map;
 
 public final class MaledictRites {
     public static final DeferredRiteEntityEffectTypes EFFECTS = DeferredRiteEntityEffectTypes.create(Maledict.MODID);
-    public static final DeferredRiteTypes RITES = DeferredRiteTypes.create(Maledict.MODID);
+    // Totem lookup scans this specific DeferredRegister, so rites use its malum namespace.
+    // Malum attaches it to its own event bus; do not register it again on ours.
+    public static final DeferredRiteTypes RITES = MalumSpiritRiteTypes.RITE_TYPES;
     private static final Map<BossDifficulty, RiteHolder<VicissitudeRiteType>> SUMMONING = new EnumMap<>(BossDifficulty.class);
 
     private static final com.sammy.malum.core.systems.registry.rite.RiteEffectHolder<OneShotRiteEffect> SACRIFICE_CORRUPTED =

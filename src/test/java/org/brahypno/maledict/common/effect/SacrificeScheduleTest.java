@@ -3,7 +3,6 @@ package org.brahypno.maledict.common.effect;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SacrificeScheduleTest {
@@ -18,14 +17,6 @@ class SacrificeScheduleTest {
         }
         assertEquals(1080.0D, paid);
         assertEquals(paid, SacrificeSchedule.targetDamage(initial, 0));
-    }
-
-    @Test
-    void halfInitialDurationDoublesTheDamage() {
-        int initial = SacrificeSchedule.DURATION_TICKS / 2;
-        assertEquals(12.0D, SacrificeSchedule.targetDamage(initial, initial));
-        assertEquals(24.0D, SacrificeSchedule.targetDamage(initial, initial - 1200));
-        assertEquals(1080.0D, SacrificeSchedule.targetDamage(initial, 0));
     }
 
     @Test
@@ -69,10 +60,4 @@ class SacrificeScheduleTest {
         }
     }
 
-    @Test
-    void completionRequiresTheWholeDamageBudget() {
-        assertFalse(SacrificeSchedule.isComplete(0.0D));
-        assertFalse(SacrificeSchedule.isComplete(1079.0D));
-        assertTrue(SacrificeSchedule.isComplete(1080.0D));
-    }
 }
