@@ -8,14 +8,10 @@ import com.sammy.malum.data.recipe.builder.VoidFavorRecipeBuilder;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.data.PackOutput;
-import net.minecraft.data.recipes.FinishedRecipe;
-import net.minecraft.data.recipes.RecipeCategory;
-import net.minecraft.data.recipes.RecipeProvider;
-import net.minecraft.data.recipes.ShapedRecipeBuilder;
-import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import net.minecraft.data.recipes.*;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraftforge.common.crafting.StrictNBTIngredient;
 import org.brahypno.maledict.Maledict;
@@ -32,10 +28,42 @@ public final class MaledictRecipes extends RecipeProvider {
 
     @Override
     protected void buildRecipes(Consumer<FinishedRecipe> recipes) {
+        new SpiritInfusionRecipeBuilder(ItemRegistry.SOUL_STAINED_STEEL_AXE.get(), 1, MaledictItems.MELTFALL_AXE.get(), 1)
+                .addExtraItem(ItemRegistry.BLIGHTED_GUNK.get(), 6)
+                .addExtraItem(ItemRegistry.LIVING_FLESH.get(), 6)
+                .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 6)
+                .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 6)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/meltfall_axe"));
+
+        new SpiritRepairRecipeBuilder(0.75f, Ingredient.of(ItemRegistry.SOUL_STAINED_STEEL_INGOT.get()), 2)
+                .addItem(MaledictItems.MELTFALL_AXE.get())
+                .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 8)
+                .addSpirit(SpiritTypeRegistry.EARTHEN_SPIRIT, 4)
+                .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 2)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/meltfall_axe"));
+
+        new SpiritInfusionRecipeBuilder(MaledictItems.MELTFALL_AXE.get(), 1, MaledictItems.LOVER_AXE.get(), 1)
+                .addExtraItem(ItemRegistry.MALIGNANT_PEWTER_INGOT.get(), 4)
+                .addExtraItem(ItemRegistry.FUSED_CONSCIOUSNESS.get(), 1)
+                .addExtraItem(ItemRegistry.BLOCK_OF_NULL_SLATE.get(), 3)
+                .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 18)
+                .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 18)
+                .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 18)
+                .addSpirit(SpiritTypeRegistry.AQUEOUS_SPIRIT, 18)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/lover_axe"));
+
+        new SpiritRepairRecipeBuilder(1.0f, Ingredient.of(ItemRegistry.MALIGNANT_PEWTER_INGOT.get()), 1)
+                .addItem(MaledictItems.LOVER_AXE.get())
+                .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 18)
+                .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 18)
+                .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 18)
+                .addSpirit(SpiritTypeRegistry.AQUEOUS_SPIRIT, 18)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/lover_axe"));
+
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ItemRegistry.MALIGNANT_LEAD.get())
-                .requires(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 8)
-                .unlockedBy("has_malignant_lead_fragment", has(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()))
-                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "malignant_lead_from_fragments"));
+                              .requires(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 8)
+                              .unlockedBy("has_malignant_lead_fragment", has(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()))
+                              .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "malignant_lead_from_fragments"));
 
         for (SpiritArrowType arrowType : SpiritArrowType.values()) {
             ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, MaledictItems.getSpiritArrow(arrowType).get(), 1)
@@ -60,7 +88,7 @@ public final class MaledictRecipes extends RecipeProvider {
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "void_favor/hangman_fool_stage_1"));
 
         new NbtSpiritInfusionRecipeBuilder(StrictNBTIngredient.of(HangmanFoolItem.create(1)), 1,
-                HangmanFoolItem.create(2))
+                                           HangmanFoolItem.create(2))
                 .addExtraItem(ItemRegistry.MNEMONIC_FRAGMENT.get(), 6)
                 .addExtraItem(ItemRegistry.AURIC_EMBERS.get(), 6)
                 .addExtraItem(ItemRegistry.VOID_SALTS.get(), 6)
@@ -209,7 +237,9 @@ public final class MaledictRecipes extends RecipeProvider {
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/elegy_bow"));
     }
 
-    /** Malum's builder omits output NBT; the altar also defaults to replacing it with the input tag. */
+    /**
+     * Malum's builder omits output NBT; the altar also defaults to replacing it with the input tag.
+     */
     private static final class NbtSpiritInfusionRecipeBuilder extends SpiritInfusionRecipeBuilder {
         private final ItemStack nbtOutput;
 

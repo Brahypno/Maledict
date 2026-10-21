@@ -1,0 +1,42 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 4,
+      "item": "malum:malignant_pewter_ingot"
+    },
+    {
+      "count": 1,
+      "item": "malum:fused_consciousness"
+    },
+    {
+      "count": 3,
+      "item": "malum:block_of_null_slate"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "maledict:meltfall_axe"
+  },
+  "output": {
+    "item": "maledict:lover_axe"
+  },
+  "spirits": [
+    {
+      "type": "arcane",
+      "count": 18
+    },
+    {
+      "type": "eldritch",
+      "count": 18
+    },
+    {
+      "type": "infernal",
+      "count": 18
+    },
+    {
+      "type": "aqueous",
+      "count": 18
+    }
+  ]
+}

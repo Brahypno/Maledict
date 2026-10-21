@@ -1,0 +1,30 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 6,
+      "item": "malum:blighted_gunk"
+    },
+    {
+      "count": 6,
+      "item": "malum:living_flesh"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "malum:soul_stained_steel_axe"
+  },
+  "output": {
+    "item": "maledict:meltfall_axe"
+  },
+  "spirits": [
+    {
+      "type": "eldritch",
+      "count": 6
+    },
+    {
+      "type": "arcane",
+      "count": 6
+    }
+  ]
+}

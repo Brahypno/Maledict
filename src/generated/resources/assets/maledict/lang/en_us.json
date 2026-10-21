@@ -56,6 +56,7 @@
   "item.maledict.lover_axe": "The Lover's AX",
   "item.maledict.malignant_lead_fragment": "Malignant Lead Fragment",
   "item.maledict.malignant_pewter_tablet": "Malignant Pewter Tablet",
+  "item.maledict.meltfall_axe": "Meltfall Axe",
   "item.maledict.raven_feather": "Raven Feather",
   "item.maledict.raven_spawn_egg": "The Raven Spawn Egg",
   "item.maledict.remembrance_bow": "Remembrance Bow",
@@ -85,6 +86,8 @@
   "malum.gui.book.entry.maledict.eldritch_spirit_arrow.description": "An echo in the wound",
   "malum.gui.book.entry.maledict.infernal_spirit_arrow": "Infernal Spirit Arrow",
   "malum.gui.book.entry.maledict.infernal_spirit_arrow.description": "Nowhere to hide",
+  "malum.gui.book.entry.maledict.meltfall_axe": "Meltfall Axe",
+  "malum.gui.book.entry.maledict.meltfall_axe.description": "Smelting, falling, the beginning of the mysteries",
   "malum.gui.book.entry.maledict.remembrance_bow": "Remembrance Bow",
   "malum.gui.book.entry.maledict.remembrance_bow.description": "Longing Beyond Barriers",
   "malum.gui.book.entry.maledict.rune_of_decay": "Rune of Decay",
@@ -109,6 +112,7 @@
   "malum.gui.book.entry.page.headline.maledict.earthen_spirit_arrow": "Earthen Spirit Arrow",
   "malum.gui.book.entry.page.headline.maledict.eldritch_spirit_arrow": "Eldritch Spirit Arrow",
   "malum.gui.book.entry.page.headline.maledict.infernal_spirit_arrow": "Infernal Spirit Arrow",
+  "malum.gui.book.entry.page.headline.maledict.meltfall_axe": "Meltfall Axe",
   "malum.gui.book.entry.page.headline.maledict.remembrance_bow": "Remembrance Bow",
   "malum.gui.book.entry.page.headline.maledict.rune_of_decay": "Rune of Decay",
   "malum.gui.book.entry.page.headline.maledict.rune_of_ripening": "Rune of Ripening",
@@ -141,6 +145,8 @@
   "malum.gui.book.entry.page.text.maledict.earthen_spirit_arrow.1": "Earthen spirits lend weight to the arrowhead. Base damage is increased by 1.5; the actual damage gained varies with the arrow's speed.",
   "malum.gui.book.entry.page.text.maledict.eldritch_spirit_arrow.1": "Eldritch spirits make the arrow's damage echo. On hit, they deal additional potent damage equal to half the arrow's damage, excluding bonus damage from critical hits.",
   "malum.gui.book.entry.page.text.maledict.infernal_spirit_arrow.1": "Infernal spirits set the arrow ablaze, allowing it to ignite its target. On hit, the target also glows for 10 seconds, leaving it nowhere to hide.",
+  "malum.gui.book.entry.page.text.maledict.meltfall_axe.1": "By giving the randomness of blight the form of Descent, I have created an extremely uncontrollable weapon.",
+  "malum.gui.book.entry.page.text.maledict.meltfall_axe.2": "Holding it greatly increases both the damage I deal and the damage I take.",
   "malum.gui.book.entry.page.text.maledict.remembrance_bow.1": "Gathering the magic of endermen into Astral Weave can give Soulwood wondrous properties.",
   "malum.gui.book.entry.page.text.maledict.remembrance_bow.2": "A bow made from this wood takes half as long to draw as an ordinary bow. Its arrows fly faster and can pass through blocks to a limited depth.",
   "malum.gui.book.entry.page.text.maledict.rune_of_decay.1": "The pulse of the Rite of Decay grows sluggish when inscribed on a tablet. It slowly wears away the flesh of hostile creatures near the wearer, but cannot kill them.",
@@ -266,5 +272,7 @@
   "tooltip.maledict.incursus_blade.spirit.wicked": "Wicked %s%% (%s/%s): Critical damage",
   "tooltip.maledict.lover_axe.charged": "Effective hits with at least 90% charge grant 2 additional Descent.",
   "tooltip.maledict.lover_axe.descent": "Gain 0.1 Descent per second in either hand; lose 0.1 per second when not held.",
-  "tooltip.maledict.lover_axe.wound": "Each effective melee hit reduces the target's maximum health by 2%, cleared on true death."
+  "tooltip.maledict.lover_axe.flavor": "Even death cannot part us",
+  "tooltip.maledict.lover_axe.wound": "Each effective melee hit reduces the target's maximum health by 2%, cleared on true death.",
+  "tooltip.maledict.meltfall_axe.flavor": "Smelting, falling, the beginning of the mysteries"
 }

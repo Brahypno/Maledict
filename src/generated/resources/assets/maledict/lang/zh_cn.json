@@ -56,6 +56,7 @@
   "item.maledict.lover_axe": "恋人之斧",
   "item.maledict.malignant_lead_fragment": "恶念之铅碎片",
   "item.maledict.malignant_pewter_tablet": "恶念白镴符板",
+  "item.maledict.meltfall_axe": "熔坠之斧",
   "item.maledict.raven_feather": "渡鸦羽毛",
   "item.maledict.raven_spawn_egg": "渡鸦刷怪蛋",
   "item.maledict.remembrance_bow": "思念弓",
@@ -85,6 +86,8 @@
   "malum.gui.book.entry.maledict.eldritch_spirit_arrow.description": "伤口的回响",
   "malum.gui.book.entry.maledict.infernal_spirit_arrow": "狱火精魂箭",
   "malum.gui.book.entry.maledict.infernal_spirit_arrow.description": "无处遁形",
+  "malum.gui.book.entry.maledict.meltfall_axe": "熔坠之斧",
+  "malum.gui.book.entry.maledict.meltfall_axe.description": "熔炼，坠落，秘仪的开始",
   "malum.gui.book.entry.maledict.remembrance_bow": "思念弓",
   "malum.gui.book.entry.maledict.remembrance_bow.description": "穿越阻隔的思念",
   "malum.gui.book.entry.maledict.rune_of_decay": "衰朽符文",
@@ -109,6 +112,7 @@
   "malum.gui.book.entry.page.headline.maledict.earthen_spirit_arrow": "大地精魂箭",
   "malum.gui.book.entry.page.headline.maledict.eldritch_spirit_arrow": "邪术精魂箭",
   "malum.gui.book.entry.page.headline.maledict.infernal_spirit_arrow": "狱火精魂箭",
+  "malum.gui.book.entry.page.headline.maledict.meltfall_axe": "熔坠之斧",
   "malum.gui.book.entry.page.headline.maledict.remembrance_bow": "思念弓",
   "malum.gui.book.entry.page.headline.maledict.rune_of_decay": "衰朽符文",
   "malum.gui.book.entry.page.headline.maledict.rune_of_ripening": "熟成符文",
@@ -141,6 +145,8 @@
   "malum.gui.book.entry.page.text.maledict.earthen_spirit_arrow.1": "大地精魂使箭头更加沉重。基 础伤害提高一点五，实际增加 的伤害随箭矢速度而变化。",
   "malum.gui.book.entry.page.text.maledict.eldritch_spirit_arrow.1": "邪术精魂使箭矢的伤害有了回 响。命中后，额外造成相当于 箭矢伤害一半的有力的伤害。 这一份不计暴击增伤。",
   "malum.gui.book.entry.page.text.maledict.infernal_spirit_arrow.1": "狱火精魂使箭矢燃烧，能够点 燃目标。命中后还会使目标发 光十秒，让它无处遁形。",
+  "malum.gui.book.entry.page.text.maledict.meltfall_axe.1": "将腐枯的随机性拟化为堕落， 我得到了一种极其不受控的武 器。",
+  "malum.gui.book.entry.page.text.maledict.meltfall_axe.2": "持有它会使造成和受到的伤害 都大大提升。",
   "malum.gui.book.entry.page.text.maledict.remembrance_bow.1": "若能汇集末影人的魔法并以星 灵织物承载，就能使灵魂木产 生奇妙的性质。",
   "malum.gui.book.entry.page.text.maledict.remembrance_bow.2": "拉动这种材质的弓只需要一般 弓一半的时间，射出的箭矢不 仅更快，还可以有限度的穿过 方块。",
   "malum.gui.book.entry.page.text.maledict.rune_of_decay.1": "衰朽仪式的脉动刻进符板，也 变得迟钝了。佩戴者身边的敌 对之物会被缓缓磨去血肉，但 却无法因此而死。",
@@ -266,5 +272,7 @@
   "tooltip.maledict.incursus_blade.spirit.wicked": "邪恶 %s%%（%s/%s）：暴击伤害",
   "tooltip.maledict.lover_axe.charged": "蓄力至少 90% 的有效命中额外增加 2 堕落。",
   "tooltip.maledict.lover_axe.descent": "主手或副手持有时每秒增加 0.1 堕落；离手每秒减少 0.1。",
-  "tooltip.maledict.lover_axe.wound": "每次有效近战命中使目标最大生命值降低 2%，真正死亡后清除。"
+  "tooltip.maledict.lover_axe.flavor": "纵然是死亡也无法使我们分离",
+  "tooltip.maledict.lover_axe.wound": "每次有效近战命中使目标最大生命值降低 2%，真正死亡后清除。",
+  "tooltip.maledict.meltfall_axe.flavor": "熔炼，坠落，秘仪的开始"
 }

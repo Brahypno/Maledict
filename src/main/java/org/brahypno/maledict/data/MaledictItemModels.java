@@ -12,7 +12,6 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
-import org.brahypno.maledict.common.weapon.lover.LoverAxeItem;
 import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
 
@@ -33,9 +32,8 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerSeparateBowModel("elegy_bow");
 
         registerIncursusBladeModels();
-        ItemModelBuilder lavenderAxe = loverAxeModel("lover_axe_lavender");
-        loverAxeModel("lover_axe").override()
-                .predicate(LoverAxeItem.COLOR_PROPERTY, 0.5F).model(lavenderAxe).end();
+        loverAxeModel("lover_axe", "lover_axe");
+        loverAxeModel("meltfall_axe", "lover_axe_lavender");
 
         registerAgeOfEnlightenmentModel();
         registerHangmanFoolModels();
@@ -147,13 +145,13 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .end();
     }
 
-    private ItemModelBuilder loverAxeModel(String name) {
+    private ItemModelBuilder loverAxeModel(String name, String texture) {
         ItemModelBuilder handheld = getBuilder(name + "_handheld")
                 .parent(new ModelFile.UncheckedModelFile(
                         ResourceLocation.fromNamespaceAndPath("malum", "item/handheld_large")))
-                .texture("layer0", modLoc("item/" + name + "_huge"));
+                .texture("layer0", modLoc("item/" + texture + "_huge"));
         ItemModelBuilder inventory = withExistingParent(name + "_gui", "item/handheld")
-                .texture("layer0", modLoc("item/" + name));
+                .texture("layer0", modLoc("item/" + texture));
         ItemModelBuilder model = withExistingParent(name, "item/handheld");
         model.customLoader(SeparateTransformsModelBuilder::begin).base(handheld)
                 .perspective(ItemDisplayContext.GUI, inventory)

@@ -46,7 +46,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
-        tag(ItemTags.AXES).add(MaledictItems.LOVER_AXE.get());
+        tag(ItemTags.AXES).add(MaledictItems.LOVER_AXE.get(), MaledictItems.MELTFALL_AXE.get());
         tag(ItemTags.ARROWS)
                 .add(MaledictItems.SACRED_SPIRIT_ARROW.get())
                 .add(MaledictItems.WICKED_SPIRIT_ARROW.get())
@@ -64,7 +64,8 @@ public final class MaledictItemTags extends ItemTagsProvider {
                 .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "dark_metal_scythe"))
                 .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "dark_scythe"));
         tag(ItemTagRegistry.SOUL_HUNTER_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());
-        tag(ItemTagRegistry.MAGIC_CAPABLE_WEAPON).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(ItemTagRegistry.MAGIC_CAPABLE_WEAPON).add(MaledictItems.INCURSUS_BLADE.get(),
+                                                      MaledictItems.LOVER_AXE.get(), MaledictItems.MELTFALL_AXE.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.INCURSUS_BLADE.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.ELEGY_BOW.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.MALIGNANT_PEWTER_TABLET.get());

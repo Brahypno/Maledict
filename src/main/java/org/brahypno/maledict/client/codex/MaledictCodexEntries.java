@@ -29,11 +29,11 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.common.vicissitude.rite.SummoningRite;
+import org.brahypno.maledict.common.vicissitude.rite.VicissitudeRiteType;
 import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowType;
 import org.brahypno.maledict.common.wisdom.SacrificeRite;
 import org.brahypno.maledict.common.wisdom.SacrificeRiteType;
-import org.brahypno.maledict.common.vicissitude.rite.SummoningRite;
-import org.brahypno.maledict.common.vicissitude.rite.VicissitudeRiteType;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.List;
@@ -128,6 +128,7 @@ public final class MaledictCodexEntries {
     public static void setupEntries(SetupMalumCodexEntriesEvent event) {
         addSpiritArrowsEntry();
         addRemembranceBowEntry();
+        addMeltfallAxeEntry();
         addElegyBowEntry();
         addObelisksEntry();
         addIncursusBladeEntry();
@@ -170,11 +171,11 @@ public final class MaledictCodexEntries {
         RegistryObject<Item> arrow = MaledictItems.getSpiritArrow(type);
         String identifier = "maledict." + arrow.getId().getPath();
         return new EntryReference(arrow, BookEntry.build(identifier)
-                .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
-                .addPage(new CraftingPage(arrow.get(),
-                        Items.AIR, type.getSpiritType().spiritShard.get(), Items.AIR,
-                        Items.AIR, Items.STICK, Items.AIR,
-                        Items.AIR, Items.FEATHER, Items.AIR)));
+                                                  .addPage(new HeadlineTextPage(identifier, identifier + ".1"))
+                                                  .addPage(new CraftingPage(arrow.get(),
+                                                                            Items.AIR, type.getSpiritType().spiritShard.get(), Items.AIR,
+                                                                            Items.AIR, Items.STICK, Items.AIR,
+                                                                            Items.AIR, Items.FEATHER, Items.AIR)));
     }
 
     private static void addVoidRuneworkingEntry() {
@@ -392,6 +393,19 @@ public final class MaledictCodexEntries {
         builder.addPage(new TextPage(REMEMBRANCE_BOW_ENTRY + ".2"));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.REMEMBRANCE_BOW.get()));
 
+        ArcanaProgressionScreen.ENTRIES.add(builder.build());
+    }
+
+    private static void addMeltfallAxeEntry() {
+        String identifier = "maledict.meltfall_axe";
+        if (containsEntry(ArcanaProgressionScreen.ENTRIES, identifier))
+            return;
+        PlacedBookEntryBuilder builder = BookEntry.build(identifier, -5, 8);
+        builder.configureWidget(widget -> widget.setIcon(MaledictItems.MELTFALL_AXE)
+                                                .setStyle(BookWidgetStyle.SOULWOOD));
+        builder.addPage(new HeadlineTextItemPage(identifier, identifier + ".1", MaledictItems.MELTFALL_AXE.get()));
+        builder.addPage(new TextPage(identifier + ".2"));
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.MELTFALL_AXE.get()));
         ArcanaProgressionScreen.ENTRIES.add(builder.build());
     }
 

@@ -7,14 +7,6 @@
     }
   },
   "loader": "forge:separate_transforms",
-  "overrides": [
-    {
-      "model": "maledict:item/lover_axe_lavender",
-      "predicate": {
-        "maledict:lover_axe_color": 0.5
-      }
-    }
-  ],
   "perspectives": {
     "fixed": {
       "parent": "minecraft:item/handheld",
