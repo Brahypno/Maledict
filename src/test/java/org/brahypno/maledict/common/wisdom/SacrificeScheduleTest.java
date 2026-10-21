@@ -3,76 +3,77 @@ package org.brahypno.maledict.common.wisdom;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SacrificeScheduleTest {
     @Test
     void normalRiteStillPaysSixImmediatelyAndOncePerMinute() {
         int initial = SacrificeSchedule.DURATION_TICKS;
-        double paid = 0.0D;
+        int pulses = 0;
         for (int elapsed = 0; elapsed < initial; elapsed += SacrificeSchedule.INTERVAL_TICKS) {
-            double target = SacrificeSchedule.targetDamage(initial, initial - elapsed);
-            assertEquals(6.0D, target - paid, 0.000001D);
-            paid = target;
+            int target = SacrificeSchedule.targetPulses(initial, initial - elapsed);
+            assertEquals(1, target - pulses);
+            pulses = target;
         }
-        assertEquals(1080.0D, paid);
-        assertEquals(paid, SacrificeSchedule.targetDamage(initial, 0));
+        assertEquals(180, pulses);
+        assertEquals(1080.0F, pulses * SacrificeSchedule.DAMAGE);
+        assertEquals(pulses, SacrificeSchedule.targetPulses(initial, 0));
     }
 
     @Test
-    void halfInitialDurationDoublesTheDamage() {
+    void halfInitialDurationHalvesTheInterval() {
         int initial = SacrificeSchedule.DURATION_TICKS / 2;
-        assertEquals(12.0D, SacrificeSchedule.targetDamage(initial, initial));
-        assertEquals(24.0D, SacrificeSchedule.targetDamage(initial, initial - 1200));
-        assertEquals(1080.0D, SacrificeSchedule.targetDamage(initial, 0));
+        assertEquals(1, SacrificeSchedule.targetPulses(initial, initial));
+        assertEquals(1, SacrificeSchedule.targetPulses(initial, initial - 599));
+        assertEquals(2, SacrificeSchedule.targetPulses(initial, initial - 600));
+        assertEquals(3, SacrificeSchedule.targetPulses(initial, initial - 1200));
+        assertEquals(180, SacrificeSchedule.targetPulses(initial, 0));
     }
 
     @Test
-    void tenServerSecondsConsumingThirtyEffectSecondsTriplesTheDamageRate() {
+    void tenServerSecondsConsumingThirtyEffectSecondsMakesTheNextHitLandAtTwentySeconds() {
         int initial = SacrificeSchedule.DURATION_TICKS;
-        double first = SacrificeSchedule.targetDamage(initial, initial);
-        double normal = SacrificeSchedule.targetDamage(initial, initial - 10 * 20) - first;
-        double accelerated = SacrificeSchedule.targetDamage(initial, initial - 30 * 20) - first;
-        assertEquals(1.0D, normal);
-        assertEquals(3.0D, accelerated);
-        assertEquals(normal * 3.0D, accelerated);
+        assertEquals(1, SacrificeSchedule.targetPulses(initial, initial - 30 * 20));
+        assertEquals(1, SacrificeSchedule.targetPulses(initial, initial - 399 * 3));
+        assertEquals(2, SacrificeSchedule.targetPulses(initial, initial - 400 * 3));
+        assertEquals(4, SacrificeSchedule.targetPulses(initial, initial - 1200 * 3));
     }
 
     @Test
     void shortInitialDurationAndAccelerationMultiply() {
         int initial = SacrificeSchedule.DURATION_TICKS / 2;
-        double first = SacrificeSchedule.targetDamage(initial, initial);
-        assertEquals(36.0D, SacrificeSchedule.targetDamage(initial, initial - 3 * 1200) - first);
+        assertEquals(1, SacrificeSchedule.targetPulses(initial, initial - 199 * 3));
+        assertEquals(2, SacrificeSchedule.targetPulses(initial, initial - 200 * 3));
+        assertEquals(7, SacrificeSchedule.targetPulses(initial, initial - 1200 * 3));
     }
 
     @Test
-    void speedChangesOnlyChargeTheProgressActuallyConsumed() {
+    void speedChangesOnlyAdvanceByTheEffectTimeConsumed() {
         int initial = SacrificeSchedule.DURATION_TICKS;
         // First ten seconds consume thirty, then the remaining fifty consume fifty.
-        assertEquals(8.0D, SacrificeSchedule.targetDamage(initial, initial - 80 * 20)
-                - SacrificeSchedule.targetDamage(initial, initial));
+        assertEquals(2, SacrificeSchedule.targetPulses(initial, initial - 80 * 20));
+        assertEquals(2, SacrificeSchedule.targetPulses(initial, initial - 120 * 20 + 1));
+        assertEquals(3, SacrificeSchedule.targetPulses(initial, initial - 120 * 20));
     }
 
     @Test
-    void expirySettlesSkippedAndFractionalIntervalsWithoutExceedingTheBudget() {
+    void expiryIncludesSkippedAndFractionalIntervalsWithoutExceeding180Hits() {
         for (int initial : new int[]{1, 1000, 1234, 108001, SacrificeSchedule.DURATION_TICKS}) {
-            double paid = 0.0D;
+            int pulses = 0;
             for (int remaining = initial; remaining > 0; remaining -= 3 * 1200) {
-                double target = SacrificeSchedule.targetDamage(initial, remaining);
-                assertTrue(target >= paid && target <= 1080.0D);
-                paid = target;
+                int target = SacrificeSchedule.targetPulses(initial, remaining);
+                assertTrue(target >= pulses && target <= 180);
+                pulses = target;
             }
-            paid += SacrificeSchedule.targetDamage(initial, 0) - paid;
-            assertEquals(1080.0D, paid);
-            assertEquals(1080.0D, SacrificeSchedule.targetDamage(initial, -100));
+            pulses += SacrificeSchedule.targetPulses(initial, 0) - pulses;
+            assertEquals(180, pulses);
+            assertEquals(180, SacrificeSchedule.targetPulses(initial, -100));
         }
     }
 
     @Test
-    void completionRequiresTheWholeDamageBudget() {
-        assertFalse(SacrificeSchedule.isComplete(0.0D));
-        assertFalse(SacrificeSchedule.isComplete(1079.0D));
-        assertTrue(SacrificeSchedule.isComplete(1080.0D));
+    void standardDurationRemainsNineDaysAndEveryHitRemainsSix() {
+        assertEquals(9 * 24000, SacrificeSchedule.DURATION_TICKS);
+        assertEquals(6.0F, SacrificeSchedule.DAMAGE);
     }
 }

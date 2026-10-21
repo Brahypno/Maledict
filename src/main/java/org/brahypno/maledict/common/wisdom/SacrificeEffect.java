@@ -10,15 +10,15 @@ import net.minecraft.world.entity.LivingEntity;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 
 /**
- * 「献祭」：按实际初始时长和倒计时进度分摊 1080 点伤害，每服务器分钟结算一次。
- * 标准九天九夜仍是每分钟 6 点；缩短或加速的效果会在更短的时间里结清同一笔伤害。
+ * 「献祭」：标准九天九夜每分钟触发一次，每次固定 6 点，共 180 次。
+ * 实际时长缩短或倒计时加速只提高频率；不统计伤害是否命中、减免或实际扣了多少血。
  *
  * <p>伤害走 {@code malum:voodoo}：它带 {@code bypasses_armor} / {@code bypasses_resistance} /
  * {@code bypasses_invulnerability} 三个标签，穿过护甲、抗性提升与创造模式免疫，也照样打得死人。无敌帧在
  * 结算时单独绕过（这个伤害类型没有 {@code bypasses_cooldown}），结算后保留原有保护。这里不带
  * 攻击者，所以死亡信息是 Malum 那句「灵魂被击碎了」，而不是把自己记成凶手。
  *
- * <p>结算记录随实体 NBT 保存；效果自然到期且实际承受满额伤害才发成就，见
+ * <p>计时进度随实体 NBT 保存；仪式施加的效果自然到期且玩家存活就发成就，见
  * {@code WisdomSacrifice}；中途死亡、被牛奶清掉或被人为移除都只是白挨一顿打。
  */
 public final class SacrificeEffect extends MobEffect {
@@ -27,7 +27,7 @@ public final class SacrificeEffect extends MobEffect {
      */
     public static final int COLOR = 0x8C1F3F;
 
-    private static final String PROGRESS_KEY = "maledict:sacrifice_damage";
+    private static final String PROGRESS_KEY = "maledict:sacrifice_schedule";
 
     public SacrificeEffect() {
         super(MobEffectCategory.NEUTRAL, COLOR);
@@ -49,59 +49,55 @@ public final class SacrificeEffect extends MobEffect {
         if (effect == null) {
             return;
         }
+        if (effect.isInfiniteDuration()) {
+            if (wearer.tickCount % SacrificeSchedule.INTERVAL_TICKS == 0) {
+                strike(wearer);
+            }
+            return;
+        }
         if (!wearer.getPersistentData().contains(PROGRESS_KEY)) {
             start(wearer, effect.getDuration());
         }
         CompoundTag progress = wearer.getPersistentData().getCompound(PROGRESS_KEY);
-        long now = wearer.level().getGameTime();
-        if (now < progress.getLong("nextPulse")) {
-            return;
-        }
-        progress.putLong("nextPulse", now + SacrificeSchedule.INTERVAL_TICKS);
-        double target = effect.isInfiniteDuration()
-                ? progress.getDouble("paidDamage") + SacrificeSchedule.DAMAGE
-                : SacrificeSchedule.targetDamage(progress.getInt("initialDuration"), effect.getDuration());
-        settle(wearer, progress, target);
+        triggerPulses(wearer, progress, SacrificeSchedule.targetPulses(
+                progress.getInt("initialDuration"), effect.getDuration()));
     }
 
-    /** 仪式重新施加时，伤害预算与凭据一同重新开始；读取实际加上的效果时长。 */
+    /** 仪式重新施加时，触发进度与凭据一同重新开始；读取实际加上的效果时长。 */
     public static void start(LivingEntity wearer, int duration) {
+        clear(wearer);
         CompoundTag progress = new CompoundTag();
         progress.putInt("initialDuration", duration);
-        progress.putLong("nextPulse", wearer.level().getGameTime());
+        progress.putInt("pulses", 0);
         wearer.getPersistentData().put(PROGRESS_KEY, progress);
     }
 
-    /** 自然到期时补齐尾款；被取消、免疫或减掉的伤害不能充当已经承受的代价。 */
-    public static boolean finish(LivingEntity wearer) {
+    /** 自然到期时补上因倒计时跳减而尚未触发的次数，每次仍固定 6 点。 */
+    public static void finish(LivingEntity wearer) {
         CompoundTag progress = wearer.getPersistentData().getCompound(PROGRESS_KEY);
-        if (!progress.contains("initialDuration")) {
-            return false;
+        if (progress.contains("initialDuration")) {
+            triggerPulses(wearer, progress, SacrificeSchedule.PULSES);
         }
-        settle(wearer, progress, SacrificeSchedule.TOTAL_DAMAGE);
-        return wearer.isAlive() && SacrificeSchedule.isComplete(progress.getDouble("paidDamage"));
     }
 
     public static void clear(LivingEntity wearer) {
         wearer.getPersistentData().remove(PROGRESS_KEY);
+        wearer.getPersistentData().remove("maledict:sacrifice_damage");
     }
 
-    private static void settle(LivingEntity wearer, CompoundTag progress, double target) {
-        double paid = progress.getDouble("paidDamage");
-        float due = (float) Math.max(0.0D, target - paid);
-        if (due <= 0.0F || !wearer.isAlive()) {
-            return;
+    private static void triggerPulses(LivingEntity wearer, CompoundTag progress, int target) {
+        while (progress.getInt("pulses") < target && wearer.isAlive()) {
+            progress.putInt("pulses", progress.getInt("pulses") + 1);
+            strike(wearer);
         }
-        float health = wearer.getHealth();
-        float absorption = wearer.getAbsorptionAmount();
+    }
+
+    private static void strike(LivingEntity wearer) {
         DamageSource source = DamageTypeHelper.create(wearer.level(), DamageTypeRegistry.VOODOO);
-        // 尾款可能紧接着上一笔；voodoo 的 bypasses_invulnerability 并不绕过受伤冷却。
+        // 加速后同 tick 内可能触发多次；voodoo 并不绕过受伤冷却。
         int invulnerableTime = wearer.invulnerableTime;
         wearer.invulnerableTime = 0;
-        wearer.hurt(source, due);
+        wearer.hurt(source, SacrificeSchedule.DAMAGE);
         wearer.invulnerableTime = Math.max(invulnerableTime, wearer.invulnerableTime);
-        double taken = Math.max(0.0D, health - wearer.getHealth())
-                + Math.max(0.0D, absorption - wearer.getAbsorptionAmount());
-        progress.putDouble("paidDamage", paid + Math.min(due, taken));
     }
 }
