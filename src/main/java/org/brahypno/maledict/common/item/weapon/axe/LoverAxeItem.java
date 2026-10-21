@@ -1,12 +1,13 @@
 package org.brahypno.maledict.common.item.weapon.axe;
 
-import org.brahypno.maledict.common.item.MaledictItemData;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -16,27 +17,32 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
-import org.brahypno.maledict.Maledict;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.brahypno.maledict.registry.MaledictAttributes;
+import team.lodestar.lodestone.registry.common.LodestoneAttributes;
 
 import java.util.List;
 
 /** One reward and one wound per completed probe, including its fallback damage. */
 public final class LoverAxeItem extends AxeItem {
-    public static final ResourceLocation COLOR_PROPERTY =
-            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "lover_axe_color");
     public static final ResourceLocation WOUND_ID = ResourceLocation.parse("maledict:lover_axe_wound");
-    private static final String COLOR_TAG = "LoverAxeLavender";
+    private final boolean inflictsWounds;
 
     public LoverAxeItem() {
-        super(Tiers.NETHERITE, new Properties().rarity(Rarity.EPIC).fireResistant()
-                .attributes(AxeItem.createAttributes(Tiers.NETHERITE, 5.0F, -3.0F)));
+        this(true);
     }
 
-    public static boolean isLavender(ItemStack stack) {
-        return MaledictItemData.read(stack).getBoolean(COLOR_TAG);
+    public LoverAxeItem(boolean inflictsWounds) {
+        // Netherite contributes four damage and the player's base contributes one.
+        super(Tiers.NETHERITE, new Properties().rarity(Rarity.EPIC).fireResistant()
+                .attributes(AxeItem.createAttributes(Tiers.NETHERITE, inflictsWounds ? 6.0F : 3.0F, -3.0F)
+                        .withModifierAdded(LodestoneAttributes.MAGIC_DAMAGE,
+                                new AttributeModifier(LodestoneAttributes.BASE_MAGIC_DAMAGE,
+                                        inflictsWounds ? 1.0D : 2.0D, AttributeModifier.Operation.ADD_VALUE),
+                                EquipmentSlotGroup.MAINHAND)));
+        this.inflictsWounds = inflictsWounds;
     }
 
     @Override
@@ -64,7 +70,7 @@ public final class LoverAxeItem extends AxeItem {
         if (!result.instantEffective()) {
             return false;
         }
-        if (victim.isAlive()) {
+        if (victim.isAlive() && weapon.getItem() instanceof LoverAxeItem axe && axe.inflictsWounds) {
             wound(victim);
         }
         if (fullyCharged) {
@@ -72,9 +78,6 @@ public final class LoverAxeItem extends AxeItem {
             if (descent != null) {
                 descent.setBaseValue(descent.getBaseValue() + 2.0D);
             }
-        }
-        if (attacker.getRandom().nextBoolean()) {
-            MaledictItemData.update(weapon, tag -> tag.putBoolean(COLOR_TAG, !isLavender(weapon)));
         }
         return true;
     }
@@ -93,8 +96,15 @@ public final class LoverAxeItem extends AxeItem {
 
     @Override
     public void appendHoverText(ItemStack stack, net.minecraft.world.item.Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.maledict.lover_axe.wound").withStyle(ChatFormatting.GRAY));
+        if (inflictsWounds) {
+            tooltip.add(Component.translatable("tooltip.maledict.lover_axe.wound").withStyle(ChatFormatting.GRAY));
+        }
         tooltip.add(Component.translatable("tooltip.maledict.lover_axe.descent").withStyle(ChatFormatting.DARK_PURPLE));
         tooltip.add(Component.translatable("tooltip.maledict.lover_axe.charged").withStyle(ChatFormatting.DARK_PURPLE));
+        if (FMLEnvironment.dist == Dist.CLIENT && Screen.hasShiftDown()) {
+            String name = inflictsWounds ? "lover_axe" : "meltfall_axe";
+            tooltip.add(Component.translatable("tooltip.maledict." + name + ".flavor")
+                    .withStyle(ChatFormatting.DARK_PURPLE));
+        }
     }
 }

@@ -1,0 +1,29 @@
+{
+  "type": "malum:spirit_repair",
+  "durabilityPercentage": 1.0,
+  "repairMaterial": {
+    "count": 1,
+    "item": "malum:malignant_pewter_ingot"
+  },
+  "spirits": [
+    {
+      "type": "malum:arcane",
+      "count": 18
+    },
+    {
+      "type": "malum:eldritch",
+      "count": 18
+    },
+    {
+      "type": "malum:infernal",
+      "count": 18
+    },
+    {
+      "type": "malum:aqueous",
+      "count": 18
+    }
+  ],
+  "validItems": [
+    "maledict:lover_axe"
+  ]
+}

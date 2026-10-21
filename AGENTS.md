@@ -10,6 +10,11 @@
 
 ## Development Notes
 
+- Do not run full builds or packaging tasks (`build`, `assemble`, `jar`, `jarJar`, or reobfuscation tasks) unless
+  the user explicitly requests a build, package, or distributable jar. A request to implement or fix something
+  does not authorize packaging. Use only the checks needed for the affected behavior; run `runData` when
+  generated resources need updating. Do not append `build` to a test or data-generation command.
+
 - Mixins are a last resort. First use existing item/entity overrides, Forge events, extension hooks, and public APIs.
   For custom left-click weapon behavior, check `Item#onLeftClickEntity` before considering an injection into
   `Player#attack`. Introduce a mixin only when those supported extension points cannot implement the required

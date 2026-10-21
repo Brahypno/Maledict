@@ -49,7 +49,8 @@ public final class MaledictItems {
 
     public static final DeferredHolder<Item, Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
             new IncursusBladeItem(MaledictItemTiers.INCURSUS, new team.lodestar.lodestone.systems.item.LodestoneItemProperties().rarity(Rarity.EPIC)));
-    public static final DeferredHolder<Item, Item> LOVER_AXE = ITEMS.register("lover_axe", LoverAxeItem::new);
+    public static final DeferredHolder<Item, Item> LOVER_AXE = ITEMS.register("lover_axe", () -> new LoverAxeItem());
+    public static final DeferredHolder<Item, Item> MELTFALL_AXE = ITEMS.register("meltfall_axe", () -> new LoverAxeItem(false));
     public static final DeferredHolder<Item, Item> REMEMBRANCE_BOW = ITEMS.register("remembrance_bow", () ->
             new RemembranceBowItem(new Item.Properties().durability(384).rarity(Rarity.RARE), false));
     public static final DeferredHolder<Item, Item> ELEGY_BOW = ITEMS.register("elegy_bow", () ->

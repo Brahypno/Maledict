@@ -1,0 +1,25 @@
+{
+  "type": "malum:spirit_repair",
+  "durabilityPercentage": 0.75,
+  "repairMaterial": {
+    "count": 2,
+    "item": "malum:soul_stained_steel_ingot"
+  },
+  "spirits": [
+    {
+      "type": "malum:arcane",
+      "count": 8
+    },
+    {
+      "type": "malum:earthen",
+      "count": 4
+    },
+    {
+      "type": "malum:wicked",
+      "count": 2
+    }
+  ],
+  "validItems": [
+    "maledict:meltfall_axe"
+  ]
+}

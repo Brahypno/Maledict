@@ -19,6 +19,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.curio.HangmanFoolItem;
 import org.brahypno.maledict.common.item.arrow.SpiritArrowType;
@@ -32,6 +33,38 @@ public final class MaledictRecipes extends RecipeProvider {
 
     @Override
     protected void buildRecipes(RecipeOutput recipes) {
+        new SpiritInfusionRecipeBuilder(MalumItems.SOUL_STAINED_STEEL_AXE.get(), 1, MaledictItems.MELTFALL_AXE.get(), 1)
+                .addExtraItem(MalumItems.BLIGHTED_GUNK.get(), 6)
+                .addExtraItem(MalumItems.LIVING_FLESH.get(), 6)
+                .addSpirit(MalumSpiritTypes.ELDRITCH_SPIRIT, 6)
+                .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 6)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "meltfall_axe"));
+
+        new SpiritRepairRecipeBuilder(new SizedIngredient(Ingredient.of(MalumItems.SOUL_STAINED_STEEL_INGOT.get()), 2), 0.75f)
+                .withValidItem(MaledictItems.MELTFALL_AXE.get())
+                .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 8)
+                .addSpirit(MalumSpiritTypes.EARTHEN_SPIRIT, 4)
+                .addSpirit(MalumSpiritTypes.WICKED_SPIRIT, 2)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "meltfall_axe"));
+
+        new SpiritInfusionRecipeBuilder(MaledictItems.MELTFALL_AXE.get(), 1, MaledictItems.LOVER_AXE.get(), 1)
+                .addExtraItem(MalumItems.MALIGNANT_PEWTER_INGOT.get(), 4)
+                .addExtraItem(MalumItems.FUSED_CONSCIOUSNESS.get(), 1)
+                .addExtraItem(MalumItems.BLOCK_OF_NULL_SLATE.get(), 3)
+                .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 18)
+                .addSpirit(MalumSpiritTypes.ELDRITCH_SPIRIT, 18)
+                .addSpirit(MalumSpiritTypes.INFERNAL_SPIRIT, 18)
+                .addSpirit(MalumSpiritTypes.AQUEOUS_SPIRIT, 18)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "lover_axe"));
+
+        new SpiritRepairRecipeBuilder(new SizedIngredient(Ingredient.of(MalumItems.MALIGNANT_PEWTER_INGOT.get()), 1), 1.0f)
+                .withValidItem(MaledictItems.LOVER_AXE.get())
+                .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 18)
+                .addSpirit(MalumSpiritTypes.ELDRITCH_SPIRIT, 18)
+                .addSpirit(MalumSpiritTypes.INFERNAL_SPIRIT, 18)
+                .addSpirit(MalumSpiritTypes.AQUEOUS_SPIRIT, 18)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "lover_axe"));
+
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, MalumItems.MALIGNANT_LEAD.get())
                 .requires(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 8)
                 .unlockedBy("has_malignant_lead_fragment", has(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()))

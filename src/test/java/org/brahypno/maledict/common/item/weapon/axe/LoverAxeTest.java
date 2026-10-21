@@ -26,6 +26,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.minecraft.world.effect.MobEffects;
 import org.brahypno.maledict.registry.MaledictAttributes;
 import org.brahypno.maledict.registry.MaledictItems;
+import team.lodestar.lodestone.registry.common.LodestoneAttributes;
 
 import java.util.UUID;
 
@@ -54,7 +55,7 @@ public final class LoverAxeTest {
         Cow victim = cow(helper);
         player.cooldownReset = false;
         player.attack(victim);
-        equal(helper, 87, victim.getHealth(), "Sharpness V adds three damage to the axe's ten");
+        equal(helper, 85, victim.getHealth(), "Eleven melee damage plus Sharpness V and one magic damage");
         equal(helper, 98, victim.getMaxHealth(), "Enchanted hit wounds once");
         equal(helper, 2, descent(player), "Enchanted hit rewards once");
         equal(helper, 2, weapon.getDamageValue(), "Axe melee consumes normal durability");
@@ -65,7 +66,7 @@ public final class LoverAxeTest {
         falling.setOnGround(false);
         Cow criticalTarget = cow(helper);
         falling.attack(criticalTarget);
-        equal(helper, 82, criticalTarget.getHealth(), "Falling crit multiplies base damage before Sharpness");
+        equal(helper, 79.5, criticalTarget.getHealth(), "Falling crit multiplies melee damage before Sharpness and magic");
         helper.succeed();
     }
 
@@ -81,7 +82,7 @@ public final class LoverAxeTest {
         target.getAttribute(Attributes.MAX_HEALTH).setBaseValue(100);
         target.setHealth(100);
         player.attack(target);
-        equal(helper, 85, target.getHealth(), "Bane II adds five against arthropods");
+        equal(helper, 83, target.getHealth(), "Bane II adds five against arthropods, alongside one magic damage");
         helper.assertTrue(target.hasEffect(MobEffects.MOVEMENT_SLOWDOWN),
                 "Axe attack invokes the enchantment's post-hit callback");
         helper.succeed();
@@ -111,12 +112,12 @@ public final class LoverAxeTest {
         Cow victim = cow(helper);
         player.attack(victim);
         equal(helper, 98, victim.getMaxHealth(), "First wound");
-        equal(helper, 90, victim.getHealth(), "First hit uses Descent zero");
+        equal(helper, 88, victim.getHealth(), "First hit uses Descent zero with eleven melee and one magic damage");
         equal(helper, 2, descent(player), "First full hit rewards once");
         victim.invulnerableTime = 0;
         player.attack(victim);
         equal(helper, 96.04, victim.getMaxHealth(), "Second wound multiplies remaining maximum");
-        equal(helper, 90 - 10 * (1 + 3 * (1 - Math.exp(-0.2))), victim.getHealth(),
+        equal(helper, 88 - 12 * (1 + 3 * (1 - Math.exp(-0.2))), victim.getHealth(),
                 "Second hit uses previous Descent two");
         equal(helper, 4, descent(player), "Second full hit rewards once");
         victim.heal(100);
@@ -152,7 +153,7 @@ public final class LoverAxeTest {
         player.attack(victim);
         equal(helper, 2, descent(player), "Dead target grants no reward");
         helper.assertTrue(ItemStack.matches(beforeDeadHit, player.getMainHandItem()),
-                "Dead target cannot switch color or consume durability");
+                "Dead target cannot change the weapon or consume durability");
         helper.succeed();
     }
 
@@ -162,7 +163,7 @@ public final class LoverAxeTest {
         var attribute = holder.getAttribute(MaledictAttributes.DESCENT);
         attribute.addTransientModifier(new AttributeModifier(org.brahypno.maledict.TestSupport.modifierId(UUID.randomUUID()), 5, AttributeModifier.Operation.ADD_VALUE));
         holder.tickCount = 20;
-        holder.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(MaledictItems.LOVER_AXE.get()));
+        holder.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(MaledictItems.MELTFALL_AXE.get()));
         LoverAxeEvents.tick(new net.neoforged.neoforge.event.tick.EntityTickEvent.Pre(holder));
         equal(helper, 0.1, attribute.getBaseValue(), "Offhand grows base");
         holder.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(MaledictItems.LOVER_AXE.get()));
@@ -225,12 +226,38 @@ public final class LoverAxeTest {
     }
 
     private static ChargedPlayer player(GameTestHelper helper) {
+        return player(helper, new ItemStack(MaledictItems.LOVER_AXE.get()));
+    }
+
+    private static ChargedPlayer player(GameTestHelper helper, ItemStack axe) {
         ChargedPlayer player = new ChargedPlayer(helper);
-        ItemStack axe = new ItemStack(MaledictItems.LOVER_AXE.get());
         player.setItemSlot(EquipmentSlot.MAINHAND, axe);
         axe.forEachModifier(EquipmentSlot.MAINHAND, (attribute, modifier) ->
                 player.getAttribute(attribute).addTransientModifier(modifier));
         return player;
+    }
+
+    @GameTest(template = "test_empty", batch = "lover_axe")
+    public static void meltfallKeepsDescentRewardsWithoutWounding(GameTestHelper helper) {
+        ChargedPlayer player = player(helper, new ItemStack(MaledictItems.MELTFALL_AXE.get()));
+        equal(helper, 8, player.getAttributeValue(Attributes.ATTACK_DAMAGE), "Meltfall melee damage");
+        equal(helper, 2, player.getAttributeValue(LodestoneAttributes.MAGIC_DAMAGE), "Meltfall magic damage");
+        Cow victim = cow(helper);
+        player.attack(victim);
+        equal(helper, 90, victim.getHealth(), "First full hit deals eight melee and two magic damage");
+        equal(helper, 100, victim.getMaxHealth(), "Meltfall does not wound");
+        equal(helper, 2, descent(player), "Full hit grants two Descent");
+        player.charge = 0.5F;
+        victim.invulnerableTime = 0;
+        player.attack(victim);
+        equal(helper, 100, victim.getMaxHealth(), "Weak hit does not wound either");
+        equal(helper, 2, descent(player), "Weak hit grants no extra Descent");
+        helper.assertTrue(!org.brahypno.maledict.common.item.MaledictItemData.read(player.getMainHandItem()).contains("LoverAxeLavender"),
+                "Hits no longer write the random color tag");
+        ChargedPlayer lover = player(helper);
+        equal(helper, 11, lover.getAttributeValue(Attributes.ATTACK_DAMAGE), "Lover melee damage");
+        equal(helper, 1, lover.getAttributeValue(LodestoneAttributes.MAGIC_DAMAGE), "Lover magic damage");
+        helper.succeed();
     }
 
     private static double descent(LivingEntity entity) {

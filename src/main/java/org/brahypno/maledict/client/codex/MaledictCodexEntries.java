@@ -138,6 +138,7 @@ public final class MaledictCodexEntries {
     private void setupArcana() {
         addSpiritArrowsEntry();
         addRemembranceBowEntry();
+        addMeltfallAxeEntry();
 
         addTotemicRunesContinuedEntry(List.of(
                 runeEntry(RUNE_OF_SATIATION_ENTRY, MaledictItems.RUNE_OF_SATIATION),
@@ -353,6 +354,18 @@ public final class MaledictCodexEntries {
         builder.addPage(new TextPage(REMEMBRANCE_BOW_ENTRY + ".2"));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.REMEMBRANCE_BOW.get()));
 
+        entries.add(builder.build());
+    }
+
+    private void addMeltfallAxeEntry() {
+        String identifier = "maledict.meltfall_axe";
+        if (containsEntry(entries, identifier)) return;
+        PlacedBookEntryBuilder builder = BookEntry.create(identifier, -5, 8);
+        builder.configureWidget(widget -> widget.setIcon(MaledictItems.MELTFALL_AXE)
+                .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER)));
+        builder.addPage(new HeadlineTextItemPage(identifier, identifier + ".1", MaledictItems.MELTFALL_AXE.get()));
+        builder.addPage(new TextPage(identifier + ".2"));
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.MELTFALL_AXE.get()));
         entries.add(builder.build());
     }
 
