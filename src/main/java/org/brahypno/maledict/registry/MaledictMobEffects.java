@@ -50,7 +50,7 @@ public final class MaledictMobEffects {
             MOB_EFFECTS.register("thinning", ThinningEffect::new);
 
     /**
-     * 献祭：标准九天九夜每分钟 6 点；缩短或加速时按比例结算，承受满 1080 点且自然到期后发「智慧的牺牲」。
+     * 献祭：九天九夜内每次固定打出 6 点，时间缩短只提高频率；仪式效果自然到期且存活就完成。
      * 时间表在 {@code SacrificeSchedule}，发放写在 {@code WisdomSacrifice}。
      */
     public static final DeferredHolder<MobEffect, MobEffect> SACRIFICE =

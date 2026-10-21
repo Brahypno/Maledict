@@ -98,15 +98,26 @@ public final class WisdomSacrificeTest {
     }
 
     @GameTest(template = "test_empty")
-    public static void halfDurationDoublesFirstHitAndRemovalInvalidatesTheOffering(GameTestHelper helper) {
+    public static void halfDurationHalvesPulseIntervalAndRemovalInvalidatesTheOffering(GameTestHelper helper) {
         ServerPlayer player = createResilientPlayer(helper);
         float before = healthAndAbsorption(player);
         player.addEffect(new MobEffectInstance(MaledictMobEffects.SACRIFICE,
                 SacrificeSchedule.DURATION_TICKS / 2));
         WisdomSacrifice.markOffered(player);
         player.doTick();
+        helper.assertTrue(before - healthAndAbsorption(player) == 6.0F,
+                          "Half duration must preserve the six-point first hit");
+        int initial = SacrificeSchedule.DURATION_TICKS / 2;
+        player.getActiveEffectsMap().put(MaledictMobEffects.SACRIFICE,
+                new MobEffectInstance(MaledictMobEffects.SACRIFICE, initial - 599));
+        player.doTick();
+        helper.assertTrue(before - healthAndAbsorption(player) == 6.0F,
+                          "No second pulse before 600 effect ticks have elapsed");
+        player.getActiveEffectsMap().put(MaledictMobEffects.SACRIFICE,
+                new MobEffectInstance(MaledictMobEffects.SACRIFICE, initial - 600));
+        player.doTick();
         helper.assertTrue(before - healthAndAbsorption(player) == 12.0F,
-                          "Half duration must double the normal six-point first hit");
+                          "Half duration must deliver another six-point hit at 600 effect ticks");
         player.removeEffect(MaledictMobEffects.SACRIFICE);
         helper.assertTrue(!player.getPersistentData().contains("maledict:sacrifice_offered")
                           && !player.getPersistentData().contains("maledict:sacrifice_damage"),
@@ -119,32 +130,49 @@ public final class WisdomSacrificeTest {
     }
 
     @GameTest(template = "test_empty")
-    public static void acceleratedExpirySettlesAllSkippedDamage(GameTestHelper helper) {
+    public static void resistanceDoesNotIncreaseLaterPulsesOrPreventAcceleratedCompletion(GameTestHelper helper) {
         ServerPlayer player = createResilientPlayer(helper);
+        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 1000, 3));
         float before = healthAndAbsorption(player);
         player.addEffect(new MobEffectInstance(MaledictMobEffects.SACRIFICE,
                 SacrificeSchedule.DURATION_TICKS));
         WisdomSacrifice.markOffered(player);
         player.doTick();
-        helper.assertTrue(before - healthAndAbsorption(player) == 6.0F, "Normal first hit must remain six");
+        // Confirmed sequence: each scheduled hit is six raw damage, even when resistance reduces it.
+        helper.assertTrue(Math.abs(before - healthAndAbsorption(player) - 1.2F) < 0.001F,
+                          "Resistance IV must reduce the actual first hit to 1.2");
+        var progress = player.getPersistentData().getCompound("maledict:sacrifice_damage");
+        helper.assertTrue(progress.getInt("pulses") == 1,
+                          "Only the scheduled pulse count is recorded, regardless of damage taken");
+        player.getActiveEffectsMap().put(MaledictMobEffects.SACRIFICE,
+                new MobEffectInstance(MaledictMobEffects.SACRIFICE,
+                        SacrificeSchedule.DURATION_TICKS - SacrificeSchedule.INTERVAL_TICKS));
+        player.doTick();
+        helper.assertTrue(progress.getInt("pulses") == 2
+                          && Math.abs(before - healthAndAbsorption(player) - 2.4F) < 0.001F,
+                          "The second six-point pulse must not collect the damage resisted on the first");
         // Simulate a foreign countdown modifier jumping straight to the last tick.
         player.getActiveEffectsMap().put(MaledictMobEffects.SACRIFICE,
                 new MobEffectInstance(MaledictMobEffects.SACRIFICE, 1));
         player.doTick();
-        helper.assertTrue(before - healthAndAbsorption(player) == SacrificeSchedule.TOTAL_DAMAGE,
-                          "Expiry must settle skipped minutes without losing or duplicating damage");
-        helper.assertTrue(WisdomSacrifice.hasEarned(player), "Accelerated full payment must complete the rite");
+        helper.assertTrue(Math.abs(before - healthAndAbsorption(player) - 216.0F) < 0.05F,
+                          "1080 raw damage with Resistance IV must cost only 216 actual damage");
+        helper.assertTrue(WisdomSacrifice.hasEarned(player),
+                          "Resistance must not prevent accelerated completion of the raw damage budget");
         helper.assertTrue(!player.getPersistentData().contains("maledict:sacrifice_damage"),
                           "Natural expiry must clear the finished ledger");
         helper.succeed();
     }
 
     @GameTest(template = "test_empty")
-    public static void cancelledDamageCannotCompleteTheRite(GameTestHelper helper) {
+    public static void cancelledAndImmuneDamageStillCompleteTheRite(GameTestHelper helper) {
         ServerPlayer player = createResilientPlayer(helper);
         float before = healthAndAbsorption(player);
+        int[] hits = {0};
         Consumer<LivingIncomingDamageEvent> cancel = event -> {
             if (event.getEntity() == player) {
+                helper.assertTrue(event.getAmount() == 6.0F, "Every hit must stay at six even when time is compressed");
+                hits[0]++;
                 event.setCanceled(true);
             }
         };
@@ -157,7 +185,17 @@ public final class WisdomSacrificeTest {
             NeoForge.EVENT_BUS.unregister(cancel);
         }
         helper.assertTrue(healthAndAbsorption(player) == before, "Cancelled damage must not be charged");
-        helper.assertTrue(!WisdomSacrifice.hasEarned(player), "Expiry without paid damage must not award");
+        helper.assertTrue(hits[0] == 180, "A one-tick offering must issue 180 separate six-point hits");
+        helper.assertTrue(WisdomSacrifice.hasEarned(player),
+                          "Cancelling the hit must not prevent completion of the raw damage budget");
+        ServerPlayer immune = createPlayer(helper);
+        immune.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 1000, 4));
+        float immuneBefore = healthAndAbsorption(immune);
+        immune.addEffect(new MobEffectInstance(MaledictMobEffects.SACRIFICE, 1));
+        WisdomSacrifice.markOffered(immune);
+        immune.doTick();
+        helper.assertTrue(healthAndAbsorption(immune) == immuneBefore && WisdomSacrifice.hasEarned(immune),
+                          "Full damage immunity must preserve health and still complete the offering");
         helper.succeed();
     }
 

@@ -32,22 +32,21 @@ import java.util.UUID;
  * 仪式由这里发放成就；额外栏位在获得成就时发放，包括指令授予。
  * 无 display 的独立父进度负责隐藏整个页签；仅靠 hidden 标记无法在完成后继续隐藏。
  *
- * <h2>发放条件：仪式来源、完整伤害、自然到期</h2>
+ * <h2>发放条件：仪式来源、自然到期、存活</h2>
  * 只认「{@code maledict:sacrifice} 到期」是不够的：{@code /effect give}、别的模组的随机效果、清洗与
  * 转移效果之类的机制都能凭空塞一枚进来，所以这里要三项条件同时成立：
  *
  * <ol>
  *     <li><b>凭据</b>：仪式真的把印记按上去时（{@link #markOffered}，只在 {@code addEffect} 返回 true 后
  *     调用）在玩家的 ForgeData 里记下仪式来源，并以实际效果时长开始记录伤害。</li>
- *     <li><b>完整伤害</b>：由 {@link SacrificeEffect} 按效果进度结算，总计承受 1080 点；不再要求
- *     服务器时间走满九天九夜。</li>
  *     <li><b>自然到期</b>：{@code MobEffectEvent.Expired} 只在 {@code LivingEntity#tickEffects} 里
  *     {@code MobEffectInstance#tick()} 返回 false 的那一步发；死亡重生根本不复制 {@code activeEffects}，
  *     牛奶与 {@code /effect clear} 走的是 {@code Remove}。</li>
+ *     <li><b>存活</b>：效果自然到期后仍活着就完成，不以受到或累计的伤害数额为门槛。</li>
  * </ol>
  *
  * <p>凭空来的效果没有仪式凭据，不发成就。自然到期、非自然移除和死亡都会清除凭据与伤害记录；
- * 初始时长缩短或倒计时加速可以提前完成，但不能省略对应的伤害。
+ * 初始时长缩短或倒计时加速只提高固定伤害的出手频率，不再要求服务器时间走满九天九夜。
  *
  * <p>栏位走 Curios 的永久槽位修饰符：它落在 {@code CurioStacksHandler} 的 persistentModifiers 上，尺寸由
  * {@code baseSize + 修饰符} 重算并存进 NBT，所以死亡重生的 {@code readTag} 与重登都带得回来；固定 UUID
@@ -97,17 +96,17 @@ public final class WisdomSacrifice {
         SacrificeEffect.start(player, effect.getDuration());
     }
 
-    /** 自然到期：补齐尾段伤害后，仍然活着且承受满额才算完成。 */
+    /** 自然到期：处理最后的出手节点后，有仪式凭据且仍存活就完成。 */
     @SubscribeEvent
     public static void onEffectExpired(MobEffectEvent.Expired event) {
         if (!isSacrifice(event.getEffectInstance())) {
             return;
         }
-        boolean paidInFull = SacrificeEffect.finish(event.getEntity());
+        boolean survived = SacrificeEffect.finish(event.getEntity());
         if (event.getEntity() instanceof ServerPlayer player) {
             boolean offered = player.getPersistentData().contains(OFFERED_KEY);
             clearOffering(player);
-            if (offered && paidInFull) {
+            if (offered && survived) {
                 award(player);
             }
         }
