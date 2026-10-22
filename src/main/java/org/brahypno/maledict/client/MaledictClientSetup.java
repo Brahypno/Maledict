@@ -1,32 +1,31 @@
 package org.brahypno.maledict.client;
 
-import net.minecraft.resources.ResourceLocation;
 import com.sammy.malum.common.item.IVoidItem;
 import com.sammy.malum.visual_effects.ScreenParticleEffects;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
-import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
-import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.infrared.InfraredPostProcessor;
-import org.brahypno.maledict.client.realm.BlightedRealmEffects;
-import org.brahypno.maledict.common.realm.BlightedRealm;
 import org.brahypno.maledict.client.item.AgeOfEnlightenmentCurioRenderer;
 import org.brahypno.maledict.client.item.AgeOfEnlightenmentModel;
-import org.brahypno.maledict.client.item.SpiritArrowRenderer;
 import org.brahypno.maledict.client.item.HangmanTrapRenderer;
+import org.brahypno.maledict.client.item.SpiritArrowRenderer;
 import org.brahypno.maledict.client.raven.RavenFeatherRenderer;
 import org.brahypno.maledict.client.raven.RavenModel;
 import org.brahypno.maledict.client.raven.RavenRenderer;
 import org.brahypno.maledict.client.raven.RavenShoulderLayer;
+import org.brahypno.maledict.client.realm.BlightedRealmEffects;
 import org.brahypno.maledict.client.vicissitude.model.FirstVicissitudeBossModel;
 import org.brahypno.maledict.client.vicissitude.render.FirstVicissitudeBossRenderer;
 import org.brahypno.maledict.client.vicissitude.render.VicissitudeLightOrbRenderer;
@@ -35,6 +34,7 @@ import org.brahypno.maledict.client.vicissitude.render.VicissitudeSpiritBoltRend
 import org.brahypno.maledict.client.vicissitude.vfx.VicissitudeSummoningPostProcessor;
 import org.brahypno.maledict.client.vitals.DelayedVitalsOverlay;
 import org.brahypno.maledict.common.item.arrow.SpiritArrowItem;
+import org.brahypno.maledict.common.realm.BlightedRealm;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
 import team.lodestar.lodestone.handlers.screenparticle.ParticleEmitterHandler;
@@ -42,7 +42,9 @@ import team.lodestar.lodestone.systems.particle.screen.ScreenParticleHolder;
 import team.lodestar.lodestone.systems.postprocess.PostProcessHandler;
 import top.theillusivec4.curios.api.client.CuriosRendererRegistry;
 
-/** 客户端 MOD 总线注册入口：实体与图层、饰品、HUD、物品颜色与粒子、后处理器。 */
+/**
+ * 客户端 MOD 总线注册入口：实体与图层、饰品、HUD、物品颜色与粒子、后处理器。
+ */
 @EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class MaledictClientSetup {
 
@@ -58,8 +60,9 @@ public final class MaledictClientSetup {
     private static final ParticleEmitterHandler.ItemParticleSupplier ESOTERICA_PARTICLES =
             new ParticleEmitterHandler.ItemParticleSupplier() {
                 @Override
-                public void spawnLateParticles(ScreenParticleHolder target, Level level, float partialTick,
-                                               ItemStack stack, float x, float y) {
+                public void spawnLateParticles(
+                        ScreenParticleHolder target, Level level, float partialTick,
+                        ItemStack stack, float x, float y) {
                     ScreenParticleEffects.spawnEncyclopediaEsotericaScreenParticles(target, level, partialTick);
                 }
             };
@@ -79,9 +82,9 @@ public final class MaledictClientSetup {
     @SubscribeEvent
     public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(FirstVicissitudeBossRenderer.LAYER,
-                FirstVicissitudeBossModel::createBodyLayer);
+                                      FirstVicissitudeBossModel::createBodyLayer);
         event.registerLayerDefinition(AgeOfEnlightenmentModel.LAYER,
-                AgeOfEnlightenmentModel::createBodyLayer);
+                                      AgeOfEnlightenmentModel::createBodyLayer);
         event.registerLayerDefinition(RavenModel.LAYER, RavenModel::createBodyLayer);
     }
 
@@ -91,25 +94,31 @@ public final class MaledictClientSetup {
                 event.getEntityModels().bakeLayer(AgeOfEnlightenmentModel.LAYER));
         for (var skin : event.getSkins()) {
             PlayerRenderer renderer = event.getSkin(skin);
-            if (renderer != null) {
+            if (renderer != null){
                 renderer.addLayer(new RavenShoulderLayer(renderer, event.getEntityModels()));
             }
         }
     }
 
-    /** 面具模型实例，在 {@code AddLayers} 阶段烘焙。 */
+    /**
+     * 面具模型实例，在 {@code AddLayers} 阶段烘焙。
+     */
     public static AgeOfEnlightenmentModel ageOfEnlightenmentModel() {
         return ageOfEnlightenmentModel;
     }
 
-    /** Curios 在 AddLayers 时冻结渲染器表，必须在客户端初始化阶段完成绑定。 */
+    /**
+     * Curios 在 AddLayers 时冻结渲染器表，必须在客户端初始化阶段完成绑定。
+     */
     @SubscribeEvent
     public static void registerCurioRenderers(FMLClientSetupEvent event) {
         event.enqueueWork(() -> CuriosRendererRegistry.register(
                 MaledictItems.AGE_OF_ENLIGHTENMENT.get(), AgeOfEnlightenmentCurioRenderer::new));
     }
 
-    /** 两条延迟池显示叠在原版红心之后、护甲之前，不占新的 HUD 行。 */
+    /**
+     * 两条延迟池显示叠在原版红心之后、护甲之前，不占新的 HUD 行。
+     */
     @SubscribeEvent
     public static void registerGuiOverlays(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.PLAYER_HEALTH, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "delayed_vitals_heal"),
@@ -121,19 +130,19 @@ public final class MaledictClientSetup {
     @SubscribeEvent
     public static void registerItemColors(RegisterColorHandlersEvent.Item event) {
         event.register((stack, tintIndex) -> {
-                    if (tintIndex != 0 || !(stack.getItem() instanceof SpiritArrowItem arrowItem)) {
-                        return 0xFFFFFFFF;
-                    }
-                    return arrowItem.getDefiningSpiritType().getItemColor().getRGB();
-                },
-                MaledictItems.SACRED_SPIRIT_ARROW.get(),
-                MaledictItems.WICKED_SPIRIT_ARROW.get(),
-                MaledictItems.ARCANE_SPIRIT_ARROW.get(),
-                MaledictItems.ELDRITCH_SPIRIT_ARROW.get(),
-                MaledictItems.AERIAL_SPIRIT_ARROW.get(),
-                MaledictItems.AQUEOUS_SPIRIT_ARROW.get(),
-                MaledictItems.EARTHEN_SPIRIT_ARROW.get(),
-                MaledictItems.INFERNAL_SPIRIT_ARROW.get());
+                           if (tintIndex != 0 || !(stack.getItem() instanceof SpiritArrowItem arrowItem)){
+                               return 0xFFFFFFFF;
+                           }
+                           return arrowItem.getDefiningSpiritType().getItemColor().getRGB();
+                       },
+                       MaledictItems.SACRED_SPIRIT_ARROW.get(),
+                       MaledictItems.WICKED_SPIRIT_ARROW.get(),
+                       MaledictItems.ARCANE_SPIRIT_ARROW.get(),
+                       MaledictItems.ELDRITCH_SPIRIT_ARROW.get(),
+                       MaledictItems.AERIAL_SPIRIT_ARROW.get(),
+                       MaledictItems.AQUEOUS_SPIRIT_ARROW.get(),
+                       MaledictItems.EARTHEN_SPIRIT_ARROW.get(),
+                       MaledictItems.INFERNAL_SPIRIT_ARROW.get());
     }
 
     @SubscribeEvent
@@ -141,17 +150,16 @@ public final class MaledictClientSetup {
         event.enqueueWork(() -> {
             ParticleEmitterHandler.registerItemParticleEmitter(
                     VOID_PARTICLES,
-                    MaledictItems.INCURSUS_BLADE.get());
-            ParticleEmitterHandler.registerItemParticleEmitter(
-                    VOID_PARTICLES,
-                    MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+                    MaledictItems.INCURSUS_BLADE.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get());
             ParticleEmitterHandler.registerItemParticleEmitter(
                     ESOTERICA_PARTICLES,
-                    MaledictItems.ELEGY_BOW.get());
+                    MaledictItems.ELEGY_BOW.get(), MaledictItems.HANGMAN_FOOL.get(), MaledictItems.BLEEDING_EYE.get());
         });
     }
 
-    /** 常驻后处理器只登记一次；Lodestone 按 isActive 执行，首次生效时才载入链。 */
+    /**
+     * 常驻后处理器只登记一次；Lodestone 按 isActive 执行，首次生效时才载入链。
+     */
     @SubscribeEvent
     public static void registerPostProcessor(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
