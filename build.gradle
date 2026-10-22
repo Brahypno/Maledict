@@ -127,6 +127,11 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.3'
+
+    runtimeOnly "curse.maven:selene-499980:9122548"
+    runtimeOnly "curse.maven:mmmmmmmmmmmm-225738:8903254"
+
+    runtimeOnly "curse.maven:just-enough-characters-250702:9163765"
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"

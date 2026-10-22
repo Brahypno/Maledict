@@ -89,7 +89,7 @@
 
 ## 可重复生成
 
-使用 Java 17，在项目根目录运行贴图生成器：
+使用 Java 21，在项目根目录运行贴图生成器：
 
 ```powershell
 java art/raven/tools/RavenTextureBuilder.java
