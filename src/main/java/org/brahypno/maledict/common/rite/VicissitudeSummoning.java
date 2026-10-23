@@ -5,6 +5,14 @@ public final class VicissitudeSummoning {
     public static final int OPEN_TICKS = 30;
     public static final int ARRIVAL_TICK = 130;
     public static final int DURATION = 160;
+    public static final float RISE = 9.0F;
+    public static final float PORTAL_RADIUS = 3.8F;
+    /** Covers the 4.17-block rift rim and the folded/unfolded wing envelope (under 4.41). */
+    public static final double CLEARANCE_RADIUS = 4.5D;
+    /** Wing tips reach above the body's 4.375-block collision box (under 5.19). */
+    public static final double CLEARANCE_HEIGHT = 5.25D;
+    /** Cloth can hang slightly below the body's feet. */
+    public static final double CLEARANCE_BELOW = 0.25D;
 
     private VicissitudeSummoning() {
     }
