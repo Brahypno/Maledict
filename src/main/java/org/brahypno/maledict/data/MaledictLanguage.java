@@ -23,6 +23,10 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE, "扭曲石恶念之铅矿石");
             addItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT, "恶念之铅碎片");
             add("message.maledict.well_unavailable", "彼端无处落足，深井将你拒回。");
+            add("message.maledict.vicissitude_rite.warning", "仪式已聆听你的呼唤。然而，回应你的存在必不听命于你。");
+            add("message.maledict.vicissitude_rite.confirm", "再次右键，承担随之而来的后果。");
+            add("message.maledict.vicissitude_rite.occupied", "附近已有同类存在，无法再次启动召唤仪式。");
+            add("message.maledict.vicissitude_rite.cramped", "周围的空间太过狭小，无法洞开创口");
             add("message.maledict.realm_no_respawn", "此界无法安置你的归处。");
             addItem(MaledictItems.HANGMAN_FOOL, "倒吊人的愚见");
             add("tooltip.maledict.hangman_fool.flavor.0", "献出力量，以求取人智");
@@ -338,6 +342,10 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE, "Twisted Malignant Lead Ore");
             addItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT, "Malignant Lead Fragment");
             add("message.maledict.well_unavailable", "There is no safe passage beyond. The well rejects you.");
+            add("message.maledict.vicissitude_rite.warning", "The ritual has heard your call. What answers will not obey you.");
+            add("message.maledict.vicissitude_rite.confirm", "Right-click again to embrace the consequences.");
+            add("message.maledict.vicissitude_rite.occupied", "A being of the same kind is already nearby. The summoning ritual cannot begin.");
+            add("message.maledict.vicissitude_rite.cramped", "The surrounding space is too confined to tear open a wound.");
             add("message.maledict.realm_no_respawn", "You cannot bind your return to this realm.");
             addItem(MaledictItems.HANGMAN_FOOL, "Hangman`s fool");
             add("tooltip.maledict.hangman_fool.flavor.0", "\"strength\" is sacrificed for \"human wisdom\"");

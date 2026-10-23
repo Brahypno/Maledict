@@ -667,20 +667,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     /**
-     * The existing free spawn position is the destination; check the entire vertical entrance.
+     * SummoningRite validates the full entrance before this starts or consumes the totem.
      */
     public void beginRiteSummoning(TotemBaseBlockEntity totem) {
         summoningTotem = VicissitudeTotemConsumption.capture(totem);
         BlockPos landing = blockPosition();
-        float rise = 0.0F;
-        for (int candidate = 9; candidate >= 1; candidate--) {
-            if (getY() + candidate + getBbHeight() >= level().getMaxBuildHeight())
-                continue;
-            if (level().noCollision(this, getBoundingBox().expandTowards(0, candidate, 0))){
-                rise = candidate;
-                break;
-            }
-        }
+        float rise = VicissitudeSummoning.RISE;
         entityData.set(DATA_SUMMON_LANDING, landing);
         entityData.set(DATA_SUMMON_RISE, rise);
         entityData.set(DATA_SUMMON_START, level().getGameTime());
@@ -704,7 +696,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     public Vec3 getSummoningPortal() {
         BlockPos landing = entityData.get(DATA_SUMMON_LANDING);
         float rise = entityData.get(DATA_SUMMON_RISE);
-        // A low ceiling keeps the portal above the head instead of cutting across the body.
+        // Full-height entry: the portal stays above the landing point throughout the animation.
         return new Vec3(landing.getX() + 0.5D,
                         landing.getY() + Math.max(rise, getBbHeight() + 0.3D), landing.getZ() + 0.5D);
     }

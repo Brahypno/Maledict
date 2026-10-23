@@ -33,7 +33,8 @@ public final class VicissitudeDialogueOverlay {
         }
         Component message = hud.overlayMessageString;
         if (message == null || !(message.getContents() instanceof TranslatableContents translation)
-            || !translation.getKey().startsWith("message.maledict.first_vicissitude.")){
+            || !(translation.getKey().startsWith("message.maledict.first_vicissitude.")
+                 || translation.getKey().startsWith("message.maledict.vicissitude_rite."))){
             return;
         }
         int width = event.getWindow().getGuiScaledWidth();

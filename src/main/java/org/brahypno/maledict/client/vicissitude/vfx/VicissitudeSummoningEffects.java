@@ -38,7 +38,7 @@ public final class VicissitudeSummoningEffects {
     private static final Color BONE = new Color(0xD8DBE2);
     private static final Color VIOLET = new Color(0x6D5A87);
     private static final int SEGMENTS = 96;
-    private static final float RADIUS = 3.8F;
+    private static final float RADIUS = VicissitudeSummoning.PORTAL_RADIUS;
 
     private VicissitudeSummoningEffects() {
     }

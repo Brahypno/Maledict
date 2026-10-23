@@ -1,6 +1,7 @@
 package org.brahypno.maledict.common.vicissitude.rite;
 
 import com.sammy.malum.common.block.curiosities.totem.TotemBaseBlockEntity;
+import com.sammy.malum.common.block.curiosities.totem.TotemPoleBlockEntity;
 import com.sammy.malum.core.systems.spirit.MalumSpiritType;
 import com.sammy.malum.registry.common.SoundRegistry;
 import com.sammy.malum.registry.common.SpiritRiteRegistry;
@@ -13,6 +14,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -21,12 +24,15 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.config.MaledictConfig;
+import org.brahypno.maledict.registry.MaledictEntities;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Registers the encounter's four rites in Malum's rite table and performs what they create.
@@ -135,9 +141,11 @@ public final class SummoningRite {
         BlockPos base = totem.getBlockPos();
         double x = base.getX() + 0.5D;
         double z = base.getZ() + 0.5D;
-        AABB guard = new AABB(base).inflate(SUMMON_GUARD_RADIUS);
-        if (!level.getEntitiesOfClass(Entity.class, guard, entity -> entity.getType() == type)
-                .isEmpty()) {
+        if (hasNearbySummon(level, base, type)) {
+            return;
+        }
+        BlockPos landing = findLanding(level, base, type);
+        if (landing == null) {
             return;
         }
         Entity created = type.create(level);
@@ -148,11 +156,7 @@ public final class SummoningRite {
             boss.setBossDifficulty(difficulty);
         }
         float yaw = totem.getDirection().toYRot();
-        if (!place(created, level, x, base.getY(), z, yaw)) {
-            // Every candidate was blocked; a rite that promises uncontrolled creation must not
-            // quietly do nothing, and the encounter brings its own unstick search.
-            created.moveTo(x, base.getY() + SUMMON_HEIGHTS[0], z, yaw, 0.0F);
-        }
+        created.moveTo(x, landing.getY(), z, yaw, 0.0F);
         if (created instanceof FirstVicissitudeBossEntity boss) {
             boss.beginRiteSummoning(totem);
             level.addFreshEntity(boss);
@@ -166,16 +170,83 @@ public final class SummoningRite {
                 SoundSource.HOSTILE, 1.2F, 0.7F);
     }
 
-    /** Finds a free spot above the totem; a big hitbox needs the clearance checked, not assumed. */
-    private static boolean place(Entity entity, ServerLevel level, double x, double baseY,
-                                 double z, float yaw) {
+    /** Same exclusion check before confirmation and immediately before entity creation. */
+    static boolean hasNearbySummon(ServerLevel level, BlockPos base) {
+        EntityType<?> type = resolveType();
+        return type != null && hasNearbySummon(level, base, type);
+    }
+
+    private static boolean hasNearbySummon(ServerLevel level, BlockPos base, EntityType<?> type) {
+        AABB guard = new AABB(base).inflate(SUMMON_GUARD_RADIUS);
+        return !level.getEntitiesOfClass(Entity.class, guard, entity -> entity.getType() == type).isEmpty();
+    }
+
+    static boolean hasSummoningSpace(ServerLevel level, BlockPos base) {
+        EntityType<?> type = resolveType();
+        // Invalid configuration is handled by summon, rather than reported as cramped terrain.
+        return type == null || findLanding(level, base, type) != null;
+    }
+
+    /** Search uses exactly the same clearance before confirmation and before entity creation. */
+    @Nullable
+    static BlockPos findLanding(ServerLevel level, BlockPos base, EntityType<?> type) {
+        Set<BlockPos> consumed = consumedBlocks(level, base);
         for (int height : SUMMON_HEIGHTS) {
-            entity.moveTo(x, baseY + height, z, yaw, 0.0F);
-            if (level.noCollision(entity)) {
-                return true;
+            BlockPos landing = base.above(height);
+            AABB space = clearance(landing, type);
+            if (space.minY < level.getMinBuildHeight() || space.maxY > level.getMaxBuildHeight()
+                    || !level.getWorldBorder().isWithinBounds(space)) continue;
+            if (!level.hasChunksAt(BlockPos.containing(space.minX, space.minY, space.minZ),
+                    BlockPos.containing(space.maxX, space.maxY, space.maxZ))) continue;
+            boolean clear = true;
+            var volume = Shapes.create(space);
+            for (BlockPos pos : BlockPos.betweenClosed(BlockPos.containing(space.minX, space.minY, space.minZ),
+                    BlockPos.containing(Math.nextDown(space.maxX), Math.nextDown(space.maxY), Math.nextDown(space.maxZ)))) {
+                if (consumed.contains(pos)) continue;
+                var state = level.getBlockState(pos);
+                // Fluids and visible non-solid blocks can also obscure the entrance.
+                if (!state.getFluidState().isEmpty() || Shapes.joinIsNotEmpty(volume,
+                        state.getShape(level, pos).move(pos.getX(), pos.getY(), pos.getZ()), BooleanOp.AND)) {
+                    clear = false;
+                    break;
+                }
             }
+            if (clear) return landing;
         }
-        return false;
+        return null;
+    }
+
+    static AABB clearance(BlockPos landing, EntityType<?> type) {
+        double radius = type.getWidth() * 0.5D;
+        double height = type.getHeight();
+        double below = 0;
+        if (type == MaledictEntities.FIRST_VICISSITUDE.get()) {
+            radius = Math.max(radius, VicissitudeSummoning.CLEARANCE_RADIUS);
+            height = VicissitudeSummoning.RISE + Math.max(height, VicissitudeSummoning.CLEARANCE_HEIGHT);
+            below = VicissitudeSummoning.CLEARANCE_BELOW;
+        }
+        double x = landing.getX() + 0.5D, z = landing.getZ() + 0.5D;
+        return new AABB(x - radius, landing.getY() - below, z - radius,
+                x + radius, landing.getY() + height, z + radius);
+    }
+
+    /** Only blocks the existing consumption sequence actually removes are exempt. */
+    private static Set<BlockPos> consumedBlocks(ServerLevel level, BlockPos base) {
+        Set<BlockPos> consumed = new HashSet<>();
+        consumed.add(base);
+        BlockPos top = base;
+        while (top.getY() + 1 < level.getMaxBuildHeight()
+                && level.getBlockEntity(top.above()) instanceof TotemPoleBlockEntity) {
+            top = top.above();
+            consumed.add(top);
+        }
+        final BlockPos poleTop = top;
+        for (int y : VicissitudeTotemConsumption.findUpperLogs(top.getY(), level.getMaxBuildHeight(),
+                height -> level.getBlockState(poleTop.atY(height)).isAir(),
+                height -> VicissitudeTotemConsumption.isRitualLog(level.getBlockState(poleTop.atY(height))))) {
+            consumed.add(top.atY(y));
+        }
+        return consumed;
     }
 
     private static EntityType<?> resolveType() {

@@ -67,7 +67,7 @@ public final class VicissitudeTotemConsumption {
         return heights;
     }
 
-    private static boolean isRitualLog(BlockState state) {
+    static boolean isRitualLog(BlockState state) {
         return state.is(BlockRegistry.SOULWOOD_LOG.get()) || state.is(BlockRegistry.RUNEWOOD_LOG.get());
     }
 
