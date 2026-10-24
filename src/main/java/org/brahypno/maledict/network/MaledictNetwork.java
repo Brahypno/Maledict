@@ -2,7 +2,10 @@ package org.brahypno.maledict.network;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.util.Mth;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
@@ -13,7 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class MaledictNetwork {
-    private static final String PROTOCOL = "2";
+    private static final String PROTOCOL = "3";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "main"),
             () -> PROTOCOL,
@@ -65,6 +68,9 @@ public final class MaledictNetwork {
         CHANNEL.registerMessage(7, IncursusSlashPacket.class,
                 IncursusSlashPacket::encode, IncursusSlashPacket::decode,
                 IncursusSlashPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(8, LoverAxeHitPacket.class,
+                LoverAxeHitPacket::encode, LoverAxeHitPacket::decode,
+                LoverAxeHitPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendRadialAttack() {
@@ -74,6 +80,13 @@ public final class MaledictNetwork {
     public static void sendIncursusSlash(ServerPlayer player, float scale) {
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
                 new IncursusSlashPacket(player.position().add(0, player.getBbHeight() * 0.5, 0), scale));
+    }
+
+    /** One notification after the entire damage probe, including fallback and lethal hits. */
+    public static void sendLoverAxeHit(Player attacker, LivingEntity target) {
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> attacker),
+                new LoverAxeHitPacket(target.getId(), target.position().add(0, target.getBbHeight() * 0.5, 0),
+                        Mth.clamp(target.getBbWidth() * 0.5F + 0.3F, 0.5F, 1.4F)));
     }
 
     public static void sendProjectileReflection(net.minecraft.world.entity.projectile.Projectile projectile) {

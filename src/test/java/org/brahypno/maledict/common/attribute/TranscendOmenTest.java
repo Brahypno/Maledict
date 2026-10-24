@@ -152,7 +152,6 @@ public final class TranscendOmenTest {
 
     @GameTest(template = "test_empty", batch = "transcend_omen")
     public static void minimumShareCanExceedTheTotalBudgetAndRecalculates(GameTestHelper helper) {
-        double originalMinimum = MaledictConfig.OMEN_MINIMUM_SHARE.get();
         try (Fixture f = new Fixture(helper)) {
             f.rules(rule(magic()), rule(capacity()));
             f.base(magic(), 2);
@@ -166,8 +165,6 @@ public final class TranscendOmenTest {
             f.tick();
             f.expect(2.25, 10, 0.125, "Changing the floor invalidates the cache and restores equal halves");
             f.equal(1.25, f.value(capacity()), "The floor is a minimum, not an extra additive share");
-        } finally {
-            MaledictConfig.OMEN_MINIMUM_SHARE.set(originalMinimum);
         }
         helper.succeed();
     }
@@ -354,6 +351,7 @@ public final class TranscendOmenTest {
         final GameTestHelper helper;
         final LivingEntity entity;
         final Map<ResourceLocation, MalignantConversionData> original = MalignantConversionReloadListener.CONVERSION_DATA;
+        final double originalMinimum = MaledictConfig.OMEN_MINIMUM_SHARE.get();
 
         Fixture(GameTestHelper helper) {
             this.helper = helper;
@@ -363,6 +361,8 @@ public final class TranscendOmenTest {
             base(Attributes.ARMOR, 20);
             base(resistance(), 0.25);
             base(capacity(), 0);
+            // Numeric expectations use the default floor, independent of the local test-server config.
+            MaledictConfig.OMEN_MINIMUM_SHARE.set(0.01);
         }
 
         void rules(MalignantConversionData... rules) {
@@ -384,6 +384,7 @@ public final class TranscendOmenTest {
             helper.assertTrue(Math.abs(expected - actual) < 1e-8, message + ": expected " + expected + ", got " + actual);
         }
         @Override public void close() {
+            MaledictConfig.OMEN_MINIMUM_SHARE.set(originalMinimum);
             MalignantConversionReloadListener.CONVERSION_DATA = original;
             entity.discard();
         }
