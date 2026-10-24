@@ -1,0 +1,8 @@
+{
+  "type": "maledict:invocation",
+  "entity": "minecraft:skeleton_horse",
+  "medium": "runewood",
+  "spawn_profile": "ground",
+  "tint": "#E9DFC6",
+  "variant": "default"
+}

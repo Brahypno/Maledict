@@ -1,0 +1,8 @@
+{
+  "type": "maledict:invocation",
+  "entity": "minecraft:sniffer",
+  "medium": "runewood",
+  "spawn_profile": "ground",
+  "tint": "#91BD59",
+  "variant": "default"
+}

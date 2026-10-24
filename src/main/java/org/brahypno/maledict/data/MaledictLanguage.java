@@ -16,6 +16,7 @@ public final class MaledictLanguage extends LanguageProvider {
 
     @Override
     protected void addTranslations() {
+        addInvocationTranslations();
         if ("zh_cn".equals(locale)){
             add("dimension.maledict.blighted_realm", "腐枯界");
             add("biome.maledict.blighted_wastes", "腐枯荒原");
@@ -740,6 +741,45 @@ public final class MaledictLanguage extends LanguageProvider {
         add("malum.gui.book.entry." + identifier + ".description", description);
         add("malum.gui.book.entry.page.headline." + identifier, title);
         add("malum.gui.book.entry.page.text." + identifier + ".1", text);
+    }
+
+    private void addInvocationTranslations() {
+        boolean chinese = "zh_cn".equals(locale);
+        addItem(MaledictItems.INVOCATION_SIGIL, chinese ? "召唤印记" : "Invocation Sigil");
+        String[][] translations = {
+                {"tooltip.maledict.invocation.target", "召唤对象：%s", "Summons: %s"},
+                {"tooltip.maledict.invocation.variant", "变种：%s", "Variant: %s"},
+                {"invocation.maledict.variant.blue", "蓝色", "Blue"},
+                {"invocation.maledict.variant.brown", "棕色", "Brown"},
+                {"tooltip.maledict.invocation.runewood", "需要符文木图腾", "Requires a Runewood totem"},
+                {"tooltip.maledict.invocation.soulwood", "需要灵魂木图腾，将召唤敌对生物", "Requires a Soulwood totem; summons a hostile mob"},
+                {"tooltip.maledict.invocation.use", "主手手持印记并进行对应的图腾仪式", "Hold in your main hand and perform the matching rite"},
+                {"tooltip.maledict.invocation.consume", "仪式开始时消耗；失败时掉落返还", "Consumed when the rite begins; dropped back on failure"},
+                {"message.maledict.invocation.invalid", "召唤印记无效或目标不受支持。", "This sigil is invalid or its target is unsupported."},
+                {"message.maledict.invocation.runewood", "此印记需要符文木图腾。", "This sigil requires a Runewood totem."},
+                {"message.maledict.invocation.soulwood", "此印记需要灵魂木图腾。", "This sigil requires a Soulwood totem."},
+                {"message.maledict.invocation.busy", "图腾正在召唤或仍有印记等待返还。", "This totem is busy or has a sigil awaiting return."},
+                {"message.maledict.invocation.structure", "图腾精魂排列、朝向或材质不匹配。", "The totem's spirits, facing or wood do not match."},
+                {"message.maledict.invocation.peaceful", "和平难度下无法召唤怪物。", "Hostile mobs cannot be summoned on Peaceful."},
+                {"message.maledict.invocation.space", "图腾前方缺少合适的召唤场地。", "There is no suitable summoning space in front of the totem."},
+                {"malum.gui.rite.maledict_invocation_rite", "生命召回", "Recall of Life"},
+                {"malum.gui.rite.corrupted_maledict_invocation_rite", "禁忌召唤", "Forbidden Invocation"},
+                {"malum.gui.book.entry.page.text.maledict_invocation_rite.hover", "消耗召唤印记，凝聚中立或友善生物。", "Consume a sigil to manifest a neutral or friendly creature."},
+                {"malum.gui.book.entry.page.text.corrupt_maledict_invocation_rite.hover", "消耗召唤印记，凝聚敌对生物。", "Consume a sigil to manifest a hostile creature."},
+                {"malum.gui.book.entry.maledict.invocation_sigil", "召唤印记", "Invocation Sigils"},
+                {"malum.gui.book.entry.maledict.invocation_sigil.description", "形态封于印记，生命凝于精魂", "A form remembered, a life recalled"},
+                {"malum.gui.book.entry.page.headline.maledict.invocation_sigil", "召唤印记", "Invocation Sigils"}
+        };
+        for (String[] translation : translations) add(translation[0], translation[chinese ? 1 : 2]);
+        add("malum.gui.book.entry.page.text.maledict.invocation_sigil.1", chinese
+                ? "精魂灌注能够将生物的形态封 入召唤印记。主手手持印记并 进行对应的图腾仪式，条件满 足后立即消耗一枚，精魂随之 凝聚为活物。"
+                : "Spirit infusion can seal a creature's form within an invocation sigil. Hold the sigil in your main hand and perform the matching totemic rite. Once its conditions are met, one sigil is consumed immediately, and the spirits gather into a living creature.");
+        add("malum.gui.book.entry.page.text.maledict.invocation_sigil.2", chinese
+                ? "自下而上排列奥术、大地、神 圣、澄空精魂。中立与友善生 物使用符文木，怪物使用灵魂 木。图腾前方需留出空间；水 生生物需要水，附着生物需要 坚实支撑与足够的活动空间。"
+                : "From bottom to top, arrange Arcane, Earthen, Sacred and Aerial spirits. Use Runewood for neutral and friendly creatures, Soulwood for hostile mobs. Leave room in front of the totem. Aquatic creatures need water; creatures that attach to surfaces need solid support and enough room to move.");
+        add("malum.gui.book.entry.page.text.maledict.invocation_sigil.3", chinese
+                ? "仪式开始后，无需继续手持印 记。若仪式中断或召唤失败， 已消耗的印记会在原图腾附近 作为掉落物返还。图腾可反复 使用，每次仪式消耗一枚印记 。"
+                : "Once the rite has begun, you may put the sigil away. If the rite is interrupted or the summoning fails, the consumed sigil drops near the original totem. The totem can be reused; each rite consumes one sigil.");
     }
 
     private static final String OBELISKS_ENTRY = "void.maledict.obelisks";

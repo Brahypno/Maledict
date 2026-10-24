@@ -103,6 +103,9 @@ const PAGE_TYPES = {
 
 // page text key -> page type, as wired up in client/codex/MaledictCodexEntries.java
 const PAGES = {
+  "malum.gui.book.entry.page.text.maledict.invocation_sigil.1": "headline",
+  "malum.gui.book.entry.page.text.maledict.invocation_sigil.2": "text",
+  "malum.gui.book.entry.page.text.maledict.invocation_sigil.3": "text",
   "malum.gui.book.entry.page.text.maledict.meltfall_axe.1": "headlineItem",
   "malum.gui.book.entry.page.text.maledict.meltfall_axe.2": "text",
   "malum.gui.book.entry.page.text.maledict.spirit_arrows.1": "headline",

@@ -1,0 +1,40 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 1,
+      "item": "minecraft:saddle"
+    },
+    {
+      "count": 8,
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "count": 4,
+      "item": "minecraft:amethyst_shard"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "minecraft:bone_block"
+  },
+  "output": {
+    "item": "maledict:invocation_sigil",
+    "nbt": "{Invocation:{Id:\"maledict:invocation/skeleton_horse\"}}"
+  },
+  "spirits": [
+    {
+      "type": "wicked",
+      "count": 8
+    },
+    {
+      "type": "sacred",
+      "count": 4
+    },
+    {
+      "type": "arcane",
+      "count": 8
+    }
+  ],
+  "useNbtFromInput": false
+}

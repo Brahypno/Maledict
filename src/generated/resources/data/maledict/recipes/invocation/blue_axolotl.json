@@ -1,0 +1,8 @@
+{
+  "type": "maledict:invocation",
+  "entity": "minecraft:axolotl",
+  "medium": "runewood",
+  "spawn_profile": "water",
+  "tint": "#718BE8",
+  "variant": "blue"
+}

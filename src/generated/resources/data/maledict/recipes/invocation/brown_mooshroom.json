@@ -1,0 +1,8 @@
+{
+  "type": "maledict:invocation",
+  "entity": "minecraft:mooshroom",
+  "medium": "runewood",
+  "spawn_profile": "ground",
+  "tint": "#BE865A",
+  "variant": "brown"
+}

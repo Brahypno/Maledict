@@ -27,6 +27,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.invocation.InvocationRite;
 import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.common.vicissitude.rite.SummoningRite;
 import org.brahypno.maledict.common.vicissitude.rite.VicissitudeRiteType;
@@ -116,6 +117,7 @@ public final class MaledictCodexEntries {
 
     @SubscribeEvent
     public static void setupEntries(SetupMalumCodexEntriesEvent event) {
+        addInvocationEntry();
         addSpiritArrowsEntry();
         addRemembranceBowEntry();
         addMeltfallAxeEntry();
@@ -146,6 +148,21 @@ public final class MaledictCodexEntries {
                 .setStyle(BookWidgetStyle.RUNEWOOD));
         builder.addPage(new HeadlineTextPage(SPIRIT_ARROWS_ENTRY, SPIRIT_ARROWS_ENTRY + ".1"));
         builder.addPage(new EntrySelectorPage(MaledictCodexEntries::spiritArrowEntry, SpiritArrowType.values()));
+        ArcanaProgressionScreen.ENTRIES.add(builder.build());
+    }
+
+    private static void addInvocationEntry() {
+        String identifier = "maledict.invocation_sigil";
+        InvocationRite rite = InvocationRite.get();
+        if (rite == null || containsEntry(ArcanaProgressionScreen.ENTRIES, identifier))
+            return;
+        PlacedBookEntryBuilder builder = BookEntry.build(identifier, -3, 14);
+        builder.configureWidget(widget -> widget.setIcon(MaledictItems.INVOCATION_SIGIL).setStyle(BookWidgetStyle.RUNEWOOD));
+        builder.addPage(new HeadlineTextPage(identifier, identifier + ".1"));
+        builder.addPage(new TextPage(identifier + ".2"));
+        builder.addPage(new TextPage(identifier + ".3"));
+        builder.addPage(new SpiritRiteRecipePage(rite));
+        builder.addPage(new SoulwoodSpiritRiteRecipePage(rite));
         ArcanaProgressionScreen.ENTRIES.add(builder.build());
     }
 

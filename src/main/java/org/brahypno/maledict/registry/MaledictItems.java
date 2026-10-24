@@ -14,6 +14,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.invocation.InvocationSigilItem;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
 import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
@@ -43,6 +44,8 @@ import java.util.List;
 
 public final class MaledictItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Maledict.MODID);
+
+    public static final RegistryObject<Item> INVOCATION_SIGIL = ITEMS.register("invocation_sigil", InvocationSigilItem::new);
 
     public static final RegistryObject<Item> TAINTED_MALIGNANT_LEAD_ORE = ITEMS.register("tainted_malignant_lead_ore",
             () -> new BlockItem(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), new Item.Properties()));

@@ -1,0 +1,8 @@
+{
+  "type": "maledict:invocation",
+  "entity": "minecraft:allay",
+  "medium": "runewood",
+  "spawn_profile": "flying",
+  "tint": "#64DCEF",
+  "variant": "default"
+}

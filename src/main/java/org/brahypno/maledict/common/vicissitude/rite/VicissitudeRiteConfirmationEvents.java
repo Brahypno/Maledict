@@ -36,6 +36,7 @@ public final class VicissitudeRiteConfirmationEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRightClick(PlayerInteractEvent.RightClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (player.getMainHandItem().getItem() instanceof org.brahypno.maledict.common.invocation.InvocationSigilItem) return;
         if (!MaledictConfig.SUMMONING_RITE.get() || player.isSpectator()
                 || event.getUseBlock() == Event.Result.DENY) return;
         // Match vanilla's crouching bypass of block use, including item sneak-bypass hooks.

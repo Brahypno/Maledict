@@ -22,6 +22,9 @@ public final class MaledictItemModels extends ItemModelProvider {
 
     @Override
     protected void registerModels() {
+        getBuilder("invocation_sigil")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/invocation_sigil"));
         for (SpiritArrowType arrowType : SpiritArrowType.values()) {
             getBuilder(arrowType.name().toLowerCase() + "_spirit_arrow")
                     .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))

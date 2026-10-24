@@ -28,6 +28,7 @@ public final class MaledictRecipes extends RecipeProvider {
 
     @Override
     protected void buildRecipes(Consumer<FinishedRecipe> recipes) {
+        InvocationRecipes.build(recipes);
         new SpiritInfusionRecipeBuilder(ItemRegistry.SOUL_STAINED_STEEL_AXE.get(), 1, MaledictItems.MELTFALL_AXE.get(), 1)
                 .addExtraItem(ItemRegistry.BLIGHTED_GUNK.get(), 6)
                 .addExtraItem(ItemRegistry.LIVING_FLESH.get(), 6)
@@ -240,10 +241,10 @@ public final class MaledictRecipes extends RecipeProvider {
     /**
      * Malum's builder omits output NBT; the altar also defaults to replacing it with the input tag.
      */
-    private static final class NbtSpiritInfusionRecipeBuilder extends SpiritInfusionRecipeBuilder {
+    static final class NbtSpiritInfusionRecipeBuilder extends SpiritInfusionRecipeBuilder {
         private final ItemStack nbtOutput;
 
-        private NbtSpiritInfusionRecipeBuilder(Ingredient input, int inputCount, ItemStack output) {
+        NbtSpiritInfusionRecipeBuilder(Ingredient input, int inputCount, ItemStack output) {
             super(input, inputCount, output);
             nbtOutput = output.copy();
         }

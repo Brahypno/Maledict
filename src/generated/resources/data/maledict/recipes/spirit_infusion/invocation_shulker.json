@@ -1,0 +1,44 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 8,
+      "item": "minecraft:purpur_block"
+    },
+    {
+      "count": 4,
+      "item": "minecraft:ender_pearl"
+    },
+    {
+      "count": 8,
+      "item": "minecraft:end_stone"
+    },
+    {
+      "count": 2,
+      "item": "minecraft:diamond"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "minecraft:chorus_flower"
+  },
+  "output": {
+    "item": "maledict:invocation_sigil",
+    "nbt": "{Invocation:{Id:\"maledict:invocation/shulker\"}}"
+  },
+  "spirits": [
+    {
+      "type": "eldritch",
+      "count": 16
+    },
+    {
+      "type": "arcane",
+      "count": 16
+    },
+    {
+      "type": "earthen",
+      "count": 8
+    }
+  ],
+  "useNbtFromInput": false
+}
