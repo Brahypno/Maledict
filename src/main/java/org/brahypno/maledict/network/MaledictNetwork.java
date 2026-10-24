@@ -10,7 +10,12 @@ import org.brahypno.maledict.network.clientbound.VicissitudeEffectPacket;
 import org.brahypno.maledict.network.clientbound.WellTravelPacket;
 import org.brahypno.maledict.network.clientbound.WisdomBlackoutPacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.util.Mth;
+import org.brahypno.maledict.network.clientbound.LoverAxeHitPacket;
+import org.brahypno.maledict.client.item.LoverAxeHitEffects;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.brahypno.maledict.Maledict;
 
@@ -28,7 +33,7 @@ public final class MaledictNetwork {
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("2");
+        var registrar = event.registrar("3");
         registrar.playToClient(WellTravelPacket.TYPE, WellTravelPacket.STREAM_CODEC, WellTravelPacket::handle);
         registrar.playToServer(RadialAttackPacket.TYPE, RadialAttackPacket.STREAM_CODEC, RadialAttackPacket::handle);
         registrar.playToServer(InfuseSpiritPacket.TYPE, InfuseSpiritPacket.STREAM_CODEC, InfuseSpiritPacket::handle);
@@ -43,6 +48,11 @@ public final class MaledictNetwork {
             slashHandler = (packet, context) -> context.enqueueWork(() -> IncursusBladeSlashEffects.spawn(packet));
         }
         registrar.playToClient(IncursusSlashPacket.TYPE, IncursusSlashPacket.STREAM_CODEC, slashHandler);
+        IPayloadHandler<LoverAxeHitPacket> loverAxeHandler = (packet, context) -> {};
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            loverAxeHandler = (packet, context) -> context.enqueueWork(() -> LoverAxeHitEffects.spawn(packet));
+        }
+        registrar.playToClient(LoverAxeHitPacket.TYPE, LoverAxeHitPacket.STREAM_CODEC, loverAxeHandler);
     }
 
     public static void sendRadialAttack() {
@@ -52,6 +62,13 @@ public final class MaledictNetwork {
     public static void sendIncursusSlash(ServerPlayer player, float scale) {
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new IncursusSlashPacket(player.position().add(0, player.getBbHeight() * 0.5, 0), scale));
+    }
+
+    /** One notification after the entire damage probe, including fallback and lethal hits. */
+    public static void sendLoverAxeHit(Player attacker, LivingEntity target) {
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(attacker,
+                new LoverAxeHitPacket(target.getId(), target.position().add(0, target.getBbHeight() * 0.5, 0),
+                        Mth.clamp(target.getBbWidth() * 0.5F + 0.3F, 0.5F, 1.4F)));
     }
 
     public static void sendProjectileReflection(net.minecraft.world.entity.projectile.Projectile projectile) {

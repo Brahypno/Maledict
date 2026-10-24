@@ -21,6 +21,7 @@ import org.brahypno.changelib.DamageHelper.DamageProbe;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 import org.brahypno.maledict.registry.MaledictAttributes;
+import org.brahypno.maledict.network.MaledictNetwork;
 import team.lodestar.lodestone.registry.common.LodestoneAttributes;
 
 import java.util.List;
@@ -79,6 +80,7 @@ public final class LoverAxeItem extends AxeItem {
                 descent.setBaseValue(descent.getBaseValue() + 2.0D);
             }
         }
+        MaledictNetwork.sendLoverAxeHit(attacker, victim);
         return true;
     }
 
