@@ -1,0 +1,46 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 8,
+      "item": "minecraft:amethyst_shard"
+    },
+    {
+      "count": 4,
+      "item": "minecraft:feather"
+    },
+    {
+      "count": 4,
+      "item": "minecraft:gold_ingot"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "minecraft:note_block"
+  },
+  "result": {
+    "components": {
+      "minecraft:custom_data": {
+        "Invocation": {
+          "Id": "maledict:invocation/allay"
+        }
+      }
+    },
+    "count": 1,
+    "id": "maledict:invocation_sigil"
+  },
+  "spirits": [
+    {
+      "type": "malum:sacred",
+      "count": 8
+    },
+    {
+      "type": "malum:aerial",
+      "count": 8
+    },
+    {
+      "type": "malum:arcane",
+      "count": 8
+    }
+  ]
+}

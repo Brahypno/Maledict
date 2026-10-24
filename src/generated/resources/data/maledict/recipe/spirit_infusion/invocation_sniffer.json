@@ -1,0 +1,54 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 4,
+      "item": "minecraft:mud"
+    },
+    {
+      "count": 8,
+      "item": "minecraft:bone_meal"
+    },
+    {
+      "count": 8,
+      "item": "minecraft:wheat_seeds"
+    },
+    {
+      "count": 4,
+      "item": "minecraft:amethyst_shard"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "minecraft:moss_block"
+  },
+  "result": {
+    "components": {
+      "minecraft:custom_data": {
+        "Invocation": {
+          "Id": "maledict:invocation/sniffer"
+        }
+      }
+    },
+    "count": 1,
+    "id": "maledict:invocation_sigil"
+  },
+  "spirits": [
+    {
+      "type": "malum:sacred",
+      "count": 8
+    },
+    {
+      "type": "malum:earthen",
+      "count": 8
+    },
+    {
+      "type": "malum:aqueous",
+      "count": 4
+    },
+    {
+      "type": "malum:arcane",
+      "count": 4
+    }
+  ]
+}

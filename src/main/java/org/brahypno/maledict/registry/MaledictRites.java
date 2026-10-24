@@ -10,6 +10,8 @@ import com.sammy.malum.registry.common.magic.rite.MalumSpiritRiteTypes;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.common.rite.*;
+import org.brahypno.maledict.common.invocation.InvocationLedger;
+import org.brahypno.maledict.common.invocation.InvocationRite;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -22,6 +24,13 @@ public final class MaledictRites {
     // Malum attaches it to its own event bus; do not register it again on ours.
     public static final DeferredRiteTypes RITES = MalumSpiritRiteTypes.RITE_TYPES;
     private static final Map<BossDifficulty, RiteHolder<VicissitudeRiteType>> SUMMONING = new EnumMap<>(BossDifficulty.class);
+
+    private static final com.sammy.malum.core.systems.registry.rite.RiteEffectHolder<OneShotRiteEffect> INVOCATION_EFFECT =
+            EFFECTS.register("invocation", () -> new OneShotRiteEffect((totem, level) -> InvocationLedger.get(level).complete(level, totem)));
+    public static final RiteHolder<InvocationRite> INVOCATION = RITES.register("maledict_invocation_rite", () ->
+            new InvocationRite(INVOCATION_EFFECT, false));
+    public static final RiteHolder<InvocationRite> CORRUPTED_INVOCATION = RITES.register("corrupted_maledict_invocation_rite", () ->
+            new InvocationRite(INVOCATION_EFFECT, true));
 
     private static final com.sammy.malum.core.systems.registry.rite.RiteEffectHolder<OneShotRiteEffect> SACRIFICE_CORRUPTED =
             EFFECTS.register("sacrifice_rite_corrupted", () -> new OneShotRiteEffect(SacrificeRite::offer));

@@ -9,6 +9,7 @@ import net.neoforged.neoforge.common.DeferredSpawnEggItem;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.invocation.InvocationSigilItem;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
@@ -30,6 +31,8 @@ import java.util.List;
 
 public final class MaledictItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, Maledict.MODID);
+
+    public static final DeferredHolder<Item, Item> INVOCATION_SIGIL = ITEMS.register("invocation_sigil", InvocationSigilItem::new);
 
     public static final DeferredHolder<Item, Item> TAINTED_MALIGNANT_LEAD_ORE = ITEMS.register("tainted_malignant_lead_ore",
                                                                                                () -> new BlockItem(

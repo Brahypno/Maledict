@@ -1,0 +1,46 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 1,
+      "item": "minecraft:saddle"
+    },
+    {
+      "count": 8,
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "count": 4,
+      "item": "minecraft:amethyst_shard"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "minecraft:bone_block"
+  },
+  "result": {
+    "components": {
+      "minecraft:custom_data": {
+        "Invocation": {
+          "Id": "maledict:invocation/skeleton_horse"
+        }
+      }
+    },
+    "count": 1,
+    "id": "maledict:invocation_sigil"
+  },
+  "spirits": [
+    {
+      "type": "malum:wicked",
+      "count": 8
+    },
+    {
+      "type": "malum:sacred",
+      "count": 4
+    },
+    {
+      "type": "malum:arcane",
+      "count": 8
+    }
+  ]
+}

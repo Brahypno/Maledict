@@ -15,6 +15,7 @@ import org.brahypno.maledict.registry.MaledictBlocks;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 import org.brahypno.maledict.registry.MaledictSounds;
+import org.brahypno.maledict.registry.MaledictRecipeTypes;
 
 @Mod(Maledict.MODID)
 public final class Maledict {
@@ -31,6 +32,9 @@ public final class Maledict {
         MaledictBlocks.BLOCKS.register(modBus);
         MaledictBlockEntities.BLOCK_ENTITY_TYPES.register(modBus);
         MaledictItems.ITEMS.register(modBus);
+        MaledictRecipeTypes.SERIALIZERS.register(modBus);
+        MaledictRecipeTypes.TYPES.register(modBus);
+        MaledictRecipeTypes.INGREDIENTS.register(modBus);
         MaledictMobEffects.MOB_EFFECTS.register(modBus);
         MaledictSounds.SOUND_EVENTS.register(modBus);
         MaledictCreativeTabs.CREATIVE_TABS.register(modBus);

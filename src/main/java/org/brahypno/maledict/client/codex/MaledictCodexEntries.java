@@ -136,6 +136,7 @@ public final class MaledictCodexEntries {
     }
 
     private void setupArcana() {
+        addInvocationEntry();
         addSpiritArrowsEntry();
         addRemembranceBowEntry();
         addMeltfallAxeEntry();
@@ -160,6 +161,20 @@ public final class MaledictCodexEntries {
         builder.addPage(new ReadableTextPage(SPIRIT_ARROWS_ENTRY, List.of(SPIRIT_ARROWS_ENTRY + ".1"),
                                              arrows.stream().map(reference -> reference.icon).toList()));
         builder.addPage(new EntryIndexPage("maledict.codex.arrow_index", arrows));
+        entries.add(builder.build());
+    }
+
+    private void addInvocationEntry() {
+        String identifier = "maledict.invocation_sigil";
+        if (containsEntry(entries, identifier)) return;
+        PlacedBookEntryBuilder builder = BookEntry.create(identifier, -3, 14);
+        builder.configureWidget(widget -> widget.setIcon(MaledictItems.INVOCATION_SIGIL)
+                .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.RUNEWOOD, WidgetDesignType.FillingType.PAPER)));
+        builder.addPage(new HeadlineTextPage(identifier, identifier + ".1"));
+        builder.addPage(new TextPage(identifier + ".2"));
+        builder.addPage(new TextPage(identifier + ".3"));
+        builder.addPage(new SpiritRiteRecipePage(MaledictRites.holder(MaledictRites.INVOCATION.get())));
+        builder.addPage(new SpiritRiteRecipePage(MaledictRites.holder(MaledictRites.CORRUPTED_INVOCATION.get())));
         entries.add(builder.build());
     }
 

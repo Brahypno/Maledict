@@ -2,6 +2,7 @@ package org.brahypno.maledict.client;
 
 import com.sammy.malum.common.item.IVoidItem;
 import com.sammy.malum.visual_effects.ScreenParticleEffects;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -35,6 +36,7 @@ import org.brahypno.maledict.client.vicissitude.vfx.VicissitudeSummoningPostProc
 import org.brahypno.maledict.client.vitals.DelayedVitalsOverlay;
 import org.brahypno.maledict.common.item.arrow.SpiritArrowItem;
 import org.brahypno.maledict.common.realm.BlightedRealm;
+import org.brahypno.maledict.common.invocation.InvocationDefinition;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
 import team.lodestar.lodestone.handlers.screenparticle.ParticleEmitterHandler;
@@ -129,6 +131,11 @@ public final class MaledictClientSetup {
 
     @SubscribeEvent
     public static void registerItemColors(RegisterColorHandlersEvent.Item event) {
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 0) return 0xFFFFFFFF;
+            InvocationDefinition definition = InvocationDefinition.find(Minecraft.getInstance().level, stack);
+            return definition == null ? 0xFFFFFFFF : 0xFF000000 | definition.tint();
+        }, MaledictItems.INVOCATION_SIGIL.get());
         event.register((stack, tintIndex) -> {
                            if (tintIndex != 0 || !(stack.getItem() instanceof SpiritArrowItem arrowItem)){
                                return 0xFFFFFFFF;

@@ -1,0 +1,54 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 4,
+      "item": "minecraft:tropical_fish"
+    },
+    {
+      "count": 8,
+      "item": "minecraft:kelp"
+    },
+    {
+      "count": 4,
+      "item": "minecraft:prismarine_crystals"
+    },
+    {
+      "count": 8,
+      "item": "minecraft:amethyst_shard"
+    }
+  ],
+  "input": {
+    "type": "maledict:ordinary_axolotl_bucket",
+    "count": 1
+  },
+  "result": {
+    "components": {
+      "minecraft:custom_data": {
+        "Invocation": {
+          "Id": "maledict:invocation/blue_axolotl"
+        }
+      }
+    },
+    "count": 1,
+    "id": "maledict:invocation_sigil"
+  },
+  "spirits": [
+    {
+      "type": "malum:aqueous",
+      "count": 16
+    },
+    {
+      "type": "malum:sacred",
+      "count": 8
+    },
+    {
+      "type": "malum:eldritch",
+      "count": 8
+    },
+    {
+      "type": "malum:arcane",
+      "count": 8
+    }
+  ]
+}

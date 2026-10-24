@@ -33,6 +33,7 @@ public final class MaledictRecipes extends RecipeProvider {
 
     @Override
     protected void buildRecipes(RecipeOutput recipes) {
+        InvocationRecipes.build(recipes);
         new SpiritInfusionRecipeBuilder(MalumItems.SOUL_STAINED_STEEL_AXE.get(), 1, MaledictItems.MELTFALL_AXE.get(), 1)
                 .addExtraItem(MalumItems.BLIGHTED_GUNK.get(), 6)
                 .addExtraItem(MalumItems.LIVING_FLESH.get(), 6)

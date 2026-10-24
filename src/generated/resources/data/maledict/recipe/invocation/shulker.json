@@ -1,0 +1,7 @@
+{
+  "type": "maledict:invocation",
+  "entity": "minecraft:shulker",
+  "medium": "soulwood",
+  "spawn_profile": "attached",
+  "tint": "#B28DD1"
+}

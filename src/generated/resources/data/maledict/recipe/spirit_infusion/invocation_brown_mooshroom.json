@@ -1,0 +1,50 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 8,
+      "item": "minecraft:brown_mushroom"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:lightning_rod"
+    },
+    {
+      "count": 8,
+      "item": "minecraft:copper_ingot"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "minecraft:red_mushroom_block"
+  },
+  "result": {
+    "components": {
+      "minecraft:custom_data": {
+        "Invocation": {
+          "Id": "maledict:invocation/brown_mooshroom"
+        }
+      }
+    },
+    "count": 1,
+    "id": "maledict:invocation_sigil"
+  },
+  "spirits": [
+    {
+      "type": "malum:earthen",
+      "count": 8
+    },
+    {
+      "type": "malum:aqueous",
+      "count": 4
+    },
+    {
+      "type": "malum:infernal",
+      "count": 4
+    },
+    {
+      "type": "malum:arcane",
+      "count": 8
+    }
+  ]
+}

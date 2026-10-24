@@ -16,6 +16,9 @@ public final class MaledictCreativeTabs {
                            .title(Component.translatable("itemGroup.maledict"))
                            .icon(() -> MaledictItems.INCURSUS_BLADE.get().getDefaultInstance())
                            .displayItems((parameters, output) -> {
+                               for (String target : org.brahypno.maledict.common.invocation.InvocationSigilItem.TARGETS) {
+                                   output.accept(org.brahypno.maledict.common.invocation.InvocationSigilItem.create(target));
+                               }
                                output.accept(MaledictItems.INCURSUS_BLADE.get());
                                output.accept(MaledictItems.LOVER_AXE.get());
                                output.accept(MaledictItems.MELTFALL_AXE.get());
