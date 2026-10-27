@@ -30,6 +30,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("message.maledict.vicissitude_rite.cramped", "周围的空间太过狭小，无法洞开创口");
             add("message.maledict.realm_no_respawn", "此界无法安置你的归处。");
             addItem(MaledictItems.HANGMAN_FOOL, "倒吊人的愚见");
+            addItem(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS, "女祭司之灵相");
+            add("malum.gui.curio.effect.maledict.high_priestess.wound_yet_to_come",
+                "未至之伤：伤害与治疗缓慢结算。造成伤害时获得等量治疗，先抵消待结算伤害，余量再缓慢回复生命。");
             add("tooltip.maledict.hangman_fool.flavor.0", "献出力量，以求取人智");
             add("tooltip.maledict.hangman_fool.flavor.1", "智性虽有缺陷，却并非谬误");
             add("tooltip.maledict.hangman_fool.flavor.2", "沉沦于黑暗，以期光明");
@@ -180,6 +183,9 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "狱火精魂箭");
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
             add("attribute.name.maledict.transcend_omen", "超越预兆");
+            add("attribute.name.maledict.transcend_omen.desc",
+                "与恶念转化互相抵消，余量按转化配方消耗部分护甲、护甲韧性与魔抗，以独立乘区按百分比增强法术属性。"
+                + "仅增强已偏离默认值的法术属性；多条有效路线分摊收益，共用防御只扣除一次。");
             add("attribute.name.maledict.descent", "堕落");
             add("attribute.name.maledict.descent.desc",
                 "提高造成与受到的伤害，倍率随双方堕落值之和增加而增加");
@@ -336,6 +342,9 @@ public final class MaledictLanguage extends LanguageProvider {
                 "升临高天，\n落入深谷。\n 倒吊自身，\n坠入深井，");
             add("malum.gui.book.entry.page.text." + HANGMAN_FOOL_PAGE + ".2",
                 "让灵知踏过七重长阶，\n借以倒映纯粹的真知。\n 我的功业将成。");
+            add("malum.gui.book.entry.page.headline." + HIGH_PRIESTESS_PAGE, "女祭司之灵相");
+            add("malum.gui.book.entry.page.text." + HIGH_PRIESTESS_PAGE + ".1",
+                "在面纱之后，渴望超越的道路");
         }else {
             add("dimension.maledict.blighted_realm", "The Blighted Realm");
             add("biome.maledict.blighted_wastes", "Blighted Wastes");
@@ -349,6 +358,10 @@ public final class MaledictLanguage extends LanguageProvider {
             add("message.maledict.vicissitude_rite.cramped", "The surrounding space is too confined to tear open a wound.");
             add("message.maledict.realm_no_respawn", "You cannot bind your return to this realm.");
             addItem(MaledictItems.HANGMAN_FOOL, "Hangman`s fool");
+            addItem(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS, "Eidolon of the High Priestess");
+            add("malum.gui.curio.effect.maledict.high_priestess.wound_yet_to_come",
+                "The Wound Yet to Come: damage and healing settle gradually. Damage dealt grants equal healing, "
+                + "first canceling pending damage, then gradually restoring health with any remainder.");
             add("tooltip.maledict.hangman_fool.flavor.0", "\"strength\" is sacrificed for \"human wisdom\"");
             add("tooltip.maledict.hangman_fool.flavor.1", "Intelligence that mortals grasp is flawed, it cannot be said to be false");
             add("tooltip.maledict.hangman_fool.flavor.2", "Light sinks into the dark, seeking to redeem the radiance.");
@@ -525,6 +538,12 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "Infernal Spirit Arrow");
             add("attribute.name.maledict.powder_snow_damage", "Freezing Damage");
             add("attribute.name.maledict.transcend_omen", "Transcend Omen");
+            add("attribute.name.maledict.transcend_omen.desc",
+                "Cancels Malignant Conversion, then uses the remainder to trade some armor, armor toughness and magic "
+                + "resistance for percentage increases to magical attributes through its conversion recipes, multiplying "
+                + "their existing totals. Only magical attributes already "
+                + "different from their default values participate. "
+                + "Active routes share the gains, while shared defenses are consumed only once.");
             add("attribute.name.maledict.descent", "Descent");
             add("attribute.name.maledict.descent.desc",
                 "Increases damage dealt and taken, with the multiplier increasing as the sum of both entities' Descent rises");
@@ -733,6 +752,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text." + HANGMAN_FOOL_PAGE + ".2",
                 "Let gnosis traverse the sevenfold stair,\nthat it may reflect the purest truth.\n"
                 + "My Great Work is nigh upon completion.");
+            add("malum.gui.book.entry.page.headline." + HIGH_PRIESTESS_PAGE, "Eidolon of the High Priestess");
+            add("malum.gui.book.entry.page.text." + HIGH_PRIESTESS_PAGE + ".1",
+                "Beyond the veil, yearning for the path to transcendence.");
         }
     }
 
@@ -770,16 +792,21 @@ public final class MaledictLanguage extends LanguageProvider {
                 {"malum.gui.book.entry.maledict.invocation_sigil.description", "形态封于印记，生命凝于精魂", "A form remembered, a life recalled"},
                 {"malum.gui.book.entry.page.headline.maledict.invocation_sigil", "召唤印记", "Invocation Sigils"}
         };
-        for (String[] translation : translations) add(translation[0], translation[chinese ? 1 : 2]);
+        for (String[] translation : translations)
+            add(translation[0], translation[chinese ? 1 : 2]);
         add("malum.gui.book.entry.page.text.maledict.invocation_sigil.1", chinese
-                ? "精魂灌注能够将生物的形态封 入召唤印记。主手手持印记并 进行对应的图腾仪式，条件满 足后立即消耗一枚，精魂随之 凝聚为活物。"
-                : "Spirit infusion can seal a creature's form within an invocation sigil. Hold the sigil in your main hand and perform the matching totemic rite. Once its conditions are met, one sigil is consumed immediately, and the spirits gather into a living creature.");
+                                                                          ? "精魂灌注能够将生物的形态封 入召唤印记。主手手持印记并 进行对应的图腾仪式，条件满 足后立即消耗一枚，精魂随之 凝聚为活物。"
+                                                                          :
+                                                                          "Spirit infusion can seal a creature's form within an invocation sigil. Hold the sigil in your main hand and perform the matching totemic rite. Once its conditions are met, one sigil is consumed immediately, and the spirits gather into a living creature.");
         add("malum.gui.book.entry.page.text.maledict.invocation_sigil.2", chinese
-                ? "自下而上排列奥术、大地、神 圣、澄空精魂。中立与友善生 物使用符文木，怪物使用灵魂 木。图腾前方需留出空间；水 生生物需要水，附着生物需要 坚实支撑与足够的活动空间。"
-                : "From bottom to top, arrange Arcane, Earthen, Sacred and Aerial spirits. Use Runewood for neutral and friendly creatures, Soulwood for hostile mobs. Leave room in front of the totem. Aquatic creatures need water; creatures that attach to surfaces need solid support and enough room to move.");
+                                                                          ?
+                                                                          "自下而上排列奥术、大地、神 圣、澄空精魂。中立与友善生 物使用符文木，怪物使用灵魂 木。图腾前方需留出空间；水 生生物需要水，附着生物需要 坚实支撑与足够的活动空间。"
+                                                                          :
+                                                                          "From bottom to top, arrange Arcane, Earthen, Sacred and Aerial spirits. Use Runewood for neutral and friendly creatures, Soulwood for hostile mobs. Leave room in front of the totem. Aquatic creatures need water; creatures that attach to surfaces need solid support and enough room to move.");
         add("malum.gui.book.entry.page.text.maledict.invocation_sigil.3", chinese
-                ? "仪式开始后，无需继续手持印 记。若仪式中断或召唤失败， 已消耗的印记会在原图腾附近 作为掉落物返还。图腾可反复 使用，每次仪式消耗一枚印记 。"
-                : "Once the rite has begun, you may put the sigil away. If the rite is interrupted or the summoning fails, the consumed sigil drops near the original totem. The totem can be reused; each rite consumes one sigil.");
+                                                                          ? "仪式开始后，无需继续手持印 记。若仪式中断或召唤失败， 已消耗的印记会在原图腾附近 作为掉落物返还。图腾可反复 使用，每次仪式消耗一枚印记 。"
+                                                                          :
+                                                                          "Once the rite has begun, you may put the sigil away. If the rite is interrupted or the summoning fails, the consumed sigil drops near the original totem. The totem can be reused; each rite consumes one sigil.");
     }
 
     private static final String OBELISKS_ENTRY = "void.maledict.obelisks";
@@ -797,6 +824,7 @@ public final class MaledictLanguage extends LanguageProvider {
     private static final String SACRIFICE_RITE_PAGE = "corrupt_sacrifice_rite";
     private static final String BLEEDING_EYE_ENTRY = "void.maledict.bleeding_eye";
     private static final String HANGMAN_FOOL_PAGE = BLEEDING_EYE_ENTRY + ".hangman_fool";
+    private static final String HIGH_PRIESTESS_PAGE = BLEEDING_EYE_ENTRY + ".high_priestess";
     private static final String TOTEMIC_RUNES_CONTINUED_ENTRY = "maledict.totemic_runes_continued";
     private static final String RUNE_OF_SATIATION_ENTRY = "maledict.rune_of_satiation";
     private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";

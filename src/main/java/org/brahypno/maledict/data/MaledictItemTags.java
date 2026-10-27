@@ -72,9 +72,10 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(GOETY_GRAVE_GLOVE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(L2_NO_SEAL)
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
-                     MaledictItems.HANGMAN_FOOL.get(), MaledictItems.LOVER_AXE.get());
+                     MaledictItems.HANGMAN_FOOL.get(), MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get(),
+                     MaledictItems.LOVER_AXE.get());
         tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
-        tag(CURIOS_DELUSION).add(MaledictItems.HANGMAN_FOOL.get());
+        tag(CURIOS_DELUSION).add(MaledictItems.HANGMAN_FOOL.get(), MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
         tag(CURIOS_RUNE).add(MaledictItems.RUNE_OF_SATIATION.get(),
                              MaledictItems.RUNE_OF_DECAY.get(),
                              MaledictItems.RUNE_OF_THE_PACK.get(),
@@ -91,7 +92,8 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(EquipmentProtectionTags.OFFHAND)
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
         tag(EquipmentProtectionTags.CURIOS)
-                .add(MaledictItems.HANGMAN_FOOL.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+                .add(MaledictItems.HANGMAN_FOOL.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
+                     MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
 
     }
 }

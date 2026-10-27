@@ -15,7 +15,7 @@ import org.brahypno.maledict.registry.MaledictAttributes;
 public final class DescentDamageEvents {
     private DescentDamageEvents() {}
 
-    // Run before NORMAL-priority consumers, including the delayed damage pool.
+    // Run before damage consumers, including the delayed damage pool.
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onLivingDamage(LivingDamageEvent event) {
         LivingEntity victim = event.getEntity();

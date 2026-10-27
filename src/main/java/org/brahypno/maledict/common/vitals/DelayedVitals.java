@@ -19,8 +19,8 @@ import org.brahypno.maledict.Maledict;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * 延迟池挂在玩家身上，而不是挂在符文上：符文只是开关，一旦入队就必须还清，摘下符文、符文被没收
- * 都不影响结算。挂在 {@link Player} 上是因为只有玩家会佩戴符文，客户端那一份只当显示用。
+ * 延迟池由抑郁符文与女祭司的未至之伤共用，挂在玩家身上：装备只是开关，一旦入队就必须还清，
+ * 摘下或没收都不影响结算。客户端那一份只当显示用。
  */
 @AutoRegisterCapability
 @Mod.EventBusSubscriber(modid = Maledict.MODID)

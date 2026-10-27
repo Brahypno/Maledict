@@ -84,6 +84,17 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 6)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/hangman_fool"));
 
+        new SpiritInfusionRecipeBuilder(MaledictItems.BLEEDING_EYE.get(), 1,
+                                       MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get(), 1)
+                .addExtraItem(ItemRegistry.SPIRIT_FABRIC.get(), 16)
+                .addExtraItem(ItemRegistry.ASTRAL_WEAVE.get(), 16)
+                .addExtraItem(ItemRegistry.CLUSTER_OF_BRILLIANCE.get(), 8)
+                .addSpirit(SpiritTypeRegistry.AQUEOUS_SPIRIT, 32)
+                .addSpirit(SpiritTypeRegistry.AERIAL_SPIRIT, 32)
+                .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 32)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
+                                                                    "spirit_infusion/eidolon_of_the_high_priestess"));
+
         new VoidFavorRecipeBuilder(
                 StrictNBTIngredient.of(new ItemStack(MaledictItems.HANGMAN_FOOL.get())), HangmanFoolItem.create(1))
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "void_favor/hangman_fool_stage_1"));

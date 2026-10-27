@@ -164,7 +164,7 @@ public final class TranscendOmenConversion {
             Set<Attribute> consumed = new HashSet<>();
             for (Route route : routes) {
                 apply(entity, state, route.source(), "gain", route.base() * strength * share,
-                        AttributeModifier.Operation.ADDITION);
+                        AttributeModifier.Operation.MULTIPLY_TOTAL);
                 consumed.addAll(route.targets());
             }
             // Confirmed option 2: all participating defense loses the full reverse percentage ONCE,

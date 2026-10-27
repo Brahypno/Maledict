@@ -40,6 +40,7 @@ public final class MaledictItemModels extends ItemModelProvider {
 
         registerAgeOfEnlightenmentModel();
         registerHangmanFoolModels();
+        basicItem(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
 
         basicItem(MaledictItems.BLEEDING_EYE.get());
         basicItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get());

@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.common.curio.priestess.EidolonOfTheHighPriestessItem;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.function.Function;
@@ -27,6 +28,8 @@ public final class MaledictJeiPlugin implements IModPlugin {
     public void registerItemSubtypes(ISubtypeRegistration registration) {
         registration.registerSubtypeInterpreter(MaledictItems.HANGMAN_FOOL.get(),
                 (stack, context) -> "stage_" + HangmanFoolItem.stage(stack));
+        registration.registerSubtypeInterpreter(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get(),
+                (stack, context) -> "stage_" + EidolonOfTheHighPriestessItem.stage(stack));
     }
 
     @Override

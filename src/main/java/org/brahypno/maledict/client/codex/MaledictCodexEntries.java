@@ -64,6 +64,7 @@ public final class MaledictCodexEntries {
     private static final String SACRIFICE_RITE_PAGE = "corrupt_sacrifice_rite";
     private static final String BLEEDING_EYE_ENTRY = "void.maledict.bleeding_eye";
     private static final String HANGMAN_FOOL_PAGE = BLEEDING_EYE_ENTRY + ".hangman_fool";
+    private static final String HIGH_PRIESTESS_PAGE = BLEEDING_EYE_ENTRY + ".high_priestess";
     private static final String TOTEMIC_RUNES_CONTINUED_ENTRY = "maledict.totemic_runes_continued";
     private static final String RUNE_OF_SATIATION_ENTRY = "maledict.rune_of_satiation";
     private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";
@@ -310,6 +311,10 @@ public final class MaledictCodexEntries {
                 Maledict.MODID, "spirit_infusion/hangman_fool")));
         builder.addPage(SpiritInfusionPage.fromId(ResourceLocation.fromNamespaceAndPath(
                 Maledict.MODID, "spirit_infusion/hangman_fool_stage_2")));
+        builder.addPage(new HeadlineTextItemPage(
+                HIGH_PRIESTESS_PAGE, HIGH_PRIESTESS_PAGE + ".1", MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get()));
+        builder.addPage(SpiritInfusionPage.fromId(ResourceLocation.fromNamespaceAndPath(
+                Maledict.MODID, "spirit_infusion/eidolon_of_the_high_priestess")));
 
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
     }
