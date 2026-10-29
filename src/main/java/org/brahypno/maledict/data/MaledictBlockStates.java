@@ -76,6 +76,18 @@ public final class MaledictBlockStates extends BlockStateProvider {
         piece(mushroom, 11, 0, 10, 12, 3, 11, "wood");
         piece(mushroom, 9, 2, 8, 14, 4, 13, "cap");
         cover(MaledictBlocks.WITHERLIGHT_MUSHROOM.get(), mushroom);
+
+        var lamp = woodCover("witherlight_lamp").texture("cap", mcLoc("block/quartz_block_top"));
+        piece(lamp, 2, 0, 6, 14, 2, 9, "wood");
+        piece(lamp, 6, 0, 2, 9, 2, 14, "wood");
+        piece(lamp, 4, 2, 4, 6, 10, 6, "wood");
+        piece(lamp, 10, 2, 10, 12, 10, 12, "wood");
+        piece(lamp, 4, 7, 4, 12, 9, 6, "wood");
+        piece(lamp, 10, 7, 4, 12, 9, 12, "wood");
+        piece(lamp, 7, 8, 7, 9, 11, 9, "cap");
+        piece(lamp, 3, 10, 3, 13, 12, 13, "cap");
+        piece(lamp, 5, 12, 5, 11, 13, 11, "cap");
+        cover(MaledictBlocks.WITHERLIGHT_LAMP.get(), lamp);
     }
 
     private BlockModelBuilder woodCover(String name) {

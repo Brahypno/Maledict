@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "maledict:block/witherlight_lamp"
+      },
+      {
+        "model": "maledict:block/witherlight_lamp",
+        "y": 90
+      },
+      {
+        "model": "maledict:block/witherlight_lamp",
+        "y": 180
+      },
+      {
+        "model": "maledict:block/witherlight_lamp",
+        "y": 270
+      }
+    ]
+  }
+}

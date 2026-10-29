@@ -29,6 +29,9 @@ public final class MaledictBlocks {
     public static final RegistryObject<Block> WITHERLIGHT_MUSHROOM = BLOCKS.register("witherlight_mushroom",
             () -> new WitherlightMushroomBlock(BlockBehaviour.Properties.copy(Blocks.BROWN_MUSHROOM)
                     .lightLevel(state -> 7).sound(SoundType.FUNGUS)));
+    public static final RegistryObject<Block> WITHERLIGHT_LAMP = BLOCKS.register("witherlight_lamp",
+            () -> new RealmGroundcoverBlock(BlockBehaviour.Properties.copy(Blocks.BROWN_MUSHROOM)
+                    .noCollission().noOcclusion().strength(0.5F).lightLevel(state -> 14).sound(SoundType.WOOD), 13));
 
     public static final RegistryObject<Block> TAINTED_MALIGNANT_LEAD_ORE = BLOCKS.register("tainted_malignant_lead_ore",
             () -> new Block(BlockBehaviour.Properties.copy(Blocks.GOLD_ORE)));

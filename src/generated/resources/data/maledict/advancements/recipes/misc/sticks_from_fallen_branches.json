@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_fallen_branches": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "maledict:fallen_soulwood_branches"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "maledict:sticks_from_fallen_branches"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_fallen_branches",
+      "has_the_recipe"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "maledict:sticks_from_fallen_branches"
+    ]
+  },
+  "sends_telemetry_event": false
+}

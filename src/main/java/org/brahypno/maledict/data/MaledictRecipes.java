@@ -29,6 +29,15 @@ public final class MaledictRecipes extends RecipeProvider {
     @Override
     protected void buildRecipes(Consumer<FinishedRecipe> recipes) {
         InvocationRecipes.build(recipes);
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, Items.STICK, 2)
+                .requires(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get())
+                .unlockedBy("has_fallen_branches", has(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get()))
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "sticks_from_fallen_branches"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, MaledictItems.WITHERLIGHT_LAMP.get())
+                .requires(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get())
+                .requires(MaledictItems.WITHERLIGHT_MUSHROOM.get())
+                .unlockedBy("has_witherlight_mushroom", has(MaledictItems.WITHERLIGHT_MUSHROOM.get()))
+                .save(recipes);
         new SpiritInfusionRecipeBuilder(ItemRegistry.SOUL_STAINED_STEEL_AXE.get(), 1, MaledictItems.MELTFALL_AXE.get(), 1)
                 .addExtraItem(ItemRegistry.BLIGHTED_GUNK.get(), 6)
                 .addExtraItem(ItemRegistry.LIVING_FLESH.get(), 6)

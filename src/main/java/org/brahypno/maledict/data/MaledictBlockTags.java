@@ -32,6 +32,7 @@ public final class MaledictBlockTags extends BlockTagsProvider {
         tag(BlockTags.NEEDS_IRON_TOOL).add(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(),
                 MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get());
         tag(BlockTags.MINEABLE_WITH_AXE)
+                .add(MaledictBlocks.WITHERLIGHT_LAMP.get())
                 .add(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS.get(), MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get())
                 .add(MaledictBlocks.MNEMONIC_OBELISK.get())
                 .add(MaledictBlocks.MNEMONIC_OBELISK_COMPONENT.get())

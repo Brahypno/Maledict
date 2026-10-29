@@ -22,6 +22,12 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.WITHERED_LEAF_LITTER, "败叶层");
             addBlock(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS, "灵魂木露根");
             addBlock(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES, "灵魂木折枝");
+            addBlock(MaledictBlocks.WITHERLIGHT_LAMP, "枯枝蕈灯");
+            add("book.maledict.realm.station", "井站残记");
+            add("book.maledict.realm.station.1", "井已经干了。我们沿旧梯下到井室，把从采掘点带回的铅碎片留在侧间。梁上的缺口与那边木架上的一样，看来先走的人也曾在这里歇脚。");
+            add("book.maledict.realm.station.2", "祭址那边又没有回应。回来时，井沿的刻痕还在，折枝旁的白蕈也亮着。");
+            add("book.maledict.realm.station.3", "我用捡来的枝条托起蕈簇，放在梯口。光比单独的蕈亮，至少能看清下一根横档。");
+            add("book.maledict.realm.station.4", "旧侧廊塌了，我们没有再挖。剩下的碎片收进箱里，灯留在井室。若有人循着祭址的记号来到这里，先检查梯子，别径直跳下去。");
             addBlock(MaledictBlocks.WITHERLIGHT_MUSHROOM, "枯灯蕈");
             add("tooltip.maledict.witherlight_mushroom", "散发微光；使用骨粉可在附近空地繁生。");
             add("book.maledict.realm.rite", "祭址残记");
@@ -366,6 +372,12 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.WITHERED_LEAF_LITTER, "Withered Leaf Litter");
             addBlock(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS, "Exposed Soulwood Roots");
             addBlock(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES, "Fallen Soulwood Branches");
+            addBlock(MaledictBlocks.WITHERLIGHT_LAMP, "Witherlight Branch Lamp");
+            add("book.maledict.realm.station", "Well Station Notes");
+            add("book.maledict.realm.station.1", "The well is dry. We took the old ladder down and stored the lead fragments from the dig in the side room. The beams bear the same notches as the timber frame there. Others must have rested here before us.");
+            add("book.maledict.realm.station.2", "Still no answer at the rite site. Back here, the marks on the rim remain; pale mushrooms glow by the branches.");
+            add("book.maledict.realm.station.3", "I made a stand of fallen twigs for a cluster and set it by the ladder. Brighter than a lone mushroom. Enough to see the next rung.");
+            add("book.maledict.realm.station.4", "The old side passage collapsed. We left it alone. The remaining fragments are in the chest; the lamps stay below. If you followed the rite site's marks here, check the ladder first. Do not jump straight down.");
             addBlock(MaledictBlocks.WITHERLIGHT_MUSHROOM, "Witherlight Mushroom");
             add("tooltip.maledict.witherlight_mushroom", "Gives off a faint light. Bone meal spreads it onto nearby empty ground.");
             add("book.maledict.realm.rite", "Notes from a Failed Rite");

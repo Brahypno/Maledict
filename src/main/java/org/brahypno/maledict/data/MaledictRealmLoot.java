@@ -16,12 +16,22 @@ import net.minecraft.world.level.storage.loot.functions.SetNbtFunction;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import org.brahypno.maledict.common.realm.BlightedRemnantFeature;
+import org.brahypno.maledict.common.realm.AbandonedWellStationFeature;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.function.BiConsumer;
 
 final class MaledictRealmLoot {
     static void generate(BiConsumer<ResourceLocation, LootTable.Builder> output) {
+        output.accept(AbandonedWellStationFeature.LOOT, LootTable.lootTable()
+                .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
+                        .add(stack(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 3, 7)))
+                .withPool(LootPool.lootPool().setRolls(UniformGenerator.between(2, 4))
+                        .add(stack(ItemRegistry.ARCANE_SPIRIT.get(), 1, 3))
+                        .add(stack(ItemRegistry.EARTHEN_SPIRIT.get(), 1, 3))
+                        .add(stack(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get(), 2, 5))
+                        .add(stack(MaledictItems.WITHERLIGHT_MUSHROOM.get(), 1, 3)))
+                .withPool(notes("station", 4)));
         output.accept(BlightedRemnantFeature.RITE_LOOT, LootTable.lootTable()
                 .withPool(LootPool.lootPool().setRolls(UniformGenerator.between(2, 4))
                         .add(stack(ItemRegistry.ARCANE_SPIRIT.get(), 1, 3))
@@ -43,11 +53,15 @@ final class MaledictRealmLoot {
     }
 
     private static LootPool.Builder notes(String kind) {
+        return notes(kind, 2);
+    }
+
+    private static LootPool.Builder notes(String kind, int pageCount) {
         CompoundTag book = new CompoundTag();
         book.putString("title", "Field Notes");
         book.putString("author", "?");
         ListTag pages = new ListTag();
-        for (int page = 1; page <= 2; page++) {
+        for (int page = 1; page <= pageCount; page++) {
             pages.add(StringTag.valueOf(Component.Serializer.toJson(Component.translatable("book.maledict.realm." + kind + "." + page))));
         }
         book.put("pages", pages);

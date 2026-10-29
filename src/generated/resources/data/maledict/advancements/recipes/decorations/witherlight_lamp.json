@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "maledict:witherlight_lamp"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_witherlight_mushroom": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "maledict:witherlight_mushroom"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_witherlight_mushroom",
+      "has_the_recipe"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "maledict:witherlight_lamp"
+    ]
+  },
+  "sends_telemetry_event": false
+}

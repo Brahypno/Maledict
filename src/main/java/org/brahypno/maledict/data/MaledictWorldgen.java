@@ -55,10 +55,12 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
     public static final ResourceKey<ConfiguredFeature<?, ?>> FALLEN_TREE = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("fallen_soulwood"));
     public static final ResourceKey<ConfiguredFeature<?, ?>> FAILED_RITE = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("failed_rite"));
     public static final ResourceKey<ConfiguredFeature<?, ?>> ABANDONED_DIG = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("abandoned_dig"));
+    public static final ResourceKey<ConfiguredFeature<?, ?>> WELL_STATION = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("abandoned_well_station"));
     public static final ResourceKey<PlacedFeature> PLACED_DETAILS = ResourceKey.create(Registries.PLACED_FEATURE, id("blighted_details"));
     public static final ResourceKey<PlacedFeature> PLACED_FALLEN_TREE = ResourceKey.create(Registries.PLACED_FEATURE, id("fallen_soulwood"));
     public static final ResourceKey<PlacedFeature> PLACED_FAILED_RITE = ResourceKey.create(Registries.PLACED_FEATURE, id("failed_rite"));
     public static final ResourceKey<PlacedFeature> PLACED_ABANDONED_DIG = ResourceKey.create(Registries.PLACED_FEATURE, id("abandoned_dig"));
+    public static final ResourceKey<PlacedFeature> PLACED_WELL_STATION = ResourceKey.create(Registries.PLACED_FEATURE, id("abandoned_well_station"));
 
     public MaledictWorldgen(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
         super(output, registries, new RegistrySetBuilder()
@@ -78,6 +80,7 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
         context.register(FALLEN_TREE, new ConfiguredFeature<>(MaledictRealmFeatures.FALLEN_TREE.get(), NoneFeatureConfiguration.INSTANCE));
         context.register(FAILED_RITE, new ConfiguredFeature<>(MaledictRealmFeatures.FAILED_RITE.get(), NoneFeatureConfiguration.INSTANCE));
         context.register(ABANDONED_DIG, new ConfiguredFeature<>(MaledictRealmFeatures.ABANDONED_DIG.get(), NoneFeatureConfiguration.INSTANCE));
+        context.register(WELL_STATION, new ConfiguredFeature<>(MaledictRealmFeatures.WELL_STATION.get(), NoneFeatureConfiguration.INSTANCE));
         // Match vanilla ORE_GOLD_BURIED; registry holders cannot be dereferenced during this bootstrap.
         context.register(LEAD_ORE, new ConfiguredFeature<>(Feature.ORE, new OreConfiguration(List.of(
                 OreConfiguration.target(new BlockMatchTest(BlockRegistry.TAINTED_ROCK.get()),
@@ -100,6 +103,9 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                 HeightmapPlacement.onHeightmap(Heightmap.Types.OCEAN_FLOOR_WG), BiomeFilter.biome())));
         context.register(PLACED_ABANDONED_DIG, new PlacedFeature(features.getOrThrow(ABANDONED_DIG), List.of(
                 RarityFilter.onAverageOnceEvery(24), InSquarePlacement.spread(),
+                HeightmapPlacement.onHeightmap(Heightmap.Types.OCEAN_FLOOR_WG), BiomeFilter.biome())));
+        context.register(PLACED_WELL_STATION, new PlacedFeature(features.getOrThrow(WELL_STATION), List.of(
+                RarityFilter.onAverageOnceEvery(64), InSquarePlacement.spread(),
                 HeightmapPlacement.onHeightmap(Heightmap.Types.OCEAN_FLOOR_WG), BiomeFilter.biome())));
         // Broad noise patches provide woods and open ground inside the initial single biome.
         context.register(PLACED_TREES, new PlacedFeature(features.getOrThrow(TREES), List.of(
@@ -145,6 +151,7 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
         }
         generation.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, PLACED_FAILED_RITE);
         generation.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, PLACED_ABANDONED_DIG);
+        generation.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, PLACED_WELL_STATION);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, PLACED_TREES);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, PLACED_FALLEN_TREE);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, PLACED_DETAILS);

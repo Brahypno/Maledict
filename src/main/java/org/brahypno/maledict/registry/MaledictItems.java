@@ -53,7 +53,14 @@ public final class MaledictItems {
     public static final RegistryObject<Item> EXPOSED_SOULWOOD_ROOTS = ITEMS.register("exposed_soulwood_roots",
             () -> new BlockItem(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS.get(), new Item.Properties()));
     public static final RegistryObject<Item> FALLEN_SOULWOOD_BRANCHES = ITEMS.register("fallen_soulwood_branches",
-            () -> new BlockItem(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get(), new Item.Properties()));
+            () -> new BlockItem(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get(), new Item.Properties()) {
+                @Override
+                public int getBurnTime(ItemStack stack, @Nullable net.minecraft.world.item.crafting.RecipeType<?> recipeType) {
+                    return 100; // Same fuel value as one vanilla stick.
+                }
+            });
+    public static final RegistryObject<Item> WITHERLIGHT_LAMP = ITEMS.register("witherlight_lamp",
+            () -> new BlockItem(MaledictBlocks.WITHERLIGHT_LAMP.get(), new Item.Properties()));
     public static final RegistryObject<Item> WITHERLIGHT_MUSHROOM = ITEMS.register("witherlight_mushroom",
             () -> new BlockItem(MaledictBlocks.WITHERLIGHT_MUSHROOM.get(), new Item.Properties()) {
                 @Override
