@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "maledict:block/withered_leaf_litter"
+      },
+      {
+        "model": "maledict:block/withered_leaf_litter",
+        "y": 90
+      },
+      {
+        "model": "maledict:block/withered_leaf_litter",
+        "y": 180
+      },
+      {
+        "model": "maledict:block/withered_leaf_litter",
+        "y": 270
+      }
+    ]
+  }
+}

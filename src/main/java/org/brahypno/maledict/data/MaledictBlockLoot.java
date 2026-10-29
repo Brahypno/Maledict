@@ -18,6 +18,10 @@ public final class MaledictBlockLoot extends BlockLootSubProvider {
     protected void generate() {
         dropSelf(MaledictBlocks.MNEMONIC_OBELISK.get());
         dropSelf(MaledictBlocks.SOULWOOD_OBELISK.get());
+        dropSelf(MaledictBlocks.WITHERED_LEAF_LITTER.get());
+        dropSelf(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS.get());
+        dropSelf(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get());
+        dropSelf(MaledictBlocks.WITHERLIGHT_MUSHROOM.get());
         add(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), block -> createOreDrop(block, MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()));
         add(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(), block -> createOreDrop(block, MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()));
     }
@@ -27,6 +31,10 @@ public final class MaledictBlockLoot extends BlockLootSubProvider {
         return List.of(
                 MaledictBlocks.MNEMONIC_OBELISK.get(),
                 MaledictBlocks.SOULWOOD_OBELISK.get(),
+                MaledictBlocks.WITHERED_LEAF_LITTER.get(),
+                MaledictBlocks.EXPOSED_SOULWOOD_ROOTS.get(),
+                MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get(),
+                MaledictBlocks.WITHERLIGHT_MUSHROOM.get(),
                 MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(),
                 MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get());
     }

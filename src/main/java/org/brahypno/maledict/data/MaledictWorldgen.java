@@ -33,6 +33,8 @@ import net.minecraftforge.common.data.DatapackBuiltinEntriesProvider;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.realm.BlightedRealm;
 import org.brahypno.maledict.registry.MaledictBlocks;
+import org.brahypno.maledict.registry.MaledictEntities;
+import org.brahypno.maledict.registry.MaledictRealmFeatures;
 
 import java.util.List;
 import java.util.OptionalLong;
@@ -49,6 +51,14 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
     public static final ResourceKey<ConfiguredFeature<?, ?>> LEAD_ORE = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("ore_malignant_lead"));
     public static final ResourceKey<PlacedFeature> PLACED_LEAD_ORE = ResourceKey.create(Registries.PLACED_FEATURE, id("ore_malignant_lead"));
     public static final ResourceKey<PlacedFeature> PLACED_LEAD_ORE_LOWER = ResourceKey.create(Registries.PLACED_FEATURE, id("ore_malignant_lead_lower"));
+    public static final ResourceKey<ConfiguredFeature<?, ?>> DETAILS = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("blighted_details"));
+    public static final ResourceKey<ConfiguredFeature<?, ?>> FALLEN_TREE = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("fallen_soulwood"));
+    public static final ResourceKey<ConfiguredFeature<?, ?>> FAILED_RITE = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("failed_rite"));
+    public static final ResourceKey<ConfiguredFeature<?, ?>> ABANDONED_DIG = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("abandoned_dig"));
+    public static final ResourceKey<PlacedFeature> PLACED_DETAILS = ResourceKey.create(Registries.PLACED_FEATURE, id("blighted_details"));
+    public static final ResourceKey<PlacedFeature> PLACED_FALLEN_TREE = ResourceKey.create(Registries.PLACED_FEATURE, id("fallen_soulwood"));
+    public static final ResourceKey<PlacedFeature> PLACED_FAILED_RITE = ResourceKey.create(Registries.PLACED_FEATURE, id("failed_rite"));
+    public static final ResourceKey<PlacedFeature> PLACED_ABANDONED_DIG = ResourceKey.create(Registries.PLACED_FEATURE, id("abandoned_dig"));
 
     public MaledictWorldgen(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
         super(output, registries, new RegistrySetBuilder()
@@ -64,6 +74,10 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
         context.register(TREES, new ConfiguredFeature<>(FeatureRegistry.SOULWOOD_TREE.get(), NoneFeatureConfiguration.INSTANCE));
         context.register(GROWTH, new ConfiguredFeature<>(Feature.SIMPLE_BLOCK,
                 new SimpleBlockConfiguration(BlockStateProvider.simple(BlockRegistry.BLIGHTED_GROWTH.get()))));
+        context.register(DETAILS, new ConfiguredFeature<>(MaledictRealmFeatures.DETAILS.get(), NoneFeatureConfiguration.INSTANCE));
+        context.register(FALLEN_TREE, new ConfiguredFeature<>(MaledictRealmFeatures.FALLEN_TREE.get(), NoneFeatureConfiguration.INSTANCE));
+        context.register(FAILED_RITE, new ConfiguredFeature<>(MaledictRealmFeatures.FAILED_RITE.get(), NoneFeatureConfiguration.INSTANCE));
+        context.register(ABANDONED_DIG, new ConfiguredFeature<>(MaledictRealmFeatures.ABANDONED_DIG.get(), NoneFeatureConfiguration.INSTANCE));
         // Match vanilla ORE_GOLD_BURIED; registry holders cannot be dereferenced during this bootstrap.
         context.register(LEAD_ORE, new ConfiguredFeature<>(Feature.ORE, new OreConfiguration(List.of(
                 OreConfiguration.target(new BlockMatchTest(BlockRegistry.TAINTED_ROCK.get()),
@@ -75,6 +89,18 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
 
     private static void placements(BootstapContext<PlacedFeature> context) {
         var features = context.lookup(Registries.CONFIGURED_FEATURE);
+        context.register(PLACED_DETAILS, new PlacedFeature(features.getOrThrow(DETAILS), List.of(
+                CountPlacement.of(3), InSquarePlacement.spread(),
+                HeightmapPlacement.onHeightmap(Heightmap.Types.OCEAN_FLOOR_WG), BiomeFilter.biome())));
+        context.register(PLACED_FALLEN_TREE, new PlacedFeature(features.getOrThrow(FALLEN_TREE), List.of(
+                RarityFilter.onAverageOnceEvery(9), InSquarePlacement.spread(),
+                HeightmapPlacement.onHeightmap(Heightmap.Types.OCEAN_FLOOR_WG), BiomeFilter.biome())));
+        context.register(PLACED_FAILED_RITE, new PlacedFeature(features.getOrThrow(FAILED_RITE), List.of(
+                RarityFilter.onAverageOnceEvery(32), InSquarePlacement.spread(),
+                HeightmapPlacement.onHeightmap(Heightmap.Types.OCEAN_FLOOR_WG), BiomeFilter.biome())));
+        context.register(PLACED_ABANDONED_DIG, new PlacedFeature(features.getOrThrow(ABANDONED_DIG), List.of(
+                RarityFilter.onAverageOnceEvery(24), InSquarePlacement.spread(),
+                HeightmapPlacement.onHeightmap(Heightmap.Types.OCEAN_FLOOR_WG), BiomeFilter.biome())));
         // Broad noise patches provide woods and open ground inside the initial single biome.
         context.register(PLACED_TREES, new PlacedFeature(features.getOrThrow(TREES), List.of(
                 NoiseThresholdCountPlacement.of(-0.2D, 0, 2), RarityFilter.onAverageOnceEvery(2),
@@ -117,10 +143,15 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                         : feature.is(OrePlacements.ORE_GOLD_LOWER) ? placements.getOrThrow(PLACED_LEAD_ORE_LOWER) : feature);
             }
         }
+        generation.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, PLACED_FAILED_RITE);
+        generation.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, PLACED_ABANDONED_DIG);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, PLACED_TREES);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, PLACED_FALLEN_TREE);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, PLACED_DETAILS);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, PLACED_GROWTH);
         var mobs = new MobSpawnSettings.Builder();
         BiomeDefaultFeatures.plainsSpawns(mobs);
+        mobs.addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(MaledictEntities.RAVEN.get(), 12, 2, 4));
         mobs.addSpawn(MobCategory.WATER_CREATURE, new MobSpawnSettings.SpawnerData(EntityType.SQUID, 3, 1, 4));
         mobs.addSpawn(MobCategory.WATER_AMBIENT, new MobSpawnSettings.SpawnerData(EntityType.COD, 10, 3, 6));
         mobs.addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(EntityType.DROWNED, 5, 1, 1));
@@ -144,7 +175,8 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                         VerticalAnchor.aboveBottom(5)), SurfaceRules.state(Blocks.BEDROCK.defaultBlockState())),
                 SurfaceRules.ifTrue(SurfaceRules.abovePreliminarySurface(), SurfaceRules.sequence(
                         SurfaceRules.ifTrue(SurfaceRules.ON_FLOOR, SurfaceRules.sequence(
-                                SurfaceRules.ifTrue(SurfaceRules.steep(), rock), earth)),
+                                SurfaceRules.ifTrue(SurfaceRules.steep(), rock),
+                                SurfaceRules.ifTrue(SurfaceRules.noiseCondition(Noises.SURFACE, -0.7D, -0.3D), rock), earth)),
                         SurfaceRules.ifTrue(SurfaceRules.UNDER_FLOOR, soil))),
                 SurfaceRules.ifTrue(SurfaceRules.verticalGradient("deepslate", VerticalAnchor.absolute(0),
                         VerticalAnchor.absolute(8)), deepRock));

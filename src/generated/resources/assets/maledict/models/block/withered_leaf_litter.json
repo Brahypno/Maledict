@@ -1,0 +1,106 @@
+{
+  "parent": "minecraft:block/block",
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#cover"
+        },
+        "east": {
+          "texture": "#cover"
+        },
+        "north": {
+          "texture": "#cover"
+        },
+        "south": {
+          "texture": "#cover"
+        },
+        "up": {
+          "texture": "#cover"
+        },
+        "west": {
+          "texture": "#cover"
+        }
+      },
+      "from": [
+        1,
+        0,
+        2
+      ],
+      "to": [
+        10,
+        1,
+        9
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#cover"
+        },
+        "east": {
+          "texture": "#cover"
+        },
+        "north": {
+          "texture": "#cover"
+        },
+        "south": {
+          "texture": "#cover"
+        },
+        "up": {
+          "texture": "#cover"
+        },
+        "west": {
+          "texture": "#cover"
+        }
+      },
+      "from": [
+        6,
+        0,
+        7
+      ],
+      "to": [
+        15,
+        1,
+        15
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#cover"
+        },
+        "east": {
+          "texture": "#cover"
+        },
+        "north": {
+          "texture": "#cover"
+        },
+        "south": {
+          "texture": "#cover"
+        },
+        "up": {
+          "texture": "#cover"
+        },
+        "west": {
+          "texture": "#cover"
+        }
+      },
+      "from": [
+        2,
+        0,
+        11
+      ],
+      "to": [
+        6,
+        1,
+        15
+      ]
+    }
+  ],
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "cover": "malum:block/soulwood/soulwood_leaves",
+    "particle": "malum:block/soulwood/soulwood_leaves"
+  }
+}

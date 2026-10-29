@@ -28,7 +28,10 @@
       "minecraft:monster_room",
       "minecraft:monster_room_deep"
     ],
-    [],
+    [
+      "maledict:failed_rite",
+      "maledict:abandoned_dig"
+    ],
     [],
     [
       "minecraft:ore_dirt",
@@ -58,6 +61,8 @@
     [
       "minecraft:glow_lichen",
       "maledict:blighted_soulwood",
+      "maledict:fallen_soulwood",
+      "maledict:blighted_details",
       "maledict:blighted_growth"
     ]
   ],
@@ -109,6 +114,12 @@
         "maxCount": 3,
         "minCount": 1,
         "weight": 1
+      },
+      {
+        "type": "maledict:raven",
+        "maxCount": 4,
+        "minCount": 2,
+        "weight": 12
       }
     ],
     "misc": [],

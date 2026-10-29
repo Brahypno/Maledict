@@ -1,0 +1,105 @@
+{
+  "parent": "minecraft:block/block",
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#wood"
+        },
+        "east": {
+          "texture": "#wood"
+        },
+        "north": {
+          "texture": "#wood"
+        },
+        "south": {
+          "texture": "#wood"
+        },
+        "up": {
+          "texture": "#wood"
+        },
+        "west": {
+          "texture": "#wood"
+        }
+      },
+      "from": [
+        2,
+        0,
+        5
+      ],
+      "to": [
+        14,
+        2,
+        7
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#wood"
+        },
+        "east": {
+          "texture": "#wood"
+        },
+        "north": {
+          "texture": "#wood"
+        },
+        "south": {
+          "texture": "#wood"
+        },
+        "up": {
+          "texture": "#wood"
+        },
+        "west": {
+          "texture": "#wood"
+        }
+      },
+      "from": [
+        7,
+        0,
+        3
+      ],
+      "to": [
+        9,
+        2,
+        14
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#wood"
+        },
+        "east": {
+          "texture": "#wood"
+        },
+        "north": {
+          "texture": "#wood"
+        },
+        "south": {
+          "texture": "#wood"
+        },
+        "up": {
+          "texture": "#wood"
+        },
+        "west": {
+          "texture": "#wood"
+        }
+      },
+      "from": [
+        9,
+        0,
+        10
+      ],
+      "to": [
+        14,
+        1,
+        12
+      ]
+    }
+  ],
+  "textures": {
+    "particle": "malum:block/soulwood/soulwood_log",
+    "wood": "malum:block/soulwood/soulwood_log"
+  }
+}

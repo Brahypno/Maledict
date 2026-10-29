@@ -7,10 +7,20 @@
   "attribute.name.maledict.transcend_omen": "超越预兆",
   "attribute.name.maledict.transcend_omen.desc": "与恶念转化互相抵消，余量按转化配方消耗部分护甲、护甲韧性与魔抗，以独立乘区按百分比增强法术属性。仅增强已偏离默认值的法术属性；多条有效路线分摊收益，共用防御只扣除一次。",
   "biome.maledict.blighted_wastes": "腐枯荒原",
+  "block.maledict.exposed_soulwood_roots": "灵魂木露根",
+  "block.maledict.fallen_soulwood_branches": "灵魂木折枝",
   "block.maledict.mnemonic_obelisk": "回忆方尖碑",
   "block.maledict.soulwood_obelisk": "灵魂木方尖碑",
   "block.maledict.tainted_malignant_lead_ore": "污秽石恶念之铅矿石",
   "block.maledict.twisted_malignant_lead_ore": "扭曲石恶念之铅矿石",
+  "block.maledict.withered_leaf_litter": "败叶层",
+  "block.maledict.witherlight_mushroom": "枯灯蕈",
+  "book.maledict.realm.dig": "采掘残记",
+  "book.maledict.realm.dig.1": "照旧沿着矿脉挖掘。上次标记的地方，取出的仍是灰暗而沉重的碎片。箱子上写着金，里面已经装满了铅。",
+  "book.maledict.realm.dig.2": "支撑梁开始断裂。我们把工具留在浅坑，沿河返回井口。若还有人来，这条路至少可以再走一次。",
+  "book.maledict.realm.rite": "祭址残记",
+  "book.maledict.realm.rite.1": "柱子已经撤下。基座下的石头仍有余温，可最后一份精魂没有回应。我们留下材料，准备明日重试。",
+  "book.maledict.realm.rite.2": "又一次回到这里。井口的记号还在，树根却穿过了石缝。枯灯蕈已经长到散落的枝条旁。我带走了几株。",
   "curios.identifier.delusion": "视界",
   "curios.modifiers.delusion": "装备于视界槽位时：",
   "dimension.maledict.blighted_realm": "腐枯界",
@@ -309,5 +319,6 @@
   "tooltip.maledict.lover_axe.descent": "主手或副手持有时每秒增加 0.1 堕落；离手每秒减少 0.1。",
   "tooltip.maledict.lover_axe.flavor": "纵然是死亡也无法使我们分离",
   "tooltip.maledict.lover_axe.wound": "每次有效近战命中使目标最大生命值降低 2%，真正死亡后清除。",
-  "tooltip.maledict.meltfall_axe.flavor": "熔炼，坠落，秘仪的开始"
+  "tooltip.maledict.meltfall_axe.flavor": "熔炼，坠落，秘仪的开始",
+  "tooltip.maledict.witherlight_mushroom": "散发微光；使用骨粉可在附近空地繁生。"
 }

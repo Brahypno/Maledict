@@ -46,6 +46,8 @@ public final class MaledictDataGenerators {
                         new LootTableProvider.SubProviderEntry(
                                 MaledictEntityLoot::new, LootContextParamSets.ENTITY),
                         new LootTableProvider.SubProviderEntry(
+                                () -> MaledictRealmLoot::generate, LootContextParamSets.CHEST),
+                        new LootTableProvider.SubProviderEntry(
                                 () -> consumer -> consumer.accept(
                                         ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "rewards/wisdom_sacrifice"),
                                         LootTable.lootTable().withPool(LootPool.lootPool()

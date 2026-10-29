@@ -19,6 +19,17 @@ public final class MaledictLanguage extends LanguageProvider {
         addInvocationTranslations();
         if ("zh_cn".equals(locale)){
             add("dimension.maledict.blighted_realm", "腐枯界");
+            addBlock(MaledictBlocks.WITHERED_LEAF_LITTER, "败叶层");
+            addBlock(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS, "灵魂木露根");
+            addBlock(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES, "灵魂木折枝");
+            addBlock(MaledictBlocks.WITHERLIGHT_MUSHROOM, "枯灯蕈");
+            add("tooltip.maledict.witherlight_mushroom", "散发微光；使用骨粉可在附近空地繁生。");
+            add("book.maledict.realm.rite", "祭址残记");
+            add("book.maledict.realm.rite.1", "柱子已经撤下。基座下的石头仍有余温，可最后一份精魂没有回应。我们留下材料，准备明日重试。");
+            add("book.maledict.realm.rite.2", "又一次回到这里。井口的记号还在，树根却穿过了石缝。枯灯蕈已经长到散落的枝条旁。我带走了几株。");
+            add("book.maledict.realm.dig", "采掘残记");
+            add("book.maledict.realm.dig.1", "照旧沿着矿脉挖掘。上次标记的地方，取出的仍是灰暗而沉重的碎片。箱子上写着金，里面已经装满了铅。");
+            add("book.maledict.realm.dig.2", "支撑梁开始断裂。我们把工具留在浅坑，沿河返回井口。若还有人来，这条路至少可以再走一次。");
             add("biome.maledict.blighted_wastes", "腐枯荒原");
             addBlock(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE, "污秽石恶念之铅矿石");
             addBlock(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE, "扭曲石恶念之铅矿石");
@@ -347,6 +358,17 @@ public final class MaledictLanguage extends LanguageProvider {
                 "在面纱之后，渴望超越的道路");
         }else {
             add("dimension.maledict.blighted_realm", "The Blighted Realm");
+            addBlock(MaledictBlocks.WITHERED_LEAF_LITTER, "Withered Leaf Litter");
+            addBlock(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS, "Exposed Soulwood Roots");
+            addBlock(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES, "Fallen Soulwood Branches");
+            addBlock(MaledictBlocks.WITHERLIGHT_MUSHROOM, "Witherlight Mushroom");
+            add("tooltip.maledict.witherlight_mushroom", "Gives off a faint light. Bone meal spreads it onto nearby empty ground.");
+            add("book.maledict.realm.rite", "Notes from a Failed Rite");
+            add("book.maledict.realm.rite.1", "The poles have been taken down. The stone beneath the base is still warm, but the last spirit gave no answer. We left the materials for another attempt tomorrow.");
+            add("book.maledict.realm.rite.2", "Back again. The mark by the well remains, though roots have entered the stonework. Pale mushrooms grow beside the fallen branches. I took a few with me.");
+            add("book.maledict.realm.dig", "Notes from an Abandoned Dig");
+            add("book.maledict.realm.dig.1", "We followed the vein as before. The place we marked yielded the same dull, heavy fragments. The crate says gold. It is full of lead.");
+            add("book.maledict.realm.dig.2", "The supports are splitting. We left our tools in the shallow pit and followed the river back to the well. Whoever comes after us can still take that road.");
             add("biome.maledict.blighted_wastes", "Blighted Wastes");
             addBlock(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE, "Tainted Malignant Lead Ore");
             addBlock(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE, "Twisted Malignant Lead Ore");

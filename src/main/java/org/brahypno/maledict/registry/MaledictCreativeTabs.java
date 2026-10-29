@@ -29,6 +29,10 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.TAINTED_MALIGNANT_LEAD_ORE.get());
                                output.accept(MaledictItems.TWISTED_MALIGNANT_LEAD_ORE.get());
                                output.accept(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get());
+                               output.accept(MaledictItems.WITHERED_LEAF_LITTER.get());
+                               output.accept(MaledictItems.EXPOSED_SOULWOOD_ROOTS.get());
+                               output.accept(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get());
+                               output.accept(MaledictItems.WITHERLIGHT_MUSHROOM.get());
                                output.accept(MaledictItems.RAVEN_SPAWN_EGG.get());
                                output.accept(MaledictItems.RAVEN_FEATHER.get());
                                output.accept(MaledictItems.SACRED_SPIRIT_ARROW.get());

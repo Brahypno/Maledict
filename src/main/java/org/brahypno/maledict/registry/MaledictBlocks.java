@@ -11,9 +11,24 @@ import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskCoreBlock;
 import org.brahypno.maledict.common.block.SoulwoodObeliskCoreBlock;
+import org.brahypno.maledict.common.realm.RealmGroundcoverBlock;
+import org.brahypno.maledict.common.realm.WitherlightMushroomBlock;
 
 public final class MaledictBlocks {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Maledict.MODID);
+
+    public static final RegistryObject<Block> WITHERED_LEAF_LITTER = BLOCKS.register("withered_leaf_litter",
+            () -> new RealmGroundcoverBlock(BlockBehaviour.Properties.copy(Blocks.MOSS_CARPET)
+                    .noCollission().sound(SoundType.AZALEA_LEAVES), 1));
+    public static final RegistryObject<Block> EXPOSED_SOULWOOD_ROOTS = BLOCKS.register("exposed_soulwood_roots",
+            () -> new RealmGroundcoverBlock(BlockBehaviour.Properties.copy(Blocks.HANGING_ROOTS)
+                    .noCollission().sound(SoundType.ROOTS), 4));
+    public static final RegistryObject<Block> FALLEN_SOULWOOD_BRANCHES = BLOCKS.register("fallen_soulwood_branches",
+            () -> new RealmGroundcoverBlock(BlockBehaviour.Properties.copy(Blocks.HANGING_ROOTS)
+                    .noCollission().sound(SoundType.WOOD), 3));
+    public static final RegistryObject<Block> WITHERLIGHT_MUSHROOM = BLOCKS.register("witherlight_mushroom",
+            () -> new WitherlightMushroomBlock(BlockBehaviour.Properties.copy(Blocks.BROWN_MUSHROOM)
+                    .lightLevel(state -> 7).sound(SoundType.FUNGUS)));
 
     public static final RegistryObject<Block> TAINTED_MALIGNANT_LEAD_ORE = BLOCKS.register("tainted_malignant_lead_ore",
             () -> new Block(BlockBehaviour.Properties.copy(Blocks.GOLD_ORE)));

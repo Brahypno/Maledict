@@ -7,10 +7,20 @@
   "attribute.name.maledict.transcend_omen": "Transcend Omen",
   "attribute.name.maledict.transcend_omen.desc": "Cancels Malignant Conversion, then uses the remainder to trade some armor, armor toughness and magic resistance for percentage increases to magical attributes through its conversion recipes, multiplying their existing totals. Only magical attributes already different from their default values participate. Active routes share the gains, while shared defenses are consumed only once.",
   "biome.maledict.blighted_wastes": "Blighted Wastes",
+  "block.maledict.exposed_soulwood_roots": "Exposed Soulwood Roots",
+  "block.maledict.fallen_soulwood_branches": "Fallen Soulwood Branches",
   "block.maledict.mnemonic_obelisk": "Mnemonic Obelisk",
   "block.maledict.soulwood_obelisk": "Soulwood Obelisk",
   "block.maledict.tainted_malignant_lead_ore": "Tainted Malignant Lead Ore",
   "block.maledict.twisted_malignant_lead_ore": "Twisted Malignant Lead Ore",
+  "block.maledict.withered_leaf_litter": "Withered Leaf Litter",
+  "block.maledict.witherlight_mushroom": "Witherlight Mushroom",
+  "book.maledict.realm.dig": "Notes from an Abandoned Dig",
+  "book.maledict.realm.dig.1": "We followed the vein as before. The place we marked yielded the same dull, heavy fragments. The crate says gold. It is full of lead.",
+  "book.maledict.realm.dig.2": "The supports are splitting. We left our tools in the shallow pit and followed the river back to the well. Whoever comes after us can still take that road.",
+  "book.maledict.realm.rite": "Notes from a Failed Rite",
+  "book.maledict.realm.rite.1": "The poles have been taken down. The stone beneath the base is still warm, but the last spirit gave no answer. We left the materials for another attempt tomorrow.",
+  "book.maledict.realm.rite.2": "Back again. The mark by the well remains, though roots have entered the stonework. Pale mushrooms grow beside the fallen branches. I took a few with me.",
   "curios.identifier.delusion": "Vision",
   "curios.modifiers.delusion": "When equipped in a vision slot:",
   "dimension.maledict.blighted_realm": "The Blighted Realm",
@@ -309,5 +319,6 @@
   "tooltip.maledict.lover_axe.descent": "Gain 0.1 Descent per second in either hand; lose 0.1 per second when not held.",
   "tooltip.maledict.lover_axe.flavor": "Even death cannot part us",
   "tooltip.maledict.lover_axe.wound": "Each effective melee hit reduces the target's maximum health by 2%, cleared on true death.",
-  "tooltip.maledict.meltfall_axe.flavor": "Smelting, falling, the beginning of the mysteries"
+  "tooltip.maledict.meltfall_axe.flavor": "Smelting, falling, the beginning of the mysteries",
+  "tooltip.maledict.witherlight_mushroom": "Gives off a faint light. Bone meal spreads it onto nearby empty ground."
 }

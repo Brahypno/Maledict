@@ -1,0 +1,170 @@
+{
+  "parent": "minecraft:block/block",
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#wood"
+        },
+        "east": {
+          "texture": "#wood"
+        },
+        "north": {
+          "texture": "#wood"
+        },
+        "south": {
+          "texture": "#wood"
+        },
+        "up": {
+          "texture": "#wood"
+        },
+        "west": {
+          "texture": "#wood"
+        }
+      },
+      "from": [
+        6,
+        0,
+        6
+      ],
+      "to": [
+        8,
+        5,
+        8
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#cap"
+        },
+        "east": {
+          "texture": "#cap"
+        },
+        "north": {
+          "texture": "#cap"
+        },
+        "south": {
+          "texture": "#cap"
+        },
+        "up": {
+          "texture": "#cap"
+        },
+        "west": {
+          "texture": "#cap"
+        }
+      },
+      "from": [
+        3,
+        4,
+        3
+      ],
+      "to": [
+        11,
+        6,
+        11
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#cap"
+        },
+        "east": {
+          "texture": "#cap"
+        },
+        "north": {
+          "texture": "#cap"
+        },
+        "south": {
+          "texture": "#cap"
+        },
+        "up": {
+          "texture": "#cap"
+        },
+        "west": {
+          "texture": "#cap"
+        }
+      },
+      "from": [
+        5,
+        6,
+        5
+      ],
+      "to": [
+        9,
+        7,
+        9
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#wood"
+        },
+        "east": {
+          "texture": "#wood"
+        },
+        "north": {
+          "texture": "#wood"
+        },
+        "south": {
+          "texture": "#wood"
+        },
+        "up": {
+          "texture": "#wood"
+        },
+        "west": {
+          "texture": "#wood"
+        }
+      },
+      "from": [
+        11,
+        0,
+        10
+      ],
+      "to": [
+        12,
+        3,
+        11
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#cap"
+        },
+        "east": {
+          "texture": "#cap"
+        },
+        "north": {
+          "texture": "#cap"
+        },
+        "south": {
+          "texture": "#cap"
+        },
+        "up": {
+          "texture": "#cap"
+        },
+        "west": {
+          "texture": "#cap"
+        }
+      },
+      "from": [
+        9,
+        2,
+        8
+      ],
+      "to": [
+        14,
+        4,
+        13
+      ]
+    }
+  ],
+  "textures": {
+    "cap": "minecraft:block/quartz_block_top",
+    "particle": "malum:block/soulwood/soulwood_log",
+    "wood": "malum:block/soulwood/soulwood_log"
+  }
+}

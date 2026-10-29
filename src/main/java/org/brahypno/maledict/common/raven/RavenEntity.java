@@ -1,5 +1,8 @@
 package org.brahypno.maledict.common.raven;
 
+import com.sammy.malum.registry.common.block.BlockRegistry;
+import net.minecraft.tags.BlockTags;
+import org.brahypno.maledict.common.realm.BlightedRealm;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -609,9 +612,24 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
 
     public static boolean checkRavenSpawnRules(EntityType<RavenEntity> type, ServerLevelAccessor level,
             MobSpawnType reason, BlockPos pos, RandomSource random) {
-        return level.getBlockState(pos.below()).isValidSpawn(level, pos.below(), type)
-                && level.getFluidState(pos).isEmpty()
-                && level.getFluidState(pos.above()).isEmpty();
+        boolean realm = BlightedRealm.is(level.getLevel());
+        var ground = level.getBlockState(pos.below());
+        boolean supported = ground.isValidSpawn(level, pos.below(), type)
+                || (realm && (ground.is(BlockRegistry.BLIGHTED_EARTH.get())
+                || ground.is(BlockRegistry.BLIGHTED_SOIL.get())));
+        if (!supported || !level.getFluidState(pos).isEmpty() || !level.getFluidState(pos.above()).isEmpty()) return false;
+        if (realm && reason == MobSpawnType.NATURAL) {
+            boolean habitat = false;
+            for (BlockPos sample : BlockPos.betweenClosed(pos.offset(-4, 0, -4), pos.offset(4, 3, 4))) {
+                var nearby = level.getBlockState(sample);
+                if (nearby.is(BlockTags.LOGS) || nearby.is(BlockRegistry.TAINTED_ROCK_BRICKS.get())) {
+                    habitat = true;
+                    break;
+                }
+            }
+            if (!habitat) return false;
+        }
+        return true;
     }
 
     @Override
