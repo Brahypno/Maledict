@@ -17,6 +17,7 @@ import org.brahypno.maledict.common.raven.RavenEntity;
 import org.brahypno.maledict.common.raven.RavenFeatherEntity;
 import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowEntity;
 import org.brahypno.maledict.common.curio.hangman.HangmanTrapEntity;
+import org.brahypno.maledict.common.curio.priestess.SoulEchoEntity;
 import org.brahypno.maledict.common.vicissitude.VicissitudeLightOrbEntity;
 import org.brahypno.maledict.common.vicissitude.VicissitudeScytheProjectileEntity;
 import org.brahypno.maledict.common.vicissitude.VicissitudeSpiritBoltEntity;
@@ -25,6 +26,12 @@ import org.brahypno.maledict.common.vicissitude.VicissitudeSpiritBoltEntity;
 public final class MaledictEntities {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, Maledict.MODID);
+
+    public static final RegistryObject<EntityType<SoulEchoEntity>> SOUL_ECHO =
+            ENTITY_TYPES.register("soul_echo", () -> EntityType.Builder
+                    .of(SoulEchoEntity::new, MobCategory.MISC).sized(0.6F, 1.8F)
+                    .clientTrackingRange(8).updateInterval(20).noSave().noSummon().fireImmune()
+                    .build("soul_echo"));
 
     public static final RegistryObject<EntityType<HangmanTrapEntity>> HANGMAN_TRAP =
             ENTITY_TYPES.register("hangman_trap", () -> EntityType.Builder
@@ -94,6 +101,7 @@ public final class MaledictEntities {
 
     @SubscribeEvent
     public static void registerAttributes(EntityAttributeCreationEvent event) {
+        event.put(SOUL_ECHO.get(), SoulEchoEntity.createLivingAttributes().build());
         event.put(FIRST_VICISSITUDE.get(), FirstVicissitudeBossEntity.createAttributes().build());
         event.put(RAVEN.get(), RavenEntity.createAttributes().build());
     }

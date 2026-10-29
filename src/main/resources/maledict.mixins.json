@@ -13,6 +13,7 @@
   ],
   "client": [
     "GameRendererMixin",
+    "MinecraftOutlineMixin",
     "HiddenTagRegistryMixin"
   ],
   "injectors": {

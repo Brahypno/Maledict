@@ -76,6 +76,10 @@ public final class HighPriestessTest {
                         "Each stage keeps the same base Omen without stacking upgrades");
                 helper.assertTrue(EidolonOfTheHighPriestessItem.hasWoundYetToCome(f.player) == (stage >= 2),
                         "The Wound Yet to Come starts at stage two and remains active later");
+                helper.assertTrue((EidolonOfTheHighPriestessItem.equippedStage(f.player) >= 1) == (stage >= 1),
+                        "Life Manifestation starts at one and remains active later");
+                helper.assertTrue((EidolonOfTheHighPriestessItem.equippedStage(f.player) >= 3) == (stage >= 3),
+                        "Soul Displacement starts at three and retains the previous abilities");
             }
             f.inventory.setEquippedCurio("delusion", 0, ItemStack.EMPTY);
             f.tickCurios();

@@ -42,6 +42,11 @@ public final class MaledictLanguage extends LanguageProvider {
             add("message.maledict.realm_no_respawn", "此界无法安置你的归处。");
             addItem(MaledictItems.HANGMAN_FOOL, "倒吊人的愚见");
             addItem(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS, "女祭司之灵相");
+            add("entity.maledict.soul_echo", "灵魂残影");
+            add("malum.gui.curio.effect.maledict.high_priestess.life_manifestation",
+                "生命显影：看见16格内生物的轮廓，包括隔墙与隐身的生物，仅自己可见。");
+            add("malum.gui.curio.effect.maledict.high_priestess.soul_displacement",
+                "灵魂离位：法术命中使目标在原地留下3秒残影。法术击中残影会伤及本体，但不会刷新残影。");
             add("malum.gui.curio.effect.maledict.high_priestess.wound_yet_to_come",
                 "未至之伤：伤害与治疗缓慢结算。造成伤害时获得等量治疗，先抵消待结算伤害，余量再缓慢回复生命。");
             add("tooltip.maledict.hangman_fool.flavor.0", "献出力量，以求取人智");
@@ -381,6 +386,11 @@ public final class MaledictLanguage extends LanguageProvider {
             add("message.maledict.realm_no_respawn", "You cannot bind your return to this realm.");
             addItem(MaledictItems.HANGMAN_FOOL, "Hangman`s fool");
             addItem(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS, "Eidolon of the High Priestess");
+            add("entity.maledict.soul_echo", "Soul Echo");
+            add("malum.gui.curio.effect.maledict.high_priestess.life_manifestation",
+                "Life Manifestation: only you see the outlines of living creatures within 16 blocks, even through walls or invisibility.");
+            add("malum.gui.curio.effect.maledict.high_priestess.soul_displacement",
+                "Soul Displacement: spell hits leave a 3-second echo where the target stood. Spells hitting the echo damage its body without refreshing the echo.");
             add("malum.gui.curio.effect.maledict.high_priestess.wound_yet_to_come",
                 "The Wound Yet to Come: damage and healing settle gradually. Damage dealt grants equal healing, "
                 + "first canceling pending damage, then gradually restoring health with any remainder.");

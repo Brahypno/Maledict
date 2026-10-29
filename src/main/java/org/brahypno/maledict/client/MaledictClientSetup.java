@@ -19,6 +19,7 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.curio.enlightenment.AgeOfEnlightenmentCurioRenderer;
 import org.brahypno.maledict.client.curio.enlightenment.AgeOfEnlightenmentModel;
 import org.brahypno.maledict.client.curio.hangman.HangmanTrapRenderer;
+import org.brahypno.maledict.client.curio.priestess.SoulEchoRenderer;
 import org.brahypno.maledict.client.infrared.InfraredPostProcessor;
 import org.brahypno.maledict.client.raven.RavenFeatherRenderer;
 import org.brahypno.maledict.client.raven.RavenModel;
@@ -70,6 +71,7 @@ public final class MaledictClientSetup {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(MaledictEntities.SOUL_ECHO.get(), SoulEchoRenderer::new);
         event.registerEntityRenderer(MaledictEntities.HANGMAN_TRAP.get(), HangmanTrapRenderer::new);
         event.registerEntityRenderer(MaledictEntities.SPIRIT_ARROW.get(), SpiritArrowRenderer::new);
         event.registerEntityRenderer(MaledictEntities.RAVEN.get(), RavenRenderer::new);

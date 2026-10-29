@@ -13,7 +13,7 @@ import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.List;
 
-/** Stage zero grants Omen; stage two adds the Wound Yet to Come without replacing it. */
+/** Vision abilities accumulate on top of stage zero's Omen. */
 public final class EidolonOfTheHighPriestessItem extends AbstractVisionCurioItem {
     public static final String STAGES_TAG = "HighPriestessStages";
     public static final int MAX_STAGE = 4;
@@ -36,8 +36,11 @@ public final class EidolonOfTheHighPriestessItem extends AbstractVisionCurioItem
     }
 
     public static boolean hasWoundYetToCome(LivingEntity entity) {
-        return ((EidolonOfTheHighPriestessItem) MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get())
-                .getEquippedStage(entity) >= 2;
+        return equippedStage(entity) >= 2;
+    }
+
+    public static int equippedStage(LivingEntity entity) {
+        return ((EidolonOfTheHighPriestessItem) MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get()).getEquippedStage(entity);
     }
 
     @Override
@@ -54,8 +57,14 @@ public final class EidolonOfTheHighPriestessItem extends AbstractVisionCurioItem
     @Override
     public List<Component> getAttributesTooltip(List<Component> tooltip, ItemStack stack) {
         List<Component> lines = super.getAttributesTooltip(tooltip, stack);
+        if (stage(stack) >= 1) {
+            lines.add(positiveEffect("maledict.high_priestess.life_manifestation"));
+        }
         if (stage(stack) >= 2) {
             lines.add(positiveEffect(WOUND_EFFECT));
+        }
+        if (stage(stack) >= 3) {
+            lines.add(positiveEffect("maledict.high_priestess.soul_displacement"));
         }
         return lines;
     }
