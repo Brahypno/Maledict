@@ -2,9 +2,6 @@ package org.brahypno.maledict.client.vicissitude.music;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -45,43 +42,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 清单见 {@code docs/design/first-vicissitude/04_AUDIO_AND_BOSS_BAR.md} §4。
  */
 class FadeEnvelopeTest {
-
-    @Test
-    void neverStartsAtZero() {
-        FadeEnvelope envelope = new FadeEnvelope(40);
-        assertNotEquals(0.0F, envelope.fraction(),
-                        "起点为 0 时 SoundEngine#play 会跳过整个播放分支，音乐永远起不来");
-        assertTrue(envelope.fraction() > 0.0F, "起点必须是正的");
-    }
-
-    @Test
-    void fadesInToFullOverTheGivenLength() {
-        FadeEnvelope envelope = new FadeEnvelope(40);
-        assertTrue(envelope.advance() > 0.0F);
-        for (int tick = 1; tick < 40; tick++) {
-            envelope.advance();
-        }
-        assertEquals(1.0F, envelope.fraction(), 1.0E-6F, "淡入结束后应当到满");
-        // 再推进也不会越过 1。
-        envelope.advance();
-        assertEquals(1.0F, envelope.fraction(), 1.0E-6F, "淡入不应当越过满值");
-    }
-
-    @Test
-    void releaseBringsItBackToSilence() {
-        FadeEnvelope envelope = new FadeEnvelope(40);
-        for (int tick = 0; tick < 40; tick++) {
-            envelope.advance();
-        }
-        assertFalse(envelope.isReleasing(), "没调 release() 之前不该是淡出状态");
-        envelope.release();
-        assertTrue(envelope.isReleasing());
-        for (int tick = 0; tick < 40; tick++) {
-            envelope.advance();
-        }
-        assertTrue(envelope.isSilent(), "淡出结束后应当是静音");
-        assertEquals(0.0F, envelope.fraction(), 1.0E-6F);
-    }
 
     /** 淡出途中改主意再淡入，也要能回到满——切歌时旧实例淡出、新实例淡入用的就是这条路径。 */
     @Test

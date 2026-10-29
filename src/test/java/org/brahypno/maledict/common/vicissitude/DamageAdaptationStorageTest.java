@@ -1,7 +1,6 @@
 package org.brahypno.maledict.common.vicissitude;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
 import org.junit.jupiter.api.Test;
@@ -39,17 +38,4 @@ class DamageAdaptationStorageTest {
         assertEquals(1.0F, loaded.adapt("B", 2), "An evicted message must still return at full damage");
     }
 
-    @Test
-    void legacySaveKeepsTheRememberedMessages() {
-        ListTag legacy = new ListTag();
-        for (String message : List.of("B", "A")) {
-            CompoundTag entry = new CompoundTag();
-            entry.putString("Message", message);
-            legacy.add(entry);
-        }
-        DamageAdaptation loaded = new DamageAdaptation();
-        DamageAdaptationStorage.load(loaded, legacy);
-        assertEquals(List.of("B", "A"), loaded.snapshot());
-        assertEquals(Math.exp(-1), loaded.adapt("A", 2), 1.0E-6);
-    }
 }

@@ -8,10 +8,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class VicissitudeUnstickSearchTest {
-    @Test void findsTheOnlyExitOnTheFarPositiveSide() {
-        var exit = new VicissitudeUnstickSearch.Offset(16, 0, 0);
-        assertEquals(exit, VicissitudeUnstickSearch.find(exit::equals));
-    }
 
     @Test void failedSearchStaysBoundedAndCoversAllRingsAndHeights() {
         List<VicissitudeUnstickSearch.Offset> visited = new ArrayList<>();

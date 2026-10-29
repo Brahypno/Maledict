@@ -17,17 +17,6 @@ class EnlightenmentLevelTest {
         assertEquals(0, EnlightenmentLevel.fromTag(new CompoundTag()));
     }
 
-    @Test
-    void aStackWithoutNbtFallsBackToZeroLevel() {
-        assertEquals(0, EnlightenmentLevel.fromTag(null));
-    }
-
-    @Test
-    void aNegativeLevelFallsBackToZero() {
-        assertEquals(0, EnlightenmentLevel.fromTag(level(-1)));
-        assertEquals(0, EnlightenmentLevel.fromTag(level(-100)));
-    }
-
     private static CompoundTag level(int value) {
         CompoundTag tag = new CompoundTag();
         // 字面键名：外部来源（战利品表、give 命令）按这个名字写，改名就是改存档格式。

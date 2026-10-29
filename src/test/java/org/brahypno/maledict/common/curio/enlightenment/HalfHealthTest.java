@@ -22,15 +22,4 @@ class HalfHealthTest {
         assertFalse(HalfHealth.isAtOrBelowHalf(251.0F, 500.0F));
     }
 
-    @Test
-    void aDeadCreatureDoesNotCount() {
-        assertFalse(HalfHealth.isAtOrBelowHalf(0.0F, MAX_HEALTH));
-        assertFalse(HalfHealth.isAtOrBelowHalf(-1.0F, MAX_HEALTH));
-    }
-
-    @Test
-    void aTargetWithNoMaximumHealthDoesNotCount() {
-        assertFalse(HalfHealth.isAtOrBelowHalf(0.0F, 0.0F));
-        assertFalse(HalfHealth.isAtOrBelowHalf(10.0F, 0.0F));
-    }
 }

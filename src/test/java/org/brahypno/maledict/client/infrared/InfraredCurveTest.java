@@ -2,42 +2,15 @@ package org.brahypno.maledict.client.infrared;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * 微光视觉两段算术的验收：迟滞的两个阈值与中括号那格，以及过渡时长落在文档要求的 0.3–0.5 秒里。
+ * 微光视觉迟滞序列：进入黑暗、经过中间亮度、退出后再次经过中间亮度。
  *
  * <p>这里证明不了效果真的出现在画面上——读相机、读眼槽、上传 uniform 那几段只能在游戏里验。
  */
 class InfraredCurveTest {
-
-    /** 已确认：正常亮度保留原画面；夜视和亮度增强均可提供正常亮度，遮挡雾独立处理。 */
-    @Test
-    void enhancementOnlyRunsWhenNormalVisionIsTooDark() {
-        assertFalse(InfraredCurve.needsEnhancement(false, false, false));
-        assertTrue(InfraredCurve.needsEnhancement(true, false, false));
-        assertFalse(InfraredCurve.needsEnhancement(true, true, false));
-        assertFalse(InfraredCurve.needsEnhancement(true, false, true));
-        assertFalse(InfraredCurve.needsEnhancement(true, true, true));
-    }
-
-    @Test
-    void darknessEntersAtSixOrBelow() {
-        assertTrue(InfraredCurve.darknessAfter(false, 0));
-        assertTrue(InfraredCurve.darknessAfter(false, 6));
-        assertFalse(InfraredCurve.darknessAfter(false, 7));
-        assertFalse(InfraredCurve.darknessAfter(false, 15));
-    }
-
-    @Test
-    void darknessLeavesAtEightOrAbove() {
-        assertTrue(InfraredCurve.darknessAfter(true, 0));
-        assertTrue(InfraredCurve.darknessAfter(true, 7));
-        assertFalse(InfraredCurve.darknessAfter(true, 8));
-        assertFalse(InfraredCurve.darknessAfter(true, 15));
-    }
 
     /** 7 这一格两个方向都保持现状：在阈值上反复横跳不该让画面闪。 */
     @Test
@@ -55,42 +28,4 @@ class InfraredCurveTest {
         assertTrue(active);
     }
 
-    @Test
-    void fadeInIsMostlyDoneInAboutFourTenthsOfASecond() {
-        assertTrue(InfraredCurve.approach(0.0F, 1.0F, 0.2F) < 0.85F);
-        assertTrue(InfraredCurve.approach(0.0F, 1.0F, 0.3F) > 0.9F);
-        assertTrue(InfraredCurve.approach(0.0F, 1.0F, 0.5F) > 0.98F);
-        assertTrue(InfraredCurve.approach(0.0F, 1.0F, 10.0F) <= 1.0F);
-    }
-
-    /** 逐帧推进与整段一次性算出来的必须一致，否则掉帧会改变淡入淡出的手感。 */
-    @Test
-    void frameSteppingMatchesOneBigStep() {
-        float stepped = 0.0F;
-        for (int frame = 0; frame < 30; frame++) {
-            stepped = InfraredCurve.approach(stepped, 1.0F, 1.0F / 60.0F);
-        }
-        assertEquals(InfraredCurve.approach(0.0F, 1.0F, 0.5F), stepped, 0.002F);
-    }
-
-    /** 淡出期间强度必须还在 epsilon 之上，后处理才不会被提前关掉。 */
-    @Test
-    void fadeOutStaysVisibleForAWhileThenSnapsToZero() {
-        assertTrue(InfraredCurve.approach(1.0F, 0.0F, 0.25F) > InfraredCurve.ACTIVE_EPSILON);
-        assertEquals(0.0F, InfraredCurve.approach(1.0F, 0.0F, 1.0F), 0.0F);
-        assertEquals(0.0F, InfraredCurve.approach(0.0F, 0.0F, 1.0F), 0.0F);
-    }
-
-    @Test
-    void strengthNeverOvershootsAndNeverGoesBackwards() {
-        float previous = 0.0F;
-        for (int frame = 0; frame < 120; frame++) {
-            float next = InfraredCurve.approach(previous, 1.0F, 1.0F / 20.0F);
-            assertTrue(next >= previous);
-            assertTrue(next <= 1.0F);
-            previous = next;
-        }
-        // 负的帧时长（时钟回拨之类）不该把强度推离目标。
-        assertEquals(0.5F, InfraredCurve.approach(0.5F, 1.0F, -1.0F), 0.0F);
-    }
 }

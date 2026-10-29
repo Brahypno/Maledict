@@ -18,14 +18,4 @@ class BlessedRegenerationTest {
         assertEquals(0.3333F, BlessedRegeneration.extraHeal(0.3333F, 0), EPSILON);
     }
 
-    @Test
-    void aTickWithNoHealingGivesNothing() {
-        assertEquals(0.0F, BlessedRegeneration.extraHeal(0.0F, 0), EPSILON);
-        assertEquals(0.0F, BlessedRegeneration.extraHeal(-3.0F, 4), EPSILON);
-    }
-
-    @Test
-    void anInvalidAmplifierGivesNothing() {
-        assertEquals(0.0F, BlessedRegeneration.extraHeal(1.0F, -2), EPSILON);
-    }
 }

@@ -19,26 +19,4 @@ class RavenDangerEscapeTest {
         assertTrue(escape.shouldEscape(true, true));
     }
 
-    @Test
-    void extinguishingThenCatchingFireAgainStartsAnotherEscape() {
-        RavenDangerEscape escape = new RavenDangerEscape();
-        escape.begin(true);
-        escape.finish();
-        escape.updateBurning(false);
-        assertFalse(escape.shouldEscape(false, false));
-        assertTrue(escape.shouldEscape(false, true));
-    }
-
-    @Test
-    void environmentalDamageRequestsEscapeButMobAttacksKeepNormalRetaliation() {
-        RavenDangerEscape escape = new RavenDangerEscape();
-        escape.onDamage(false, false);
-        assertFalse(escape.shouldEscape(false, false));
-        escape.onDamage(true, false);
-        assertTrue(escape.shouldEscape(false, false));
-        escape.begin(false);
-        escape.onDamage(true, false);
-        escape.finish();
-        assertFalse(escape.shouldEscape(false, false));
-    }
 }

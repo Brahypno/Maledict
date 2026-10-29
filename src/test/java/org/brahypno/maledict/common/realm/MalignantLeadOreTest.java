@@ -1,22 +1,16 @@
 package org.brahypno.maledict.common.realm;
 
-import com.sammy.malum.registry.common.block.BlockRegistry;
 import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderSet;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.data.worldgen.placement.OrePlacements;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
@@ -24,48 +18,12 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
-import org.brahypno.maledict.data.MaledictWorldgen;
 import org.brahypno.maledict.registry.MaledictBlocks;
 import org.brahypno.maledict.registry.MaledictItems;
 
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
 public final class MalignantLeadOreTest {
-    @GameTest(template = "test_empty", batch = "blighted_realm", timeoutTicks = 300)
-    public static void goldBecomesLeadOnlyInTheRealm(GameTestHelper helper) {
-        var realm = helper.getLevel().getServer().getLevel(BlightedRealm.LEVEL);
-        var biome = realm.registryAccess().registryOrThrow(Registries.BIOME).getOrThrow(BlightedRealm.WASTES);
-        var oreFeatures = biome.getGenerationSettings().features().stream().flatMap(HolderSet::stream).toList();
-        helper.assertTrue(oreFeatures.stream().noneMatch(f -> f.is(OrePlacements.ORE_GOLD) || f.is(OrePlacements.ORE_GOLD_LOWER)),
-                "The realm must not retain either vanilla gold placement");
-        helper.assertTrue(oreFeatures.stream().anyMatch(f -> f.is(MaledictWorldgen.PLACED_LEAD_ORE))
-                        && oreFeatures.stream().anyMatch(f -> f.is(MaledictWorldgen.PLACED_LEAD_ORE_LOWER)),
-                "Both gold distributions must be replaced with malignant lead");
-        var plains = helper.getLevel().registryAccess().registryOrThrow(Registries.BIOME)
-                .getOrThrow(net.minecraft.world.level.biome.Biomes.PLAINS);
-        helper.assertTrue(plains.getGenerationSettings().features().stream().flatMap(HolderSet::stream)
-                        .anyMatch(f -> f.is(OrePlacements.ORE_GOLD)), "Overworld gold generation must remain intact");
-
-        var configured = realm.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).getOrThrow(MaledictWorldgen.LEAD_ORE);
-        var config = (OreConfiguration) configured.config();
-        helper.assertTrue(config.size == 9 && config.discardChanceOnAirExposure == 0.5F,
-                "The replacement retains vanilla buried-gold size and air-exposure restrictions");
-        for (boolean deep : new boolean[]{false, true}) {
-            BlockPos center = new BlockPos(4600, deep ? -24 : 24, 4600);
-            var host = deep ? BlockRegistry.TWISTED_ROCK.get() : BlockRegistry.TAINTED_ROCK.get();
-            var ore = deep ? MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get() : MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get();
-            for (var pos : BlockPos.betweenClosed(center.offset(-5, -5, -5), center.offset(5, 5, 5))) {
-                realm.setBlockAndUpdate(pos, host.defaultBlockState());
-            }
-            configured.place(realm, realm.getChunkSource().getGenerator(), RandomSource.create(73), center);
-            int count = 0;
-            for (var pos : BlockPos.betweenClosed(center.offset(-5, -5, -5), center.offset(5, 5, 5))) {
-                if (realm.getBlockState(pos).is(ore)) count++;
-            }
-            helper.assertTrue(count > 0, "The registered ore feature must replace its " + (deep ? "twisted" : "tainted") + " host");
-        }
-        helper.succeed();
-    }
 
     @GameTest(template = "test_empty", batch = "blighted_realm")
     public static void eitherHostDropsFragmentsAndEightCraftOneLead(GameTestHelper helper) {

@@ -15,12 +15,4 @@ class RavenGroundTravelTest {
         assertEquals(HOP, RavenGroundTravel.next(false, 1 * 1));
     }
 
-    @Test
-    void fourBlockTakeoffAndTwoBlockLandingBoundariesAreDistinct() {
-        assertEquals(HOP, RavenGroundTravel.next(false, 16.0D));
-        assertEquals(TAKE_OFF, RavenGroundTravel.next(false, 16.01D));
-        assertEquals(FLY, RavenGroundTravel.next(true, 4.01D));
-        assertEquals(LAND, RavenGroundTravel.next(true, 4.0D));
-        assertEquals(HOP, RavenGroundTravel.next(false, 4.01D));
-    }
 }

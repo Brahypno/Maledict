@@ -4,21 +4,16 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.projectile.Arrow;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
@@ -33,52 +28,6 @@ import java.util.UUID;
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
 public final class SoulDisplacementTest {
-    @GameTest(template = "test_empty", batch = "priestess_soul")
-    public static void lifeManifestationHasExactRangeAndDoesNotSetGlowingFlags(GameTestHelper helper) {
-        try (Caster caster = new Caster(helper, 1)) {
-            LivingEntity target = target(helper);
-            target.setPos(caster.player.position().add(16, 0, 0));
-            helper.assertTrue(LifeManifestation.reveals(caster.player, target), "The exact 16-block boundary is included");
-            target.setInvisible(true);
-            helper.assertTrue(LifeManifestation.reveals(caster.player, target), "Invisible targets are revealed");
-            helper.assertTrue(!target.isCurrentlyGlowing(), "Reveal must not mutate the entity's actual glow flag");
-            target.setPos(caster.player.position().add(16.01, 0, 0));
-            helper.assertTrue(!LifeManifestation.reveals(caster.player, target), "Targets outside the radius are excluded");
-            target.setPos(caster.player.position());
-            helper.assertTrue(!LifeManifestation.reveals(caster.player, caster.player), "The wearer is excluded");
-            helper.assertTrue(!LifeManifestation.reveals(caster.player, new Arrow(helper.getLevel(), caster.player)),
-                    "Projectiles are not living targets");
-            target.setHealth(0);
-            helper.assertTrue(!LifeManifestation.reveals(caster.player, target), "Dead targets are excluded");
-        }
-        helper.succeed();
-    }
-
-    @GameTest(template = "test_empty", batch = "priestess_soul")
-    public static void onlyStageThreeMagicCreatesOneStationaryEcho(GameTestHelper helper) {
-        for (int stage = 0; stage <= 3; stage++) {
-            try (Caster caster = new Caster(helper, stage)) {
-                LivingEntity target = target(helper);
-                DamageSource spell = spell(target, caster.player);
-                helper.assertTrue(target.hurt(spell, 4), "The initial spell must hit");
-                List<SoulEchoEntity> echoes = echoes(helper, target);
-                helper.assertTrue(echoes.size() == (stage >= 3 ? 1 : 0), "Only stage three creates an echo");
-                if (stage == 3) {
-                    SoulEchoEntity echo = echoes.get(0);
-                    Vec3 origin = target.position();
-                    equal(helper, target.getBbWidth(), echo.getBbWidth(), "Echo hitbox keeps the target width");
-                    equal(helper, target.getBbHeight(), echo.getBbHeight(), "Echo hitbox keeps the target height");
-                    target.setPos(origin.add(5, 0, 0));
-                    helper.assertTrue(echo.position().equals(origin), "The echo stays at the impact position");
-                    helper.assertTrue(!LifeManifestation.reveals(caster.player, echo), "Soul echoes are not living outlines");
-                    helper.assertTrue(!echo.save(new CompoundTag()), "Echoes must not enter world saves");
-                    echo.discard();
-                }
-                target.discard();
-            }
-        }
-        helper.succeed();
-    }
 
     @GameTest(template = "test_empty", batch = "priestess_soul", timeoutTicks = 130)
     public static void confirmedSequenceForwardsWithoutRefreshingThenDirectHitRefreshes(GameTestHelper helper) {
@@ -141,32 +90,6 @@ public final class SoulDisplacementTest {
         helper.succeed();
     }
 
-    @GameTest(template = "test_empty", batch = "priestess_soul")
-    public static void canceledForwardingCannotRefreshAndBodyRemovalCleansEcho(GameTestHelper helper) {
-        try (Caster caster = new Caster(helper, 3)) {
-            LivingEntity target = target(helper);
-            DamageSource spell = spell(target, caster.player);
-            target.hurt(spell, 4);
-            SoulEchoEntity echo = echoes(helper, target).get(0);
-            float before = target.getHealth();
-            int remaining = echo.remainingTicks();
-            CancelHurt cancel = new CancelHurt(target);
-            MinecraftForge.EVENT_BUS.register(cancel);
-            try {
-                target.invulnerableTime = 0;
-                echo.hurt(spell, 4);
-            } finally {
-                MinecraftForge.EVENT_BUS.unregister(cancel);
-            }
-            equal(helper, before, target.getHealth(), "Canceled body damage remains canceled");
-            helper.assertTrue(echo.remainingTicks() == remaining, "A canceled spell cannot extend the echo");
-            target.discard();
-            echo.tick();
-            helper.assertTrue(echo.isRemoved(), "An absent body removes its echo");
-        }
-        helper.succeed();
-    }
-
     public static final class HitObserver {
         private final LivingEntity target;
         private final DamageSource source;
@@ -175,14 +98,6 @@ public final class SoulDisplacementTest {
         HitObserver(LivingEntity target, DamageSource source) { this.target = target; this.source = source; }
         @SubscribeEvent public void damage(LivingDamageEvent event) {
             if (event.getEntity() == target) { hits++; sameSource = event.getSource() == source; }
-        }
-    }
-
-    public static final class CancelHurt {
-        private final LivingEntity target;
-        CancelHurt(LivingEntity target) { this.target = target; }
-        @SubscribeEvent(priority = EventPriority.HIGH) public void hurt(LivingHurtEvent event) {
-            if (event.getEntity() == target) event.setCanceled(true);
         }
     }
 

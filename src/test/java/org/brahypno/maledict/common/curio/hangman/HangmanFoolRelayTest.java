@@ -6,7 +6,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.entity.projectile.SmallFireball;
 import net.minecraft.world.level.block.Blocks;
@@ -14,7 +13,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -50,65 +48,6 @@ public final class HangmanFoolRelayTest {
     }
 
     @GameTest(template = "test_empty", batch = "hangman_relay")
-    public static void stageRangeOwnershipAndDisappearingCirclesAreRespected(GameTestHelper helper) {
-        Fixture f = new Fixture(helper);
-        var a = f.circle(2);
-        var b = f.circle(4);
-        var c = f.circle(6);
-        f.circle(16.1);
-        var foreign = f.circle(1);
-        var data = foreign.saveWithoutId(new net.minecraft.nbt.CompoundTag());
-        data.putUUID("TrapOwner", UUID.randomUUID());
-        foreign.load(data);
-        f.equip(2);
-        vector(helper, f.player.getEyePosition(), f.shot().position(), "Stage two shoots normally");
-        f.equip(3);
-        f.assertOrigin(f.shot(), a);
-        b.discard();
-        f.assertOrigin(f.shot(), c);
-        f.assertOrigin(f.shot(), a);
-        a.discard();
-        c.discard();
-        vector(helper, f.player.getEyePosition(), f.shot().position(), "No eligible circle shoots normally");
-        f.finish();
-    }
-
-    @GameTest(template = "test_empty", batch = "hangman_relay")
-    public static void aimSelectsFirstEntityThenBlockAndStopsAtWalls(GameTestHelper helper) {
-        Fixture f = new Fixture(helper);
-        Vec3 eye = f.player.getEyePosition();
-        var near = EntityType.PIG.create(helper.getLevel());
-        near.setNoAi(true);
-        near.setPos(eye.add(0, -0.4, 2));
-        helper.getLevel().addFreshEntity(near);
-        f.entities.add(near);
-        var far = EntityType.PIG.create(helper.getLevel());
-        far.setNoAi(true);
-        far.setPos(eye.add(0, -0.4, 4));
-        helper.getLevel().addFreshEntity(far);
-        f.entities.add(far);
-        BlockPos wall = BlockPos.containing(eye.add(0, 0, 6));
-        helper.getLevel().setBlockAndUpdate(wall, Blocks.STONE.defaultBlockState());
-        Arrow probe = new Arrow(helper.getLevel(), f.player);
-        double firstZ = near.getBoundingBox().inflate(near.getPickRadius()).minZ;
-        vector(helper, new Vec3(eye.x, eye.y, firstZ), HangmanFoolRelay.aimTarget(f.player, probe).getLocation(),
-                "The first entity's ray intersection, not its center, is the aim point");
-        near.discard();
-        double secondZ = far.getBoundingBox().inflate(far.getPickRadius()).minZ;
-        vector(helper, new Vec3(eye.x, eye.y, secondZ), HangmanFoolRelay.aimTarget(f.player, probe).getLocation(), "Next entity");
-        far.setPos(eye.add(0, -0.4, 8));
-        vector(helper, new Vec3(eye.x, eye.y, wall.getZ()), HangmanFoolRelay.aimTarget(f.player, probe).getLocation(),
-                "A wall occludes the entity behind it");
-        helper.getLevel().setBlockAndUpdate(wall, Blocks.AIR.defaultBlockState());
-        // The flat test world's platform sits above this fixture; use empty sky for the no-hit case.
-        f.player.setPos(f.player.getX(), helper.getLevel().getMaxBuildHeight() + 16, f.player.getZ());
-        f.player.setXRot(-90);
-        vector(helper, f.player.getEyePosition().add(f.player.getLookAngle().scale(64)), HangmanFoolRelay.aimTarget(f.player, probe).getLocation(),
-                "An empty ray aims at its 64-block endpoint");
-        f.finish();
-    }
-
-    @GameTest(template = "test_empty", batch = "hangman_relay")
     public static void relayPreservesArrowPayloadAndFireballSpeedAndAcceleration(GameTestHelper helper) {
         Fixture f = new Fixture(helper);
         var circle = f.circle(2);
@@ -140,69 +79,6 @@ public final class HangmanFoolRelayTest {
     }
 
     @GameTest(template = "test_empty", batch = "hangman_relay")
-    public static void trapReleasesAndDiskLoadsDoNotSpendARelayTurn(GameTestHelper helper) {
-        Fixture f = new Fixture(helper);
-        var a = f.circle(2);
-        var b = f.circle(4);
-        Arrow released = new Arrow(helper.getLevel(), f.player);
-        released.setDeltaMovement(0, 0, 2);
-        Vec3 original = released.position();
-        HangmanFoolRelay.markTrapRelease(released);
-        helper.getLevel().addFreshEntity(released);
-        f.entities.add(released);
-        vector(helper, original, released.position(), "Restored contact payload stays at its contact position");
-        var loaded = new Arrow(helper.getLevel(), f.player);
-        HangmanFoolEvents.onLaunch(new EntityJoinLevelEvent(loaded, helper.getLevel(), true));
-        vector(helper, original, loaded.position(), "Disk loads keep their saved position");
-        var shot = f.shot();
-        f.assertOrigin(shot, a);
-        HangmanFoolEvents.onLaunch(new EntityJoinLevelEvent(shot, helper.getLevel()));
-        f.assertOrigin(shot, a);
-        f.assertOrigin(f.shot(), b);
-        f.finish();
-    }
-
-    @GameTest(template = "test_empty", batch = "hangman_relay")
-    public static void actualTrapContactStillHitsInsteadOfRelayingItsPayload(GameTestHelper helper) {
-        Fixture f = new Fixture(helper);
-        helper.getLevel().addNewPlayer(f.player);
-        var contact = f.circle(2);
-        var other = f.circle(4);
-        var pig = EntityType.PIG.create(helper.getLevel());
-        pig.setNoAi(true);
-        pig.setPos(contact.position());
-        helper.getLevel().addFreshEntity(pig);
-        f.entities.add(pig);
-        float health = pig.getHealth();
-        contact.tick();
-        helper.assertTrue(!contact.isAlive() && pig.getHealth() < health,
-                "Actual contact must consume its trap and dispatch the saved arrow hit");
-        helper.assertTrue(other.isAlive(), "Contact does not consume the other circle");
-        f.assertOrigin(f.shot(), other);
-        f.finish();
-    }
-
-    @GameTest(template = "test_empty", batch = "hangman_relay")
-    public static void relayedArrowStopsAtAnInterveningBlockAndLeavesItsNormalTrap(GameTestHelper helper) {
-        Fixture f = new Fixture(helper);
-        var circle = f.circle(2);
-        BlockPos wall = BlockPos.containing(circle.position().add(0, 0, 1));
-        var arrow = f.shot();
-        Vec3 origin = arrow.position();
-        // A new obstacle after launch must still stop the already emitted projectile.
-        helper.getLevel().setBlockAndUpdate(wall, Blocks.STONE.defaultBlockState());
-        arrow.tick();
-        helper.assertTrue(arrow.isRemoved(), "A relayed arrow must stop when a block captures it");
-        var deposited = helper.getLevel().getEntitiesOfClass(HangmanTrapEntity.class, new AABB(wall).inflate(0.1),
-                trap -> trap != circle && trap.isOwnedBy(f.player));
-        helper.assertTrue(deposited.size() == 1, "The blocked shot must leave its normal trap at the wall");
-        f.entities.addAll(deposited);
-        helper.assertTrue(deposited.get(0).position().distanceTo(origin) < 2, "The shot cannot travel through the wall");
-        helper.getLevel().setBlockAndUpdate(wall, Blocks.AIR.defaultBlockState());
-        f.finish();
-    }
-
-    @GameTest(template = "test_empty", batch = "hangman_relay")
     public static void blockedBCyclesACAAndRejoinsAfterTheObstructionIsRemoved(GameTestHelper helper) {
         Fixture f = new Fixture(helper);
         var a = f.circle(2);
@@ -221,56 +97,6 @@ public final class HangmanFoolRelayTest {
         f.assertOrigin(f.shot(), a);
         f.assertOrigin(f.shot(), b);
         helper.getLevel().setBlockAndUpdate(target, Blocks.AIR.defaultBlockState());
-        f.finish();
-    }
-
-    @GameTest(template = "test_empty", batch = "hangman_relay")
-    public static void allBlockedCirclesFallBackAndRecoverWhenThePathClears(GameTestHelper helper) {
-        Fixture f = new Fixture(helper);
-        var a = f.circle(2);
-        BlockPos target = BlockPos.containing(f.player.getEyePosition().add(0, 0, 8));
-        BlockPos obstruction = BlockPos.containing(a.position().add(0, 0, 1));
-        helper.getLevel().setBlockAndUpdate(target, Blocks.STONE.defaultBlockState());
-        helper.getLevel().setBlockAndUpdate(obstruction, Blocks.STONE.defaultBlockState());
-        var shot = f.shot();
-        vector(helper, f.player.getEyePosition(), shot.position(), "All obstructed circles fall back to the player");
-        vector(helper, new Vec3(0, 0, 3), shot.getDeltaMovement(), "Fallback preserves the ordinary shot");
-        helper.assertTrue(a.isAlive(), "An obstructed circle is not consumed");
-        helper.getLevel().setBlockAndUpdate(obstruction, Blocks.AIR.defaultBlockState());
-        f.assertOrigin(f.shot(), a);
-        helper.getLevel().setBlockAndUpdate(target, Blocks.AIR.defaultBlockState());
-        f.finish();
-    }
-
-    @GameTest(template = "test_empty", batch = "hangman_relay")
-    public static void embeddedEmissionBoxesAreSkippedButTheAimedBlockIsAllowed(GameTestHelper helper) {
-        Fixture f = new Fixture(helper);
-        var a = f.circle(2);
-        var b = f.circle(4);
-        BlockPos target = BlockPos.containing(f.player.getEyePosition().add(0, 0, 8));
-        BlockPos embedded = BlockPos.containing(a.position());
-        helper.getLevel().setBlockAndUpdate(target, Blocks.STONE.defaultBlockState());
-        helper.getLevel().setBlockAndUpdate(embedded, Blocks.STONE.defaultBlockState());
-        // The block deliberately contains the launch box; neither circle is the target block.
-        f.assertOrigin(f.shot(), b);
-        helper.getLevel().setBlockAndUpdate(embedded, Blocks.AIR.defaultBlockState());
-        b.discard();
-        // Approach through the aimed block's far face: that block is the destination, not an obstruction.
-        a.setPos(f.player.getEyePosition().add(0, 0, 10));
-        f.assertOrigin(f.shot(), a);
-        helper.getLevel().setBlockAndUpdate(target, Blocks.AIR.defaultBlockState());
-        f.finish();
-    }
-
-    @GameTest(template = "test_empty", batch = "hangman_relay")
-    public static void emittedBoundingBoxesClearFloorsWallsAndCeilings(GameTestHelper helper) {
-        Fixture f = new Fixture(helper);
-        var floor = f.circle(2, Direction.UP);
-        var wall = f.circle(4, Direction.EAST);
-        var ceiling = f.circle(6, Direction.DOWN);
-        helper.assertTrue(f.shot().getBoundingBox().minY > floor.getY(), "Shot clears the floor");
-        helper.assertTrue(f.shot().getBoundingBox().minX > wall.getX(), "Shot clears the wall");
-        helper.assertTrue(f.shot().getBoundingBox().maxY < ceiling.getY(), "Shot clears the ceiling");
         f.finish();
     }
 

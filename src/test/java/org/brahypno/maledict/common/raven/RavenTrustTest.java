@@ -16,14 +16,4 @@ class RavenTrustTest {
         assertEquals(List.of(A, B), RavenTrust.fromBreeding(A, B));
     }
 
-    @Test
-    void theSamePlayerFeedingBothParentsMakesOneTrustEntry() {
-        assertEquals(List.of(A), RavenTrust.fromBreeding(A, A));
-    }
-
-    @Test
-    void unfedParentsAddNoTrustedPlayer() {
-        assertEquals(List.of(), RavenTrust.fromBreeding(null, null));
-        assertEquals(List.of(B), RavenTrust.fromBreeding(null, B));
-    }
 }

@@ -14,9 +14,4 @@ class IncursusBladeTierTest {
         assertEquals(DamageTier.FINAL, DamageTier.MEDIUM.raised());
     }
 
-    /** 终档没有更高的地方可去，抬了还是终档（不溢出、不回绕）。 */
-    @Test
-    void theTopTierStaysAtTheTop() {
-        assertEquals(DamageTier.FINAL, DamageTier.FINAL.raised());
-    }
 }

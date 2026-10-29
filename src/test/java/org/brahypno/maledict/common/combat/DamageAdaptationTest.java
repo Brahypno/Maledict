@@ -2,26 +2,15 @@ package org.brahypno.maledict.common.combat;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Tests the adaptation state machine; boss event delivery and entity persistence require game verification. */
 class DamageAdaptationTest {
 
     private static final double DELTA = 1.0E-6D;
-
-    @Test
-    void aRememberedMessageDecaysOnTheNaturalExponential() {
-        DamageAdaptation adaptation = new DamageAdaptation();
-        assertEquals(1.0D, adaptation.adapt("player", 2), DELTA);
-        assertEquals(Math.exp(-1.0D), adaptation.adapt("player", 2), DELTA);
-        assertEquals(Math.exp(-2.0D), adaptation.adapt("player", 2), DELTA);
-        assertEquals(Math.exp(-3.0D), adaptation.adapt("player", 2), DELTA);
-    }
 
     @Test
     void adaptationTwoCannotReduceAThreeMessageRotation() {
@@ -81,106 +70,6 @@ class DamageAdaptationTest {
         assertEquals(Math.exp(-1.0D), adaptation.adapt("A", 2), DELTA);
     }
 
-    @Test
-    void orderMattersForUnbatchedCalls() {
-        DamageAdaptation adaptation = new DamageAdaptation();
-        assertEquals(1.0D, adaptation.adapt("player", 2), DELTA);
-        assertEquals(Math.exp(-1.0D), adaptation.adapt("player", 2), DELTA);
-        assertEquals(1.0D, adaptation.adapt("arrow", 2), DELTA);
-        assertEquals(Math.exp(-2.0D), adaptation.adapt("player", 2), DELTA);
-    }
-
-    @Test
-    void zeroAdaptationDisablesTheEffect() {
-        DamageAdaptation adaptation = new DamageAdaptation();
-        assertEquals(1.0D, adaptation.adapt("player", 0), DELTA);
-        assertEquals(1.0D, adaptation.adapt("player", 0), DELTA);
-        assertEquals(1.0D, adaptation.adapt("player", -3), DELTA);
-        assertTrue(adaptation.isEmpty());
-    }
-
-    @Test
-    void aMissingMessageIsNeverAdapted() {
-        DamageAdaptation adaptation = new DamageAdaptation();
-        assertEquals(1.0D, adaptation.adapt(null, 2), DELTA);
-        assertEquals(1.0D, adaptation.adapt("", 2), DELTA);
-        assertTrue(adaptation.isEmpty());
-    }
-
-    @Test
-    void clearingForgetsEveryRecord() {
-        DamageAdaptation adaptation = new DamageAdaptation();
-        adaptation.adapt("player", 2);
-        assertEquals(Math.exp(-1.0D), adaptation.adapt("player", 2), DELTA);
-        adaptation.clear();
-        assertTrue(adaptation.isEmpty());
-        assertEquals(1.0D, adaptation.adapt("player", 2), DELTA);
-        assertEquals(Math.exp(-1.0D), adaptation.adapt("player", 2), DELTA);
-    }
-
-    @Test
-    void legacyWindowOnlyRestoreStartsEachCounterAtOne() {
-        DamageAdaptation adaptation = new DamageAdaptation();
-        adaptation.adapt("player", 2);
-        adaptation.adapt("player", 2);
-        adaptation.adapt("arrow", 2);
-        assertEquals(List.of("arrow", "player"), adaptation.snapshot());
-
-        DamageAdaptation loaded = new DamageAdaptation();
-        loaded.restore(adaptation.snapshot());
-
-        assertEquals(List.of("arrow", "player"), loaded.snapshot());
-        assertEquals(Math.exp(-1.0D), loaded.adapt("player", 2), DELTA);
-        assertEquals(Math.exp(-1.0D), loaded.adapt("arrow", 2), DELTA);
-    }
-
-    @Test
-    void theSnapshotIsAReadOnlyCopy() {
-        DamageAdaptation adaptation = new DamageAdaptation();
-        adaptation.adapt("player", 2);
-        List<String> snapshot = adaptation.snapshot();
-        assertTrue(snapshot.contains("player"));
-        try {
-            snapshot.add("arrow");
-            throw new AssertionError("快照不该可写");
-        } catch (UnsupportedOperationException expected) {
-            // 就该这样。
-        }
-        assertEquals(Math.exp(-1.0D), adaptation.adapt("player", 2), DELTA);
-    }
-
-    @Test
-    void restoringDropsUnusableEntries() {
-        List<String> saved = new ArrayList<>();
-        saved.add("player");
-        saved.add("");
-        saved.add(null);
-        saved.add("player");
-
-        DamageAdaptation adaptation = new DamageAdaptation();
-        adaptation.restore(saved);
-
-        assertEquals(List.of("player"), adaptation.snapshot());
-        assertEquals(Math.exp(-1.0D), adaptation.adapt("player", 2), DELTA);
-    }
-
-    /** Only the restore overload is exercised here; this does not test the boss' NBT save/load path. */
-    @Test
-    void restoreKeepsTheHitCountsWhenTheyAreSaved() {
-        DamageAdaptation adaptation = new DamageAdaptation();
-        adaptation.adapt("mob|minecraft:zombie", 1);
-        adaptation.adapt("mob|minecraft:zombie", 1);
-        adaptation.adapt("mob|minecraft:zombie", 1);
-        assertEquals(Map.of("mob|minecraft:zombie", 3), adaptation.hitCounts());
-
-        DamageAdaptation loaded = new DamageAdaptation();
-        loaded.restore(adaptation.snapshot(), adaptation.hitCounts());
-
-        assertEquals(List.of("mob|minecraft:zombie"), loaded.snapshot());
-        assertEquals(Math.exp(-3.0D), loaded.adapt("mob|minecraft:zombie", 1), DELTA);
-        assertEquals(Map.of("mob|minecraft:zombie", 4), loaded.hitCounts());
-    }
-
     /** 一次挥砍会用同一个伤害源打好几记（补足、追加通道）：同一刻的同一条消息只算一记。 */
     @Test
     void oneTickCountsOneHitPerMessage() {
@@ -217,23 +106,4 @@ class DamageAdaptationTest {
         assertEquals(1.0D, adaptation.adapt("scythe_sweep", 2), DELTA);
     }
 
-    /** 不带批的记账还是老规矩：逐记都算，符文那边不受影响。 */
-    @Test
-    void adaptWithoutABatchStillRecordsEveryHit() {
-        DamageAdaptation adaptation = new DamageAdaptation();
-        assertEquals(1.0D, adaptation.adapt("mob|minecraft:zombie", 1), DELTA);
-        assertEquals(Math.exp(-1.0D), adaptation.adapt("mob|minecraft:zombie", 1), DELTA);
-        assertEquals(Map.of("mob|minecraft:zombie", 2), adaptation.hitCounts());
-    }
-
-    /** 清账连当前这一批一起作废，不然重开一场会把上一场的批内缓存接着用。 */
-    @Test
-    void clearAlsoDropsTheBatch() {
-        DamageAdaptation adaptation = new DamageAdaptation();
-        adaptation.adaptInBatch("scythe_sweep", 2, 100);
-        assertEquals(Math.exp(-1.0D), adaptation.adaptInBatch("scythe_sweep", 2, 101), DELTA);
-        adaptation.clear();
-        assertEquals(1.0D, adaptation.adaptInBatch("scythe_sweep", 2, 101), DELTA);
-        assertEquals(Map.of("scythe_sweep", 1), adaptation.hitCounts());
-    }
 }

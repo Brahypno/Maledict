@@ -10,6 +10,9 @@
 
 ## Development Notes
 
+- Keep at most 50 GameTest cases and at most 50 JUnit cases in the repository. Replace or remove lower-value
+  cases when adding coverage at the limit; do not hide extra cases with filters, disabling, or nested test runners.
+
 - Do not run full builds or packaging tasks (`build`, `assemble`, `jar`, `jarJar`, or reobfuscation tasks) unless
   the user explicitly requests a build, package, or distributable jar. A request to implement or fix something
   does not authorize packaging. Use only the checks needed for the affected behavior; run `runData` when
