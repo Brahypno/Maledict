@@ -8,6 +8,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.entity.projectile.SmallFireball;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -75,6 +76,18 @@ public final class HangmanFoolRelayTest {
         equal(helper, 0.1, power.length(), "Fireball acceleration magnitude");
         vector(helper, fireball.getDeltaMovement().normalize(), power.normalize(), "Fireball acceleration follows aim");
         helper.assertTrue(circle.isAlive(), "Shooting must not consume the trap");
+        for (int stage = 0; stage <= 4; stage++) {
+            f.equip(stage);
+            Arrow shot = f.shot();
+            if (stage >= 3) {
+                f.assertOrigin(shot, circle);
+            } else {
+                vector(helper, f.player.getEyePosition(), shot.position(), "Relay is locked before stage three");
+            }
+        }
+        CuriosApi.getCuriosInventory(f.player).orElseThrow(IllegalStateException::new)
+                .setEquippedCurio("delusion", 0, ItemStack.EMPTY);
+        vector(helper, f.player.getEyePosition(), f.shot().position(), "Unequipping disables relay");
         f.finish();
     }
 

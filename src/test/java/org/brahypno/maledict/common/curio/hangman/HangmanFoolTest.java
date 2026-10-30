@@ -2,6 +2,7 @@ package org.brahypno.maledict.common.curio.hangman;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -13,7 +14,10 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -56,27 +60,36 @@ public final class HangmanFoolTest {
     }
 
     @GameTest(template = "test_empty", batch = "hangman_fool")
-    public static void realCuriosEquipHalvesAttackAndMultipliesMagicThenUnequipRestores(GameTestHelper helper) {
+    public static void stageProgressionUnlocksTrapAtZeroAndMagicAtOneThenUnequipRestores(GameTestHelper helper) {
         Fixture f = new Fixture(helper, 0);
         double attack = f.player.getAttributeValue(Attributes.ATTACK_DAMAGE);
         double magic = f.player.getAttributeValue(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get());
         f.tickCurios();
         equal(helper, attack * 0.5D, f.player.getAttributeValue(Attributes.ATTACK_DAMAGE), "Attack total");
-        equal(helper, magic * 1.5D, f.player.getAttributeValue(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get()), "Magic total");
+        equal(helper, magic, f.player.getAttributeValue(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get()), "Stage zero has no magic bonus");
+        f.assertTrapCapture(true, false);
         var item = (HangmanFoolItem) f.stack().getItem();
         var modifiers = item.getAttributeModifiers(new SlotContext("delusion", f.player, 0, false, true),
                 UUID.randomUUID(), f.stack());
         helper.assertTrue(modifiers.values().stream().allMatch(m -> m.getOperation() == AttributeModifier.Operation.MULTIPLY_TOTAL),
-                "Both modifiers must use MULTIPLY_TOTAL");
+                "Attribute modifiers must use MULTIPLY_TOTAL");
         helper.assertTrue(!item.canEquip(new SlotContext("charm", f.player, 0, false, true), f.stack()), "Vision slot only");
-        f.equip(2);
+        for (int stage = 1; stage <= 4; stage++) {
+            f.equip(stage);
+            f.tickCurios();
+            equal(helper, attack * 0.5D, f.player.getAttributeValue(Attributes.ATTACK_DAMAGE), "Stage " + stage + " keeps attack penalty");
+            equal(helper, magic * 1.5D,
+                    f.player.getAttributeValue(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get()), "Stage " + stage + " magic total");
+            f.assertTrapCapture(true, stage >= 3);
+        }
+        f.equip(0);
         f.tickCurios();
-        equal(helper, attack * 0.5D, f.player.getAttributeValue(Attributes.ATTACK_DAMAGE), "Upgrade must not double apply attack");
-        equal(helper, magic * 1.5D, f.player.getAttributeValue(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get()), "Upgrade preserves magic");
+        equal(helper, magic, f.player.getAttributeValue(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get()), "Downgrade removes magic bonus");
         f.inventory.setEquippedCurio("delusion", 0, ItemStack.EMPTY);
         f.tickCurios();
         equal(helper, attack, f.player.getAttributeValue(Attributes.ATTACK_DAMAGE), "Unequip attack");
         equal(helper, magic, f.player.getAttributeValue(LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get()), "Unequip magic");
+        f.assertTrapCapture(false, false);
         f.finish();
     }
 
@@ -133,6 +146,21 @@ public final class HangmanFoolTest {
 
         void tickCurios() {
             MinecraftForge.EVENT_BUS.post(new LivingEvent.LivingTickEvent(player));
+        }
+
+        void assertTrapCapture(boolean expectedCapture, boolean expectedDiscard) {
+            Arrow arrow = new Arrow(helper.getLevel(), player);
+            arrow.setDeltaMovement(0, 0, 3);
+            Vec3 impact = player.position().add(0, 0, 4);
+            boolean canceled = ForgeEventFactory.onProjectileImpact(arrow,
+                    new BlockHitResult(impact, Direction.UP, BlockPos.containing(impact), false));
+            helper.assertTrue(canceled == expectedCapture, "Only equipped wearers capture block impacts, starting at stage zero");
+            var traps = helper.getLevel().getEntitiesOfClass(HangmanTrapEntity.class,
+                    new AABB(impact, impact).inflate(0.1), trap -> trap.isAlive() && trap.isOwnedBy(player));
+            helper.assertTrue(traps.size() == (expectedCapture ? 1 : 0), "A captured impact creates exactly one owned trap");
+            helper.assertTrue(arrow.isRemoved() == expectedDiscard, "Only stage-three and higher shots stop after capture");
+            traps.forEach(HangmanTrapEntity::discard);
+            arrow.discard();
         }
 
         LivingEntity target() {

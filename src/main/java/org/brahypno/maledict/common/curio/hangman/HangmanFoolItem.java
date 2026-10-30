@@ -61,10 +61,12 @@ public final class HangmanFoolItem extends AbstractVisionCurioItem {
         addAttributeModifier(attributes, Attributes.ATTACK_DAMAGE,
                 id -> new AttributeModifier(id, "Hangman's attack", -0.5D,
                         AttributeModifier.Operation.MULTIPLY_TOTAL));
-        addAttributeModifier(attributes, LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get(),
-                id -> new AttributeModifier(id, "Hangman's magic proficiency", 0.5D,
-                        AttributeModifier.Operation.MULTIPLY_TOTAL));
-        IronsSpellsCompat.addSpellPowerToCurio(this, attributes, 0.5F);
+        if (stage(stack) >= 1) {
+            addAttributeModifier(attributes, LodestoneAttributeRegistry.MAGIC_PROFICIENCY.get(),
+                    id -> new AttributeModifier(id, "Hangman's magic proficiency", 0.5D,
+                            AttributeModifier.Operation.MULTIPLY_TOTAL));
+            IronsSpellsCompat.addSpellPowerToCurio(this, attributes, 0.5F);
+        }
     }
 
     @Override
@@ -83,9 +85,7 @@ public final class HangmanFoolItem extends AbstractVisionCurioItem {
     public List<Component> getAttributesTooltip(List<Component> tooltip, ItemStack stack) {
         List<Component> lines = super.getAttributesTooltip(tooltip, stack);
         int stage = stage(stack);
-        if (stage >= 1) {
-            lines.add(positiveEffect(EFFECT_PREFIX + "trap"));
-        }
+        lines.add(positiveEffect(EFFECT_PREFIX + "trap"));
         if (stage >= 2) {
             lines.add(positiveEffect(EFFECT_PREFIX + "reflect"));
             lines.add(negativeEffect(EFFECT_PREFIX + "restrictions"));

@@ -48,7 +48,7 @@ public final class HangmanFoolEvents {
         }
         if (event.getRayTraceResult() instanceof BlockHitResult hit
             && projectile.getOwner() instanceof LivingEntity shooter
-            && HangmanFoolItem.equippedStage(shooter) >= 1
+            && HangmanFoolItem.equippedStage(shooter) >= 0
             && HangmanTrapEntity.capture(projectile, hit)){
             event.setCanceled(true);
             if (HangmanFoolItem.equippedStage(shooter) >= 3) {
