@@ -161,7 +161,8 @@ public final class MaledictClientSetup {
                     MaledictItems.INCURSUS_BLADE.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get());
             ParticleEmitterHandler.registerItemParticleEmitter(
                     ESOTERICA_PARTICLES,
-                    MaledictItems.ELEGY_BOW.get(), MaledictItems.BLEEDING_EYE.get(), MaledictItems.HANGMAN_FOOL.get());
+                    MaledictItems.ELEGY_BOW.get(), MaledictItems.BLEEDING_EYE.get(), MaledictItems.HANGMAN_FOOL.get(),
+                    MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
         });
     }
 

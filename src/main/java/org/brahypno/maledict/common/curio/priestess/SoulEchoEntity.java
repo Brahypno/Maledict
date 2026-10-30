@@ -15,6 +15,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkHooks;
 import team.lodestar.lodestone.registry.common.tag.LodestoneDamageTypeTags;
@@ -31,6 +32,8 @@ public final class SoulEchoEntity extends LivingEntity {
             SynchedEntityData.defineId(SoulEchoEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Long> EXPIRES =
             SynchedEntityData.defineId(SoulEchoEntity.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Integer> BODY_ID =
+            SynchedEntityData.defineId(SoulEchoEntity.class, EntityDataSerializers.INT);
 
     private UUID targetUuid;
     private boolean forwarding;
@@ -47,25 +50,44 @@ public final class SoulEchoEntity extends LivingEntity {
         entityData.define(WIDTH, 0.6F);
         entityData.define(HEIGHT, 1.8F);
         entityData.define(EXPIRES, 0L);
+        entityData.define(BODY_ID, -1);
     }
 
     void refresh(LivingEntity target) {
         targetUuid = target.getUUID();
+        entityData.set(BODY_ID, target.getId());
+        syncHealth(target);
         entityData.set(WIDTH, target.getBbWidth());
         entityData.set(HEIGHT, target.getBbHeight());
         entityData.set(EXPIRES, level().getGameTime() + LIFETIME_TICKS);
         refreshDimensions();
-        moveTo(target.getX(), target.getY(), target.getZ(), target.getYRot(), 0);
+        // The body still occupies the anchor when a direct hit creates or refreshes it.
+        double angle = random.nextDouble() * Math.PI * 2;
+        double offset = 0.5 + random.nextDouble() * 0.3;
+        moveTo(target.getX() + Math.cos(angle) * offset, target.getY(),
+                target.getZ() + Math.sin(angle) * offset, target.getYRot(), 0);
     }
 
     public int remainingTicks() { return (int) Math.max(0, entityData.get(EXPIRES) - level().getGameTime()); }
     public UUID targetUuid() { return targetUuid; }
     boolean isForwarding() { return forwarding; }
 
+    /** The tracked runtime ID lets the client reuse the body's renderer, skin, and equipment. */
+    public LivingEntity visualBody() {
+        Entity entity = level().getEntity(entityData.get(BODY_ID));
+        return entity instanceof LivingEntity living && !(living instanceof SoulEchoEntity) ? living : null;
+    }
+
     private LivingEntity body() {
         if (!(level() instanceof ServerLevel level) || targetUuid == null) return null;
         Entity entity = level.getEntity(targetUuid);
         return entity instanceof LivingEntity living && living.isAlive() ? living : null;
+    }
+
+    private void syncHealth(LivingEntity target) {
+        var maximum = getAttribute(Attributes.MAX_HEALTH);
+        if (maximum.getBaseValue() != target.getMaxHealth()) maximum.setBaseValue(target.getMaxHealth());
+        if (getHealth() != target.getHealth()) setHealth(target.getHealth());
     }
 
     @Override
@@ -88,7 +110,11 @@ public final class SoulEchoEntity extends LivingEntity {
     @Override
     public void tick() {
         super.tick();
-        if (!level().isClientSide() && (remainingTicks() == 0 || body() == null)) discard();
+        if (!level().isClientSide()) {
+            LivingEntity target = body();
+            if (remainingTicks() == 0 || target == null) discard();
+            else syncHealth(target);
+        }
     }
 
     @Override public void aiStep() {} // No movement, collision pushes, or independent combat simulation.

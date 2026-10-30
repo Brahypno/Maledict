@@ -1,28 +1,26 @@
 package org.brahypno.maledict.client.curio.priestess;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 import org.brahypno.maledict.common.curio.priestess.SoulEchoEntity;
-import team.lodestar.lodestone.registry.client.LodestoneRenderTypeRegistry;
-import team.lodestar.lodestone.systems.rendering.LodestoneRenderType;
-import team.lodestar.lodestone.systems.rendering.VFXBuilders;
-import team.lodestar.lodestone.systems.rendering.rendeertype.RenderTypeToken;
 
-/** One batched billboard per echo, using Malum's spirit-flame frames rather than copying a mob's render layers. */
+import java.util.IdentityHashMap;
+import java.util.Map;
+
+/** Reuses the actual body's model, textures, scale, and layers at the stationary echo anchor. */
 public final class SoulEchoRenderer extends EntityRenderer<SoulEchoEntity> {
-    private static final ResourceLocation[] TEXTURES = new ResourceLocation[20];
-    private static final LodestoneRenderType[] TYPES = new LodestoneRenderType[20];
-    static {
-        for (int i = 0; i < TEXTURES.length; i++) {
-            TEXTURES[i] = ResourceLocation.fromNamespaceAndPath("malum",
-                    "textures/particle/spirit_flame/entrance/spirit_flame_entrance_" + String.format("%02d", i) + ".png");
-            TYPES[i] = LodestoneRenderTypeRegistry.ADDITIVE_TEXTURE.applyAndCache(RenderTypeToken.createCachedToken(TEXTURES[i]));
-        }
-    }
-    private final VFXBuilders.WorldVFXBuilder builder = VFXBuilders.createWorld().setFormat(TYPES[0].format());
+    private final Map<RenderType, RenderType> translucentTypes = new IdentityHashMap<>();
 
     public SoulEchoRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -31,17 +29,46 @@ public final class SoulEchoRenderer extends EntityRenderer<SoulEchoEntity> {
 
     @Override
     public void render(SoulEchoEntity echo, float yaw, float partialTick, PoseStack pose, MultiBufferSource buffers, int light) {
-        int remaining = echo.remainingTicks();
-        int frame = Math.min(19, (SoulEchoEntity.LIFETIME_TICKS - Math.min(remaining, SoulEchoEntity.LIFETIME_TICKS)) / 3);
-        float alpha = Math.min(1, remaining / 10.0F) * 0.7F;
+        LivingEntity body = echo.visualBody();
+        if (body == null) return;
+
+        float alpha = Math.min(1, echo.remainingTicks() / 10.0F) * 0.65F;
+        MultiBufferSource spectralBuffers = type -> new SoulEchoVertexConsumer(
+                buffers.getBuffer(translucentType(type)), alpha);
+        EntityRenderer<? super LivingEntity> renderer = entityRenderDispatcher.getRenderer(body);
         pose.pushPose();
-        pose.translate(0, echo.getBbHeight() * 0.5F, 0);
-        pose.mulPose(entityRenderDispatcher.cameraOrientation());
-        pose.scale(echo.getBbWidth() * 0.75F, echo.getBbHeight() * 0.55F, 1);
-        builder.setVertexConsumer(buffers.getBuffer(TYPES[frame])).setUV(0, 0, 1, 1)
-                .setLight(0xF000F0).setColor(0.55F, 0.95F, 0.9F, alpha).renderQuad(pose, 1);
+        // Living renderers read the body's rotation themselves; compensate so the anchor keeps its facing.
+        float bodyYaw = Mth.rotLerp(partialTick, body.yBodyRotO, body.yBodyRot);
+        pose.mulPose(Axis.YP.rotationDegrees(bodyYaw - echo.getYRot()));
+        renderer.render(body, yaw, partialTick, pose, spectralBuffers, 0xF000F0);
         pose.popPose();
     }
 
-    @Override public ResourceLocation getTextureLocation(SoulEchoEntity echo) { return TEXTURES[0]; }
+    private RenderType translucentType(RenderType original) {
+        if (!original.format().equals(DefaultVertexFormat.NEW_ENTITY)) return original;
+        return translucentTypes.computeIfAbsent(original, type -> new RenderType(
+                "maledict_soul_echo", type.format(), type.mode(), type.bufferSize(), false, true,
+                () -> {
+                    // Preserve each layer's own texture and texture transform, then replace its surface shader.
+                    type.setupRenderState();
+                    RenderSystem.setShader(GameRenderer::getRendertypeEntityTranslucentEmissiveShader);
+                    RenderSystem.enableBlend();
+                    RenderSystem.defaultBlendFunc();
+                    RenderSystem.disableCull();
+                    RenderSystem.depthMask(false);
+                },
+                () -> {
+                    RenderSystem.depthMask(true);
+                    RenderSystem.enableCull();
+                    RenderSystem.disableBlend();
+                    type.clearRenderState();
+                }) {});
+    }
+
+    @Override
+    public ResourceLocation getTextureLocation(SoulEchoEntity echo) {
+        LivingEntity body = echo.visualBody();
+        return body == null ? TextureAtlas.LOCATION_BLOCKS
+                : entityRenderDispatcher.getRenderer(body).getTextureLocation(body);
+    }
 }
