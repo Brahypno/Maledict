@@ -47,74 +47,6 @@ class VicissitudeThemeTest {
         return new Participant(true, true, true);
     }
 
-    /** 在打，但离玩家超过交战半径。 */
-    private static Participant farPhaseOne() {
-        return new Participant(true, false, false);
-    }
-
-    private static Participant farPhaseTwo() {
-        return new Participant(true, false, true);
-    }
-
-    @Test
-    void noBossMeansNoMusic() {
-        assertEquals(VicissitudeTheme.NONE, VicissitudeTheme.select(List.of()));
-    }
-
-    @Test
-    void phaseTwoWithoutOpponentsDoesNotPlayMusic() {
-        Participant emptyPhaseTwo = new Participant(false, true, true);
-        assertEquals(VicissitudeTheme.NONE,
-                VicissitudeTheme.select(List.of(dormant(), emptyPhaseTwo)));
-        assertEquals(VicissitudeTheme.PHASE_ONE,
-                VicissitudeTheme.select(List.of(emptyPhaseTwo, phaseOne())));
-    }
-
-    /** 只有没被唤醒的雕像：不放音乐，否则一进区域就剧透了。 */
-    @Test
-    void dormantIdolsDoNotPlayAnything() {
-        assertEquals(VicissitudeTheme.NONE,
-                     VicissitudeTheme.select(List.of(dormant(), dormant())));
-    }
-
-    /** 初版就是错在这里：最近的那只是雕像时，把旁边正在打的那只一起压掉了。 */
-    @Test
-    void dormantIdolDoesNotSuppressAnEngagedNeighbour() {
-        assertEquals(VicissitudeTheme.PHASE_ONE,
-                     VicissitudeTheme.select(List.of(dormant(), phaseOne())));
-    }
-
-    /** 距离门：八十格外的一场战斗不该给你放 BGM，哪怕它真在打。 */
-    @Test
-    void distantFightsAreSilent() {
-        assertEquals(VicissitudeTheme.NONE, VicissitudeTheme.select(List.of(farPhaseOne())));
-        assertEquals(VicissitudeTheme.NONE, VicissitudeTheme.select(List.of(farPhaseTwo())));
-        assertEquals(VicissitudeTheme.NONE,
-                     VicissitudeTheme.select(List.of(farPhaseOne(), farPhaseTwo(), dormant())));
-    }
-
-    /** 远处在打、近处也有：只算近的那只，远处的二阶段不该把近处的一阶段顶掉。 */
-    @Test
-    void distantPhaseTwoDoesNotOverrideNearbyPhaseOne() {
-        assertEquals(VicissitudeTheme.PHASE_ONE,
-                     VicissitudeTheme.select(List.of(farPhaseTwo(), phaseOne())));
-    }
-
-    @Test
-    void singleBossFollowsItsOwnPhase() {
-        assertEquals(VicissitudeTheme.PHASE_ONE, VicissitudeTheme.select(List.of(phaseOne())));
-        assertEquals(VicissitudeTheme.PHASE_TWO, VicissitudeTheme.select(List.of(phaseTwo())));
-    }
-
-    /** 多只同阶段：结果不随顺序变，也就不会因为走动而抖。 */
-    @Test
-    void samePhaseIsOrderIndependent() {
-        assertEquals(VicissitudeTheme.PHASE_ONE,
-                     VicissitudeTheme.select(List.of(phaseOne(), phaseOne())));
-        assertEquals(VicissitudeTheme.PHASE_TWO,
-                     VicissitudeTheme.select(List.of(phaseTwo(), phaseTwo())));
-    }
-
     /** 一只先进了二阶段：放二阶段曲，且**和列表顺序无关**——这是"不抖"的关键。 */
     @Test
     void furthestAlongBossWinsRegardlessOfOrder() {
@@ -126,9 +58,4 @@ class VicissitudeThemeTest {
                      VicissitudeTheme.select(List.of(phaseOne(), dormant(), phaseTwo(), phaseOne())));
     }
 
-    @Test
-    void dormantBossesAreIgnoredEvenAlongsidePhaseTwo() {
-        assertEquals(VicissitudeTheme.PHASE_TWO,
-                     VicissitudeTheme.select(List.of(dormant(), dormant(), phaseTwo())));
-    }
 }

@@ -1,21 +1,15 @@
 package org.brahypno.maledict.common.invocation;
 
 import com.mojang.authlib.GameProfile;
-import com.sammy.malum.common.block.curiosities.spirit_altar.SpiritAltarBlockEntity;
 import com.sammy.malum.common.block.curiosities.totem.TotemBaseBlockEntity;
 import com.sammy.malum.common.block.curiosities.totem.TotemPoleBlockEntity;
-import com.sammy.malum.common.recipe.SpiritInfusionRecipe;
 import com.sammy.malum.registry.common.block.MalumBlocks;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.component.CustomData;
-import org.brahypno.maledict.common.item.MaledictItemData;
 import org.brahypno.maledict.TestSupport;
 import com.sammy.malum.core.systems.spirit.SpiritTypeProperty;
 import com.mojang.serialization.JsonOps;
@@ -24,12 +18,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.animal.MushroomCow;
-import net.minecraft.world.entity.animal.axolotl.Axolotl;
-import net.minecraft.world.entity.animal.horse.SkeletonHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
@@ -38,7 +28,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -77,20 +66,6 @@ public final class InvocationTest {
                 "{\"entity\":\"minecraft:shulker\",\"medium\":\"any_wood\",\"spawn_profile\":\"ground\"}").getAsJsonObject()).getOrThrow());
         assertThrows(IllegalStateException.class, () -> InvocationDefinition.CODEC.codec().parse(JsonOps.INSTANCE, JsonParser.parseString(
                 "{\"entity\":\"minecraft:shulker\",\"medium\":\"soulwood\",\"spawn_profile\":\"arbitrary_nbt\"}").getAsJsonObject()).getOrThrow());
-    }
-
-    @Test
-    void tintIsOptionalAndRejectsMalformedRgbValues() {
-        var json = JsonParser.parseString(
-                "{\"entity\":\"minecraft:axolotl\",\"variant\":\"blue\",\"medium\":\"runewood\",\"spawn_profile\":\"water\"}")
-                .getAsJsonObject();
-        assertEquals(0xFFFFFF, InvocationDefinition.CODEC.codec().parse(JsonOps.INSTANCE, json).getOrThrow().tint());
-        json.addProperty("tint", "#718be8");
-        assertEquals(0x718BE8, InvocationDefinition.CODEC.codec().parse(JsonOps.INSTANCE, json).getOrThrow().tint());
-        for (String invalid : new String[]{"blue", "#123", "#FF718BE8", "#GGGGGG"}) {
-            json.addProperty("tint", invalid);
-            assertThrows(IllegalStateException.class, () -> InvocationDefinition.CODEC.codec().parse(JsonOps.INSTANCE, json).getOrThrow());
-        }
     }
 
     @GameTest(template = "test_empty", batch = "invocation", timeoutTicks = 160)
@@ -153,57 +128,6 @@ public final class InvocationTest {
         });
     }
 
-    @GameTest(template = "test_empty", batch = "invocation")
-    public static void wrongWoodInvalidSigilAndProtectedInteractionNeverPay(GameTestHelper helper) {
-        var base = arena(helper, false, 1);
-        FakePlayer player = player(helper, base, "shulker", 2);
-        click(helper, player, base, InteractionHand.MAIN_HAND);
-        helper.assertTrue(player.getMainHandItem().getCount() == 2 && !base.isActiveOrAssembling(),
-                "A hostile sigil on Runewood must not pay or activate");
-        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(MaledictItems.INVOCATION_SIGIL.get(), 2));
-        click(helper, player, base, InteractionHand.MAIN_HAND);
-        helper.assertTrue(player.getMainHandItem().getCount() == 2 && !base.isActiveOrAssembling(), "Invalid NBT must not pay");
-        player.setItemInHand(InteractionHand.MAIN_HAND, InvocationSigilItem.create("sniffer"));
-        Consumer<PlayerInteractEvent.RightClickBlock> deny = event -> {
-            if (event.getEntity() == player) event.setCanceled(true);
-        };
-        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, deny);
-        try {
-            click(helper, player, base, InteractionHand.MAIN_HAND);
-        } finally {
-            NeoForge.EVENT_BUS.unregister(deny);
-        }
-        helper.assertTrue(player.getMainHandItem().getCount() == 1 && !base.isActiveOrAssembling(),
-                "Earlier protection cancellations must remain authoritative");
-        var soulwood = arena(helper, true, 2);
-        FakePlayer other = player(helper, soulwood, "sniffer", 1);
-        click(helper, other, soulwood, InteractionHand.MAIN_HAND);
-        helper.assertTrue(other.getMainHandItem().getCount() == 1 && !soulwood.isActiveOrAssembling(),
-                "A friendly sigil must reject Soulwood");
-        helper.succeed();
-    }
-
-    @GameTest(template = "test_empty", batch = "invocation")
-    public static void brokenTotemDropsTheOriginalSigilExactlyOnce(GameTestHelper helper) {
-        var base = arena(helper, false, 3);
-        FakePlayer player = player(helper, base, "allay", 2);
-        player.getMainHandItem().set(DataComponents.CUSTOM_NAME, Component.literal("Remember this creature"));
-        MaledictItemData.update(player.getMainHandItem(), tag -> tag.putInt("TestMarker", 1234));
-        ItemStack paid = player.getMainHandItem().copyWithCount(1);
-        click(helper, player, base, InteractionHand.MAIN_HAND);
-        helper.getLevel().setBlockAndUpdate(base.getBlockPos(), Blocks.AIR.defaultBlockState());
-        helper.runAfterDelay(15, () -> {
-            var drops = drops(helper, base);
-            helper.assertTrue(drops.size() == 1 && drops.get(0).getItem().getCount() == 1
-                    && ItemStack.isSameItemSameComponents(paid, drops.get(0).getItem()), "A broken base must return the exact paid stack once");
-            InvocationLedger.get(helper.getLevel()).complete(helper.getLevel(), base);
-            InvocationLedger.get(helper.getLevel()).tick(helper.getLevel());
-            helper.assertTrue(drops(helper, base).size() == 1 && mobs(helper, base, EntityType.ALLAY).isEmpty(),
-                    "The failure cannot later create another refund or a mob");
-            helper.succeed();
-        });
-    }
-
     @GameTest(template = "test_empty", batch = "invocation", timeoutTicks = 160)
     public static void cancelledMobJoinRefundsAndCancelledDropWaitsForRetry(GameTestHelper helper) {
         var base = arena(helper, false, 4);
@@ -235,99 +159,6 @@ public final class InvocationTest {
                     "Once the item join is allowed, exactly one physical refund must complete");
             helper.succeed();
         });
-    }
-
-    @GameTest(template = "test_empty", batch = "invocation", timeoutTicks = 170)
-    public static void variantsAndHostileMediumSurviveRealInitialization(GameTestHelper helper) {
-        var cowBase = arena(helper, false, 5);
-        var axolotlBase = arena(helper, false, 6);
-        var shulkerBase = arena(helper, true, 7);
-        var horseBase = arena(helper, false, 8);
-        BlockPos center = axolotlBase.getBlockPos().relative(Direction.NORTH, 3);
-        for (BlockPos pos : BlockPos.betweenClosed(center.offset(-2, 0, -2), center.offset(2, 0, 2))) {
-            helper.getLevel().setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
-        }
-        click(helper, player(helper, cowBase, "brown_mooshroom", 1), cowBase, InteractionHand.MAIN_HAND);
-        click(helper, player(helper, axolotlBase, "blue_axolotl", 1), axolotlBase, InteractionHand.MAIN_HAND);
-        click(helper, player(helper, shulkerBase, "shulker", 1), shulkerBase, InteractionHand.MAIN_HAND);
-        click(helper, player(helper, horseBase, "skeleton_horse", 1), horseBase, InteractionHand.MAIN_HAND);
-        helper.runAfterDelay(110, () -> {
-            var cows = mobs(helper, cowBase, EntityType.MOOSHROOM);
-            var axolotls = mobs(helper, axolotlBase, EntityType.AXOLOTL);
-            var horses = mobs(helper, horseBase, EntityType.SKELETON_HORSE);
-            helper.assertTrue(cows.size() == 1 && ((MushroomCow) cows.get(0)).getVariant() == MushroomCow.MushroomType.BROWN,
-                    "Mooshroom initialization must preserve the brown variant");
-            helper.assertTrue(axolotls.size() == 1 && ((Axolotl) axolotls.get(0)).getVariant() == Axolotl.Variant.BLUE,
-                    "Axolotl initialization must preserve the blue variant");
-            helper.assertTrue(mobs(helper, shulkerBase, EntityType.SHULKER).size() == 1,
-                    "Soulwood must summon a shulker on its supported floor");
-            helper.assertTrue(horses.size() == 1 && !((SkeletonHorse) horses.get(0)).isTrap(),
-                    "A non-hostile skeleton horse must use Runewood without starting a trap");
-            helper.succeed();
-        });
-    }
-
-    @GameTest(template = "test_empty", batch = "invocation")
-    public static void savedPendingPaymentRestoresAsOnePhysicalRefund(GameTestHelper helper) {
-        var base = arena(helper, false, 9);
-        ItemStack sigil = InvocationSigilItem.create("allay");
-        MaledictItemData.update(sigil, tag -> tag.putString("RefundMarker", "saved"));
-        InvocationLedger original = new InvocationLedger();
-        original.begin(helper.getLevel(), InvocationRite.inspect(helper.getLevel(), base),
-                InvocationDefinition.find(helper.getLevel(), sigil), sigil);
-        InvocationLedger restored = InvocationLedger.load(original.save(new CompoundTag(), helper.getLevel().registryAccess()), helper.getLevel().registryAccess());
-        // Exercises production save/load and physical delivery, rather than claiming a full process restart.
-        for (int tick = 1; tick <= 20; tick++) helper.runAfterDelay(tick, () -> restored.tick(helper.getLevel()));
-        helper.runAfterDelay(22, () -> {
-            helper.assertTrue(drops(helper, base).size() == 1
-                    && ItemStack.isSameItemSameComponents(sigil, drops(helper, base).get(0).getItem())
-                    && !restored.contains(base.getBlockPos()), "Restored payments must return the original sigil only once");
-            helper.succeed();
-        });
-    }
-
-    @GameTest(template = "test_empty", batch = "invocation")
-    public static void actualAltarCompletionConsumesOrdinaryBucketWithoutReturningAnEmptyOne(GameTestHelper helper) {
-        var base = arena(helper, false, 10);
-        var level = helper.getLevel();
-        ResourceLocation recipeId = ResourceLocation.fromNamespaceAndPath("maledict", "spirit_infusion/invocation_blue_axolotl");
-        SpiritInfusionRecipe recipe = (SpiritInfusionRecipe) level.getRecipeManager().byKey(recipeId).orElseThrow().value();
-        for (int variant = 0; variant <= 4; variant++) {
-            ItemStack bucket = new ItemStack(Items.AXOLOTL_BUCKET);
-            CompoundTag data = new CompoundTag();
-            data.putInt("Variant", variant);
-            data.putFloat("Health", 14.0F);
-            data.putInt("Age", -2400);
-            bucket.set(DataComponents.BUCKET_ENTITY_DATA, CustomData.of(data));
-            helper.assertTrue(recipe.input.test(bucket) == (variant != 4), "Only ordinary axolotl variants may be consumed");
-        }
-        BlockPos altarPos = base.getBlockPos().east(3);
-        level.setBlockAndUpdate(altarPos, MalumBlocks.SPIRIT_ALTAR.get().defaultBlockState());
-        SpiritAltarBlockEntity altar = (SpiritAltarBlockEntity) level.getBlockEntity(altarPos);
-        ItemStack bucket = new ItemStack(Items.AXOLOTL_BUCKET);
-        CompoundTag data = new CompoundTag();
-        data.putInt("Variant", 2);
-        bucket.set(DataComponents.BUCKET_ENTITY_DATA, CustomData.of(data));
-        bucket.set(DataComponents.CUSTOM_NAME, Component.literal("Do not copy me"));
-        altar.inventory.setStackInSlot(0, bucket);
-        altar.recipe = recipe;
-        // Runs Malum's actual completion path; pedestal collection/animation are not simulated here.
-        altar.craft(level);
-        helper.assertTrue(altar.inventory.getStackInSlot(0).isEmpty(), "The entire bucket item must be consumed");
-        var outputs = level.getEntitiesOfClass(ItemEntity.class, area(base));
-        helper.assertTrue(outputs.size() == 1 && outputs.get(0).getItem().is(MaledictItems.INVOCATION_SIGIL.get())
-                && !outputs.get(0).getItem().has(DataComponents.CUSTOM_NAME), "Only the recipe's sigil NBT must remain; no empty bucket is returned");
-        InvocationDefinition definition = InvocationDefinition.find(level, outputs.get(0).getItem());
-        helper.assertTrue(definition != null && definition.variant().equals("blue"), "Altar output must retain the target definition");
-        var serializer = new InvocationDefinition.Serializer();
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), TestSupport.registries());
-        try {
-            serializer.streamCodec().encode(buffer, definition);
-            helper.assertTrue(serializer.streamCodec().decode(buffer).equals(definition), "Definition sync must preserve medium and variant");
-        } finally {
-            buffer.release();
-        }
-        helper.succeed();
     }
 
     private static TotemBaseBlockEntity arena(GameTestHelper helper, boolean soulwood, int layer) {

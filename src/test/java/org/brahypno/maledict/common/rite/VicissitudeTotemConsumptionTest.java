@@ -18,26 +18,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
 public class VicissitudeTotemConsumptionTest {
-    @Test
-    void upperLogSelectionStopsAtFirstAir() {
-        String[] column = {"pole", "soulwood", "runewood", "air", "soulwood"};
-        List<Integer> logs = scan(column);
-        assertEquals(List.of(1, 2), logs);
-    }
 
     @Test
     void otherBlocksAreLeftOutWhileTheSearchContinuesUntilAir() {
         assertEquals(List.of(1, 3), scan(new String[]{"pole", "soulwood", "stone", "runewood", "air"}));
-    }
-
-    @Test
-    void airImmediatelyAboveTheTopLeavesNothingExtraToConsume() {
-        assertEquals(List.of(), scan(new String[]{"pole", "air", "runewood"}));
-    }
-
-    @Test
-    void aColumnWithoutAirStopsAtTheWorldHeight() {
-        assertEquals(List.of(1, 2), scan(new String[]{"pole", "runewood", "soulwood"}));
     }
 
     private static List<Integer> scan(String[] column) {

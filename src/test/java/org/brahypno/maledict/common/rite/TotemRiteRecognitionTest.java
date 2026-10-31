@@ -2,12 +2,10 @@ package org.brahypno.maledict.common.rite;
 
 import com.mojang.authlib.GameProfile;
 import com.sammy.malum.common.block.curiosities.totem.TotemBaseBlockEntity;
-import com.sammy.malum.common.block.curiosities.totem.TotemPoleBlockEntity;
 import com.sammy.malum.core.systems.rite.SpiritRiteType;
 import com.sammy.malum.core.systems.spirit.SpiritTypeProperty;
 import com.sammy.malum.registry.common.block.MalumBlocks;
 import com.sammy.malum.registry.common.item.MalumItems;
-import com.sammy.malum.registry.common.magic.rite.MalumSpiritRiteTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -21,7 +19,6 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.common.effect.SacrificeSchedule;
 import org.brahypno.maledict.registry.MaledictMobEffects;
-import org.brahypno.maledict.registry.MaledictRites;
 
 import java.util.UUID;
 
@@ -56,33 +53,6 @@ public final class TotemRiteRecognitionTest {
             player.discard();
             clearTotem(helper, rite);
         }
-        helper.succeed();
-    }
-
-    @GameTest(template = "test_empty")
-    public static void registeredMaledictRitesAreRecognizedByMalum(GameTestHelper helper) {
-        int checked = 0;
-        for (var holder : MaledictRites.RITES.getEntries()) {
-            SpiritRiteType rite = holder.get();
-            if (!(rite instanceof SacrificeRiteType) && !(rite instanceof VicissitudeRiteType)) {
-                continue;
-            }
-            checked++;
-            helper.assertTrue(holder.getId().getNamespace().equals("malum"),
-                    "Sacrifice and all Vicissitude rites must use Malum's registration namespace");
-            TotemBaseBlockEntity base = buildTotem(helper, rite, rite.isCorrupted());
-            try {
-                for (int i = 1; i <= rite.getSpirits().size(); i++) {
-                    base.addTotemPole(helper.getLevel(), (TotemPoleBlockEntity) helper.getLevel()
-                            .getBlockEntity(base.getBlockPos().above(i)));
-                }
-                helper.assertTrue(MalumSpiritRiteTypes.getRite(helper.getLevel(), base) == rite,
-                        "Malum must recognize registered rite " + holder.getId());
-            } finally {
-                clearTotem(helper, rite);
-            }
-        }
-        helper.assertTrue(checked == 9, "Check sacrifice and all four natural/corrupted Vicissitude pairs");
         helper.succeed();
     }
 

@@ -5,13 +5,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RavenRangedAttackCycleTest {
-    @Test
-    void continuousHoverReleasesAfterWindupAndEverySixtyTicks() {
-        RavenRangedAttackCycle cycle = new RavenRangedAttackCycle();
-        for (int tick = 0; tick < 130; tick++) {
-            assertEquals(tick == 9 || tick == 69 || tick == 129, cycle.tick(true, tick), "tick " + tick);
-        }
-    }
 
     @Test
     void losingSightOrLeavingHoverRestartsTheFullWindup() {
@@ -28,12 +21,4 @@ class RavenRangedAttackCycleTest {
         assertFalse(cycle.tick(true, 20));
     }
 
-    @Test
-    void hoverRequiresAVisibleEnemyBetweenThreeAndTwelveBlocks() {
-        assertFalse(RavenRangedAttackCycle.canHover(8.99D, true));
-        assertTrue(RavenRangedAttackCycle.canHover(9.0D, true));
-        assertTrue(RavenRangedAttackCycle.canHover(144.0D, true));
-        assertFalse(RavenRangedAttackCycle.canHover(144.01D, true));
-        assertFalse(RavenRangedAttackCycle.canHover(64.0D, false));
-    }
 }

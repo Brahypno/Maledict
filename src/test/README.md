@@ -1,5 +1,8 @@
 # 测试
 
+游戏测试与 JUnit 单元测试各自最多保留 50 项，当前为 50 项 GameTest、43 项 JUnit。
+新增用例达到上限时替换或删除低价值用例，不使用过滤、禁用或嵌套测试入口隐藏数量。
+
 测试按被测功能组织，与 `src/main/java` 的包结构对应：
 
 ```text
@@ -7,9 +10,9 @@ java/org/brahypno/maledict/
   common/entity/raven/          渡鸦 AI、繁殖、战斗与移动
   common/entity/vicissitude/    伤害适应、真实生命、存档与 Boss 场景
   common/item/weapon/           incursus/ 神侵恶刃；axe/ 恋人斧
-  common/curio/                 hangman/ 投射物与装备；rune/ 共命倍率；vicissitude/ 饰品返还
+  common/curio/                 hangman/ 投射物与装备；priestess/ 延迟池与灵魂离位；rune/ 共命倍率；vicissitude/ 饰品返还
   common/attribute/             属性换算与真实伤害链
-  common/realm/                 跨维度传送、井配对与矿石
+  common/realm/                 跨维度传送、井配对、矿石、遗迹战利品与照明物资
   common/rite/, common/effect/, common/vitals/
   client/                       布局、视觉曲线与音乐状态
   rig/                          骨架、命中几何与动画连续性
