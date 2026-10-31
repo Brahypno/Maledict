@@ -35,6 +35,8 @@ public final class MaledictDataGenerators {
         generator.addProvider(event.includeServer(), new MaledictRecipes(output));
         MaledictWorldgen worldgen = new MaledictWorldgen(output, event.getLookupProvider());
         generator.addProvider(event.includeServer(), worldgen);
+        generator.addProvider(event.includeServer(), new MaledictReliquaryTemplates(output));
+        generator.addProvider(event.includeServer(), new MaledictSpiritData(output));
         generator.addProvider(event.includeServer(), new MaledictBiomeTags(output, worldgen.getRegistryProvider(), existingFiles));
         generator.addProvider(event.includeServer(), new MaledictBiomeModifiers(output));
         generator.addProvider(event.includeServer(), new LootTableProvider(

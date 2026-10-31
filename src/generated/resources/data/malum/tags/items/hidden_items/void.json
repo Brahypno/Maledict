@@ -1,6 +1,10 @@
 {
   "values": [
     "maledict:incursus_blade",
+    "maledict:crying_tainted_rock",
+    "maledict:crying_twisted_rock",
+    "maledict:blighted_wither_skull",
+    "maledict:blighted_star",
     "maledict:elegy_bow",
     "maledict:malignant_pewter_tablet"
   ]

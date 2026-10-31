@@ -48,6 +48,15 @@ public final class MaledictItems {
 
     public static final RegistryObject<Item> INVOCATION_SIGIL = ITEMS.register("invocation_sigil", InvocationSigilItem::new);
 
+    public static final RegistryObject<Item> CRYING_TAINTED_ROCK = ITEMS.register("crying_tainted_rock",
+            () -> new BlockItem(MaledictBlocks.CRYING_TAINTED_ROCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> CRYING_TWISTED_ROCK = ITEMS.register("crying_twisted_rock",
+            () -> new BlockItem(MaledictBlocks.CRYING_TWISTED_ROCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> BLIGHTED_WITHER_SKULL = ITEMS.register("blighted_wither_skull",
+            () -> new BlockItem(MaledictBlocks.BLIGHTED_WITHER_SKULL.get(), new Item.Properties().rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> BLIGHTED_STAR = ITEMS.register("blighted_star",
+            () -> new net.minecraft.world.item.SimpleFoiledItem(new Item.Properties().rarity(Rarity.UNCOMMON).fireResistant()));
+
     public static final RegistryObject<Item> WITHERED_LEAF_LITTER = ITEMS.register("withered_leaf_litter",
             () -> new BlockItem(MaledictBlocks.WITHERED_LEAF_LITTER.get(), new Item.Properties()));
     public static final RegistryObject<Item> EXPOSED_SOULWOOD_ROOTS = ITEMS.register("exposed_soulwood_roots",

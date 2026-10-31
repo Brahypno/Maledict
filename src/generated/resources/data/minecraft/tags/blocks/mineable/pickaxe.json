@@ -1,5 +1,8 @@
 {
   "values": [
+    "maledict:crying_tainted_rock",
+    "maledict:crying_twisted_rock",
+    "maledict:reliquary_altar",
     "maledict:tainted_malignant_lead_ore",
     "maledict:twisted_malignant_lead_ore"
   ]

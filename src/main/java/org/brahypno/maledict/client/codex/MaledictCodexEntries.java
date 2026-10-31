@@ -1,5 +1,7 @@
 package org.brahypno.maledict.client.codex;
 
+import com.sammy.malum.client.VoidRevelationHandler;
+import com.sammy.malum.client.VoidRevelationHandler.RevelationType;
 import com.sammy.malum.client.screen.codex.BookEntry;
 import com.sammy.malum.client.screen.codex.BookWidgetStyle;
 import com.sammy.malum.client.screen.codex.PlacedBookEntryBuilder;
@@ -119,6 +121,7 @@ public final class MaledictCodexEntries {
     @SubscribeEvent
     public static void setupEntries(SetupMalumCodexEntriesEvent event) {
         addInvocationEntry();
+        addWeepingWitherEntry();
         addSpiritArrowsEntry();
         addRemembranceBowEntry();
         addMeltfallAxeEntry();
@@ -150,6 +153,23 @@ public final class MaledictCodexEntries {
         builder.addPage(new HeadlineTextPage(SPIRIT_ARROWS_ENTRY, SPIRIT_ARROWS_ENTRY + ".1"));
         builder.addPage(new EntrySelectorPage(MaledictCodexEntries::spiritArrowEntry, SpiritArrowType.values()));
         ArcanaProgressionScreen.ENTRIES.add(builder.build());
+    }
+
+    private static void addWeepingWitherEntry() {
+        String identifier = "void.maledict.weeping_wither";
+        if (containsEntry(VoidProgressionScreen.VOID_ENTRIES, identifier)) return;
+        // Upper part of the esoterica map reached through Chronicles of the Void.
+        PlacedBookEntryBuilder builder = BookEntry.build(identifier, 2, 18);
+        builder.configureWidget(widget -> widget.setIcon(MaledictItems.BLIGHTED_STAR)
+                .setStyle(BookWidgetStyle.SOULWOOD));
+        builder.setEntryVisibleWhen(() -> VoidRevelationHandler.hasSeenTheRevelation(RevelationType.VOID_READER));
+        builder.addPage(new HeadlineTextPage(identifier, identifier + ".1"));
+        builder.addPage(new TextPage(identifier + ".2"));
+        builder.addPage(new TextPage(identifier + ".summoning"));
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.CRYING_TAINTED_ROCK.get()));
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.CRYING_TWISTED_ROCK.get()));
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.BLIGHTED_WITHER_SKULL.get()));
+        VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
     }
 
     private static void addInvocationEntry() {

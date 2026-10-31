@@ -9,6 +9,30 @@ This file ships inside the jar on purpose: it is the copy that travels with ever
 
 ---
 
+## Textures — the Weeping Wither
+
+`assets/maledict/textures/entity/weeping_wither*.png` are modified Minecraft 1.20.1 Wither
+textures, derived from Mojang's `textures/entity/wither/wither.png` and `wither_armor.png`.
+The original Minecraft assets remain Mojang's work; they are not original Maledict art.
+Changes include localized weathering, tear stains, a chest fissure, small emissive masks,
+reformation and spawn variants, and a desaturated gray-purple armor texture.
+The body uses a registered, selectively composited image edit made with OpenAI ImageGen.
+Source textures, the edit prompt and the reproducible pixel-compositing tool are recorded
+in the repository under `art/weeping-wither/`.
+
+The placeable Blighted Wither Skull reuses the modified main-head UVs of that texture.
+Its six block textures are exact pixel copies of those UV islands, enlarged with nearest
+neighbor sampling to fill separate block-atlas sprites; no new head artwork is introduced.
+`assets/maledict/textures/item/blighted_star.png` is an OpenAI ImageGen edit of Minecraft
+1.20.1's `textures/item/nether_star.png`, adding purple crying-obsidian fissures and tear
+streaks. The final native 16x16 texture keeps vanilla's shaded surface pixels unchanged
+outside 20 localized violet fissure pixels, including all original cardinal-axis pixels.
+Each fissure inherits its underlying pixel's brightness. Four fine purple 45-degree spurs
+are added, with mirrored geometry and fissure positions. Its source, prompt and integration
+tool are also recorded there.
+
+---
+
 ## Music
 
 Both tracks are used under licences that require **no attribution**. They are credited here anyway,

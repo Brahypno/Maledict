@@ -3,6 +3,7 @@ package org.brahypno.maledict.data;
 import com.sammy.malum.registry.common.block.BlockRegistry;
 import com.sammy.malum.registry.common.worldgen.FeatureRegistry;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
@@ -35,13 +36,25 @@ import org.brahypno.maledict.common.realm.BlightedRealm;
 import org.brahypno.maledict.registry.MaledictBlocks;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictRealmFeatures;
+import org.brahypno.maledict.common.realm.reliquary.InvertedReliquaryStructure;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
+import net.minecraft.world.level.levelgen.structure.StructureSpawnOverride;
+import net.minecraft.util.random.WeightedRandomList;
+import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
+import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
+import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
 
 import java.util.List;
+import java.util.Map;
+import java.util.EnumMap;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
+    public static final ResourceKey<Structure> RELIQUARY = ResourceKey.create(Registries.STRUCTURE, id("inverted_reliquary"));
+    public static final ResourceKey<StructureSet> RELIQUARIES = ResourceKey.create(Registries.STRUCTURE_SET, id("inverted_reliquaries"));
     private static final ResourceLocation TREES_ID = id("blighted_soulwood");
     private static final ResourceLocation GROWTH_ID = id("blighted_growth");
     public static final ResourceKey<ConfiguredFeature<?, ?>> TREES = ResourceKey.create(Registries.CONFIGURED_FEATURE, TREES_ID);
@@ -67,9 +80,29 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                 .add(Registries.CONFIGURED_FEATURE, MaledictWorldgen::features)
                 .add(Registries.PLACED_FEATURE, MaledictWorldgen::placements)
                 .add(Registries.BIOME, MaledictWorldgen::biomes)
+                .add(Registries.STRUCTURE, MaledictWorldgen::structures)
+                .add(Registries.STRUCTURE_SET, MaledictWorldgen::structureSets)
                 .add(Registries.NOISE_SETTINGS, MaledictWorldgen::noise)
                 .add(Registries.DIMENSION_TYPE, MaledictWorldgen::dimensionType)
                 .add(Registries.LEVEL_STEM, MaledictWorldgen::dimension), Set.of(Maledict.MODID));
+    }
+
+    private static void structures(BootstapContext<Structure> context) {
+        Map<MobCategory, StructureSpawnOverride> noNaturalSpawns = new EnumMap<>(MobCategory.class);
+        for (MobCategory category : MobCategory.values()) {
+            if (category != MobCategory.MISC) {
+                noNaturalSpawns.put(category, new StructureSpawnOverride(
+                        StructureSpawnOverride.BoundingBoxType.STRUCTURE, WeightedRandomList.create()));
+            }
+        }
+        context.register(RELIQUARY, new InvertedReliquaryStructure(new Structure.StructureSettings(
+                HolderSet.direct(context.lookup(Registries.BIOME).getOrThrow(BlightedRealm.WASTES)),
+                noNaturalSpawns, GenerationStep.Decoration.UNDERGROUND_STRUCTURES, TerrainAdjustment.NONE)));
+    }
+
+    private static void structureSets(BootstapContext<StructureSet> context) {
+        context.register(RELIQUARIES, new StructureSet(context.lookup(Registries.STRUCTURE).getOrThrow(RELIQUARY),
+                new RandomSpreadStructurePlacement(64, 24, RandomSpreadType.LINEAR, 94781362)));
     }
 
     private static void features(BootstapContext<ConfiguredFeature<?, ?>> context) {

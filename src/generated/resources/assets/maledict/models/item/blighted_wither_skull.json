@@ -1,0 +1,89 @@
+{
+  "parent": "maledict:block/blighted_wither_skull",
+  "display": {
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        180,
+        0
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        180,
+        0
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0,
+        4,
+        0
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        45,
+        225,
+        0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        45,
+        225,
+        0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    }
+  }
+}

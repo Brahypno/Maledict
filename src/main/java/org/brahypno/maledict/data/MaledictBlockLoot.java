@@ -16,6 +16,10 @@ public final class MaledictBlockLoot extends BlockLootSubProvider {
 
     @Override
     protected void generate() {
+        dropSelf(MaledictBlocks.CRYING_TAINTED_ROCK.get());
+        dropSelf(MaledictBlocks.CRYING_TWISTED_ROCK.get());
+        dropSelf(MaledictBlocks.BLIGHTED_WITHER_SKULL.get());
+        dropOther(MaledictBlocks.RELIQUARY_ALTAR.get(), com.sammy.malum.registry.common.block.BlockRegistry.RUNIC_TAINTED_ROCK_BRICKS.get());
         dropSelf(MaledictBlocks.MNEMONIC_OBELISK.get());
         dropSelf(MaledictBlocks.SOULWOOD_OBELISK.get());
         dropSelf(MaledictBlocks.WITHERED_LEAF_LITTER.get());
@@ -30,6 +34,10 @@ public final class MaledictBlockLoot extends BlockLootSubProvider {
     @Override
     protected Iterable<Block> getKnownBlocks() {
         return List.of(
+                MaledictBlocks.CRYING_TAINTED_ROCK.get(),
+                MaledictBlocks.CRYING_TWISTED_ROCK.get(),
+                MaledictBlocks.BLIGHTED_WITHER_SKULL.get(),
+                MaledictBlocks.RELIQUARY_ALTAR.get(),
                 MaledictBlocks.MNEMONIC_OBELISK.get(),
                 MaledictBlocks.SOULWOOD_OBELISK.get(),
                 MaledictBlocks.WITHERED_LEAF_LITTER.get(),

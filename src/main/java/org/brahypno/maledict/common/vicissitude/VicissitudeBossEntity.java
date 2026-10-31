@@ -5,8 +5,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.stats.Stats;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
@@ -16,10 +14,10 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.ForgeEventFactory;
 import org.brahypno.changelib.HealthHelper.HealthProtectionLevel;
 import org.brahypno.changelib.HealthHelper.SetHealthProtection;
+import org.brahypno.maledict.common.combat.BossDamage;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -38,9 +36,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
     private static final EntityDataAccessor<Float> DISPLAY_VITALITY =
             SynchedEntityData.defineId(VicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
     private final VitalityState vitality = new VitalityState();
-    // Each channel resolves completely; only the increase in the final maximum is debited.
-    private float tickLargestLoss;
-    private long tickHitAt = Long.MIN_VALUE;
+    private final BossDamage damageBatch = new BossDamage();
 
     protected VicissitudeBossEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -170,7 +166,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
         }
         long now = level().getGameTime();
         // 同一 tick 的追加伤害并入本批；两道门对本批只判一次。
-        boolean sameTickBatch = tickHitAt == now;
+        boolean sameTickBatch = damageBatch.isCurrentTick(now);
         if (!sameTickBatch && invulnerableTime > 0) {
             return false;
         }
@@ -195,10 +191,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
         if (!Float.isFinite(cappedAmount) || cappedAmount <= 0.0F) {
             return false;
         }
-        if (!sameTickBatch) {
-            tickHitAt = now;
-            tickLargestLoss = 0.0F;
-        }
+        damageBatch.beginTick(now);
         DamageFrame frame = new DamageFrame(limit);
         vitality.frames.push(frame);
         boolean accepted;
@@ -227,23 +220,12 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
             return;
         }
         frame.resolved = true;
-        // Forge 1.20.1 LivingEntity#actuallyHurt order, with the health write committed to our ledger.
         // No setter transaction is opened around mod callbacks; a callback's setHealth cannot spend it.
-        amount = ForgeHooks.onLivingHurt(this, source, amount);
-        if (!Float.isFinite(amount) || amount <= 0.0F) return;
-        amount = getDamageAfterArmorAbsorb(source, amount);
-        amount = getDamageAfterMagicAbsorb(source, amount);
-        float finalAmount = Math.max(amount - getAbsorptionAmount(), 0.0F);
-        setAbsorptionAmount(getAbsorptionAmount() - (amount - finalAmount));
-        float absorbed = amount - finalAmount;
-        if (absorbed > 0.0F && absorbed < 3.4028235E37F && source.getEntity() instanceof ServerPlayer player) {
-            player.awardStat(Stats.DAMAGE_DEALT_ABSORBED, Math.round(absorbed * 10.0F));
-        }
-        finalAmount = ForgeHooks.onLivingDamage(this, source, finalAmount);
-        if (!Float.isFinite(finalAmount) || finalAmount <= 0.0F) return;
+        float finalAmount = BossDamage.resolve(this, source, amount,
+                damage -> getDamageAfterMagicAbsorb(source, getDamageAfterArmorAbsorb(source, damage)));
+        if (finalAmount <= 0.0F) return;
         frame.finalLoss = Math.min(frame.limit, finalAmount);
-        float additionalLoss = Math.max(0.0F, frame.finalLoss - tickLargestLoss);
-        tickLargestLoss = Math.max(tickLargestLoss, frame.finalLoss);
+        float additionalLoss = damageBatch.additionalLoss(frame.finalLoss);
         if (additionalLoss > 0.0F) {
             float loss = Math.min(getHealth(), additionalLoss);
             if (loss > 0.0F) {

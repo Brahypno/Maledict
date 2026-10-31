@@ -43,6 +43,19 @@ public final class MaledictItemModels extends ItemModelProvider {
         basicItem(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
 
         basicItem(MaledictItems.BLEEDING_EYE.get());
+        basicItem(MaledictItems.BLIGHTED_STAR.get());
+        // Match template_skull's scale and placement. The static model includes the renderer's 180-degree turn.
+        getBuilder("blighted_wither_skull")
+                .parent(new ModelFile.UncheckedModelFile(modLoc("block/blighted_wither_skull")))
+                .transforms()
+                .transform(ItemDisplayContext.GUI).rotation(30, 225, 0).translation(0, 3, 0).scale(1).end()
+                .transform(ItemDisplayContext.FIXED).rotation(0, 0, 0).translation(0, 4, 0).scale(1).end()
+                .transform(ItemDisplayContext.GROUND).rotation(0, 180, 0).translation(0, 3, 0).scale(0.5F).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(45, 225, 0).translation(0, 3, 0).scale(0.5F).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND).rotation(45, 225, 0).translation(0, 3, 0).scale(0.5F).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(0, 180, 0).scale(1).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(0, 180, 0).scale(1).end()
+                .end();
         basicItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get());
 
         withExistingParent("raven_feather", mcLoc("item/generated"))

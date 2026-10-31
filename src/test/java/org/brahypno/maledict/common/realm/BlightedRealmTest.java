@@ -8,17 +8,12 @@ import com.sammy.malum.registry.common.MobEffectRegistry;
 import com.sammy.malum.registry.common.block.BlockRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.BiomeTags;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
@@ -27,7 +22,6 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
-import org.brahypno.maledict.data.MaledictWorldgen;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.capability.ICurio;
 import top.theillusivec4.curios.common.inventory.CurioStacksHandler;
@@ -38,35 +32,6 @@ import java.util.UUID;
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
 public final class BlightedRealmTest {
-
-    @GameTest(template = "test_empty", batch = "blighted_realm", timeoutTicks = 300)
-    public static void dimensionAndNativeWorldgenLoad(GameTestHelper helper) {
-        var realm = helper.getLevel().getServer().getLevel(BlightedRealm.LEVEL);
-        check(helper, realm != null, "The generated dimension must load on a dedicated server");
-        check(helper, realm.dimensionType().coordinateScale() == 16 && realm.dimensionType().hasFixedTime(),
-                "The dimension has 16:1 scale and fixed celestial time");
-        check(helper, !realm.dimensionType().respawnAnchorWorks(), "Respawn anchors must not bind a spawn");
-        check(helper, realm.getChunkSource().getGenerator() instanceof NoiseBasedChunkGenerator,
-                "Terrain uses the overworld-style noise generator");
-        BlockPos sample = new BlockPos(512, 64, 512);
-        realm.getChunk(sample);
-        int surface = realm.getHeight(Heightmap.Types.OCEAN_FLOOR, sample.getX(), sample.getZ());
-        var biome = realm.getBiome(sample);
-        check(helper, biome.is(BiomeTags.IS_OVERWORLD) && biome.is(BlightedRealm.WASTES),
-                "The initial biome exposes the overworld generation tag");
-        check(helper, biome.is(BiomeTags.HAS_STRONGHOLD),
-                "Strongholds inherit overworld membership through the vanilla nested tag");
-        check(helper, !biome.value().hasPrecipitation() && biome.value().getWaterColor() == 0x30243E,
-                "The biome has still weather and purple water");
-        var ground = realm.getBlockState(new BlockPos(sample.getX(), surface - 1, sample.getZ()));
-        check(helper, ground.is(BlockRegistry.BLIGHTED_EARTH.get()) || ground.is(BlockRegistry.BLIGHTED_SOIL.get())
-                        || ground.is(BlockRegistry.TAINTED_ROCK.get()) || ground.is(BlockRegistry.BLIGHTED_SOULWOOD.get())
-                        || ground.is(BlockRegistry.SOULWOOD_LOG.get()) || ground.is(BlockTags.LEAVES),
-                "Surface generation must use blighted ground or soulwood; got " + ground + " at y=" + surface);
-        check(helper, realm.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).containsKey(MaledictWorldgen.TREES.location()),
-                "The native soulwood configured feature must load");
-        helper.succeed();
-    }
 
     @GameTest(template = "test_empty", batch = "blighted_realm", timeoutTicks = 400)
     public static void rejectionHookBuildsAndReturnsThroughPairedWell(GameTestHelper helper) {

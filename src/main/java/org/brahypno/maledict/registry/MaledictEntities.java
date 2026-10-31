@@ -27,6 +27,18 @@ public final class MaledictEntities {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, Maledict.MODID);
 
+    public static final RegistryObject<EntityType<org.brahypno.maledict.common.realm.wither.WeepingWitherEntity>> WEEPING_WITHER =
+            ENTITY_TYPES.register("weeping_wither", () -> EntityType.Builder
+                    .of(org.brahypno.maledict.common.realm.wither.WeepingWitherEntity::new, MobCategory.MONSTER)
+                    .sized(1.08F, 4.2F).clientTrackingRange(10).fireImmune().build("weeping_wither"));
+
+    public static final RegistryObject<EntityType<org.brahypno.maledict.common.realm.wither.WeepingWitherSkull>> WEEPING_WITHER_SKULL =
+            ENTITY_TYPES.register("weeping_wither_skull", () -> EntityType.Builder
+                    .<org.brahypno.maledict.common.realm.wither.WeepingWitherSkull>of(
+                            org.brahypno.maledict.common.realm.wither.WeepingWitherSkull::new, MobCategory.MISC)
+                    .sized(0.3125F, 0.3125F).clientTrackingRange(4).updateInterval(10).fireImmune()
+                    .build("weeping_wither_skull"));
+
     public static final RegistryObject<EntityType<SoulEchoEntity>> SOUL_ECHO =
             ENTITY_TYPES.register("soul_echo", () -> EntityType.Builder
                     .of(SoulEchoEntity::new, MobCategory.MISC).sized(0.6F, 1.8F)
@@ -101,6 +113,7 @@ public final class MaledictEntities {
 
     @SubscribeEvent
     public static void registerAttributes(EntityAttributeCreationEvent event) {
+        event.put(WEEPING_WITHER.get(), org.brahypno.maledict.common.realm.wither.WeepingWitherEntity.createAttributes().build());
         event.put(SOUL_ECHO.get(), SoulEchoEntity.createLivingAttributes().build());
         event.put(FIRST_VICISSITUDE.get(), FirstVicissitudeBossEntity.createAttributes().build());
         event.put(RAVEN.get(), RavenEntity.createAttributes().build());

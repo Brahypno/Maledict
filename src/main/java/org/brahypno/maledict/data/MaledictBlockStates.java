@@ -11,6 +11,9 @@ import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.registry.MaledictBlocks;
+import org.brahypno.maledict.common.realm.wither.BlightedWitherSkullBlock;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class MaledictBlockStates extends BlockStateProvider {
     public MaledictBlockStates(PackOutput output, ExistingFileHelper existingFiles) {
@@ -19,6 +22,12 @@ public final class MaledictBlockStates extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
+        simpleBlockWithItem(MaledictBlocks.CRYING_TAINTED_ROCK.get(), cubeAll(MaledictBlocks.CRYING_TAINTED_ROCK.get()));
+        simpleBlockWithItem(MaledictBlocks.CRYING_TWISTED_ROCK.get(), cubeAll(MaledictBlocks.CRYING_TWISTED_ROCK.get()));
+        blightedWitherSkull();
+        simpleBlock(MaledictBlocks.RELIQUARY_ALTAR.get(), models().cubeBottomTop("reliquary_altar",
+                ResourceLocation.fromNamespaceAndPath("malum", "block/arcane_rock/tainted/runic_tainted_rock_bricks"),
+                mcLoc("block/end_stone_bricks"), mcLoc("block/crying_obsidian")));
         leadOre(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), "tainted/tainted_rock");
         leadOre(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(), "twisted/twisted_rock");
         groundcoverModels();
@@ -90,6 +99,35 @@ public final class MaledictBlockStates extends BlockStateProvider {
         cover(MaledictBlocks.WITHERLIGHT_LAMP.get(), lamp);
     }
 
+    private void blightedWitherSkull() {
+        // Each face copies the boss's main head UVs into its own full sprite, avoiding transparent atlas bleed.
+        Map<Integer, ModelFile> offsets = new HashMap<>();
+        // Blockstate rotations accept only 90-degree steps. Element rotations supply the 22.5-degree offsets.
+        for (int offset = -2; offset <= 1; offset++) {
+            String name = offset == 0 ? "blighted_wither_skull" : "blighted_wither_skull_offset_" + (offset + 2);
+            var model = models().getBuilder(name)
+                    .parent(new ModelFile.UncheckedModelFile(mcLoc("block/block")))
+                    .ao(false)
+                    .texture("particle", modLoc("block/blighted_wither_skull/north"));
+            var head = model.element().from(4, 0, 4).to(12, 8, 12);
+            if (offset != 0) head.rotation().origin(8, 0, 8)
+                    .axis(net.minecraft.core.Direction.Axis.Y).angle(-offset * 22.5F).end();
+            for (var direction : net.minecraft.core.Direction.values()) {
+                String face = direction.getName();
+                model.texture(face, modLoc("block/blighted_wither_skull/" + face));
+                head.face(direction).texture("#" + face).uvs(0, 0, 16, 16).end();
+            }
+            head.end();
+            offsets.put(offset, model);
+        }
+        getVariantBuilder(MaledictBlocks.BLIGHTED_WITHER_SKULL.get()).forAllStates(state -> {
+            int rotation = state.getValue(BlightedWitherSkullBlock.ROTATION);
+            int quadrant = (rotation + 2) / 4;
+            return new ConfiguredModel[]{new ConfiguredModel(offsets.get(rotation - quadrant * 4),
+                    0, quadrant % 4 * 90, false)};
+        });
+    }
+
     private BlockModelBuilder woodCover(String name) {
         return models().getBuilder(name).parent(new ModelFile.UncheckedModelFile(mcLoc("block/block")))
                 .texture("particle", "malum:block/soulwood/soulwood_log")
@@ -121,4 +159,5 @@ public final class MaledictBlockStates extends BlockStateProvider {
                 .allFaces((direction, face) -> face.texture("#ore").cullface(direction)).end();
         simpleBlockWithItem(block, model);
     }
+
 }

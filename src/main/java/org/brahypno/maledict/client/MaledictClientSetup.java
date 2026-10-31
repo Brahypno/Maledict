@@ -71,6 +71,10 @@ public final class MaledictClientSetup {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(MaledictEntities.WEEPING_WITHER.get(),
+                org.brahypno.maledict.client.realm.WeepingWitherRenderer::new);
+        event.registerEntityRenderer(MaledictEntities.WEEPING_WITHER_SKULL.get(),
+                org.brahypno.maledict.client.realm.WeepingWitherSkullRenderer::new);
         event.registerEntityRenderer(MaledictEntities.SOUL_ECHO.get(), SoulEchoRenderer::new);
         event.registerEntityRenderer(MaledictEntities.HANGMAN_TRAP.get(), HangmanTrapRenderer::new);
         event.registerEntityRenderer(MaledictEntities.SPIRIT_ARROW.get(), SpiritArrowRenderer::new);

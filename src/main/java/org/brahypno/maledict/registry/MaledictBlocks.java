@@ -3,6 +3,8 @@ package org.brahypno.maledict.registry;
 import com.sammy.malum.common.block.curiosities.obelisk.ObeliskComponentBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CryingObsidianBlock;
+import com.sammy.malum.registry.common.block.MalumBlockProperties;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.registries.DeferredRegister;
@@ -13,9 +15,21 @@ import org.brahypno.maledict.common.block.MnemonicObeliskCoreBlock;
 import org.brahypno.maledict.common.block.SoulwoodObeliskCoreBlock;
 import org.brahypno.maledict.common.realm.RealmGroundcoverBlock;
 import org.brahypno.maledict.common.realm.WitherlightMushroomBlock;
+import org.brahypno.maledict.common.realm.wither.BlightedWitherSkullBlock;
 
 public final class MaledictBlocks {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Maledict.MODID);
+
+    public static final RegistryObject<Block> CRYING_TAINTED_ROCK = BLOCKS.register("crying_tainted_rock",
+            () -> new CryingObsidianBlock(MalumBlockProperties.TAINTED_ROCK()));
+    public static final RegistryObject<Block> CRYING_TWISTED_ROCK = BLOCKS.register("crying_twisted_rock",
+            () -> new CryingObsidianBlock(MalumBlockProperties.TWISTED_ROCK()));
+    public static final RegistryObject<Block> BLIGHTED_WITHER_SKULL = BLOCKS.register("blighted_wither_skull",
+            () -> new BlightedWitherSkullBlock(BlockBehaviour.Properties.copy(Blocks.WITHER_SKELETON_SKULL).noOcclusion()));
+
+    public static final RegistryObject<Block> RELIQUARY_ALTAR = BLOCKS.register("reliquary_altar", () ->
+            new org.brahypno.maledict.common.realm.reliquary.ReliquaryAltarBlock(
+                    BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_BRICKS).lightLevel(state -> 8)));
 
     public static final RegistryObject<Block> WITHERED_LEAF_LITTER = BLOCKS.register("withered_leaf_litter",
             () -> new RealmGroundcoverBlock(BlockBehaviour.Properties.copy(Blocks.MOSS_CARPET)

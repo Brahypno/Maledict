@@ -18,6 +18,22 @@ public final class MaledictLanguage extends LanguageProvider {
     protected void addTranslations() {
         addInvocationTranslations();
         if ("zh_cn".equals(locale)){
+            addBlock(MaledictBlocks.CRYING_TAINTED_ROCK, "哭泣的污秽石");
+            addBlock(MaledictBlocks.CRYING_TWISTED_ROCK, "哭泣的扭曲石");
+            addBlock(MaledictBlocks.BLIGHTED_WITHER_SKULL, "腐枯凋灵头颅");
+            addItem(MaledictItems.BLIGHTED_STAR, "腐枯之星");
+            add("malum.gui.book.entry.void.maledict.weeping_wither", "腐枯凋灵");
+            add("malum.gui.book.entry.void.maledict.weeping_wither.description", "世界遗留的悲伤");
+            add("malum.gui.book.entry.page.headline.void.maledict.weeping_wither", "腐枯凋灵");
+            add("malum.gui.book.entry.page.text.void.maledict.weeping_wither.1",
+                "在这个已经堕入腐枯的世界地 下，我找到了这种残存的生物 。它十分像是在下界见过的凋 灵，只是由于世界已然腐枯， 这种凋灵承载了世界遗留的悲 伤，从而变得更加强大。");
+            add("malum.gui.book.entry.page.text.void.maledict.weeping_wither.2",
+                "将世界的泪水灌注于凋灵骷髅 的头颅中，我们可以用这种腐 枯的头颅和哭泣的石头们召唤 腐枯凋灵。");
+            add("malum.gui.book.entry.page.text.void.maledict.weeping_wither.summoning",
+                "如同召唤普通凋灵，先摆出石 头的Ｔ型：横排中间放哭泣的 污秽石，两侧和下方放哭泣的 扭曲石。底层两侧留空，再在 顶上并排放置三个腐枯凋灵头 颅。击败它，便能获得腐枯之 星。");
+            add("entity.maledict.weeping_wither", "腐枯凋灵");
+            add("entity.maledict.weeping_wither_skull", "腐枯凋灵之首");
+            addBlock(MaledictBlocks.RELIQUARY_ALTAR, "倒悬灵柩祭坛");
             add("dimension.maledict.blighted_realm", "腐枯界");
             addBlock(MaledictBlocks.WITHERED_LEAF_LITTER, "败叶层");
             addBlock(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS, "灵魂木露根");
@@ -368,6 +384,22 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text." + HIGH_PRIESTESS_PAGE + ".1",
                 "在面纱之后，渴望超越的道路");
         }else {
+            addBlock(MaledictBlocks.CRYING_TAINTED_ROCK, "Crying Tainted Rock");
+            addBlock(MaledictBlocks.CRYING_TWISTED_ROCK, "Crying Twisted Rock");
+            addBlock(MaledictBlocks.BLIGHTED_WITHER_SKULL, "Blighted Wither Skull");
+            addItem(MaledictItems.BLIGHTED_STAR, "Blighted Star");
+            add("malum.gui.book.entry.void.maledict.weeping_wither", "Weeping Wither");
+            add("malum.gui.book.entry.void.maledict.weeping_wither.description", "The sorrow the world left behind");
+            add("malum.gui.book.entry.page.headline.void.maledict.weeping_wither", "Weeping Wither");
+            add("malum.gui.book.entry.page.text.void.maledict.weeping_wither.1",
+                "Beneath this world, already fallen to blight, I found this surviving creature. It closely resembles the Withers I once saw in the Nether. Yet, as the world has fallen to blight, this Wither bears the sorrow the world left behind, and has become all the stronger for it.");
+            add("malum.gui.book.entry.page.text.void.maledict.weeping_wither.2",
+                "By infusing the tears of the world into Wither Skeleton skulls, we can use these blighted skulls and crying stones to summon a Weeping Wither.");
+            add("malum.gui.book.entry.page.text.void.maledict.weeping_wither.summoning",
+                "As with an ordinary Wither, arrange the stones in a T. Place Crying Tainted Rock at the center of the crossbar, with Crying Twisted Rock to either side and beneath it. Leave air beside the stem. Place three Blighted Wither Skulls across the top. Defeat it to claim a Blighted Star.");
+            add("entity.maledict.weeping_wither", "Weeping Wither");
+            add("entity.maledict.weeping_wither_skull", "Weeping Wither Skull");
+            addBlock(MaledictBlocks.RELIQUARY_ALTAR, "Inverted Reliquary Altar");
             add("dimension.maledict.blighted_realm", "The Blighted Realm");
             addBlock(MaledictBlocks.WITHERED_LEAF_LITTER, "Withered Leaf Litter");
             addBlock(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS, "Exposed Soulwood Roots");

@@ -33,6 +33,8 @@ public final class Maledict {
         MaledictEntities.ENTITY_TYPES.register(modBus);
         MaledictBlocks.BLOCKS.register(modBus);
         org.brahypno.maledict.registry.MaledictRealmFeatures.FEATURES.register(modBus);
+        org.brahypno.maledict.registry.MaledictStructures.TYPES.register(modBus);
+        org.brahypno.maledict.registry.MaledictStructures.PIECES.register(modBus);
         MaledictBlockEntities.BLOCK_ENTITY_TYPES.register(modBus);
         MaledictItems.ITEMS.register(modBus);
         MaledictRecipeTypes.SERIALIZERS.register(modBus);

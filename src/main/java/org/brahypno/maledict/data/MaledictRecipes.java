@@ -29,6 +29,21 @@ public final class MaledictRecipes extends RecipeProvider {
     @Override
     protected void buildRecipes(Consumer<FinishedRecipe> recipes) {
         InvocationRecipes.build(recipes);
+        new SpiritInfusionRecipeBuilder(ItemRegistry.TAINTED_ROCK.get(), 4, MaledictItems.CRYING_TAINTED_ROCK.get(), 4)
+                .addExtraItem(Items.CRYING_OBSIDIAN, 4)
+                .addSpirit(SpiritTypeRegistry.SACRED_SPIRIT, 6)
+                .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 4)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/crying_tainted_rock"));
+        new SpiritInfusionRecipeBuilder(ItemRegistry.TWISTED_ROCK.get(), 4, MaledictItems.CRYING_TWISTED_ROCK.get(), 4)
+                .addExtraItem(Items.CRYING_OBSIDIAN, 4)
+                .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 6)
+                .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 4)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/crying_twisted_rock"));
+        new SpiritInfusionRecipeBuilder(Items.WITHER_SKELETON_SKULL, 1, MaledictItems.BLIGHTED_WITHER_SKULL.get(), 1)
+                .addExtraItem(ItemRegistry.BLIGHTED_GUNK.get(), 6)
+                .addSpirit(SpiritTypeRegistry.SACRED_SPIRIT, 6)
+                .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 6)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/blighted_wither_skull"));
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, Items.STICK, 2)
                 .requires(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get())
                 .unlockedBy("has_fallen_branches", has(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get()))

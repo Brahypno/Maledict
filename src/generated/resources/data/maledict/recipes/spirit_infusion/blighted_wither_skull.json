@@ -1,0 +1,26 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 6,
+      "item": "malum:blighted_gunk"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "minecraft:wither_skeleton_skull"
+  },
+  "output": {
+    "item": "maledict:blighted_wither_skull"
+  },
+  "spirits": [
+    {
+      "type": "sacred",
+      "count": 6
+    },
+    {
+      "type": "wicked",
+      "count": 6
+    }
+  ]
+}

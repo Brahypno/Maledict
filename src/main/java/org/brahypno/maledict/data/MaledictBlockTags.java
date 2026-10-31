@@ -18,6 +18,13 @@ public final class MaledictBlockTags extends BlockTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(MaledictBlocks.CRYING_TAINTED_ROCK.get(),
+                MaledictBlocks.CRYING_TWISTED_ROCK.get());
+        tag(com.sammy.malum.registry.common.block.BlockTagRegistry.TAINTED_ROCK)
+                .add(MaledictBlocks.CRYING_TAINTED_ROCK.get());
+        tag(com.sammy.malum.registry.common.block.BlockTagRegistry.TWISTED_ROCK)
+                .add(MaledictBlocks.CRYING_TWISTED_ROCK.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(MaledictBlocks.RELIQUARY_ALTAR.get());
         tag(BlockTags.MINEABLE_WITH_HOE).add(MaledictBlocks.WITHERED_LEAF_LITTER.get());
         // These covers have no collision, so footsteps must explicitly select the block above the ground.
         tag(BlockTags.INSIDE_STEP_SOUND_BLOCKS).add(MaledictBlocks.WITHERED_LEAF_LITTER.get());
