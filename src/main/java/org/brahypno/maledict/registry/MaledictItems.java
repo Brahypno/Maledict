@@ -21,6 +21,7 @@ import org.brahypno.maledict.common.item.curio.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.item.curio.CurioReturnTokenItem;
 import org.brahypno.maledict.common.item.curio.HangmanFoolItem;
 import org.brahypno.maledict.common.item.rune.*;
+import org.brahypno.maledict.common.item.curio.EidolonOfTheHighPriestessItem;
 import org.brahypno.maledict.common.item.weapon.axe.LoverAxeItem;
 import org.brahypno.maledict.common.item.weapon.bow.RemembranceBowItem;
 import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
@@ -64,6 +65,8 @@ public final class MaledictItems {
      */
     public static final DeferredHolder<Item, Item> AGE_OF_ENLIGHTENMENT = ITEMS.register("age_of_enlightenment", AgeOfEnlightenmentItem::new);
     public static final DeferredHolder<Item, Item> HANGMAN_FOOL = ITEMS.register("hangman_fool", HangmanFoolItem::new);
+    public static final DeferredHolder<Item, Item> EIDOLON_OF_THE_HIGH_PRIESTESS =
+            ITEMS.register("eidolon_of_the_high_priestess", EidolonOfTheHighPriestessItem::new);
 
     public static final DeferredHolder<Item, Item> BLEEDING_EYE = ITEMS.register("bleeding_eye", () ->
             new Item(new Item.Properties()) {

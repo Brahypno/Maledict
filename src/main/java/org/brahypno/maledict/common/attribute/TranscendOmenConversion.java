@@ -15,12 +15,10 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.minecraft.core.registries.BuiltInRegistries;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.registry.MaledictAttributes;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -170,7 +168,7 @@ public final class TranscendOmenConversion {
             Set<Holder<Attribute>> consumed = new HashSet<>();
             for (Route route : routes) {
                 apply(entity, state, route.source(), "gain", route.base() * strength * share,
-                        AttributeModifier.Operation.ADD_VALUE);
+                        AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
                 consumed.addAll(route.targets());
             }
             // Confirmed option 2: all participating defense loses the full reverse percentage ONCE,

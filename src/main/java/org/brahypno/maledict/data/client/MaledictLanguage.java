@@ -32,6 +32,14 @@ public final class MaledictLanguage extends LanguageProvider {
             add("message.maledict.vicissitude_rite.cramped", "周围的空间太过狭小，无法洞开创口");
             add("message.maledict.realm_no_respawn", "此界无法安置你的归处。");
             addItem(MaledictItems.HANGMAN_FOOL, "倒吊人的愚见");
+            addItem(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS, "女祭司之灵相");
+            add("entity.maledict.soul_echo", "灵魂残影");
+            add("malum.gui.curio.effect.maledict.high_priestess.life_manifestation",
+                "生命显影：看见16格内生物的轮廓，包括隔墙与隐身的生物，仅自己可见。");
+            add("malum.gui.curio.effect.maledict.high_priestess.soul_displacement",
+                "灵魂离位：法术命中使目标在原地留下3秒残影。法术击中残影会伤及本体，但不会刷新残影。");
+            add("malum.gui.curio.effect.maledict.high_priestess.wound_yet_to_come",
+                "未至之伤：伤害与治疗缓慢结算。造成伤害时获得等量治疗，先抵消待结算伤害，余量再缓慢回复生命。");
             add("tooltip.maledict.hangman_fool.flavor.0", "献出力量，以求取人智");
             add("tooltip.maledict.hangman_fool.flavor.1", "智性虽有缺陷，却并非谬误");
             add("tooltip.maledict.hangman_fool.flavor.2", "沉沦于黑暗，以期光明");
@@ -188,6 +196,9 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "狱火精魂箭");
             add("attribute.name.maledict.powder_snow_damage", "冻结伤害");
             add("attribute.name.maledict.transcend_omen", "超越预兆");
+            add("attribute.name.maledict.transcend_omen.desc",
+                "与恶念转化互相抵消，余量按转化配方消耗护甲等防御属性，以独立乘区按百分比增强法术属性。"
+                + "仅增强已偏离默认值的法术属性；多条有效路线分摊收益，共用防御只扣除一次。");
             add("attribute.name.maledict.descent", "堕落");
             add("attribute.name.maledict.descent.desc",
                 "提高造成与受到的伤害，倍率随双方堕落值之和增加而增加");
@@ -344,6 +355,9 @@ public final class MaledictLanguage extends LanguageProvider {
                 "升临高天，\n落入深谷。\n 倒吊自身，\n坠入深井，");
             add("malum.gui.book.entry.page.text." + HANGMAN_FOOL_PAGE + ".2",
                 "让灵知踏过七重长阶，\n借以倒映纯粹的真知。\n 我的功业将成。");
+            add("malum.gui.book.entry.page.headline." + HIGH_PRIESTESS_PAGE, "女祭司之灵相");
+            add("malum.gui.book.entry.page.text." + HIGH_PRIESTESS_PAGE + ".1",
+                "在面纱之后，渴望超越的道路");
         }else {
             add("maledict.codex.arrow_index", "Arrow Index");
             add("maledict.codex.rune_index", "Rune Index");
@@ -359,6 +373,15 @@ public final class MaledictLanguage extends LanguageProvider {
             add("message.maledict.vicissitude_rite.cramped", "The surrounding space is too confined to tear open a wound.");
             add("message.maledict.realm_no_respawn", "You cannot bind your return to this realm.");
             addItem(MaledictItems.HANGMAN_FOOL, "Hangman`s fool");
+            addItem(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS, "Eidolon of the High Priestess");
+            add("entity.maledict.soul_echo", "Soul Echo");
+            add("malum.gui.curio.effect.maledict.high_priestess.life_manifestation",
+                "Life Manifestation: only you see the outlines of living creatures within 16 blocks, even through walls or invisibility.");
+            add("malum.gui.curio.effect.maledict.high_priestess.soul_displacement",
+                "Soul Displacement: spell hits leave a 3-second echo where the target stood. Spells hitting the echo damage its body without refreshing the echo.");
+            add("malum.gui.curio.effect.maledict.high_priestess.wound_yet_to_come",
+                "The Wound Yet to Come: damage and healing settle gradually. Damage dealt grants equal healing, "
+                + "first canceling pending damage, then gradually restoring health with any remainder.");
             add("tooltip.maledict.hangman_fool.flavor.0", "\"strength\" is sacrificed for \"human wisdom\"");
             add("tooltip.maledict.hangman_fool.flavor.1", "Intelligence that mortals grasp is flawed, it cannot be said to be false");
             add("tooltip.maledict.hangman_fool.flavor.2", "Light sinks into the dark, seeking to redeem the radiance.");
@@ -541,6 +564,12 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INFERNAL_SPIRIT_ARROW, "Infernal Spirit Arrow");
             add("attribute.name.maledict.powder_snow_damage", "Freezing Damage");
             add("attribute.name.maledict.transcend_omen", "Transcend Omen");
+            add("attribute.name.maledict.transcend_omen.desc",
+                "Cancels Malignant Conversion, then uses the remainder to trade defensive attributes such as armor "
+                + "for percentage increases to magical attributes through its conversion recipes, multiplying "
+                + "their existing totals. Only magical attributes already "
+                + "different from their default values participate. "
+                + "Active routes share the gains, while shared defenses are consumed only once.");
             add("attribute.name.maledict.descent", "Descent");
             add("attribute.name.maledict.descent.desc",
                 "Increases damage dealt and taken, with the multiplier increasing as the sum of both entities' Descent rises");
@@ -749,6 +778,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text." + HANGMAN_FOOL_PAGE + ".2",
                 "Let gnosis traverse the sevenfold stair,\nthat it may reflect the purest truth.\n"
                 + "My Great Work is nigh upon completion.");
+            add("malum.gui.book.entry.page.headline." + HIGH_PRIESTESS_PAGE, "Eidolon of the High Priestess");
+            add("malum.gui.book.entry.page.text." + HIGH_PRIESTESS_PAGE + ".1",
+                "Beyond the veil, yearning for the path to transcendence.");
         }
         for (String rite : java.util.List.of(VICISSITUDE_RITE_ID, GREATER_RITE_ID, ELDRITCH_RITE_ID, GREATER_ELDRITCH_RITE_ID)) {
             String effect = "zh_cn".equals(locale) ? "召唤无常。" : "Summons Vicissitude.";
@@ -818,6 +850,7 @@ public final class MaledictLanguage extends LanguageProvider {
     private static final String SACRIFICE_RITE_PAGE = "corrupt_sacrifice_rite";
     private static final String BLEEDING_EYE_ENTRY = "void.maledict.bleeding_eye";
     private static final String HANGMAN_FOOL_PAGE = BLEEDING_EYE_ENTRY + ".hangman_fool";
+    private static final String HIGH_PRIESTESS_PAGE = BLEEDING_EYE_ENTRY + ".high_priestess";
     private static final String TOTEMIC_RUNES_CONTINUED_ENTRY = "maledict.totemic_runes_continued";
     private static final String RUNE_OF_SATIATION_ENTRY = "maledict.rune_of_satiation";
     private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";

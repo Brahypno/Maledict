@@ -43,6 +43,9 @@ public final class MaledictCreativeTabs {
                                for (int stage = 0; stage <= 3; stage++) {
                                    output.accept(org.brahypno.maledict.common.item.curio.HangmanFoolItem.create(stage));
                                }
+                               for (int stage = 0; stage <= 3; stage++) {
+                                   output.accept(org.brahypno.maledict.common.item.curio.EidolonOfTheHighPriestessItem.create(stage));
+                               }
                                output.accept(MaledictItems.BLEEDING_EYE.get());
                                output.accept(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
                                output.accept(MaledictItems.RUNE_OF_SATIATION.get());

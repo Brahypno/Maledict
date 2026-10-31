@@ -22,6 +22,7 @@ import org.brahypno.maledict.client.item.AgeOfEnlightenmentCurioRenderer;
 import org.brahypno.maledict.client.item.AgeOfEnlightenmentModel;
 import org.brahypno.maledict.client.item.HangmanTrapRenderer;
 import org.brahypno.maledict.client.item.SpiritArrowRenderer;
+import org.brahypno.maledict.client.item.priestess.SoulEchoRenderer;
 import org.brahypno.maledict.client.raven.RavenFeatherRenderer;
 import org.brahypno.maledict.client.raven.RavenModel;
 import org.brahypno.maledict.client.raven.RavenRenderer;
@@ -71,6 +72,7 @@ public final class MaledictClientSetup {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(MaledictEntities.SOUL_ECHO.get(), SoulEchoRenderer::new);
         event.registerEntityRenderer(MaledictEntities.HANGMAN_TRAP.get(), HangmanTrapRenderer::new);
         event.registerEntityRenderer(MaledictEntities.SPIRIT_ARROW.get(), SpiritArrowRenderer::new);
         event.registerEntityRenderer(MaledictEntities.RAVEN.get(), RavenRenderer::new);
@@ -160,7 +162,8 @@ public final class MaledictClientSetup {
                     MaledictItems.INCURSUS_BLADE.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get());
             ParticleEmitterHandler.registerItemParticleEmitter(
                     ESOTERICA_PARTICLES,
-                    MaledictItems.ELEGY_BOW.get(), MaledictItems.HANGMAN_FOOL.get(), MaledictItems.BLEEDING_EYE.get());
+                    MaledictItems.ELEGY_BOW.get(), MaledictItems.BLEEDING_EYE.get(), MaledictItems.HANGMAN_FOOL.get(),
+                    MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
         });
     }
 

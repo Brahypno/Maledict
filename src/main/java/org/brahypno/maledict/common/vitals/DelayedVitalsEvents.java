@@ -13,16 +13,17 @@ import net.neoforged.neoforge.event.entity.living.LivingHealEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.item.curio.EidolonOfTheHighPriestessItem;
 import org.brahypno.maledict.common.item.rune.RuneOfMelancholiaItem;
 import org.brahypno.maledict.network.MaledictNetwork;
 
 /**
- * 抑郁符文的两半：{@code LivingHurtEvent} 上先适应（数值变钝），护甲之后在
+ * 抑郁符文与女祭司共用延迟池。只有抑郁符文在 {@code LivingHurtEvent} 上先适应，护甲之后在
  * {@code LivingDamageEvent} 上入队（时间变钝），池子由玩家 tick 结算。
  *
  * <p>顺序不能反：适应必须在入队之前，否则入队的量和实际掉的血对不上，减伤看起来像失效。
  *
- * <p>符文只是开关（入队要戴着），池子本身不绑符文 —— 摘下来、被没收都照常结算，只有死亡才清。
+ * <p>装备只是开关，池子本身不绑物品 —— 摘下来、被没收都照常结算，只有死亡才清。
  */
 @EventBusSubscriber(modid = Maledict.MODID)
 public final class DelayedVitalsEvents {
@@ -59,7 +60,12 @@ public final class DelayedVitalsEvents {
         if (event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return;
         }
-        if (!(victim instanceof Player player) || !RuneOfMelancholiaItem.isEquipped(player)) {
+        // 在受害者的伤害入池、amount 被清零之前处理；箭矢与法术从 source.entity 取施放者。
+        if (event.getSource().getEntity() instanceof Player attacker && attacker != victim
+                && attacker.isAlive() && EidolonOfTheHighPriestessItem.hasWoundYetToCome(attacker)) {
+            attacker.heal(Math.min(Math.max(0, event.getNewDamage() - victim.getAbsorptionAmount()), victim.getHealth()));
+        }
+        if (!(victim instanceof Player player) || !usesDelayedVitals(player)) {
             return;
         }
         DelayedVitals vitals = DelayedVitals.get(player);
@@ -91,7 +97,7 @@ public final class DelayedVitalsEvents {
         if (entity.level().isClientSide() || event.getAmount() <= 0.0F) {
             return;
         }
-        if (!(entity instanceof Player player) || !RuneOfMelancholiaItem.isEquipped(player)) {
+        if (!(entity instanceof Player player) || !usesDelayedVitals(player)) {
             return;
         }
         DelayedVitals vitals = DelayedVitals.get(player);
@@ -195,6 +201,11 @@ public final class DelayedVitalsEvents {
         }
         vitals.clearDirty();
         MaledictNetwork.sendDelayedVitals(player, vitals.pool().pendingDamage(), vitals.pool().pendingHeal());
+    }
+
+    private static boolean usesDelayedVitals(Player player) {
+        return RuneOfMelancholiaItem.isEquipped(player)
+                || EidolonOfTheHighPriestessItem.hasWoundYetToCome(player);
     }
 
     private DelayedVitalsEvents() {

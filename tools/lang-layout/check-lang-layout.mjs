@@ -149,6 +149,7 @@ const PAGES = {
   "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.2": "text",
   "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.hangman_fool.1": "headlineItem",
   "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.hangman_fool.2": "text",
+  "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.high_priestess.1": "headlineItem",
 };
 
 function load(locale) {

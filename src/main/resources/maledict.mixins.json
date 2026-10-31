@@ -11,7 +11,8 @@
     "MalignantInfluenceDataAccessor"
   ],
   "client": [
-    "GameRendererMixin"
+    "GameRendererMixin",
+    "MinecraftOutlineMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,0 +1,39 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 16,
+      "item": "malum:soulwoven_silk"
+    },
+    {
+      "count": 16,
+      "item": "malum:astral_weave"
+    },
+    {
+      "count": 8,
+      "item": "malum:raw_brilliance"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "maledict:bleeding_eye"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:eidolon_of_the_high_priestess"
+  },
+  "spirits": [
+    {
+      "type": "malum:aqueous",
+      "count": 32
+    },
+    {
+      "type": "malum:aerial",
+      "count": 32
+    },
+    {
+      "type": "malum:arcane",
+      "count": 32
+    }
+  ]
+}
