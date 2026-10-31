@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "maledict:block/exposed_soulwood_roots"
+      },
+      {
+        "model": "maledict:block/exposed_soulwood_roots",
+        "y": 90
+      },
+      {
+        "model": "maledict:block/exposed_soulwood_roots",
+        "y": 180
+      },
+      {
+        "model": "maledict:block/exposed_soulwood_roots",
+        "y": 270
+      }
+    ]
+  }
+}

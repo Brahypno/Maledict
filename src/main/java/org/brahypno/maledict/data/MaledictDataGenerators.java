@@ -3,6 +3,7 @@ package org.brahypno.maledict.data;
 import org.brahypno.maledict.data.worldgen.MaledictBiomeModifiers;
 import org.brahypno.maledict.data.tags.MaledictBiomeTags;
 import org.brahypno.maledict.data.loot.MaledictBlockLoot;
+import org.brahypno.maledict.data.loot.MaledictRealmLoot;
 import org.brahypno.maledict.data.client.MaledictBlockStates;
 import org.brahypno.maledict.data.tags.MaledictBlockTags;
 import org.brahypno.maledict.data.loot.MaledictEntityLoot;
@@ -56,6 +57,8 @@ public final class MaledictDataGenerators {
                                 MaledictBlockLoot::new, LootContextParamSets.BLOCK),
                         new LootTableProvider.SubProviderEntry(
                                 MaledictEntityLoot::new, LootContextParamSets.ENTITY),
+                        new LootTableProvider.SubProviderEntry(
+                                MaledictRealmLoot::new, LootContextParamSets.CHEST),
                         new LootTableProvider.SubProviderEntry(
                                 registries -> consumer -> consumer.accept(
                                         net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "rewards/wisdom_sacrifice")),

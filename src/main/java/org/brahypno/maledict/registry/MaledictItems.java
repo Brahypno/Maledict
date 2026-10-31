@@ -1,5 +1,7 @@
 package org.brahypno.maledict.registry;
 
+import javax.annotation.Nullable;
+
 import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -35,16 +37,33 @@ public final class MaledictItems {
 
     public static final DeferredHolder<Item, Item> INVOCATION_SIGIL = ITEMS.register("invocation_sigil", InvocationSigilItem::new);
 
+    public static final DeferredHolder<Item, Item> WITHERED_LEAF_LITTER = ITEMS.register("withered_leaf_litter",
+            () -> new BlockItem(MaledictBlocks.WITHERED_LEAF_LITTER.get(), new Item.Properties()));
+    public static final DeferredHolder<Item, Item> EXPOSED_SOULWOOD_ROOTS = ITEMS.register("exposed_soulwood_roots",
+            () -> new BlockItem(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS.get(), new Item.Properties()));
+    public static final DeferredHolder<Item, Item> FALLEN_SOULWOOD_BRANCHES = ITEMS.register("fallen_soulwood_branches",
+            () -> new BlockItem(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get(), new Item.Properties()) {
+                @Override
+                public int getBurnTime(ItemStack stack, @Nullable net.minecraft.world.item.crafting.RecipeType<?> recipeType) {
+                    return 100; // Same fuel value as one vanilla stick.
+                }
+            });
+    public static final DeferredHolder<Item, Item> WITHERLIGHT_LAMP = ITEMS.register("witherlight_lamp",
+            () -> new BlockItem(MaledictBlocks.WITHERLIGHT_LAMP.get(), new Item.Properties()));
+    public static final DeferredHolder<Item, Item> WITHERLIGHT_MUSHROOM = ITEMS.register("witherlight_mushroom",
+            () -> new BlockItem(MaledictBlocks.WITHERLIGHT_MUSHROOM.get(), new Item.Properties()) {
+                @Override
+                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+                    tooltip.add(Component.translatable("tooltip.maledict.witherlight_mushroom"));
+                }
+            });
+
     public static final DeferredHolder<Item, Item> TAINTED_MALIGNANT_LEAD_ORE = ITEMS.register("tainted_malignant_lead_ore",
-                                                                                               () -> new BlockItem(
-                                                                                                       MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(),
-                                                                                                       new Item.Properties()));
+            () -> new BlockItem(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), new Item.Properties()));
     public static final DeferredHolder<Item, Item> TWISTED_MALIGNANT_LEAD_ORE = ITEMS.register("twisted_malignant_lead_ore",
-                                                                                               () -> new BlockItem(
-                                                                                                       MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(),
-                                                                                                       new Item.Properties()));
+            () -> new BlockItem(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(), new Item.Properties()));
     public static final DeferredHolder<Item, Item> MALIGNANT_LEAD_FRAGMENT = ITEMS.register("malignant_lead_fragment",
-                                                                                            () -> new Item(new Item.Properties()));
+            () -> new Item(new Item.Properties()));
 
     public static final DeferredHolder<Item, Item> RAVEN_SPAWN_EGG = ITEMS.register("raven_spawn_egg", () ->
             new DeferredSpawnEggItem(MaledictEntities.RAVEN, 0x151820, 0xB80F22, new Item.Properties()));

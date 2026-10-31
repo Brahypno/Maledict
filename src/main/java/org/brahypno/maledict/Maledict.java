@@ -8,7 +8,6 @@ import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictCreativeTabs;
 import org.brahypno.maledict.registry.MaledictAttributes;
-import org.brahypno.maledict.registry.MaledictEnchantments;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictBlockEntities;
 import org.brahypno.maledict.registry.MaledictBlocks;
@@ -30,6 +29,7 @@ public final class Maledict {
         MaledictAttributes.ATTRIBUTES.register(modBus);
         MaledictEntities.ENTITY_TYPES.register(modBus);
         MaledictBlocks.BLOCKS.register(modBus);
+        org.brahypno.maledict.registry.MaledictRealmFeatures.FEATURES.register(modBus);
         MaledictBlockEntities.BLOCK_ENTITY_TYPES.register(modBus);
         MaledictItems.ITEMS.register(modBus);
         MaledictRecipeTypes.SERIALIZERS.register(modBus);

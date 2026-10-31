@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "maledict:fallen_soulwood_branches"
+    },
+    {
+      "item": "maledict:witherlight_mushroom"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "maledict:witherlight_lamp"
+  }
+}

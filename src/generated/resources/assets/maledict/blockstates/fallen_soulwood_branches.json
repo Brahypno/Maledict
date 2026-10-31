@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "maledict:block/fallen_soulwood_branches"
+      },
+      {
+        "model": "maledict:block/fallen_soulwood_branches",
+        "y": 90
+      },
+      {
+        "model": "maledict:block/fallen_soulwood_branches",
+        "y": 180
+      },
+      {
+        "model": "maledict:block/fallen_soulwood_branches",
+        "y": 270
+      }
+    ]
+  }
+}
