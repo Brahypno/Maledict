@@ -22,6 +22,7 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.registry.MaledictBlocks;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.capability.ICurio;
 import top.theillusivec4.curios.common.inventory.CurioStacksHandler;
@@ -36,6 +37,7 @@ public final class BlightedRealmTest {
     @GameTest(template = "test_empty", batch = "blighted_realm", timeoutTicks = 400)
     public static void rejectionHookBuildsAndReturnsThroughPairedWell(GameTestHelper helper) {
         FakePlayer player = player(helper.getLevel());
+        verifyGroundcoverSite(helper, player);
         BlockPos core = makeSource(helper, player);
         var inventory = CuriosApi.getCuriosInventory(player).orElseThrow(IllegalStateException::new);
         inventory.setCurios(Map.of("delusion", new CurioStacksHandler(inventory, "delusion", 1,
@@ -120,6 +122,31 @@ public final class BlightedRealmTest {
             level.setBlockAndUpdate(pos, pos.getY() <= surface
                     ? Blocks.DIRT.defaultBlockState() : Blocks.AIR.defaultBlockState());
         }
+    }
+
+    private static void verifyGroundcoverSite(GameTestHelper helper, FakePlayer player) {
+        var level = helper.getLevel();
+        BlockPos center = new BlockPos(8192, level.getMaxBuildHeight() - 31, 8192);
+        prepareRebuildSite(level, center);
+        var groundcover = new net.minecraft.world.level.block.Block[]{
+                MaledictBlocks.WITHERED_LEAF_LITTER.get(), MaledictBlocks.EXPOSED_SOULWOOD_ROOTS.get(),
+                MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get(), MaledictBlocks.WITHERLIGHT_MUSHROOM.get()};
+        for (int index = 0; index < groundcover.length; index++) {
+            level.setBlockAndUpdate(center.offset(index - 2, 0, 0), groundcover[index].defaultBlockState());
+        }
+        BlockPos lamp = center.offset(3, 0, 0);
+        level.setBlockAndUpdate(lamp, MaledictBlocks.WITHERLIGHT_LAMP.get().defaultBlockState());
+        var links = WeepingWellLinks.get(level);
+        var blocked = WellPlacement.build(level, player, center, links);
+        check(helper, (blocked.isEmpty() || blocked.get().core().pos().getX() != center.getX()
+                        || blocked.get().core().pos().getZ() != center.getZ())
+                        && level.getBlockState(lamp).is(MaledictBlocks.WITHERLIGHT_LAMP.get()),
+                "A crafted lamp still prevents a well from overwriting the site");
+        level.setBlockAndUpdate(lamp, Blocks.AIR.defaultBlockState());
+        var built = WellPlacement.build(level, player, center, links);
+        check(helper, built.isPresent() && built.get().core().pos().getX() == center.getX()
+                        && built.get().core().pos().getZ() == center.getZ(),
+                "All four naturally generated groundcover blocks allow the first well site");
     }
 
     private static void check(GameTestHelper helper, boolean result, String message) {

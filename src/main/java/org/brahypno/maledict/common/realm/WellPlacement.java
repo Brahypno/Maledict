@@ -15,6 +15,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import org.brahypno.maledict.registry.MaledictBlocks;
 
 import java.util.Optional;
 
@@ -164,6 +165,10 @@ final class WellPlacement {
                 || state.is(net.minecraftforge.common.Tags.Blocks.ORES)
                 || state.is(Blocks.CLAY) || state.is(Blocks.SNOW_BLOCK) || state.is(Blocks.ICE)
                 || state.is(Blocks.PACKED_ICE) || state.is(BlockRegistry.BLIGHTED_EARTH.get())
+                || state.is(MaledictBlocks.WITHERED_LEAF_LITTER.get())
+                || state.is(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS.get())
+                || state.is(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get())
+                || state.is(MaledictBlocks.WITHERLIGHT_MUSHROOM.get())
                 || state.is(BlockRegistry.BLIGHTED_SOIL.get()) || state.is(BlockRegistry.BLIGHTED_GROWTH.get())
                 || state.is(BlockRegistry.CLINGING_BLIGHT.get()) || state.is(BlockRegistry.TAINTED_ROCK.get())
                 || state.is(BlockRegistry.TWISTED_ROCK.get())
