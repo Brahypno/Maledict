@@ -13,6 +13,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.realm.demiurge.DemiurgeStatueEntity;
 import org.brahypno.maledict.common.raven.RavenEntity;
 import org.brahypno.maledict.common.raven.RavenFeatherEntity;
 import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowEntity;
@@ -67,6 +68,12 @@ public final class MaledictEntities {
                     .fireImmune()
                     .build("first_vicissitude"));
 
+    public static final RegistryObject<EntityType<DemiurgeStatueEntity>> DEMIURGE_STATUE =
+            ENTITY_TYPES.register("demiurge_statue", () -> EntityType.Builder
+                    .of(DemiurgeStatueEntity::new, MobCategory.MISC)
+                    .sized(5.1F, 4.2F).clientTrackingRange(12).fireImmune()
+                    .build("demiurge_statue"));
+
     public static final RegistryObject<EntityType<RavenEntity>> RAVEN =
             ENTITY_TYPES.register("raven", () -> EntityType.Builder
                     .of(RavenEntity::new, MobCategory.CREATURE)
@@ -116,6 +123,7 @@ public final class MaledictEntities {
         event.put(WEEPING_WITHER.get(), org.brahypno.maledict.common.realm.wither.WeepingWitherEntity.createAttributes().build());
         event.put(SOUL_ECHO.get(), SoulEchoEntity.createLivingAttributes().build());
         event.put(FIRST_VICISSITUDE.get(), FirstVicissitudeBossEntity.createAttributes().build());
+        event.put(DEMIURGE_STATUE.get(), DemiurgeStatueEntity.createAttributes().build());
         event.put(RAVEN.get(), RavenEntity.createAttributes().build());
     }
 

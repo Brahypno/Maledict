@@ -56,6 +56,7 @@
   "enchantment.maledict.ectoplasm.desc": "每级使射出的箭矢速度提高 8%，每发消耗背包中（等级 + 1）÷ 2 枚精魂；精魂不足时不生效。",
   "enchantment.maledict.reminiscence": "追忆",
   "enchantment.maledict.reminiscence.desc": "射出的箭矢可穿过一次方块，能够穿透的厚度为 2 + 等级 格。",
+  "entity.maledict.demiurge_statue": "巨匠之石像",
   "entity.maledict.first_vicissitude": "无常(WIP)",
   "entity.maledict.hangman_trap": "倒吊人的陷阱法阵",
   "entity.maledict.raven": "渡鸦",

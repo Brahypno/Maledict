@@ -32,6 +32,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text.void.maledict.weeping_wither.summoning",
                 "如同召唤普通凋灵，先摆出石 头的Ｔ型：横排中间放哭泣的 污秽石，两侧和下方放哭泣的 扭曲石。底层两侧留空，再在 顶上并排放置三个腐枯凋灵头 颅。击败它，便能获得腐枯之 星。");
             add("entity.maledict.weeping_wither", "腐枯凋灵");
+            add("entity.maledict.demiurge_statue", "巨匠之石像");
             add("entity.maledict.weeping_wither_skull", "腐枯凋灵之首");
             addBlock(MaledictBlocks.RELIQUARY_ALTAR, "倒悬灵柩祭坛");
             add("dimension.maledict.blighted_realm", "腐枯界");
@@ -40,7 +41,8 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES, "灵魂木折枝");
             addBlock(MaledictBlocks.WITHERLIGHT_LAMP, "枯枝蕈灯");
             add("book.maledict.realm.station", "井站残记");
-            add("book.maledict.realm.station.1", "井已经干了。我们沿旧梯下到井室，把从采掘点带回的铅碎片留在侧间。梁上的缺口与那边木架上的一样，看来先走的人也曾在这里歇脚。");
+            add("book.maledict.realm.station.1",
+                "井已经干了。我们沿旧梯下到井室，把从采掘点带回的铅碎片留在侧间。梁上的缺口与那边木架上的一样，看来先走的人也曾在这里歇脚。");
             add("book.maledict.realm.station.2", "祭址那边又没有回应。回来时，井沿的刻痕还在，折枝旁的白蕈也亮着。");
             add("book.maledict.realm.station.3", "我用捡来的枝条托起蕈簇，放在梯口。光比单独的蕈亮，至少能看清下一根横档。");
             add("book.maledict.realm.station.4", "旧侧廊塌了，我们没有再挖。剩下的碎片收进箱里，灯留在井室。若有人循着祭址的记号来到这里，先检查梯子，别径直跳下去。");
@@ -398,6 +400,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.text.void.maledict.weeping_wither.summoning",
                 "As with an ordinary Wither, arrange the stones in a T. Place Crying Tainted Rock at the center of the crossbar, with Crying Twisted Rock to either side and beneath it. Leave air beside the stem. Place three Blighted Wither Skulls across the top. Defeat it to claim a Blighted Star.");
             add("entity.maledict.weeping_wither", "Weeping Wither");
+            add("entity.maledict.demiurge_statue", "Demiurge Statue");
             add("entity.maledict.weeping_wither_skull", "Weeping Wither Skull");
             addBlock(MaledictBlocks.RELIQUARY_ALTAR, "Inverted Reliquary Altar");
             add("dimension.maledict.blighted_realm", "The Blighted Realm");
@@ -406,18 +409,26 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES, "Fallen Soulwood Branches");
             addBlock(MaledictBlocks.WITHERLIGHT_LAMP, "Witherlight Branch Lamp");
             add("book.maledict.realm.station", "Well Station Notes");
-            add("book.maledict.realm.station.1", "The well is dry. We took the old ladder down and stored the lead fragments from the dig in the side room. The beams bear the same notches as the timber frame there. Others must have rested here before us.");
-            add("book.maledict.realm.station.2", "Still no answer at the rite site. Back here, the marks on the rim remain; pale mushrooms glow by the branches.");
-            add("book.maledict.realm.station.3", "I made a stand of fallen twigs for a cluster and set it by the ladder. Brighter than a lone mushroom. Enough to see the next rung.");
-            add("book.maledict.realm.station.4", "The old side passage collapsed. We left it alone. The remaining fragments are in the chest; the lamps stay below. If you followed the rite site's marks here, check the ladder first. Do not jump straight down.");
+            add("book.maledict.realm.station.1",
+                "The well is dry. We took the old ladder down and stored the lead fragments from the dig in the side room. The beams bear the same notches as the timber frame there. Others must have rested here before us.");
+            add("book.maledict.realm.station.2",
+                "Still no answer at the rite site. Back here, the marks on the rim remain; pale mushrooms glow by the branches.");
+            add("book.maledict.realm.station.3",
+                "I made a stand of fallen twigs for a cluster and set it by the ladder. Brighter than a lone mushroom. Enough to see the next rung.");
+            add("book.maledict.realm.station.4",
+                "The old side passage collapsed. We left it alone. The remaining fragments are in the chest; the lamps stay below. If you followed the rite site's marks here, check the ladder first. Do not jump straight down.");
             addBlock(MaledictBlocks.WITHERLIGHT_MUSHROOM, "Witherlight Mushroom");
             add("tooltip.maledict.witherlight_mushroom", "Gives off a faint light. Bone meal spreads it onto nearby empty ground.");
             add("book.maledict.realm.rite", "Notes from a Failed Rite");
-            add("book.maledict.realm.rite.1", "The poles have been taken down. The stone beneath the base is still warm, but the last spirit gave no answer. We left the materials for another attempt tomorrow.");
-            add("book.maledict.realm.rite.2", "Back again. The mark by the well remains, though roots have entered the stonework. Pale mushrooms grow beside the fallen branches. I took a few with me.");
+            add("book.maledict.realm.rite.1",
+                "The poles have been taken down. The stone beneath the base is still warm, but the last spirit gave no answer. We left the materials for another attempt tomorrow.");
+            add("book.maledict.realm.rite.2",
+                "Back again. The mark by the well remains, though roots have entered the stonework. Pale mushrooms grow beside the fallen branches. I took a few with me.");
             add("book.maledict.realm.dig", "Notes from an Abandoned Dig");
-            add("book.maledict.realm.dig.1", "We followed the vein as before. The place we marked yielded the same dull, heavy fragments. The crate says gold. It is full of lead.");
-            add("book.maledict.realm.dig.2", "The supports are splitting. We left our tools in the shallow pit and followed the river back to the well. Whoever comes after us can still take that road.");
+            add("book.maledict.realm.dig.1",
+                "We followed the vein as before. The place we marked yielded the same dull, heavy fragments. The crate says gold. It is full of lead.");
+            add("book.maledict.realm.dig.2",
+                "The supports are splitting. We left our tools in the shallow pit and followed the river back to the well. Whoever comes after us can still take that road.");
             add("biome.maledict.blighted_wastes", "Blighted Wastes");
             addBlock(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE, "Tainted Malignant Lead Ore");
             addBlock(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE, "Twisted Malignant Lead Ore");
