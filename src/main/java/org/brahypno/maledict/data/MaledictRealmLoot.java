@@ -54,6 +54,8 @@ final class MaledictRealmLoot {
                 .withPool(LootPool.lootPool().setRolls(UniformGenerator.between(3, 5))
                         .add(stack(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 3, 8).setWeight(60))
                         .add(stack(ItemRegistry.MALIGNANT_LEAD.get(), 1, 3).setWeight(25))
+                        .add(stack(MaledictItems.CRYING_TWISTED_ROCK.get(), 1, 3).setWeight(25))
+                        .add(stack(MaledictItems.CRYING_TAINTED_ROCK.get(), 1, 3).setWeight(25))
                         .add(stack(Items.NETHERITE_SCRAP, 1, 2).setWeight(15)))
                 .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
                         .when(LootItemRandomChanceCondition.randomChance(0.05F))
