@@ -11,6 +11,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.phys.Vec3;
+import com.sammy.malum.registry.common.MobEffectRegistry;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.item.ItemStack;
@@ -105,10 +108,47 @@ public final class DemiurgeAwakeningTest {
             verifyBodyConnections(root, animation, ground, names.size());
             verifyContinuousMotion(animation, ground, names.size());
             verifySelfAvoidance(root, animation, ground, names.size());
+            for (var attack : DemiurgeAttack.values()) {
+                if (attack == DemiurgeAttack.NONE) continue;
+                var clip = animation.getAsJsonObject("attacks").getAsJsonObject(attack.name().toLowerCase(java.util.Locale.ROOT));
+                var keys = clip.getAsJsonArray("frames");
+                assertEquals(attack.duration + 1, keys.size());
+                assertEquals(attack.release, clip.get("release").getAsInt());
+                assertEquals(attack.recovery, clip.get("recovery").getAsInt());
+                for (int tick = 0; tick <= attack.duration; tick++) {
+                    var transform = frame(keys, tick, head);
+                    assertTrue(position(transform).y > 4.3, "All casts retain the raised forebody");
+                    if (attack == DemiurgeAttack.CHARGE) {
+                        var forward = rotation(transform).transform(new Vector3f(0, 0, 1));
+                        assertTrue(forward.y >= 0, "Charge never pitches the face down");
+                    }
+                }
+                if (attack == DemiurgeAttack.ROAR) {
+                    var opening = rotation(frame(keys, 40, head)).conjugate().mul(rotation(frame(keys, 40, jaw)));
+                    assertTrue(opening.angle() > .7, "Rain roar must visibly open the jaw");
+                }
+            }
+            var combatPose = DemiurgeRig.INSTANCE.pose();
+            combatPose.sample(200, 0, DemiurgeAttack.LASER, 40, Vec3.ZERO, 0, new DemiurgeTrail()::sample);
+            assertEquals(.875, combatPose.eye(0, Vec3.ZERO, 0).distanceTo(combatPose.eye(1, Vec3.ZERO, 0)), .00001,
+                    "The beams originate from the two separately authored eyes");
+            assertEquals(400, DemiurgeDifficulty.maxHealth(net.minecraft.world.Difficulty.EASY));
+            assertEquals(600, DemiurgeDifficulty.maxHealth(net.minecraft.world.Difficulty.NORMAL));
+            assertEquals(800, DemiurgeDifficulty.maxHealth(net.minecraft.world.Difficulty.HARD));
+            try (var spirits = getClass().getResourceAsStream("/data/maledict/spirit_data/entity/demiurge_statue.json")) {
+                assertNotNull(spirits);
+                var spiritData = JsonParser.parseReader(new InputStreamReader(spirits, StandardCharsets.UTF_8)).getAsJsonObject();
+                var counts = new java.util.HashMap<String, Integer>();
+                for (var value : spiritData.getAsJsonArray("spirits")) {
+                    var entry = value.getAsJsonObject();
+                    counts.put(entry.get("spirit").getAsString(), entry.get("count").getAsInt());
+                }
+                assertEquals(java.util.Map.of("sacred", 6, "wicked", 7, "eldritch", 8, "umbral", 3), counts);
+            }
         }
     }
 
-    @GameTest(template = "test_empty", batch = "demiurge_awakening", timeoutTicks = 420)
+    @GameTest(template = "test_empty", batch = "demiurge_awakening", timeoutTicks = 1000)
     public static void starIsConsumedOnceAndTheUncoilingSurvivesReload(GameTestHelper helper) {
         var level = helper.getLevel();
         var player = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "DemiurgeTest"));
@@ -118,6 +158,55 @@ public final class DemiurgeAwakeningTest {
         statue.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(2, 12, 2)));
         statue.setNoGravity(true);
         level.addFreshEntity(statue);
+        helper.assertTrue(statue.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR) == 20
+                        && statue.getHealth() == DemiurgeDifficulty.maxHealth(level.getDifficulty()),
+                "The spawned statue must receive 20 armour and its difficulty's authoritative health pool");
+        var spiritDrops = com.sammy.malum.core.listeners.SpiritDataReloadListener.SPIRIT_DATA.get(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("maledict", "demiurge_statue"));
+        helper.assertTrue(spiritDrops != null && spiritDrops.totalSpirits == 24 && spiritDrops.droppedSpirits.size() == 4,
+                "Malum's live reload listener must load all four spirit types, totalling 24 spirits");
+        for (var difficulty : net.minecraft.world.Difficulty.values()) {
+            double base = 7;
+            float unit = DemiurgeDifficulty.damage(1, difficulty);
+            helper.assertTrue(Math.abs(DemiurgeDifficulty.damage(base, difficulty) - unit * base) < .00001,
+                    "Changing base damage must scale proportionally in every difficulty");
+            var healthFixture = MaledictEntities.DEMIURGE_STATUE.get().create(level);
+            var tag = healthFixture.saveWithoutId(new CompoundTag());
+            tag.putInt("CombatDifficulty", difficulty.getId());
+            healthFixture.load(tag);
+            healthFixture.setPos(statue.position().add(32, 0, 0));
+            level.addFreshEntity(healthFixture);
+            helper.assertTrue(healthFixture.getHealth() == DemiurgeDifficulty.maxHealth(difficulty)
+                            && healthFixture.getMaxHealth() == DemiurgeDifficulty.maxHealth(difficulty),
+                    "The ledger and vanilla attribute must agree on the captured difficulty health: " + difficulty);
+            healthFixture.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+        }
+        var originalDamage = statue.damageSources().mobAttack(statue);
+        var scaledDamage = DemiurgeDifficulty.source(originalDamage);
+        helper.assertTrue(!scaledDamage.scalesWithDifficulty() && scaledDamage.typeHolder().equals(originalDamage.typeHolder())
+                        && scaledDamage.getEntity() == statue && scaledDamage.getDirectEntity() == statue,
+                "Difficulty must be applied exactly once while retaining source tags and boss attribution");
+        var reducedTarget = new ContactCow(level);
+        reducedTarget.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);
+        reducedTarget.setPos(statue.position().add(32, 0, 0));
+        reducedTarget.damageMultiplier = .25F;
+        level.addFreshEntity(reducedTarget);
+        for (var difficulty : net.minecraft.world.Difficulty.values()) {
+            reducedTarget.setHealth(100);
+            reducedTarget.invulnerableTime = 0;
+            reducedTarget.attempts = 0;
+            float expected = DemiurgeDifficulty.damage(8, difficulty) * .25F;
+            DemiurgeDifficulty.hurt(reducedTarget, originalDamage, 8, difficulty);
+            helper.assertTrue(Math.abs(reducedTarget.getHealth() - (100 - expected)) < .0001
+                            && reducedTarget.attempts == (expected > 0 ? 1 : 0),
+                    "Every difficulty must stop after the first reduced hit without compensating: " + difficulty
+                            + ", health=" + reducedTarget.getHealth() + ", attempts=" + reducedTarget.attempts);
+            DemiurgeDifficulty.hurt(reducedTarget, originalDamage, 8, difficulty);
+            helper.assertTrue(Math.abs(reducedTarget.getHealth() - (100 - expected)) < .0001
+                            && reducedTarget.attempts == (expected > 0 ? 1 : 0),
+                    "The active vanilla i-frame window must block another probe run: " + difficulty);
+        }
+        reducedTarget.discard();
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STICK, 2));
         statue.mobInteract(player, InteractionHand.MAIN_HAND);
         helper.assertTrue(statue.awakeningAge(0) == -1, "An ordinary item must not awaken the statue");
@@ -129,6 +218,10 @@ public final class DemiurgeAwakeningTest {
         helper.assertTrue(player.getMainHandItem().getCount() == 2 && player.getOffhandItem().getCount() == 2
                         && statue.awakeningAge(0) == 0,
                 "First use consumes exactly one; repeat and offhand use cannot consume again");
+        helper.runAtTickTime(10, () -> helper.assertTrue(
+                !level.getEntitiesOfClass(DemiurgeTearEntity.class, current[0].getBoundingBox().inflate(15),
+                        tear -> tear.getOwner() == current[0]).isEmpty(),
+                "Rain must start during awakening, before the roar and before combat AI becomes available"));
         helper.runAtTickTime(35, () -> {
             var old = current[0];
             float age = old.awakeningAge(0);
@@ -184,12 +277,28 @@ public final class DemiurgeAwakeningTest {
         net.minecraft.world.phys.Vec3[] patrolStart = new net.minecraft.world.phys.Vec3[1];
         BlockPos[] wall = new BlockPos[1];
         float[] previousYaw = new float[1];
+        ContactCow[] combatTarget = new ContactCow[1];
+        var observed = java.util.EnumSet.noneOf(DemiurgeAttack.class);
+        boolean[] firstCharge = {true};
         helper.onEachTick(() -> {
             if (patrolStart[0] != null && !current[0].isRemoved()) {
                 float yaw = current[0].getYRot();
                 helper.assertTrue(Math.abs(net.minecraft.util.Mth.wrapDegrees(yaw - previousYaw[0])) <= 2.01F,
                         "Patrol must turn in a broad arc, at most two degrees per tick");
                 previousYaw[0] = yaw;
+            }
+            var awake = current[0];
+            if (combatTarget[0] != null) {
+                observed.add(awake.attack());
+                if (firstCharge[0] && awake.attack() == DemiurgeAttack.CHARGE && awake.attack().active(awake.attackAge(0))) {
+                    // Move the same target between head and tail while preserving
+                    // vanilla i-frames. Overlapping parts must share one damage attempt.
+                    int bone = ((int) awake.attackAge(0) & 1) == 0 ? 14 : 25;
+                    var bounds = awake.getParts()[bone].getBoundingBox();
+                    var center = bounds.getCenter();
+                    combatTarget[0].setPos(center.x, bounds.minY, center.z);
+                    combatTarget[0].setDeltaMovement(Vec3.ZERO);
+                }
             }
         });
         helper.runAtTickTime(145, () -> {
@@ -235,12 +344,138 @@ public final class DemiurgeAwakeningTest {
             enemy.setNoAi(true);
             awake.setTarget(enemy);
             helper.assertTrue(!awake.canPatrol() && !new DemiurgePatrolGoal(awake).canUse(),
-                    "A live enemy excludes idle patrol without adding a combat attack");
+                    "A live enemy excludes idle patrol");
             enemy.discard();
+            patrolStart[0] = null;
+            // Restore into open air above the patrol fixtures. The old ground
+            // walls must not obstruct an unrelated autonomous casting check.
+            var combatSave = awake.saveWithoutId(new CompoundTag());
+            Vec3 combatOrigin = new Vec3(awake.getX(), level.getMaxBuildHeight() - 40, awake.getZ());
             awake.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+            awake = MaledictEntities.DEMIURGE_STATUE.get().create(level);
+            awake.load(combatSave);
+            awake.setPos(combatOrigin);
+            level.addFreshEntity(awake);
+            current[0] = awake;
+            awake.setTarget(null);
+            awake.getNavigation().stop();
+            awake.setNoGravity(true);
+            awake.setDeltaMovement(Vec3.ZERO);
+            awake.setYRot(0);
+            awake.updateParts();
+            combatTarget[0] = verifyLaserAndRoofPiercingRain(helper, awake);
+            combatTarget[0].getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000);
+            combatTarget[0].setHealth(1000);
+            combatTarget[0].removeAllEffects();
+            combatTarget[0].attempts = 0;
+            combatTarget[0].lastAttempt = Long.MIN_VALUE;
+            combatTarget[0].minimumInterval = Long.MAX_VALUE;
+            combatTarget[0].damageLog.clear();
+            awake.setTarget(combatTarget[0]);
+            awake.beginAttack(DemiurgeAttack.CHARGE, combatTarget[0]);
+        });
+        helper.runAtTickTime(418, () -> {
+            var awake = current[0];
+            float perHit = DemiurgeDifficulty.damage(org.brahypno.maledict.config.MaledictConfig.DEMIURGE_CHARGE_DAMAGE.get(), level.getDifficulty());
+            float hits = (1000 - combatTarget[0].getHealth()) / perHit;
+            helper.assertTrue(hits >= 2 && hits <= 3,
+                    "Sustained head/tail contact may damage again after vanilla i-frames, not once per cast: "
+                            + combatTarget[0].getHealth() + ", damage=" + perHit + ", attempts=" + combatTarget[0].attempts
+                            + ", interval=" + combatTarget[0].minimumInterval + ", log=" + combatTarget[0].damageLog);
+            helper.assertTrue(combatTarget[0].minimumInterval >= 10 && combatTarget[0].attempts <= 3,
+                    "Overlapping body parts must not spam hurt during the i-frame window: attempts="
+                            + combatTarget[0].attempts + ", minimumInterval=" + combatTarget[0].minimumInterval);
+            firstCharge[0] = false;
+            combatTarget[0].setPos(awake.position().add(0, 4, 8));
+            combatTarget[0].setDeltaMovement(Vec3.ZERO);
+        });
+        helper.runAtTickTime(900, () -> {
+            helper.assertTrue(observed.containsAll(java.util.List.of(DemiurgeAttack.CHARGE, DemiurgeAttack.LASER, DemiurgeAttack.ROAR)),
+                    "The live combat goal must autonomously enter all three attacks: " + observed
+                            + ", target=" + current[0].getTarget() + ", alive=" + combatTarget[0].isAlive()
+                            + ", distance=" + current[0].distanceTo(combatTarget[0])
+                            + ", lineOfSight=" + current[0].hasLineOfSight(combatTarget[0]));
+            combatTarget[0].discard();
+            current[0].remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
             patrolChunks.forEach(chunk -> level.setChunkForced(chunk.x, chunk.z, false));
             helper.succeed();
         });
+    }
+
+    private static ContactCow verifyLaserAndRoofPiercingRain(GameTestHelper helper, DemiurgeStatueEntity statue) {
+        var level = helper.getLevel();
+        var target = new ContactCow(level);
+        target.setNoAi(true);
+        target.setNoGravity(true);
+        Vec3 eye = statue.eyeOrigin(0);
+        target.setPos(eye.add(0, -target.getBbHeight() / 2, 8));
+        level.addFreshEntity(target);
+        statue.beginAttack(DemiurgeAttack.LASER, target);
+        var wall = new java.util.ArrayList<BlockPos>();
+        // The patrol can finish beyond its original cleared floor. Reserve an
+        // unobstructed beam corridor before installing the deliberate test wall.
+        BlockPos entrance = BlockPos.containing(eye);
+        for (int x = -3; x <= 3; x++) for (int y = -2; y <= 2; y++) for (int z = 0; z <= 11; z++) {
+            level.setBlockAndUpdate(entrance.offset(x, y, z), Blocks.AIR.defaultBlockState());
+        }
+        BlockPos center = BlockPos.containing(eye.add(0, 0, 4));
+        for (int x = -3; x <= 3; x++) for (int y = -2; y <= 2; y++) {
+            var pos = center.offset(x, y, 0);
+            level.setBlockAndUpdate(pos, Blocks.BEDROCK.defaultBlockState());
+            wall.add(pos);
+        }
+        float health = target.getHealth();
+        float laserDamage = DemiurgeDifficulty.damage(org.brahypno.maledict.config.MaledictConfig.DEMIURGE_LASER_DAMAGE.get(), level.getDifficulty());
+        float rainDamage = DemiurgeDifficulty.damage(org.brahypno.maledict.config.MaledictConfig.DEMIURGE_RAIN_DAMAGE.get(), level.getDifficulty());
+        statue.fireLasers();
+        helper.assertTrue(target.getHealth() == health && !target.hasEffect(MobEffectRegistry.SILENCED.get()),
+                "A solid wall must block BOTH laser damage and silence");
+        wall.forEach(pos -> level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState()));
+        statue.fireLasers();
+        helper.assertTrue(Math.abs(target.getHealth() - (health - laserDamage)) < .00001 && target.hasEffect(MobEffectRegistry.SILENCED.get()),
+                "An unobstructed twin-eye hit deals one scaled pulse and applies Malum silence: health=" + target.getHealth()
+                        + ", previous=" + health + ", silence=" + target.hasEffect(MobEffectRegistry.SILENCED.get())
+                        + ", eye=" + eye + ", end=" + statue.laserEnd(eye) + ", target=" + target.getBoundingBox()
+                        + ", direction=" + statue.beamDirection());
+        statue.finishAttack();
+        target.invulnerableTime = 0;
+        target.setPos(target.position().add(8, 0, 0));
+        BlockPos roof = BlockPos.containing(target.position().add(0, 3, 0));
+        level.setBlockAndUpdate(roof, Blocks.BEDROCK.defaultBlockState());
+        var tear = MaledictEntities.DEMIURGE_TEAR.get().create(level);
+        tear.setOwner(statue);
+        tear.setPos(target.position().add(0, 5, 0));
+        tear.setDeltaMovement(0, -DemiurgeTearEntity.FALL_SPEED, 0);
+        level.addFreshEntity(tear);
+        for (int tick = 0; tick < 8 && !tear.isRemoved(); tick++) tear.tick();
+        helper.assertTrue(tear.isRemoved() && Math.abs(target.getHealth() - (health - laserDamage - rainDamage)) < .00001
+                        && level.getBlockState(roof).is(Blocks.BEDROCK),
+                "A falling tear must pass THROUGH an intact roof and deal one scaled hit to the target below");
+        level.setBlockAndUpdate(roof, Blocks.AIR.defaultBlockState());
+        target.setPos(statue.position().add(0, 4, 8));
+        target.setDeltaMovement(Vec3.ZERO);
+        return target;
+    }
+
+    private static final class ContactCow extends Cow {
+        private int attempts;
+        private long lastAttempt = Long.MIN_VALUE;
+        private long minimumInterval = Long.MAX_VALUE;
+        private final java.util.List<String> damageLog = new java.util.ArrayList<>();
+        private float damageMultiplier = 1;
+
+        private ContactCow(net.minecraft.world.level.Level level) { super(EntityType.COW, level); }
+
+        @Override public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+            damageLog.add(level().getGameTime() + ":" + source.getMsgId() + ":" + amount + ":iframes=" + invulnerableTime);
+            if (source.getEntity() instanceof DemiurgeStatueEntity) {
+                long now = level().getGameTime();
+                if (lastAttempt != Long.MIN_VALUE) minimumInterval = Math.min(minimumInterval, now - lastAttempt);
+                lastAttempt = now;
+                attempts++;
+            }
+            return super.hurt(source, amount * damageMultiplier);
+        }
     }
 
     private static BlockPos verifyContactDestruction(GameTestHelper helper, DemiurgeStatueEntity statue) {

@@ -83,6 +83,8 @@ public final class MaledictClientSetup {
         event.registerEntityRenderer(MaledictEntities.RAVEN_FEATHER.get(), RavenFeatherRenderer::new);
         event.registerEntityRenderer(MaledictEntities.FIRST_VICISSITUDE.get(), FirstVicissitudeBossRenderer::new);
         event.registerEntityRenderer(MaledictEntities.DEMIURGE_STATUE.get(), DemiurgeStatueRenderer::new);
+        event.registerEntityRenderer(MaledictEntities.DEMIURGE_TEAR.get(),
+                org.brahypno.maledict.client.realm.demiurge.DemiurgeTearRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_LIGHT_ORB.get(), VicissitudeLightOrbRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SPIRIT_BOLT.get(), VicissitudeSpiritBoltRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SCYTHE.get(), VicissitudeScytheRenderer::new);

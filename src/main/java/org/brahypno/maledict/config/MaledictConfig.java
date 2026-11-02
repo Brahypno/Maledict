@@ -32,9 +32,26 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.IntValue HANGMAN_TRAP_LIFETIME;
     public static final ForgeConfigSpec.DoubleValue HANGMAN_TRAP_RADIUS;
     public static final ForgeConfigSpec.DoubleValue OMEN_MINIMUM_SHARE;
+    public static final ForgeConfigSpec.DoubleValue DEMIURGE_CHARGE_DAMAGE;
+    public static final ForgeConfigSpec.DoubleValue DEMIURGE_LASER_DAMAGE;
+    public static final ForgeConfigSpec.DoubleValue DEMIURGE_RAIN_DAMAGE;
+    public static final ForgeConfigSpec.DoubleValue DEMIURGE_EASY_DAMAGE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DEMIURGE_NORMAL_DAMAGE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DEMIURGE_HARD_DAMAGE_MULTIPLIER;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+        builder.push("demiurge");
+        DEMIURGE_CHARGE_DAMAGE = builder.comment("Base charge damage before the world difficulty multiplier.")
+                .defineInRange("chargeDamage", 1.0D, 0.0D, 10000.0D);
+        DEMIURGE_LASER_DAMAGE = builder.comment("Base damage per laser pulse before the world difficulty multiplier.")
+                .defineInRange("laserDamage", 1.0D, 0.0D, 10000.0D);
+        DEMIURGE_RAIN_DAMAGE = builder.comment("Base damage per tear before the world difficulty multiplier.")
+                .defineInRange("rainDamage", 1.0D, 0.0D, 10000.0D);
+        DEMIURGE_EASY_DAMAGE_MULTIPLIER = builder.defineInRange("easyDamageMultiplier", 0.5D, 0.0D, 100.0D);
+        DEMIURGE_NORMAL_DAMAGE_MULTIPLIER = builder.defineInRange("normalDamageMultiplier", 1.0D, 0.0D, 100.0D);
+        DEMIURGE_HARD_DAMAGE_MULTIPLIER = builder.defineInRange("hardDamageMultiplier", 1.5D, 0.0D, 100.0D);
+        builder.pop();
         builder.push("transcendOmen");
         OMEN_MINIMUM_SHARE = builder.comment("Minimum share per active reverse route. Total shares may exceed 100%.")
                 .defineInRange("minimumShare", 0.01D, 0.0D, 1.0D);

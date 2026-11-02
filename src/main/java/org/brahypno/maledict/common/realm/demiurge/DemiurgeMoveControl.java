@@ -15,7 +15,7 @@ final class DemiurgeMoveControl extends MoveControl {
     @Override
     public void tick() {
         safeYaw = statue.getYRot();
-        if (hasWanted() && statue.canPatrol()) {
+        if (hasWanted() && statue.canNavigate()) {
             float targetYaw = (float) Math.toDegrees(Math.atan2(statue.getX() - wantedX, wantedZ - statue.getZ()));
             var turn = DemiurgePatrolSteering.steer(statue.position(), statue.getYRot(), targetYaw,
                     statue.horizontalStep(), statue.patrolBody());

@@ -74,6 +74,13 @@ public final class MaledictEntities {
                     .sized(5.1F, 4.2F).clientTrackingRange(12).fireImmune()
                     .build("demiurge_statue"));
 
+    public static final RegistryObject<EntityType<org.brahypno.maledict.common.realm.demiurge.DemiurgeTearEntity>> DEMIURGE_TEAR =
+            ENTITY_TYPES.register("demiurge_tear", () -> EntityType.Builder
+                    .<org.brahypno.maledict.common.realm.demiurge.DemiurgeTearEntity>of(
+                            org.brahypno.maledict.common.realm.demiurge.DemiurgeTearEntity::new, MobCategory.MISC)
+                    .sized(.2F, .6F).clientTrackingRange(10).updateInterval(1).noSave().noSummon().fireImmune()
+                    .build("demiurge_tear"));
+
     public static final RegistryObject<EntityType<RavenEntity>> RAVEN =
             ENTITY_TYPES.register("raven", () -> EntityType.Builder
                     .of(RavenEntity::new, MobCategory.CREATURE)
