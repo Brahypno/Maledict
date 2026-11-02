@@ -11,7 +11,7 @@ import net.minecraft.util.Mth;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.realm.demiurge.DemiurgeStatueEntity;
 
-/** One opaque, backface-culled pass; particle and awakening effects remain undecided. */
+/** One opaque, backface-culled pass with the Blender-authored awakening poses. */
 public final class DemiurgeStatueRenderer extends EntityRenderer<DemiurgeStatueEntity> {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "textures/entity/demiurge_statue.png");
@@ -28,9 +28,10 @@ public final class DemiurgeStatueRenderer extends EntityRenderer<DemiurgeStatueE
                        PoseStack stack, MultiBufferSource buffers, int light) {
         if (!entity.isInvisible()) {
             stack.pushPose();
-            stack.mulPose(Axis.YP.rotationDegrees(-Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot())));
+            float heading = Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
+            stack.mulPose(Axis.YP.rotationDegrees(-heading));
             // entityCutout retains default CULL; no duplicate reverse faces or full glow pass.
-            model.render(stack, buffers.getBuffer(RenderType.entityCutout(TEXTURE)), light);
+            model.render(stack, buffers.getBuffer(RenderType.entityCutout(TEXTURE)), light, entity, partialTick, heading);
             stack.popPose();
         }
         super.render(entity, yaw, partialTick, stack, buffers, light);

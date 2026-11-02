@@ -33,6 +33,7 @@ public final class MaledictLanguage extends LanguageProvider {
                 "如同召唤普通凋灵，先摆出石 头的Ｔ型：横排中间放哭泣的 污秽石，两侧和下方放哭泣的 扭曲石。底层两侧留空，再在 顶上并排放置三个腐枯凋灵头 颅。击败它，便能获得腐枯之 星。");
             add("entity.maledict.weeping_wither", "腐枯凋灵");
             add("entity.maledict.demiurge_statue", "巨匠之石像");
+            add("sounds.maledict.entity.demiurge.awakening_roar", "巨匠之石像怒吼");
             add("entity.maledict.weeping_wither_skull", "腐枯凋灵之首");
             addBlock(MaledictBlocks.RELIQUARY_ALTAR, "倒悬灵柩祭坛");
             add("dimension.maledict.blighted_realm", "腐枯界");
@@ -401,6 +402,7 @@ public final class MaledictLanguage extends LanguageProvider {
                 "As with an ordinary Wither, arrange the stones in a T. Place Crying Tainted Rock at the center of the crossbar, with Crying Twisted Rock to either side and beneath it. Leave air beside the stem. Place three Blighted Wither Skulls across the top. Defeat it to claim a Blighted Star.");
             add("entity.maledict.weeping_wither", "Weeping Wither");
             add("entity.maledict.demiurge_statue", "Demiurge Statue");
+            add("sounds.maledict.entity.demiurge.awakening_roar", "Demiurge Statue roars");
             add("entity.maledict.weeping_wither_skull", "Weeping Wither Skull");
             addBlock(MaledictBlocks.RELIQUARY_ALTAR, "Inverted Reliquary Altar");
             add("dimension.maledict.blighted_realm", "The Blighted Realm");

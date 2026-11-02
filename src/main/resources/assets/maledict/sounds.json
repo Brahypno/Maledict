@@ -1,4 +1,8 @@
 {
+  "entity.demiurge.awakening_roar": {
+    "subtitle": "sounds.maledict.entity.demiurge.awakening_roar",
+    "sounds": ["maledict:entity/demiurge/awakening_roar"]
+  },
   "entity.raven.ambient": {
     "subtitle": "sounds.maledict.entity.raven.ambient",
     "sounds": [

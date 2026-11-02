@@ -23,6 +23,9 @@ public final class MaledictSounds {
     public static final DeferredRegister<SoundEvent> SOUND_EVENTS =
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, Maledict.MODID);
 
+    public static final RegistryObject<SoundEvent> DEMIURGE_AWAKENING_ROAR =
+            register("entity.demiurge.awakening_roar");
+
     /** 一阶段（高位圣像）：人声圣咏，126 秒，不循环。 */
     public static final RegistryObject<SoundEvent> VICISSITUDE_MUSIC_PHASE_ONE =
             register("music.vicissitude.phase_one");

@@ -298,6 +298,7 @@
   "message.maledict.vicissitude_rite.occupied": "附近已有同类存在，无法再次启动召唤仪式。",
   "message.maledict.vicissitude_rite.warning": "仪式已聆听你的呼唤。然而，回应你的存在必不听命于你。",
   "message.maledict.well_unavailable": "彼端无处落足，深井将你拒回。",
+  "sounds.maledict.entity.demiurge.awakening_roar": "巨匠之石像怒吼",
   "sounds.maledict.entity.raven.ambient": "渡鸦鸣叫",
   "sounds.maledict.entity.raven.death": "渡鸦死亡",
   "sounds.maledict.entity.raven.fly": "渡鸦振翅",

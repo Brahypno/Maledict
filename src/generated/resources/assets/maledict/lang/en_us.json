@@ -298,6 +298,7 @@
   "message.maledict.vicissitude_rite.occupied": "A being of the same kind is already nearby. The summoning ritual cannot begin.",
   "message.maledict.vicissitude_rite.warning": "The ritual has heard your call. What answers will not obey you.",
   "message.maledict.well_unavailable": "There is no safe passage beyond. The well rejects you.",
+  "sounds.maledict.entity.demiurge.awakening_roar": "Demiurge Statue roars",
   "sounds.maledict.entity.raven.ambient": "Raven calls",
   "sounds.maledict.entity.raven.death": "Raven dies",
   "sounds.maledict.entity.raven.fly": "Raven flaps",

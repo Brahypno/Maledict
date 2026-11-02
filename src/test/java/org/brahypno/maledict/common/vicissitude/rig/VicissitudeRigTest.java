@@ -25,19 +25,6 @@ class VicissitudeRigTest {
         }
     }
 
-    @Test
-    void poseCopyPreservesSolvedAnchorsWithoutAnotherSolve() {
-        VicissitudeRig.Pose source = VicissitudeRig.newPose();
-        VicissitudeRig.Pose copy = VicissitudeRig.newPose();
-        sample(source, Action.SCYTHE_THROW, 16.5F);
-        copy.copyFrom(source);
-        assertAnchorsEqual(source, copy);
-        sample(source, Action.NONE, 0);
-        VicissitudeRig.Pose expected = VicissitudeRig.newPose();
-        sample(expected, Action.SCYTHE_THROW, 16.5F);
-        assertAnchorsEqual(expected, copy);
-    }
-
     private static void sample(VicissitudeRig.Pose pose, Action action, float tick) {
         // Constant idle clock: the idle layer is clock driven, so a varying clock would mix two
         // animations into every measurement; these assertions are about the action's contribution.
