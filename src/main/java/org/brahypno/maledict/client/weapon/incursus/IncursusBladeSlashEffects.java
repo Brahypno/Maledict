@@ -9,6 +9,7 @@ import org.brahypno.maledict.network.IncursusSlashPacket;
 import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.systems.particle.data.GenericParticleData;
 import team.lodestar.lodestone.systems.particle.data.spin.SpinParticleData;
+import team.lodestar.lodestone.systems.particle.render_types.LodestoneWorldParticleRenderType;
 
 /** 神侵恶刃的水平腰环；绕 Y 轴排布，不使用会倾斜刀光平面的 slashAngle。 */
 public final class IncursusBladeSlashEffects {
@@ -24,10 +25,18 @@ public final class IncursusBladeSlashEffects {
             double yaw = i * Math.PI * 2.0 / RING_SEGMENTS;
             Vec3 direction = new Vec3(Math.sin(yaw), 0, Math.cos(yaw));
             Vec3 position = packet.center().add(direction.scale(RING_RADIUS * packet.scale()));
-            var effect = SlashParticleEffects.spawnSlashParticle(level, position, SpiritTypeRegistry.UMBRAL_SPIRIT);
+            // 只借幽影配色：精魂构建器会强制用 RGB 亮度作透明度，与钠的透明像素补色冲突。
+            var effect = SlashParticleEffects.spawnSlashParticle(level, position,
+                    SpiritTypeRegistry.UMBRAL_SPIRIT.createColorData().build());
             effect.getBuilder()
+                    .setRenderType(LodestoneWorldParticleRenderType.TRANSPARENT)
+                    // 保留幽影构建器原有的寿命、透明度与尺寸曲线调整。
+                    .multiplyLifetime(2.5f)
+                    .modifyData(builder -> builder.getParticleOptions().transparencyData,
+                            data -> data.multiplyValue(4.0f).multiplyCoefficient(1.5f))
                     .setScaleData(GenericParticleData.create(
-                            RandomHelper.randomBetween(level.random, 2.0f, 3.0f) * packet.scale()).build())
+                            RandomHelper.randomBetween(level.random, 2.0f, 3.0f) * packet.scale())
+                            .build().multiplyCoefficient(1.5f))
                     // PointyDirectional 已由 direction 设置水平朝向；局部 X 自旋会把腰环翻到眼前。
                     .setSpinData(SpinParticleData.create(0).build())
                     .setBehavior(new PointyDirectionalBehaviorComponent(direction))
