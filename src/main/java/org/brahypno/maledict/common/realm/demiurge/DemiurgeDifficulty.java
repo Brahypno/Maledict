@@ -7,7 +7,9 @@ import org.brahypno.changelib.DamageHelper.DamageOptions;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.config.MaledictConfig;
 
-/** Configurable proportional damage; the same final amount applies to players and other living targets. */
+/**
+ * Configurable proportional damage; the same final amount applies to players and other living targets.
+ */
 public final class DemiurgeDifficulty {
     public static float maxHealth(Difficulty difficulty) {
         return switch (difficulty) {
@@ -30,7 +32,8 @@ public final class DemiurgeDifficulty {
     public static DamageSource source(DamageSource original) {
         // Player#hurt would otherwise multiply our already-scaled amount again.
         return new DamageSource(original.typeHolder(), original.getDirectEntity(), original.getEntity(), original.sourcePositionRaw()) {
-            @Override public boolean scalesWithDifficulty() { return false; }
+            @Override
+            public boolean scalesWithDifficulty() {return false;}
         };
     }
 
@@ -39,17 +42,17 @@ public final class DemiurgeDifficulty {
     }
 
     static void hurt(LivingEntity victim, DamageSource original, double base, Difficulty difficulty) {
-        // Probes may escalate when hurt makes no progress. Check the vanilla
-        // i-frame window first so sustained contact cannot escalate around it.
-        if (victim.invulnerableTime > 10) return;
+        // The caller merges overlapping body contacts; ChangeLib owns delivery
+        // and cooldown handling without a separate i-frame filter here.
         float amount = damage(base, difficulty);
-        if (amount <= 0) return;
+        if (amount <= 0)
+            return;
         DamageSource source = source(original);
         switch (difficulty) {
             case EASY -> DamageProbe.lighterDamageMethod(victim, source, amount);
             case NORMAL -> DamageProbe.mediumDamageMethod(victim, source, amount, false);
             case HARD -> DamageProbe.finalDamageMethod(victim, source, amount, DamageOptions.finalNoRemove(), false);
-            case PEACEFUL -> { }
+            case PEACEFUL -> {}
         }
     }
 

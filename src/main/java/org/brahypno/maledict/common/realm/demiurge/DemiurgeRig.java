@@ -22,7 +22,7 @@ public final class DemiurgeRig {
     private final Bone[][][] attacks = new Bone[DemiurgeAttack.values().length][][];
     private final List<List<Vector3f>> vertices = new ArrayList<>();
     private final DemiurgeBodyChain chain;
-    private final int head;
+    private final int head, neck, jaw;
     private final Vector3f[] eyes = new Vector3f[2];
     public final int size;
 
@@ -41,11 +41,16 @@ public final class DemiurgeRig {
         var names = animation.getAsJsonArray("bones");
         size = names.size();
         int headIndex = -1;
+        int neckIndex = -1, jawIndex = -1;
         for (int i = 0; i < size; i++) {
             vertices.add(new ArrayList<>());
             if (names.get(i).getAsString().equals("head")) headIndex = i;
+            if (names.get(i).getAsString().equals("neck")) neckIndex = i;
+            if (names.get(i).getAsString().equals("jaw")) jawIndex = i;
         }
         head = headIndex;
+        neck = neckIndex;
+        jaw = jawIndex;
         awakening = frames(animation.getAsJsonArray("frames"));
         transition = frames(animation.getAsJsonArray("ground_transition_frames"));
         slither = frames(animation.getAsJsonArray("slither_frames"));
@@ -105,15 +110,65 @@ public final class DemiurgeRig {
 
         public void sample(float age, float clock, DemiurgeAttack attack, float attackAge,
                            Vec3 origin, float yaw, DemiurgeBodyChain.Path path) {
+            sample(age, clock, attack, attackAge, origin, yaw, path, null);
+        }
+
+        public void sample(float age, float clock, DemiurgeAttack attack, float attackAge,
+                           Vec3 origin, float yaw, DemiurgeBodyChain.Path path, Vec3 laserDirection) {
             Bone[][] base = age < 100 ? awakening : age < 140 ? transition : slither;
             float time = age < 100 ? Math.max(0, age) : age < 140 ? age - 100 : clock % DemiurgeSlither.CYCLE_TICKS;
             float blend = attack.blend(attackAge);
             for (int bone = 0; bone < size; bone++) {
                 interpolate(base, time, bone, 1);
-                if (blend > 0) interpolate(attacks[attack.ordinal()], attackAge, bone, blend);
+                // Clips add their gesture to the current travelling posture.
+                // They never replace the body's distance-driven slither phase.
+                if (blend > 0) addGesture(attacks[attack.ordinal()], attackAge, bone, blend);
             }
             float stance = DemiurgeSlither.groundBlend(age);
+            if (stance > 0) breathe(age, stance * (1 - blend));
+            if (attack == DemiurgeAttack.LASER && laserDirection != null && blend > 0) {
+                aimHead(DemiurgeAim.constrain(laserDirection, yaw).yRot((float) Math.toRadians(yaw)), blend);
+            }
             if (stance > 0) chain.follow(positions, rotations, origin, yaw, stance, path);
+        }
+
+        private void aimHead(Vec3 localDirection, float blend) {
+            var wanted = new Quaternionf().rotationYXZ((float) Math.atan2(localDirection.x, localDirection.z),
+                    (float) -Math.asin(Math.max(-1, Math.min(1, localDirection.y))), 0);
+            var delta = wanted.mul(new Quaternionf(rotations[head]).conjugate());
+            var turn = new Quaternionf().slerp(delta, blend);
+            var pivot = positions[head];
+            positions[jaw].sub(pivot);
+            turn.transform(positions[jaw]);
+            positions[jaw].add(pivot);
+            rotations[head].premul(turn);
+            rotations[jaw].premul(turn);
+        }
+
+        private void addGesture(Bone[][] clip, float time, int bone, float blend) {
+            int key = Math.min((int) time, clip.length - 1);
+            var a = clip[key][bone];
+            var b = clip[Math.min(key + 1, clip.length - 1)][bone];
+            var reference = slither[0][bone];
+            positions[bone].add(new Vector3f(a.position).lerp(b.position, time - key).sub(reference.position).mul(blend));
+            var delta = new Quaternionf(a.rotation).slerp(b.rotation, time - key)
+                    .mul(new Quaternionf(reference.rotation).conjugate());
+            rotations[bone].premul(new Quaternionf().slerp(delta, blend));
+        }
+
+        private void breathe(float age, float weight) {
+            float lift = (float) Math.sin(age * .075) * .028F * weight;
+            var turn = new Quaternionf().rotationYXZ((float) Math.sin(age * .027) * .045F * weight,
+                    (float) Math.sin(age * .061) * .012F * weight, 0);
+            var pivot = positions[head];
+            positions[jaw].sub(pivot);
+            turn.transform(positions[jaw]);
+            positions[jaw].add(pivot);
+            rotations[head].premul(turn);
+            rotations[jaw].premul(turn);
+            positions[neck].y += lift;
+            positions[head].y += lift;
+            positions[jaw].y += lift;
         }
 
         private void interpolate(Bone[][] clip, float time, int bone, float blend) {
@@ -129,6 +184,14 @@ public final class DemiurgeRig {
 
         public Vec3 eye(int side, Vec3 origin, float yaw) {
             return world(rotations[head].transform(eyes[side], new Vector3f()).add(positions[head]), origin, yaw);
+        }
+
+        public Vec3 headForward(float yaw) {
+            return world(rotations[head].transform(new Vector3f(0, 0, 1)), Vec3.ZERO, yaw).normalize();
+        }
+
+        public Vec3 headCenter(Vec3 origin, float yaw) {
+            return bounds(head, origin, yaw).getCenter();
         }
 
         public AABB bounds(int bone, Vec3 origin, float yaw) {

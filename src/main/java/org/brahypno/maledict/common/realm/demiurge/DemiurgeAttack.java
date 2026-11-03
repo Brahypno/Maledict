@@ -11,7 +11,7 @@ public enum DemiurgeAttack {
     public static final int SILENCE_TICKS = 100;
     public static final int LASER_INTERVAL = 10;
     public static final double LASER_RANGE = 40;
-    public static final double RAIN_RADIUS = 12;
+    public static final double RAIN_RADIUS = 5;
     public final int duration;
     public final int release;
     public final int recovery;
@@ -28,7 +28,17 @@ public enum DemiurgeAttack {
 
     public float blend(float age) {
         if (this == NONE || age < 0 || age >= duration) return 0;
-        float x = Math.min(1, Math.min(age / 8, (duration - age) / 8));
-        return x * x * (3 - 2 * x);
+        return smooth(age / release) * smooth((duration - age) / (duration - recovery));
+    }
+
+    public float chargeSpeed(float age) {
+        if (this != CHARGE || age < release || age >= recovery + 10) return 0;
+        return .8F * smooth((age - release + 1) / 5)
+                * (1 - smooth((age - recovery) / 10));
+    }
+
+    private static float smooth(float x) {
+        x = Math.max(0, Math.min(1, x));
+        return x * x * x * (x * (x * 6 - 15) + 10);
     }
 }

@@ -43,26 +43,26 @@ public final class MaledictConfig {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         builder.push("demiurge");
         DEMIURGE_CHARGE_DAMAGE = builder.comment("Base charge damage before the world difficulty multiplier.")
-                .defineInRange("chargeDamage", 1.0D, 0.0D, 10000.0D);
+                                        .defineInRange("chargeDamage", 7.0D, 0.0D, 10000.0D);
         DEMIURGE_LASER_DAMAGE = builder.comment("Base damage per laser pulse before the world difficulty multiplier.")
-                .defineInRange("laserDamage", 1.0D, 0.0D, 10000.0D);
+                                       .defineInRange("laserDamage", 6.0D, 0.0D, 10000.0D);
         DEMIURGE_RAIN_DAMAGE = builder.comment("Base damage per tear before the world difficulty multiplier.")
-                .defineInRange("rainDamage", 1.0D, 0.0D, 10000.0D);
+                                      .defineInRange("rainDamage", 5.0D, 0.0D, 10000.0D);
         DEMIURGE_EASY_DAMAGE_MULTIPLIER = builder.defineInRange("easyDamageMultiplier", 0.5D, 0.0D, 100.0D);
         DEMIURGE_NORMAL_DAMAGE_MULTIPLIER = builder.defineInRange("normalDamageMultiplier", 1.0D, 0.0D, 100.0D);
         DEMIURGE_HARD_DAMAGE_MULTIPLIER = builder.defineInRange("hardDamageMultiplier", 1.5D, 0.0D, 100.0D);
         builder.pop();
         builder.push("transcendOmen");
         OMEN_MINIMUM_SHARE = builder.comment("Minimum share per active reverse route. Total shares may exceed 100%.")
-                .defineInRange("minimumShare", 0.01D, 0.0D, 1.0D);
+                                    .defineInRange("minimumShare", 0.01D, 0.0D, 1.0D);
         builder.pop();
         builder.push("hangmanFool");
         HANGMAN_REFLECTION_BASE = builder.comment("Base reflection chance, plus lost health fraction, capped at 100%.")
-                .defineInRange("reflectionBaseChance", 0.25D, 0.0D, 1.0D);
+                                         .defineInRange("reflectionBaseChance", 0.25D, 0.0D, 1.0D);
         HANGMAN_TRAP_LIFETIME = builder.comment("Trap lifetime in ticks; 600 ticks is 30 seconds.")
-                .defineInRange("trapLifetime", 600, 1, 72000);
+                                       .defineInRange("trapLifetime", 600, 1, 72000);
         HANGMAN_TRAP_RADIUS = builder.comment("Contact distance in blocks around the impact point.")
-                .defineInRange("trapRadius", 1.0D, 0.1D, 16.0D);
+                                     .defineInRange("trapRadius", 1.0D, 0.1D, 16.0D);
         builder.pop();
         builder.push("incursusBlade");
         AERIAL_POTION_EFFECTS_ONLY = builder

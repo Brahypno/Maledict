@@ -37,6 +37,7 @@ import org.brahypno.maledict.config.MaledictConfig;
 
 /** A star awakens the statue in a rain of tears; the raised serpent then fights with three casts. */
 public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
+    private static final double BASE_MOVEMENT_SPEED = .30;
     private static final EntityDataAccessor<Long> AWAKENING_START = SynchedEntityData.defineId(
             DemiurgeStatueEntity.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Integer> ATTACK = SynchedEntityData.defineId(
@@ -53,6 +54,8 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
     private double previousSlitherClock;
     private double horizontalStep;
     private int combatDifficulty = -1;
+    private Vec3 awakeningRainOrigin;
+    private Vec3 attackRainOrigin;
     private final DemiurgeRig.Pose pose = DemiurgeRig.INSTANCE.pose();
     private final DemiurgePart[] parts = new DemiurgePart[DemiurgeRig.INSTANCE.size];
 
@@ -67,13 +70,14 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
 
     public static AttributeSupplier.Builder createAttributes() {
         return createBossAttributes().add(Attributes.MAX_HEALTH, 600).add(Attributes.ARMOR, 20)
-                .add(Attributes.MOVEMENT_SPEED, 0.12D).add(Attributes.FOLLOW_RANGE, 48);
+                .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED).add(Attributes.FOLLOW_RANGE, 48);
     }
 
     @Override public void onAddedToWorld() {
         if (!level().isClientSide) {
             if (combatDifficulty < 0) combatDifficulty = level().getDifficulty().getId();
             getAttribute(Attributes.MAX_HEALTH).setBaseValue(DemiurgeDifficulty.maxHealth(Difficulty.byId(combatDifficulty)));
+            getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(BASE_MOVEMENT_SPEED);
         }
         super.onAddedToWorld();
     }
@@ -117,7 +121,9 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
 
     void beginAttack(DemiurgeAttack attack, LivingEntity target) {
         if (!canFight() || attack == DemiurgeAttack.NONE) return;
+        if (attack == DemiurgeAttack.ROAR && !canStartRain(target)) return;
         getNavigation().stop();
+        attackRainOrigin = attack == DemiurgeAttack.ROAR ? headCenter() : null;
         entityData.set(ATTACK_START, level().getGameTime());
         entityData.set(ATTACK, attack.ordinal());
         setBeamDirection(target.getBoundingBox().getCenter().subtract(eyeOrigin(0)).normalize());
@@ -125,6 +131,7 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
 
     void finishAttack() {
         entityData.set(ATTACK, DemiurgeAttack.NONE.ordinal());
+        attackRainOrigin = null;
         setDeltaMovement(0, getDeltaMovement().y, 0);
     }
 
@@ -140,6 +147,7 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
     }
 
     private void setBeamDirection(Vec3 direction) {
+        direction = DemiurgeAim.constrain(direction, getYRot());
         entityData.set(BEAM_DIRECTION, new Vector3f((float) direction.x, (float) direction.y, (float) direction.z));
     }
 
@@ -149,9 +157,20 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
     }
 
     public Vec3 eyeOrigin(int side) { return pose.eye(side, position(), getYRot()); }
+    public Vec3 headCenter() { return pose.headCenter(position(), getYRot()); }
+    public Vec3 headForward() { return pose.headForward(getYRot()); }
+
+    boolean canStartRain(LivingEntity target) {
+        return target instanceof Player && canAttack(target)
+                && target.position().subtract(headCenter()).horizontalDistanceSqr() <= DemiurgeAttack.RAIN_RADIUS * DemiurgeAttack.RAIN_RADIUS;
+    }
 
     public Vec3 laserEnd(Vec3 from) {
-        Vec3 to = from.add(beamDirection().scale(DemiurgeAttack.LASER_RANGE));
+        return laserEnd(from, headForward());
+    }
+
+    public Vec3 laserEnd(Vec3 from, Vec3 direction) {
+        Vec3 to = from.add(direction.scale(DemiurgeAttack.LASER_RANGE));
         return level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).getLocation();
     }
 
@@ -167,7 +186,7 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
     }
 
     void updateParts() {
-        pose.sample(awakeningAge(0), slitherClock(1), attack(), attackAge(0), position(), getYRot(), this::trailPoint);
+        pose.sample(awakeningAge(0), slitherClock(1), attack(), attackAge(0), position(), getYRot(), this::trailPoint, beamDirection());
         for (int i = 0; i < parts.length; i++) parts[i].place(pose.bounds(i, position(), getYRot()));
     }
 
@@ -215,6 +234,8 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
             return InteractionResult.FAIL;
         }
         if (!level().isClientSide) {
+            updateParts();
+            awakeningRainOrigin = headCenter();
             entityData.set(AWAKENING_START, level().getGameTime());
             // Explicitly costs one star, including creative mode. Both hands
             // and repeated packets share the already-started server state.
@@ -278,8 +299,12 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
             playSound(MaledictSounds.DEMIURGE_AWAKENING_ROAR.get(), 3, 1);
             level().broadcastEntityEvent(this, DemiurgeAwakening.ROAR_EVENT);
         }
-        if ((awakeningAge >= 0 && awakeningAge < DemiurgeAwakening.DURATION)
-                || (attack == DemiurgeAttack.ROAR && attack.active(age))) releaseRain();
+        if (awakeningAge >= 0 && awakeningAge < DemiurgeAwakening.DURATION) {
+            if (awakeningRainOrigin == null) awakeningRainOrigin = headCenter();
+            releaseRain(awakeningRainOrigin);
+        } else if (attack == DemiurgeAttack.ROAR && attack.active(age) && attackRainOrigin != null) {
+            releaseRain(attackRainOrigin);
+        }
     }
 
     void fireLasers() {
@@ -296,14 +321,14 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
         }
     }
 
-    private void releaseRain() {
+    private void releaseRain(Vec3 center) {
         for (int i = 0; i < 8; i++) {
             double angle = random.nextDouble() * Math.PI * 2;
             double radius = Math.sqrt(random.nextDouble()) * DemiurgeAttack.RAIN_RADIUS;
             var tear = MaledictEntities.DEMIURGE_TEAR.get().create(level());
             tear.setOwner(this);
-            tear.setPos(getX() + Math.cos(angle) * radius, getY() + 14 + random.nextDouble() * 3,
-                    getZ() + Math.sin(angle) * radius);
+            tear.setPos(center.x + Math.cos(angle) * radius, center.y + 10 + random.nextDouble() * 3,
+                    center.z + Math.sin(angle) * radius);
             tear.setDeltaMovement(0, -DemiurgeTearEntity.FALL_SPEED, 0);
             level().addFreshEntity(tear);
         }
@@ -336,6 +361,11 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
         tag.putLong("AwakeningStart", entityData.get(AWAKENING_START));
         tag.putBoolean("AwakeningRoarPlayed", roarPlayed);
         if (combatDifficulty >= 0) tag.putInt("CombatDifficulty", combatDifficulty);
+        if (awakeningRainOrigin != null) {
+            tag.putDouble("AwakeningRainX", awakeningRainOrigin.x);
+            tag.putDouble("AwakeningRainY", awakeningRainOrigin.y);
+            tag.putDouble("AwakeningRainZ", awakeningRainOrigin.z);
+        }
     }
 
     @Override
@@ -344,6 +374,8 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
         entityData.set(AWAKENING_START, tag.contains("AwakeningStart") ? tag.getLong("AwakeningStart") : -1L);
         roarPlayed = tag.getBoolean("AwakeningRoarPlayed");
         combatDifficulty = tag.contains("CombatDifficulty") ? tag.getInt("CombatDifficulty") : -1;
+        awakeningRainOrigin = tag.contains("AwakeningRainX") ? new Vec3(tag.getDouble("AwakeningRainX"),
+                tag.getDouble("AwakeningRainY"), tag.getDouble("AwakeningRainZ")) : null;
         currentHeight = DemiurgeSlither.height(awakeningAge(0));
         refreshDimensions();
         finishAttack();
@@ -352,8 +384,9 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
 
     @Override
     public void travel(Vec3 input) {
-        if (!level().isClientSide && isAlive() && attack() == DemiurgeAttack.CHARGE && attack().active(attackAge(0))) {
-            Vec3 forward = Vec3.directionFromRotation(0, getYRot()).scale(.8);
+        float chargeSpeed = attack().chargeSpeed(attackAge(0));
+        if (!level().isClientSide && isAlive() && chargeSpeed > 0) {
+            Vec3 forward = Vec3.directionFromRotation(0, getYRot()).scale(chargeSpeed);
             boolean clear = DemiurgeBlockBreaking.clearAhead(this, getYRot());
             setDeltaMovement(clear ? forward.x : 0, getDeltaMovement().y, clear ? forward.z : 0);
             super.travel(Vec3.ZERO);

@@ -48,13 +48,19 @@ final class DemiurgeStatueModel {
 
     void animate(DemiurgeStatueEntity entity, float partialTick, float yaw, Vec3 origin) {
         pose.sample(entity.awakeningAge(partialTick), entity.slitherClock(partialTick),
-                entity.attack(), entity.attackAge(partialTick), origin, yaw, entity::trailPoint);
+                entity.attack(), entity.attackAge(partialTick), origin, yaw, entity::trailPoint, entity.beamDirection());
     }
 
     Vec3 eye(int side, Vec3 origin, float yaw) { return pose.eye(side, origin, yaw); }
+    Vec3 headForward(float yaw) { return pose.headForward(yaw); }
 
     void render(PoseStack stack, VertexConsumer buffer, int light) {
+        render(stack, buffer, light, -1, 0);
+    }
+
+    void render(PoseStack stack, VertexConsumer buffer, int light, float glow, float time) {
         for (int bone = 0; bone < bones.size(); bone++) {
+            int brightness = glow < 0 ? 255 : (int) (255 * DemiurgeGlow.bone(glow, time, bone));
             var position = pose.positions[bone];
             stack.pushPose();
             stack.translate(position.x, position.y, position.z);
@@ -62,7 +68,7 @@ final class DemiurgeStatueModel {
             var transform = stack.last();
             for (Quad quad : bones.get(bone)) for (Vertex vertex : quad.vertices) {
                 buffer.vertex(transform.pose(), vertex.x, vertex.y, vertex.z)
-                        .color(255, 255, 255, 255).uv(vertex.u, vertex.v)
+                        .color(brightness, brightness, brightness, 255).uv(vertex.u, vertex.v)
                         .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
                         .normal(transform.normal(), quad.nx, quad.ny, quad.nz).endVertex();
             }

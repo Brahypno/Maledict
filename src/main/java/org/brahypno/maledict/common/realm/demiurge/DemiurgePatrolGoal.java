@@ -8,7 +8,8 @@ final class DemiurgePatrolGoal extends WaterAvoidingRandomStrollGoal {
     private final DemiurgeStatueEntity statue;
 
     DemiurgePatrolGoal(DemiurgeStatueEntity statue) {
-        super(statue, 0.8D);
+        super(statue, 1.0D);
+        setInterval(10);
         this.statue = statue;
     }
 

@@ -29,7 +29,7 @@ final class DemiurgeNavigation extends GroundPathNavigation {
             @Override
             public void prepare(PathNavigationRegion region, Mob mob) {
                 super.prepare(region, mob);
-                breakingAllowed = ((DemiurgeStatueEntity) mob).canPatrol()
+                breakingAllowed = ((DemiurgeStatueEntity) mob).canNavigate()
                         && ForgeEventFactory.getMobGriefingEvent(mob.level(), mob);
             }
 
