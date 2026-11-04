@@ -8,6 +8,8 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.CombatRules;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
@@ -16,6 +18,9 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import org.brahypno.changelib.DamageHelper.DamageStage;
+import org.brahypno.changelib.HealthHelper.CombatProtection;
+import org.brahypno.changelib.protection.ai.AiProtection;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -91,8 +96,7 @@ public final class VicissitudeVitalityTest {
     @GameTest(template = "test_empty", timeoutTicks = 30)
     public static void canceledDeathRevivesAndNeverFinalizes(GameTestHelper helper) {
         TestBoss boss = spawn(helper);
-        VicissitudeVitalityLedger.get(helper.getLevel()).commit(boss.getUUID(),
-                VicissitudeVitality.initial(boss.getMaxHealth()).withCurrent(5));
+        boss.restoreAuthority(VicissitudeVitality.initial(boss.getMaxHealth()).withCurrent(5));
         Events listener = new Events(boss);
         listener.death = event -> event.setCanceled(true);
         withListener(listener, () -> boss.hurt(boss.damageSources().generic(), 10));
@@ -107,6 +111,20 @@ public final class VicissitudeVitalityTest {
     @GameTest(template = "test_empty", timeoutTicks = 30)
     public static void thirdDistinctKillStartsTheRealDeathTransaction(GameTestHelper helper) {
         TestBoss boss = spawn(helper);
+        var zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(2, 2, 2));
+        zombie.setNoAi(true);
+        boss.setTarget(zombie);
+        helper.assertTrue(boss.getTarget() == null, "External setTarget must not bypass AI protection");
+        boss.useAiTarget(zombie);
+        helper.assertTrue(boss.getTarget() == zombie, "The owner target path must still work");
+        boss.clearAiTarget();
+        CombatProtection.unprotect(boss);
+        helper.runAtTickTime(1, () -> {
+            helper.assertTrue(CombatProtection.state(boss) != null
+                              && CombatProtection.state(boss).grade() == DamageStage.D4_CONSISTENCY_WRITE,
+                    "The sealed health defense must restore its original grade");
+            zombie.discard();
+        });
         float initial = boss.getHealth();
         for (int call = 0; call < 20; call++) boss.kill();
         equal(helper, initial, boss.getHealth(), "One tick of kill calls counts once");
@@ -145,6 +163,8 @@ public final class VicissitudeVitalityTest {
         boss.setPos(helper.absolutePos(new BlockPos(1, 2, 1)).getCenter());
         boss.setNoGravity(true);
         helper.assertTrue(helper.getLevel().addFreshEntity(boss), "Test boss must join the real level");
+        helper.assertTrue(CombatProtection.state(boss) != null && AiProtection.state(boss) != null,
+                "Joining a Vicissitude boss must bind health and AI protection");
         return boss;
     }
 
@@ -180,5 +200,7 @@ public final class VicissitudeVitalityTest {
         @Override protected float getVitalityDamageLimit() { return 100; }
         @Override protected void onFinalDeath(DamageSource source) { finalDeaths++; }
         @Override protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) { lootDrops++; }
+        void useAiTarget(LivingEntity target) { selectAiTarget(target); }
+        void clearAiTarget() { selectAiTarget(null); }
     }
 }

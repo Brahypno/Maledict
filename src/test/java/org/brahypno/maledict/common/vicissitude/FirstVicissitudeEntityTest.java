@@ -34,6 +34,9 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
+import org.brahypno.changelib.DamageHelper.DamageStage;
+import org.brahypno.changelib.HealthHelper.CombatProtection;
+import org.brahypno.changelib.protection.ai.AiProtection;
 import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRig;
 import java.util.List;
 
@@ -332,6 +335,10 @@ public final class FirstVicissitudeEntityTest {
         boss.readAdditionalSaveData(setup);
         boss.setPos(helper.absolutePos(new BlockPos(1, 2, 1)).getCenter());
         helper.assertTrue(helper.getLevel().addFreshEntity(boss), "Registered boss must join the real level");
+        helper.assertTrue(CombatProtection.state(boss) != null
+                          && CombatProtection.state(boss).grade() == DamageStage.D4_CONSISTENCY_WRITE
+                          && AiProtection.state(boss) != null,
+                "The registered boss must bind its sealed D4 health defense and AI protection");
         return boss;
     }
 

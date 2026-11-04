@@ -20,6 +20,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -28,6 +30,9 @@ import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
+import org.brahypno.changelib.protection.ai.AiProtection;
+import org.brahypno.changelib.protection.ai.AiProtectionDefinition;
+import org.brahypno.changelib.protection.ai.ProtectedAiEntity;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.common.combat.BossDamage;
 import net.minecraftforge.event.ForgeEventFactory;
@@ -36,7 +41,7 @@ import javax.annotation.Nullable;
 import java.util.EnumSet;
 import org.joml.Vector3f;
 
-public class WeepingWitherEntity extends WitherBoss {
+public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity {
     public static final float SCALE = 1.2F;
     private static final DustParticleOptions SEEP_DUST = new DustParticleOptions(new Vector3f(0.25F, 0.21F, 0.29F), 0.6F);
     private static final DustParticleOptions BONE_DUST = new DustParticleOptions(new Vector3f(0.55F, 0.53F, 0.54F), 0.5F);
@@ -52,6 +57,7 @@ public class WeepingWitherEntity extends WitherBoss {
     private float tickLargestHurt;
     @Nullable private BlockPos altarHome;
     private boolean returningHome;
+    @Nullable private AiProtection.Controller aiController;
     // The parent's private bar cannot be updated while its attack AI is paused.
     private final ServerBossEvent encounterBar = (ServerBossEvent) new ServerBossEvent(
             getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS).setDarkenScreen(true);
@@ -75,7 +81,51 @@ public class WeepingWitherEntity extends WitherBoss {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        // Vanilla target goals write setTarget directly; replace them with controller submissions
+        // before AI protection snapshots the selectors.
+        targetSelector.removeAllGoals(goal -> goal instanceof HurtByTargetGoal
+                || goal instanceof NearestAttackableTargetGoal<?>);
+        targetSelector.addGoal(1, new WeepingWitherHurtByTargetGoal(this));
+        targetSelector.addGoal(2, new WeepingWitherNearestTargetGoal(this));
         goalSelector.addGoal(1, new ReturnToAltarGoal());
+    }
+
+    @Override
+    public void onAddedToWorld() {
+        super.onAddedToWorld();
+        if (!level().isClientSide && aiController == null) {
+            aiController = AiProtection.bind(this);
+        }
+    }
+
+    @Override
+    public final AiProtectionDefinition aiProtectionDefinition() {
+        return new AiProtectionDefinition(true, true, true,
+                (self, candidate) -> canHoldAiTarget(candidate));
+    }
+
+    private boolean canHoldAiTarget(LivingEntity candidate) {
+        return candidate != this && !candidate.isRemoved() && candidate.isAlive()
+                && candidate.level() == level()
+                && !isAlliedTo(candidate) && canAttackType(candidate.getType())
+                && canAttack(candidate);
+    }
+
+    private void selectAiTarget(@Nullable LivingEntity target) {
+        if (getTarget() == target) {
+            return;
+        }
+        AiProtection.Controller controller = aiController;
+        if (controller == null) {
+            super.setTarget(target);
+        } else {
+            controller.selectTarget(target);
+        }
+    }
+
+    /** Package-private bridge for this entity's target goals; the controller itself stays private. */
+    void selectTargetFromGoal(@Nullable LivingEntity target) {
+        selectAiTarget(target);
     }
 
     public void setAltarHome(BlockPos pos) {
@@ -153,7 +203,7 @@ public class WeepingWitherEntity extends WitherBoss {
                 getNavigation().stop();
             }
             if (returningHome || getTarget() != null && !withinHome(getTarget(), 24.0D)) {
-                setTarget(null);
+                selectAiTarget(null);
                 for (int head = 0; head < 3; head++) setAlternativeTarget(head, 0);
             }
         }
@@ -339,7 +389,7 @@ public class WeepingWitherEntity extends WitherBoss {
             clearDeathAnimation();
             entityData.set(REFORMING, true);
             setDeltaMovement(Vec3.ZERO);
-            setTarget(null);
+            selectAiTarget(null);
             for (int head = 0; head < 3; head++) setAlternativeTarget(head, 0);
             getNavigation().stop();
             return;

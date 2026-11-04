@@ -24,10 +24,10 @@ import org.brahypno.maledict.registry.MaledictEntities;
 import com.sammy.malum.registry.common.MobEffectRegistry;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.util.Mth;
+import org.brahypno.changelib.DamageHelper.DamageStage;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import java.util.HashSet;
 import java.util.Set;
@@ -95,9 +95,27 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
     protected void registerGoals() {
         goalSelector.addGoal(1, new DemiurgeCombatGoal(this));
         goalSelector.addGoal(5, new DemiurgePatrolGoal(this));
-        targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                target -> canFight()));
+        targetSelector.addGoal(1, new DemiurgeHurtByTargetGoal(this));
+        targetSelector.addGoal(2, new DemiurgeNearestPlayerTargetGoal(this));
+    }
+
+    /** The raid boss sits at the top health-defense grade; its own damage path still applies. */
+    @Override
+    protected DamageStage combatProtectionGrade() {
+        return DamageStage.D5_RECOVERY_SOURCE;
+    }
+
+    @Override
+    protected boolean canHoldAiTarget(LivingEntity candidate) {
+        return super.canHoldAiTarget(candidate)
+               && !isAlliedTo(candidate)
+               && canAttackType(candidate.getType())
+               && canAttack(candidate);
+    }
+
+    /** Package-private bridge for this entity's target goals; the controller itself stays private. */
+    void selectTargetFromGoal(@Nullable LivingEntity target) {
+        selectAiTarget(target);
     }
 
     public boolean canPatrol() {

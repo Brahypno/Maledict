@@ -41,6 +41,7 @@ import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.common.realm.BlightedRealm;
+import org.brahypno.changelib.protection.ai.AiProtection;
 import org.brahypno.maledict.common.realm.reliquary.InvertedReliquaryPiece;
 import org.brahypno.maledict.common.realm.reliquary.ReliquaryEvents;
 import org.brahypno.maledict.registry.MaledictBlocks;
@@ -128,6 +129,8 @@ public final class WeepingWitherEncounterTest {
                     "A creative player triggers one custom entity even when its spawn position contains a solid block");
             realm.setBlock(core.above(2), Blocks.AIR.defaultBlockState(), 2);
             var wither = encounter.get();
+            helper.assertTrue(AiProtection.state(wither) != null,
+                    "The summoned Weeping Wither must bind AI protection");
             BlockPos combatPos = core.above(24);
             for (BlockPos pos : BlockPos.betweenClosed(combatPos.offset(-8, 0, -8), combatPos.offset(8, 13, 8))) {
                 realm.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);

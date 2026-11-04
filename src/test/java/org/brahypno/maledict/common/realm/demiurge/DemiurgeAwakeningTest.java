@@ -21,6 +21,8 @@ import net.minecraft.world.item.Items;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import org.brahypno.changelib.DamageHelper.DamageStage;
+import org.brahypno.changelib.HealthHelper.CombatProtection;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.joml.Quaternionf;
@@ -160,6 +162,9 @@ public final class DemiurgeAwakeningTest {
         statue.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(2, 12, 2)));
         statue.setNoGravity(true);
         level.addFreshEntity(statue);
+        helper.assertTrue(CombatProtection.state(statue) != null
+                          && CombatProtection.state(statue).grade() == DamageStage.D5_RECOVERY_SOURCE,
+                "The Demiurge must seal its own D5 health defense");
         helper.assertTrue(statue.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR) == 20
                         && statue.getHealth() == DemiurgeDifficulty.maxHealth(level.getDifficulty()),
                 "The spawned statue must receive 20 armour and its difficulty's authoritative health pool");
@@ -296,7 +301,7 @@ public final class DemiurgeAwakeningTest {
                     if (rainCenter[0] == null) {
                         rainCenter[0] = awake.headCenter();
                         player.setPos(rainCenter[0].add(6, -4, 0));
-                        awake.setTarget(null);
+                        awake.selectTargetFromGoal(null);
                     }
                     for (var tear : level.getEntitiesOfClass(DemiurgeTearEntity.class, awake.getBoundingBox().inflate(24),
                             tear -> tear.getOwner() == awake)) {
@@ -357,7 +362,7 @@ public final class DemiurgeAwakeningTest {
                             + ", speed=" + awake.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED));
             var enemy = helper.spawn(EntityType.ZOMBIE, new BlockPos(2, 2, 2));
             enemy.setNoAi(true);
-            awake.setTarget(enemy);
+            awake.selectTargetFromGoal(enemy);
             helper.assertTrue(!awake.canPatrol() && !new DemiurgePatrolGoal(awake).canUse(),
                     "A live enemy excludes idle patrol");
             enemy.discard();
@@ -372,7 +377,7 @@ public final class DemiurgeAwakeningTest {
             awake.setPos(combatOrigin);
             level.addFreshEntity(awake);
             current[0] = awake;
-            awake.setTarget(null);
+            awake.selectTargetFromGoal(null);
             awake.getNavigation().stop();
             awake.setNoGravity(true);
             awake.setDeltaMovement(Vec3.ZERO);
@@ -395,7 +400,7 @@ public final class DemiurgeAwakeningTest {
             combatTarget[0].lastAttempt = Long.MIN_VALUE;
             combatTarget[0].minimumInterval = Long.MAX_VALUE;
             combatTarget[0].damageLog.clear();
-            awake.setTarget(combatTarget[0]);
+            awake.selectTargetFromGoal(combatTarget[0]);
             awake.beginAttack(DemiurgeAttack.CHARGE, combatTarget[0]);
         });
         helper.runAtTickTime(418, () -> {
@@ -415,7 +420,7 @@ public final class DemiurgeAwakeningTest {
         });
         helper.runAtTickTime(700, () -> {
             player.setPos(current[0].headCenter().add(4, -4, 0));
-            current[0].setTarget(player);
+            current[0].selectTargetFromGoal(player);
         });
         helper.runAtTickTime(900, () -> {
             helper.assertTrue(observed.containsAll(java.util.List.of(DemiurgeAttack.CHARGE, DemiurgeAttack.LASER, DemiurgeAttack.ROAR)),
@@ -445,7 +450,7 @@ public final class DemiurgeAwakeningTest {
             target.setPos(awake.position().add(0, 0, 20));
             level.addFreshEntity(target);
             combatTarget[0] = target;
-            awake.setTarget(target);
+            awake.selectTargetFromGoal(target);
             awake.beginAttack(DemiurgeAttack.LASER, target);
         });
         helper.runAtTickTime(1003, () -> {

@@ -875,7 +875,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private void clearTargetIf(UUID identity) {
         LivingEntity target = getTarget();
         if (target != null && identity.equals(target.getUUID())){
-            setTarget(null);
+            selectAiTarget(null);
         }
     }
 
@@ -1028,7 +1028,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         phaseTwoPlayerDeaths.clear();
         damageAdaptation.clear();
         adaptationSpokenAt.clear();
-        setTarget(null);
+        selectAiTarget(null);
         clearGroundMarker();
         return true;
     }
@@ -1082,7 +1082,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         action = VicissitudeRig.Action.NONE;
         endAction();
         cancelFlyingScythe();
-        setTarget(null);
+        selectAiTarget(null);
         clearGroundMarker();
         clearPhaseOneProjectiles();
     }
@@ -2467,7 +2467,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             }
         }
         if (!isValidPhaseOneTarget(getTarget())){
-            setTarget(preferredTarget(attacker, owner));
+            selectAiTarget(preferredTarget(attacker, owner));
         }
     }
 
@@ -2516,7 +2516,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         LivingEntity target = getTarget();
         if (target == null || !target.isAlive() || target.level() != level()
             || isIgnoredPlayer(target)){
-            setTarget(participant);
+            selectAiTarget(participant);
         }
     }
 
@@ -2582,7 +2582,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Nullable
     private LivingEntity selectNextPhaseOneTarget(boolean advance) {
         if (!(level() instanceof ServerLevel serverLevel) || phaseOneTargets.isEmpty()){
-            setTarget(null);
+            selectAiTarget(null);
             return null;
         }
         List<UUID> targets = orderedPhaseOneTargets(serverLevel);
@@ -2595,7 +2595,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             Entity candidate = resolveParticipant(serverLevel, identity);
             if (candidate instanceof LivingEntity living && isValidPhaseOneTarget(living)){
                 targetCursor = advance ? index + 1 : index;
-                setTarget(living);
+                selectAiTarget(living);
                 removeInvalidTargets(invalid);
                 return living;
             }
@@ -2604,7 +2604,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             }
         }
         removeInvalidTargets(invalid);
-        setTarget(null);
+        selectAiTarget(null);
         return null;
     }
 
@@ -2632,7 +2632,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (selected == null){
             selected = healthiestPhaseTwoTarget(serverLevel, false);
         }
-        setTarget(selected);
+        selectAiTarget(selected);
         return selected;
     }
 
@@ -2661,6 +2661,20 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
                    && (registeredDeathCount == null || registeredDeathCount == getDeathCount(player));
         }
         return !isIgnoredPlayer(target);
+    }
+
+    /**
+     * AI protection's target rule. Phase one only ever holds a registered roster member; phase two
+     * only holds a participant. Distance is deliberately not part of the rule: a ranged hit can add
+     * a distant attacker to the roster, and the boss's own movement decides whether to chase.
+     */
+    @Override
+    protected boolean canHoldAiTarget(LivingEntity candidate) {
+        if (!super.canHoldAiTarget(candidate) || isIgnoredPlayer(candidate)) {
+            return false;
+        }
+        return isPhaseTwo() ? phaseTwoParticipants.contains(candidate.getUUID())
+                            : phaseOneTargets.contains(candidate.getUUID());
     }
 
     /**
