@@ -71,6 +71,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.CRYING_TAINTED_ROCK.get(),
                                                    MaledictItems.CRYING_TWISTED_ROCK.get(), MaledictItems.BLIGHTED_WITHER_SKULL.get(),
                                                    MaledictItems.BLIGHTED_STAR.get());
+        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.LIGHT_FRAGMENT.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.ELEGY_BOW.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
         tag(GOETY_GRAVE_GLOVE).add(MaledictItems.INCURSUS_BLADE.get());

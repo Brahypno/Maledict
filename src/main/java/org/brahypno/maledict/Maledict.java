@@ -15,6 +15,7 @@ import org.brahypno.maledict.registry.MaledictBlockEntities;
 import org.brahypno.maledict.registry.MaledictBlocks;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictMobEffects;
+import org.brahypno.maledict.registry.MaledictParticles;
 import org.brahypno.maledict.registry.MaledictSounds;
 import org.brahypno.maledict.registry.MaledictRecipeTypes;
 
@@ -40,6 +41,7 @@ public final class Maledict {
         MaledictRecipeTypes.SERIALIZERS.register(modBus);
         MaledictRecipeTypes.TYPES.register(modBus);
         MaledictMobEffects.MOB_EFFECTS.register(modBus);
+        MaledictParticles.PARTICLE_TYPES.register(modBus);
         MaledictSounds.SOUND_EVENTS.register(modBus);
         MaledictCreativeTabs.CREATIVE_TABS.register(modBus);
         MaledictNetwork.register();

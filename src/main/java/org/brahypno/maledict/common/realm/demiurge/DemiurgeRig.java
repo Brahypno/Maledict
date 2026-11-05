@@ -22,6 +22,9 @@ public final class DemiurgeRig {
     private final Bone[][][] attacks = new Bone[DemiurgeAttack.values().length][][];
     private final List<List<Vector3f>> vertices = new ArrayList<>();
     private final DemiurgeBodyChain chain;
+    private final float[] rearExtents;
+    private final float[] nearestExtents;
+    private final int maxBodyCut;
     private final int head, neck, jaw;
     private final Vector3f[] eyes = new Vector3f[2];
     public final int size;
@@ -77,7 +80,66 @@ public final class DemiurgeRig {
                     vector(joint.getAsJsonArray("front")), vector(joint.getAsJsonArray("back")), corners));
         }
         chain = new DemiurgeBodyChain(joints);
+        rearExtents = new float[joints.size()];
+        nearestExtents = new float[joints.size()];
+        measureRearExtents(joints);
+        // A cut must leave at least eight blocks of body on the floor, and the guarantee has to
+        // hold on every authored slither frame, so the nearest extent decides.
+        int allowed = 0;
+        for (int cut = 0; cut < joints.size(); cut++) {
+            if (nearestExtents[joints.size() - cut - 1] < DemiurgeBodyLength.MINIMUM_GROUND_LENGTH) break;
+            allowed = cut;
+        }
+        maxBodyCut = allowed;
         for (int i = 0; i < 2; i++) eyes[i] = vector(animation.getAsJsonArray("eyes").get(i).getAsJsonArray());
+    }
+
+    /**
+     * Authored distance behind the statue origin for every body-chain section; the far end is what
+     * still has to lie on the floor after a cut. Both arrays are indexed like {@code body_chain}.
+     */
+    private void measureRearExtents(List<DemiurgeBodyChain.Joint> joints) {
+        for (int index = 0; index < joints.size(); index++) {
+            DemiurgeBodyChain.Joint joint = joints.get(index);
+            float farthest = 0.0F;
+            float nearest = Float.POSITIVE_INFINITY;
+            for (Bone[] frame : slither) {
+                Bone bone = frame[joint.bone()];
+                float rear = Math.max(0.0F, rearDistance(bone, joint.front()));
+                rear = Math.max(rear, rearDistance(bone, joint.back()));
+                for (Vector3f corner : joint.corners()) {
+                    rear = Math.max(rear, rearDistance(bone, corner));
+                }
+                farthest = Math.max(farthest, rear);
+                nearest = Math.min(nearest, rear);
+            }
+            rearExtents[index] = farthest;
+            nearestExtents[index] = nearest;
+        }
+    }
+
+    private static float rearDistance(Bone bone, Vector3f local) {
+        Vector3f point = bone.rotation.transform(new Vector3f(local), new Vector3f()).add(bone.position);
+        return Math.max(0.0F, -point.z);
+    }
+
+    /** Largest number of trailing sections that may be lost without breaking the eight-block floor. */
+    public int maxBodyCut() {
+        return maxBodyCut;
+    }
+
+    public int lastRetainedBone(int cut) {
+        return chain.lastRetainedBone(cut);
+    }
+
+    /** Authored far end of the remaining body; drives the patrol corridor so it stops at the cut. */
+    public float bodyEndDistance(int cut) {
+        return rearExtents[chain.retainedJoints(cut) - 1];
+    }
+
+    /** Nearest far end across the authored frames; the eight-block floor rule is checked against this. */
+    public float bodyEndDistanceWorstCase(int cut) {
+        return nearestExtents[chain.retainedJoints(cut) - 1];
     }
 
     private static Vector3f vector(JsonArray array) {
@@ -100,6 +162,7 @@ public final class DemiurgeRig {
     public final class Pose {
         public final Vector3f[] positions = new Vector3f[size];
         public final Quaternionf[] rotations = new Quaternionf[size];
+        private int bodyCut;
 
         private Pose() {
             for (int i = 0; i < size; i++) {
@@ -110,11 +173,17 @@ public final class DemiurgeRig {
 
         public void sample(float age, float clock, DemiurgeAttack attack, float attackAge,
                            Vec3 origin, float yaw, DemiurgeBodyChain.Path path) {
-            sample(age, clock, attack, attackAge, origin, yaw, path, null);
+            sample(age, clock, attack, attackAge, origin, yaw, path, 0, null);
         }
 
         public void sample(float age, float clock, DemiurgeAttack attack, float attackAge,
                            Vec3 origin, float yaw, DemiurgeBodyChain.Path path, Vec3 laserDirection) {
+            sample(age, clock, attack, attackAge, origin, yaw, path, 0, laserDirection);
+        }
+
+        public void sample(float age, float clock, DemiurgeAttack attack, float attackAge,
+                           Vec3 origin, float yaw, DemiurgeBodyChain.Path path, int cut, Vec3 laserDirection) {
+            int requestedCut = Math.max(0, Math.min(chain.jointCount() - 1, cut));
             Bone[][] base = age < 100 ? awakening : age < 140 ? transition : slither;
             float time = age < 100 ? Math.max(0, age) : age < 140 ? age - 100 : clock % DemiurgeSlither.CYCLE_TICKS;
             float blend = attack.blend(attackAge);
@@ -125,11 +194,18 @@ public final class DemiurgeRig {
                 if (blend > 0) addGesture(attacks[attack.ordinal()], attackAge, bone, blend);
             }
             float stance = DemiurgeSlither.groundBlend(age);
+            // A coiled, still-standing statue has no floor body to lose; the cut starts with the stance.
+            bodyCut = stance > 0 ? requestedCut : 0;
             if (stance > 0) breathe(age, stance * (1 - blend));
             if (attack == DemiurgeAttack.LASER && laserDirection != null && blend > 0) {
                 aimHead(DemiurgeAim.constrain(laserDirection, yaw).yRot((float) Math.toRadians(yaw)), blend);
             }
-            if (stance > 0) chain.follow(positions, rotations, origin, yaw, stance, path);
+            if (stance > 0) chain.follow(positions, rotations, origin, yaw, stance, path, bodyCut);
+        }
+
+        /** Sections lost to the body cut keep their authored transform but never render or collide. */
+        public boolean isHidden(int bone) {
+            return chain.isHidden(bone, bodyCut);
         }
 
         private void aimHead(Vec3 localDirection, float blend) {
@@ -195,6 +271,7 @@ public final class DemiurgeRig {
         }
 
         public AABB bounds(int bone, Vec3 origin, float yaw) {
+            if (isHidden(bone)) return new AABB(origin, origin);
             double minX = Double.POSITIVE_INFINITY, minY = minX, minZ = minX;
             double maxX = Double.NEGATIVE_INFINITY, maxY = maxX, maxZ = maxX;
             for (var corner : vertices.get(bone)) {

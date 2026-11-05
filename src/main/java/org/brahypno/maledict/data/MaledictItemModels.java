@@ -44,6 +44,7 @@ public final class MaledictItemModels extends ItemModelProvider {
 
         basicItem(MaledictItems.BLEEDING_EYE.get());
         basicItem(MaledictItems.BLIGHTED_STAR.get());
+        basicItem(MaledictItems.LIGHT_FRAGMENT.get());
         // Match template_skull's scale and placement. The static model includes the renderer's 180-degree turn.
         getBuilder("blighted_wither_skull")
                 .parent(new ModelFile.UncheckedModelFile(modLoc("block/blighted_wither_skull")))

@@ -22,6 +22,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.CRYING_TWISTED_ROCK, "哭泣的扭曲石");
             addBlock(MaledictBlocks.BLIGHTED_WITHER_SKULL, "腐枯凋灵头颅");
             addItem(MaledictItems.BLIGHTED_STAR, "腐枯之星");
+            addItem(MaledictItems.LIGHT_FRAGMENT, "光的残片");
             add("malum.gui.book.entry.void.maledict.weeping_wither", "腐枯凋灵");
             add("malum.gui.book.entry.void.maledict.weeping_wither.description", "世界遗留的悲伤");
             add("malum.gui.book.entry.page.headline.void.maledict.weeping_wither", "腐枯凋灵");
@@ -391,6 +392,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.CRYING_TWISTED_ROCK, "Crying Twisted Rock");
             addBlock(MaledictBlocks.BLIGHTED_WITHER_SKULL, "Blighted Wither Skull");
             addItem(MaledictItems.BLIGHTED_STAR, "Blighted Star");
+            addItem(MaledictItems.LIGHT_FRAGMENT, "Fragment of Light");
             add("malum.gui.book.entry.void.maledict.weeping_wither", "Weeping Wither");
             add("malum.gui.book.entry.void.maledict.weeping_wither.description", "The sorrow the world left behind");
             add("malum.gui.book.entry.page.headline.void.maledict.weeping_wither", "Weeping Wither");

@@ -12,6 +12,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.Vec3;
 import com.sammy.malum.registry.common.MobEffectRegistry;
 import net.minecraft.world.level.block.Blocks;
@@ -110,6 +111,7 @@ public final class DemiurgeAwakeningTest {
             verifyBodyConnections(root, animation, ground, names.size());
             verifyContinuousMotion(animation, ground, names.size());
             verifySelfAvoidance(root, animation, ground, names.size());
+            verifyBodyLoss(animation, ground);
             for (var attack : DemiurgeAttack.values()) {
                 if (attack == DemiurgeAttack.NONE) continue;
                 var clip = animation.getAsJsonObject("attacks").getAsJsonObject(attack.name().toLowerCase(java.util.Locale.ROOT));
@@ -157,6 +159,7 @@ public final class DemiurgeAwakeningTest {
         var level = helper.getLevel();
         var player = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "DemiurgeTest"));
         DemiurgeStatueEntity[] current = {MaledictEntities.DEMIURGE_STATUE.get().create(level)};
+        DemiurgeStatueEntity[] deathFixture = new DemiurgeStatueEntity[1];
         var statue = current[0];
         java.util.List<ChunkPos> patrolChunks = new java.util.ArrayList<>();
         statue.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(2, 12, 2)));
@@ -389,7 +392,8 @@ public final class DemiurgeAwakeningTest {
             awake.beginAttack(DemiurgeAttack.ROAR, player);
             helper.assertTrue(!awake.canStartRain(player) && awake.attack() == DemiurgeAttack.NONE,
                     "A player six horizontal blocks from the head must not start the rain windup");
-            player.setPos(center.add(5, -4, 0));
+            // Stay a hair inside the boundary: (center + 5) - center can round just above 25 in doubles.
+            player.setPos(center.add(5 - 1.0E-4, -4, 0));
             helper.assertTrue(awake.canStartRain(player), "The five-block boundary is inside the rain trigger");
             player.setPos(center.add(4, -10, 0));
             helper.assertTrue(awake.canStartRain(player), "The trigger uses horizontal distance, not height");
@@ -469,6 +473,31 @@ public final class DemiurgeAwakeningTest {
             combatTarget[0].discard();
             current[0].remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
             patrolChunks.forEach(chunk -> level.setChunkForced(chunk.x, chunk.z, false));
+        });
+        // A real kill, after the combat fixture is gone: three generic-kill attempts open the
+        // vicissitude bypass, the death transaction severs the body to its cap, and the nether-star
+        // style fragment must already exist as an item entity.
+        helper.runAtTickTime(1040, () -> {
+            var victim = MaledictEntities.DEMIURGE_STATUE.get().create(level);
+            victim.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(2, 12, 2)));
+            victim.setNoGravity(true);
+            level.addFreshEntity(victim);
+            deathFixture[0] = victim;
+        });
+        helper.runAtTickTime(1042, () -> deathFixture[0].hurt(deathFixture[0].damageSources().genericKill(), 1));
+        helper.runAtTickTime(1043, () -> deathFixture[0].hurt(deathFixture[0].damageSources().genericKill(), 1));
+        helper.runAtTickTime(1044, () -> deathFixture[0].hurt(deathFixture[0].damageSources().genericKill(), 1));
+        helper.runAtTickTime(1050, () -> {
+            var victim = deathFixture[0];
+            helper.assertTrue(victim.isDeadOrDying() && !victim.isAlive(),
+                    "The third generic-kill attempt must start the genuine death transaction");
+            helper.assertTrue(victim.bodyCut() == DemiurgeRig.INSTANCE.maxBodyCut(),
+                    "Losing all health severs the trailing body up to the authored cap");
+            var drops = level.getEntitiesOfClass(ItemEntity.class, victim.getBoundingBox().inflate(4));
+            helper.assertTrue(drops.stream().filter(drop -> drop.getItem().is(MaledictItems.LIGHT_FRAGMENT.get()))
+                            .mapToInt(drop -> drop.getItem().getCount()).sum() == 1,
+                    "A real death must drop exactly one Fragment of Light next to the statue");
+            drops.forEach(ItemEntity::discard);
             helper.succeed();
         });
     }
@@ -843,6 +872,65 @@ public final class DemiurgeAwakeningTest {
         assertTrue(maxStep < .15, "Consecutive render samples must not jump: " + maxStep + " blocks");
         assertTrue(maxBend < 50, "Broad patrol turns must not fold the chain back: " + maxBend + " degrees");
         assertTrue(minimumSpacing > .8, "Adjacent centres must not collapse into one another: " + minimumSpacing);
+    }
+
+    /**
+     * Confirmed body-loss model: 75 / 50 / 25 % of maximum health each sever four trailing sections,
+     * the loss is monotonic, and the authored cap keeps eight blocks of body on the floor.
+     */
+    private static void verifyBodyLoss(JsonObject animation, JsonArray ground) {
+        int cap = DemiurgeRig.INSTANCE.maxBodyCut();
+        assertEquals(11, cap, "The authored body may lose eleven trailing sections before the floor rule breaks");
+        assertEquals(0, DemiurgeBodyLength.cutFor(1.0F, cap));
+        assertEquals(0, DemiurgeBodyLength.cutFor(.7501F, cap));
+        assertEquals(4, DemiurgeBodyLength.cutFor(.75F, cap));
+        assertEquals(4, DemiurgeBodyLength.cutFor(.5001F, cap));
+        assertEquals(8, DemiurgeBodyLength.cutFor(.50F, cap));
+        assertEquals(8, DemiurgeBodyLength.cutFor(.2501F, cap));
+        assertEquals(11, DemiurgeBodyLength.cutFor(.25F, cap));
+        assertEquals(11, DemiurgeBodyLength.cutFor(0.0F, cap));
+        assertEquals(2, DemiurgeBodyLength.cutFor(.1F, 2), "A smaller rig cap still wins");
+
+        float floor = DemiurgeBodyLength.MINIMUM_GROUND_LENGTH;
+        for (int cut = 0; cut <= cap; cut++) {
+            assertTrue(DemiurgeRig.INSTANCE.bodyEndDistanceWorstCase(cut) >= floor,
+                    "The remaining floor body must keep at least eight blocks at cut " + cut);
+        }
+        assertTrue(DemiurgeRig.INSTANCE.bodyEndDistanceWorstCase(cap + 1) < floor,
+                "One more severed section would break the eight-block floor");
+
+        var joints = new java.util.ArrayList<DemiurgeBodyChain.Joint>();
+        for (var value : animation.getAsJsonArray("body_chain")) {
+            var joint = value.getAsJsonObject();
+            var corners = new java.util.ArrayList<Vector3f>();
+            for (var corner : joint.getAsJsonArray("corners")) corners.add(vector(corner.getAsJsonArray()));
+            joints.add(new DemiurgeBodyChain.Joint(joint.get("bone").getAsInt(),
+                    vector(joint.getAsJsonArray("front")), vector(joint.getAsJsonArray("back")), corners));
+        }
+        int count = animation.getAsJsonArray("bones").size();
+        var positions = new Vector3f[count];
+        var rotations = new Quaternionf[count];
+        for (int bone = 0; bone < count; bone++) {
+            positions[bone] = position(frame(ground, 0, bone));
+            rotations[bone] = rotation(frame(ground, 0, bone));
+        }
+        var chain = new DemiurgeBodyChain(joints);
+        var trail = new DemiurgeTrail();
+        trail.record(net.minecraft.world.phys.Vec3.ZERO, 0);
+        chain.follow(positions, rotations, Vec3.ZERO, 0, 1, trail::sample, cap);
+        for (int index = 0; index < joints.size(); index++) {
+            assertEquals(index >= joints.size() - cap, chain.isHidden(joints.get(index).bone(), cap),
+                    "Only the trailing sections may disappear: bone " + joints.get(index).bone());
+        }
+        assertEquals(joints.get(joints.size() - cap - 1).bone(), chain.lastRetainedBone(cap));
+        var pose = DemiurgeRig.INSTANCE.pose();
+        pose.sample(200, 17, DemiurgeAttack.NONE, -1, Vec3.ZERO, 0, trail::sample, cap, null);
+        assertTrue(pose.bounds(joints.get(joints.size() - cap - 1).bone(), Vec3.ZERO, 0).getSize() > .1F,
+                "The last retained section still blocks");
+        for (int index = joints.size() - cap; index < joints.size(); index++) {
+            assertEquals(0.0, pose.bounds(joints.get(index).bone(), Vec3.ZERO, 0).getSize(),
+                    "Severed sections no longer collide: bone " + joints.get(index).bone());
+        }
     }
 
     private static void verifySelfAvoidance(JsonObject mesh, JsonObject animation, JsonArray ground, int count) {

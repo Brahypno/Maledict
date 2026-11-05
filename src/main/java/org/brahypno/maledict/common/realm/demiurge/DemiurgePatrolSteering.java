@@ -17,10 +17,18 @@ public final class DemiurgePatrolSteering {
     private DemiurgePatrolSteering() {}
 
     public static List<Vec3> body(Vec3 origin, float yaw, DemiurgeBodyChain.Path path) {
+        return body(origin, yaw, path, 18);
+    }
+
+    /**
+     * Reserves only the corridor the remaining body actually covers; {@code endDistance} is the
+     * authored far end of the current chain, so a severed tail no longer blocks its own path.
+     */
+    public static List<Vec3> body(Vec3 origin, float yaw, DemiurgeBodyChain.Path path, double endDistance) {
         List<Vec3> result = new ArrayList<>();
-        // The first four blocks are the connected forebody. The 18-block
-        // trailing extent includes the tail and the authored sideways swing.
-        for (double distance = 4; distance <= 18; distance += .5) {
+        // The first four blocks are the connected forebody. The authored trailing extent includes
+        // the tail and the sideways swing, so it shrinks together with the body cut.
+        for (double distance = 4; distance <= endDistance; distance += .5) {
             result.add(path.sample(distance, origin, yaw).position());
         }
         return result;

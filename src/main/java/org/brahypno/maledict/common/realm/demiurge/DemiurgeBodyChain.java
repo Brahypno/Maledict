@@ -6,7 +6,9 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Places rigid sections in order along one guide, advancing by each section's fixed span. */
 public final class DemiurgeBodyChain {
@@ -18,34 +20,66 @@ public final class DemiurgeBodyChain {
     }
 
     private final List<Joint> joints;
+    private final Map<Integer, Integer> jointByBone;
 
     public DemiurgeBodyChain(List<Joint> joints) {
         this.joints = List.copyOf(joints);
+        Map<Integer, Integer> byBone = new HashMap<>();
+        for (int index = 0; index < this.joints.size(); index++) {
+            byBone.put(this.joints.get(index).bone(), index);
+        }
+        this.jointByBone = Map.copyOf(byBone);
+    }
+
+    public int jointCount() {
+        return joints.size();
+    }
+
+    /** Chain order runs head to tail, so a cut always removes whole trailing sections. */
+    public int retainedJoints(int cut) {
+        return Math.max(1, joints.size() - Math.max(0, Math.min(joints.size() - 1, cut)));
+    }
+
+    public int lastRetainedBone(int cut) {
+        return joints.get(retainedJoints(cut) - 1).bone();
+    }
+
+    /** A bone outside the chain (root, neck, head, jaw) is never hidden by the body cut. */
+    public boolean isHidden(int bone, int cut) {
+        Integer index = jointByBone.get(bone);
+        return index != null && index >= retainedJoints(cut);
     }
 
     public void follow(Vector3f[] positions, Quaternionf[] rotations, Vec3 origin, float yaw, float blend, Path path) {
+        follow(positions, rotations, origin, yaw, blend, path, 0);
+    }
+
+    public void follow(Vector3f[] positions, Quaternionf[] rotations, Vec3 origin, float yaw, float blend, Path path,
+                       int cut) {
+        int retained = retainedJoints(cut);
         Quaternionf turn = new Quaternionf();
         Vector3f target = new Vector3f();
         Vector3f endpoint = new Vector3f();
-        List<Vector2f> guide = new ArrayList<>(joints.size() + 1);
-        float[] heights = new float[joints.size()];
+        List<Vector2f> guide = new ArrayList<>(retained + 1);
+        float[] heights = new float[retained];
         int index = 0;
-        for (Joint joint : joints) {
-            Vector3f position = positions[joint.bone];
-            Quaternionf rotation = rotations[joint.bone];
+        for (int jointIndex = 0; jointIndex < retained; jointIndex++) {
+            Joint joint = joints.get(jointIndex);
+            Vector3f position = positions[joint.bone()];
+            Quaternionf rotation = rotations[joint.bone()];
             float minimum = Float.POSITIVE_INFINITY;
-            for (var corner : joint.corners) {
+            for (var corner : joint.corners()) {
                 minimum = Math.min(minimum, rotation.transform(corner, target).y + position.y);
             }
             if (minimum < .025F) position.y += (.025F - minimum) * blend;
             map(position, target, origin, yaw, path);
             heights[index++] = target.y;
             if (guide.isEmpty()) {
-                rotation.transform(joint.front, endpoint).add(position);
+                rotation.transform(joint.front(), endpoint).add(position);
                 map(endpoint, target, origin, yaw, path);
                 guide.add(new Vector2f(target.x, target.z));
             }
-            rotation.transform(joint.back, endpoint).add(position);
+            rotation.transform(joint.back(), endpoint).add(position);
             map(endpoint, target, origin, yaw, path);
             guide.add(new Vector2f(target.x, target.z));
         }
@@ -54,16 +88,17 @@ public final class DemiurgeBodyChain {
         Vector2f front = new Vector2f(guide.get(0)), back = new Vector2f();
         Vector3f direction = new Vector3f();
         index = 0;
-        for (Joint joint : joints) {
-            Vector3f position = positions[joint.bone];
-            Quaternionf rotation = rotations[joint.bone];
-            rotation.transform(direction.set(joint.back).sub(joint.front));
+        for (int jointIndex = 0; jointIndex < retained; jointIndex++) {
+            Joint joint = joints.get(jointIndex);
+            Vector3f position = positions[joint.bone()];
+            Quaternionf rotation = rotations[joint.bone()];
+            rotation.transform(direction.set(joint.back()).sub(joint.front()));
             float span = (float) Math.hypot(direction.x, direction.z);
             cursor.advance(span, back);
             float angle = (float) (Math.atan2(back.x - front.x, back.y - front.y)
                     - Math.atan2(direction.x, direction.z));
             turn.rotationY(angle).mul(rotation);
-            turn.transform(joint.front, target).negate();
+            turn.transform(joint.front(), target).negate();
             target.x += front.x;
             target.z += front.y;
             target.y = heights[index++];

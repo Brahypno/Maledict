@@ -57,6 +57,10 @@ public final class MaledictItems {
     public static final RegistryObject<Item> BLIGHTED_STAR = ITEMS.register("blighted_star",
             () -> new net.minecraft.world.item.SimpleFoiledItem(new Item.Properties().rarity(Rarity.UNCOMMON).fireResistant()));
 
+    /** 巨匠之石像倒下后留下的光，比腐枯之星更稀有的一枚残片；掉落方式与下界之星相同。 */
+    public static final RegistryObject<Item> LIGHT_FRAGMENT = ITEMS.register("light_fragment",
+            () -> new net.minecraft.world.item.SimpleFoiledItem(new Item.Properties().rarity(Rarity.RARE).fireResistant()));
+
     public static final RegistryObject<Item> WITHERED_LEAF_LITTER = ITEMS.register("withered_leaf_litter",
             () -> new BlockItem(MaledictBlocks.WITHERED_LEAF_LITTER.get(), new Item.Properties()));
     public static final RegistryObject<Item> EXPOSED_SOULWOOD_ROOTS = ITEMS.register("exposed_soulwood_roots",

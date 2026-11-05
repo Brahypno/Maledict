@@ -8,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
@@ -27,6 +28,7 @@ import org.brahypno.maledict.client.raven.RavenRenderer;
 import org.brahypno.maledict.client.raven.RavenShoulderLayer;
 import org.brahypno.maledict.client.realm.BlightedRealmEffects;
 import org.brahypno.maledict.client.realm.demiurge.DemiurgeStatueRenderer;
+import org.brahypno.maledict.client.realm.demiurge.PurpleSoulFireParticle;
 import org.brahypno.maledict.client.vicissitude.model.FirstVicissitudeBossModel;
 import org.brahypno.maledict.client.vicissitude.render.FirstVicissitudeBossRenderer;
 import org.brahypno.maledict.client.vicissitude.render.VicissitudeLightOrbRenderer;
@@ -40,6 +42,7 @@ import org.brahypno.maledict.common.invocation.InvocationDefinition;
 import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowItem;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
+import org.brahypno.maledict.registry.MaledictParticles;
 import team.lodestar.lodestone.handlers.screenparticle.ParticleEmitterHandler;
 import team.lodestar.lodestone.systems.particle.screen.ScreenParticleHolder;
 import team.lodestar.lodestone.systems.postprocess.PostProcessHandler;
@@ -88,6 +91,11 @@ public final class MaledictClientSetup {
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_LIGHT_ORB.get(), VicissitudeLightOrbRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SPIRIT_BOLT.get(), VicissitudeSpiritBoltRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SCYTHE.get(), VicissitudeScytheRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(MaledictParticles.PURPLE_SOUL_FIRE.get(), PurpleSoulFireParticle.Provider::new);
     }
 
     @SubscribeEvent

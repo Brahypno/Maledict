@@ -13,13 +13,17 @@ import org.brahypno.maledict.common.realm.demiurge.DemiurgeStatueEntity;
 import org.brahypno.maledict.common.realm.demiurge.DemiurgeAttack;
 import net.minecraft.world.phys.Vec3;
 
-/** Opaque carved stone with masked, pulsing violet emission. */
+/** Opaque carved stone with masked, pulsing violet emission that dies out with the statue. */
 public final class DemiurgeStatueRenderer extends EntityRenderer<DemiurgeStatueEntity> {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "textures/entity/demiurge_statue.png");
     private final DemiurgeStatueModel model;
     private static final ResourceLocation GLOW = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "textures/entity/demiurge_statue_emissive.png");
+    /** Authored death timing: violet out, black stone, then dust. */
+    private static final float BLACKEN_TICKS = 40.0F;
+    private static final float CRUMBLE_START = 38.0F;
+    private static final float CRUMBLE_END = 76.0F;
 
     public DemiurgeStatueRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -37,14 +41,24 @@ public final class DemiurgeStatueRenderer extends EntityRenderer<DemiurgeStatueE
                     Mth.lerp(partialTick, entity.yo, entity.getY()), Mth.lerp(partialTick, entity.zo, entity.getZ()));
             model.animate(entity, partialTick, heading, origin);
             stack.mulPose(Axis.YP.rotationDegrees(-heading));
-            model.render(stack, buffers.getBuffer(RenderType.entityCutout(TEXTURE)), light);
+            float deathTicks = entity.getDeathTicks(partialTick);
+            float tint = 1.0F, glowScale = 1.0F, dissolve = 0.0F;
+            if (deathTicks >= 0.0F) {
+                // The purple goes out first, then the stone turns pitch black, then it flakes away.
+                glowScale = 1.0F - smooth(0.0F, DemiurgeStatueEntity.DEATH_GLOW_OUT, deathTicks);
+                tint = 1.0F - .95F * smooth(0.0F, BLACKEN_TICKS, deathTicks);
+                dissolve = smooth(CRUMBLE_START, CRUMBLE_END, deathTicks);
+            }
+            if (dissolve < 1.0F) {
+                model.render(stack, buffers.getBuffer(RenderType.entityCutout(TEXTURE)), light, tint, dissolve);
+            }
             float awakeningAge = entity.awakeningAge(partialTick);
-            float glow = DemiurgeGlow.strength(awakeningAge, entity.attack(), entity.attackAge(partialTick));
+            float glow = DemiurgeGlow.strength(awakeningAge, entity.attack(), entity.attackAge(partialTick)) * glowScale;
             if (glow > 0) {
-                model.render(stack, buffers.getBuffer(RenderType.eyes(GLOW)), 0xF000F0, glow, awakeningAge);
+                model.renderEmissive(stack, buffers.getBuffer(RenderType.eyes(GLOW)), 0xF000F0, glow, awakeningAge);
             }
             stack.popPose();
-            if (entity.attack() == DemiurgeAttack.LASER) {
+            if (deathTicks < 0 && entity.attack() == DemiurgeAttack.LASER) {
                 float age = entity.attackAge(partialTick);
                 for (int side = 0; side < 2; side++) {
                     Vec3 eye = model.eye(side, origin, heading);
@@ -62,6 +76,11 @@ public final class DemiurgeStatueRenderer extends EntityRenderer<DemiurgeStatueE
             }
         }
         super.render(entity, yaw, partialTick, stack, buffers, light);
+    }
+
+    private static float smooth(float start, float end, float value) {
+        float x = Mth.clamp((value - start) / (end - start), 0.0F, 1.0F);
+        return x * x * (3 - 2 * x);
     }
 
     @Override

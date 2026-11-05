@@ -3,13 +3,17 @@ package org.brahypno.maledict.common.realm.demiurge;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -19,6 +23,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import org.brahypno.maledict.common.vicissitude.VicissitudeBossEntity;
 import org.brahypno.maledict.registry.MaledictItems;
+import org.brahypno.maledict.registry.MaledictParticles;
 import org.brahypno.maledict.registry.MaledictSounds;
 import org.brahypno.maledict.registry.MaledictEntities;
 import com.sammy.malum.registry.common.MobEffectRegistry;
@@ -38,6 +43,13 @@ import org.brahypno.maledict.config.MaledictConfig;
 /** A star awakens the statue in a rain of tears; the raised serpent then fights with three casts. */
 public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
     private static final double BASE_MOVEMENT_SPEED = .30;
+    /** Authored death sequence: violet out, black stone, then dust. */
+    public static final int DEATH_TICKS = 80;
+    /** Ticks of fading violet emission; the renderer fades exactly these ticks. */
+    public static final int DEATH_GLOW_OUT = 20;
+    private static final int DEATH_DUST_START = 26;
+    private static final EntityDataAccessor<Integer> BODY_CUT = SynchedEntityData.defineId(
+            DemiurgeStatueEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Long> AWAKENING_START = SynchedEntityData.defineId(
             DemiurgeStatueEntity.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Integer> ATTACK = SynchedEntityData.defineId(
@@ -204,8 +216,44 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
     }
 
     void updateParts() {
-        pose.sample(awakeningAge(0), slitherClock(1), attack(), attackAge(0), position(), getYRot(), this::trailPoint, beamDirection());
+        pose.sample(awakeningAge(0), slitherClock(1), attack(), attackAge(0), position(), getYRot(),
+                this::trailPoint, bodyCut(), beamDirection());
         for (int i = 0; i < parts.length; i++) parts[i].place(pose.bounds(i, position(), getYRot()));
+    }
+
+    /**
+     * Trailing body sections lost so far. The value only ever grows during one encounter, so the
+     * floor never regrows after healing; the authored cap is {@link DemiurgeRig#maxBodyCut()}.
+     */
+    public int bodyCut() {
+        return entityData.get(BODY_CUT);
+    }
+
+    /**
+     * Health thresholds sever another four sections; the cap keeps at least eight blocks of body on
+     * the floor. The server owns the value and clients only render the synced mirror.
+     */
+    private boolean updateBodyCut() {
+        if (level().isClientSide) return false;
+        float maximum = getMaxHealth();
+        int allowed = DemiurgeRig.INSTANCE.maxBodyCut();
+        int target = DemiurgeBodyLength.cutFor(maximum > 0.0F ? getHealth() / maximum : 0.0F, allowed);
+        if (target <= bodyCut()) return false;
+        entityData.set(BODY_CUT, Math.min(allowed, target));
+        return true;
+    }
+
+    /** A severed section bursts into dust at its own end, before the rest of the body follows. */
+    private void burstBodyCut() {
+        if (!(level() instanceof ServerLevel serverLevel)) return;
+        DemiurgePart end = parts[DemiurgeRig.INSTANCE.lastRetainedBone(bodyCut())];
+        AABB box = end.getBoundingBox();
+        double x = box.getCenter().x, y = box.getCenter().y, z = box.getCenter().z;
+        serverLevel.sendParticles(ParticleTypes.ASH, x, y, z, 26,
+                Math.max(.2, box.getXsize() * .35), Math.max(.2, box.getYsize() * .45),
+                Math.max(.2, box.getZsize() * .35), .02);
+        serverLevel.sendParticles(ParticleTypes.POOF, x, y, z, 6, .18, .22, .18, .01);
+        playSound(SoundEvents.STONE_BREAK, 2.0F, .55F);
     }
 
     public float slitherClock(float partialTick) {
@@ -221,12 +269,14 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
     }
 
     java.util.List<Vec3> patrolBody() {
-        return DemiurgePatrolSteering.body(position(), getYRot(), trail::sample);
+        double end = Math.max(4.0, DemiurgeRig.INSTANCE.bodyEndDistance(bodyCut()) + .9);
+        return DemiurgePatrolSteering.body(position(), getYRot(), trail::sample, end);
     }
 
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
+        entityData.define(BODY_CUT, 0);
         entityData.define(AWAKENING_START, -1L);
         entityData.define(ATTACK, 0);
         entityData.define(ATTACK_START, -1L);
@@ -270,6 +320,7 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
         for (int i = 0; i < parts.length; i++) previousBounds[i] = parts[i].getBoundingBox();
         previousSlitherClock = slitherClock;
         super.tick();
+        boolean severed = updateBodyCut();
         double distance = position().subtract(before).horizontalDistance();
         horizontalStep = distance;
         slitherClock += distance * DemiurgeSlither.CYCLE_TICKS / DemiurgeSlither.BLOCKS_PER_CYCLE;
@@ -292,6 +343,7 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
             }
         }
         updateParts();
+        if (severed) burstBodyCut();
         if (!level().isClientSide && isAlive()) tickAttacks(age, previousBounds);
     }
 
@@ -373,11 +425,76 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
         return pending;
     }
 
+    /**
+     * The light dies first, the stone blackens, then the whole statue flakes away as dust. As with
+     * the nether star, the fragment is a guaranteed spawn rather than a loot-table roll.
+     */
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        super.dropCustomDeathLoot(source, looting, recentlyHit);
+        ItemEntity drop = spawnAtLocation(MaledictItems.LIGHT_FRAGMENT.get());
+        if (drop != null) {
+            drop.setExtendedLifetime();
+        }
+    }
+
+    @Override
+    protected int getDeathDurationTicks() {
+        return DEATH_TICKS;
+    }
+
+    /** Renderer clock for the authored death sequence, or -1 while the statue still lives. */
+    public float getDeathTicks(float partialTick) {
+        if (getHealth() > 0.0F || deathTime <= 0) return -1.0F;
+        return Math.min(DEATH_TICKS, deathTime + partialTick);
+    }
+
+    /** Vanilla soul fire in the statue's violet, leaving the head while the emission dies down. */
+    private void ventDyingGlow() {
+        if (!(level() instanceof ServerLevel serverLevel)) return;
+        Vec3 head = headCenter();
+        serverLevel.sendParticles(MaledictParticles.PURPLE_SOUL_FIRE.get(), head.x, head.y, head.z, 3, .6, .5, .6, .004);
+    }
+
+    /** Ash flakes from the remaining stone so the render dissolve reads as crumbling, not blinking out. */
+    private void shedDeathDust() {
+        if (!(level() instanceof ServerLevel serverLevel)) return;
+        for (int i = 0; i < 4; i++) {
+            DemiurgePart part = parts[random.nextInt(parts.length)];
+            AABB box = part.getBoundingBox();
+            if (box.getSize() < .05) continue;
+            double x = Mth.lerp(random.nextDouble(), box.minX, box.maxX);
+            double y = Mth.lerp(random.nextDouble(), box.minY, box.maxY);
+            double z = Mth.lerp(random.nextDouble(), box.minZ, box.maxZ);
+            serverLevel.sendParticles(ParticleTypes.ASH, x, y, z, 2, .18, .12, .18, .012);
+            if (random.nextInt(3) == 0) {
+                serverLevel.sendParticles(ParticleTypes.SMOKE, x, y, z, 1, .08, .05, .08, .004);
+            }
+        }
+    }
+
+    @Override
+    protected void onDeathTick(int ticks) {
+        if (level().isClientSide) return;
+        if (ticks == 1) {
+            playSound(SoundEvents.STONE_BREAK, 2.5F, .45F);
+        }
+        if (ticks <= DEATH_GLOW_OUT) {
+            ventDyingGlow();
+        } else if (ticks == DEATH_GLOW_OUT + 1) {
+            playSound(SoundEvents.GRAVEL_BREAK, 2.0F, .5F);
+        }
+        if (ticks >= DEATH_DUST_START && ticks < DEATH_TICKS) {
+            shedDeathDust();
+        }
+    }
+
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putLong("AwakeningStart", entityData.get(AWAKENING_START));
         tag.putBoolean("AwakeningRoarPlayed", roarPlayed);
+        tag.putInt("BodyCut", bodyCut());
         if (combatDifficulty >= 0) tag.putInt("CombatDifficulty", combatDifficulty);
         if (awakeningRainOrigin != null) {
             tag.putDouble("AwakeningRainX", awakeningRainOrigin.x);
@@ -390,6 +507,8 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         entityData.set(AWAKENING_START, tag.contains("AwakeningStart") ? tag.getLong("AwakeningStart") : -1L);
+        entityData.set(BODY_CUT, Math.max(0, Math.min(DemiurgeRig.INSTANCE.maxBodyCut(),
+                tag.contains("BodyCut") ? tag.getInt("BodyCut") : 0)));
         roarPlayed = tag.getBoolean("AwakeningRoarPlayed");
         combatDifficulty = tag.contains("CombatDifficulty") ? tag.getInt("CombatDifficulty") : -1;
         awakeningRainOrigin = tag.contains("AwakeningRainX") ? new Vec3(tag.getDouble("AwakeningRainX"),

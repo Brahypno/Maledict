@@ -33,6 +33,7 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.CRYING_TWISTED_ROCK.get());
                                output.accept(MaledictItems.BLIGHTED_WITHER_SKULL.get());
                                output.accept(MaledictItems.BLIGHTED_STAR.get());
+                               output.accept(MaledictItems.LIGHT_FRAGMENT.get());
                                output.accept(MaledictItems.WITHERED_LEAF_LITTER.get());
                                output.accept(MaledictItems.EXPOSED_SOULWOOD_ROOTS.get());
                                output.accept(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get());

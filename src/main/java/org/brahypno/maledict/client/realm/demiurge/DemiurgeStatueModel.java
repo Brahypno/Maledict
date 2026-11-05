@@ -48,19 +48,46 @@ final class DemiurgeStatueModel {
 
     void animate(DemiurgeStatueEntity entity, float partialTick, float yaw, Vec3 origin) {
         pose.sample(entity.awakeningAge(partialTick), entity.slitherClock(partialTick),
-                entity.attack(), entity.attackAge(partialTick), origin, yaw, entity::trailPoint, entity.beamDirection());
+                entity.attack(), entity.attackAge(partialTick), origin, yaw, entity::trailPoint,
+                entity.bodyCut(), entity.beamDirection());
     }
 
     Vec3 eye(int side, Vec3 origin, float yaw) { return pose.eye(side, origin, yaw); }
     Vec3 headForward(float yaw) { return pose.headForward(yaw); }
 
-    void render(PoseStack stack, VertexConsumer buffer, int light) {
-        render(stack, buffer, light, -1, 0);
+    /**
+     * Base pass. {@code tint} scales the carved stone towards black and {@code dissolve} drops whole
+     * quads in a stable hash order, so the dying statue flakes away instead of blinking out.
+     */
+    void render(PoseStack stack, VertexConsumer buffer, int light, float tint, float dissolve) {
+        int brightness = (int) (255 * Math.max(0.0F, Math.min(1.0F, tint)));
+        for (int bone = 0; bone < bones.size(); bone++) {
+            if (pose.isHidden(bone)) continue;
+            var position = pose.positions[bone];
+            stack.pushPose();
+            stack.translate(position.x, position.y, position.z);
+            stack.mulPose(pose.rotations[bone]);
+            var transform = stack.last();
+            List<Quad> quads = bones.get(bone);
+            for (int index = 0; index < quads.size(); index++) {
+                if (dissolve > dissolveThreshold(bone, index)) continue;
+                Quad quad = quads.get(index);
+                for (Vertex vertex : quad.vertices) {
+                    buffer.vertex(transform.pose(), vertex.x, vertex.y, vertex.z)
+                            .color(brightness, brightness, brightness, 255).uv(vertex.u, vertex.v)
+                            .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
+                            .normal(transform.normal(), quad.nx, quad.ny, quad.nz).endVertex();
+                }
+            }
+            stack.popPose();
+        }
     }
 
-    void render(PoseStack stack, VertexConsumer buffer, int light, float glow, float time) {
+    /** Emissive pass; the remaining glow fades before the stone starts to crumble. */
+    void renderEmissive(PoseStack stack, VertexConsumer buffer, int light, float glow, float time) {
         for (int bone = 0; bone < bones.size(); bone++) {
-            int brightness = glow < 0 ? 255 : (int) (255 * DemiurgeGlow.bone(glow, time, bone));
+            if (pose.isHidden(bone)) continue;
+            int brightness = (int) (255 * DemiurgeGlow.bone(glow, time, bone));
             var position = pose.positions[bone];
             stack.pushPose();
             stack.translate(position.x, position.y, position.z);
@@ -74,5 +101,12 @@ final class DemiurgeStatueModel {
             }
             stack.popPose();
         }
+    }
+
+    /** Stable per-quad phase in [0, 1), so the dissolve order cannot change between frames. */
+    private static float dissolveThreshold(int bone, int quad) {
+        int hash = bone * 0x9E3779B9 + (quad + 1) * 0x85EBCA6B;
+        hash ^= hash >>> 16;
+        return (hash & 0xFFFF) / 65536.0F;
     }
 }
