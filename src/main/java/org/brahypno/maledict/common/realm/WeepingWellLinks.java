@@ -16,8 +16,12 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-/** World-owned, bidirectional well pairs; no player's journey can overwrite another's route. */
+/**
+ * World-owned, bidirectional well pairs. A journey that finds every site around its destination taken may
+ * take over the nearest intact pair instead, replacing that pair's endpoint in the traveller's dimension.
+ */
 public final class WeepingWellLinks extends SavedData {
     private static final String FILE_NAME = "maledict_weeping_wells";
     private final Map<GlobalPos, Link> links = new HashMap<>();
@@ -51,6 +55,11 @@ public final class WeepingWellLinks extends SavedData {
                 && horizontalDistanceSquared(pos.pos(), center) < squared);
     }
 
+    /** Distinct pairs, rather than the two map keys each one owns. */
+    public Set<Link> pairs() {
+        return new HashSet<>(links.values());
+    }
+
     public void replaceEndpoint(Link old, Endpoint replacement) {
         Endpoint overworld = old.overworld();
         Endpoint realm = old.realm();
@@ -64,7 +73,14 @@ public final class WeepingWellLinks extends SavedData {
         pair(overworld, realm);
     }
 
-    private static long horizontalDistanceSquared(BlockPos first, BlockPos second) {
+    /** Drop both ends of a route, freeing its wells for another pair. */
+    void dissolve(Link link) {
+        links.remove(link.overworld().core());
+        links.remove(link.realm().core());
+        setDirty();
+    }
+
+    static long horizontalDistanceSquared(BlockPos first, BlockPos second) {
         long x = (long) first.getX() - second.getX();
         long z = (long) first.getZ() - second.getZ();
         return x * x + z * z;

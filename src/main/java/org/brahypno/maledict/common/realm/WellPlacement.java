@@ -24,6 +24,8 @@ final class WellPlacement {
     private static final ResourceLocation TEMPLATE = ResourceLocation.fromNamespaceAndPath("malum", "weeping_well");
     private static final int[][] SITES = {{0, 0}, {32, 0}, {0, 32}, {-32, 0}, {0, -32},
             {32, 32}, {-32, 32}, {32, -32}, {-32, -32}, {64, 0}, {0, 64}, {-64, 0}, {0, -64}};
+    /** The site ring reaches 64 blocks; adoption stays inside the same neighbourhood. */
+    private static final int ADOPTION_RADIUS = 96;
 
     static boolean isWell(BlockState state) {
         return state.getBlock() instanceof PrimordialSoupBlock || state.getBlock() instanceof VoidConduitBlock;
@@ -110,6 +112,11 @@ final class WellPlacement {
 
     static Optional<WeepingWellLinks.Endpoint> build(ServerLevel level, LivingEntity player,
                                                    BlockPos target, WeepingWellLinks links) {
+        return build(level, player, target, links, false);
+    }
+
+    static Optional<WeepingWellLinks.Endpoint> build(ServerLevel level, LivingEntity player,
+                                                   BlockPos target, WeepingWellLinks links, boolean mayAdopt) {
         var template = level.getStructureManager().get(TEMPLATE);
         if (template.isEmpty()) return Optional.empty();
         var settings = new StructurePlaceSettings().setIgnoreEntities(true).setKeepLiquids(false);
@@ -155,7 +162,37 @@ final class WellPlacement {
             if (landing.isPresent()) return Optional.of(new WeepingWellLinks.Endpoint(level.dimension(), core, landing.get()));
             LOGGER.debug("Well at {} has no safe rim for {}", core, player.getUUID());
         }
-        return Optional.empty();
+        return mayAdopt ? adoptNearest(level, target, links) : Optional.empty();
+    }
+
+    /**
+     * Reuse the nearest intact pair once every site around the target is taken, instead of refusing travel.
+     * The caller replaces that pair's endpoint in the traveller's dimension with the entering well.
+     */
+    private static Optional<WeepingWellLinks.Endpoint> adoptNearest(ServerLevel level, BlockPos target,
+                                                                   WeepingWellLinks links) {
+        WeepingWellLinks.Endpoint best = null;
+        double bestDistance = (double) ADOPTION_RADIUS * ADOPTION_RADIUS;
+        for (WeepingWellLinks.Link link : links.pairs()) {
+            WeepingWellLinks.Endpoint endpoint = link.overworld().core().dimension().equals(level.dimension())
+                    ? link.overworld() : link.realm();
+            if (!endpoint.core().dimension().equals(level.dimension())) continue;
+            if (!isWell(level.getBlockState(endpoint.core().pos()))) continue;
+            double distance = WeepingWellLinks.horizontalDistanceSquared(endpoint.core().pos(), target);
+            if (distance > bestDistance) continue;
+            if (best != null && distance == bestDistance
+                    && !precedes(endpoint.core().pos(), best.core().pos())) continue;
+            best = endpoint;
+            bestDistance = distance;
+        }
+        return Optional.ofNullable(best);
+    }
+
+    /** Stable tie-break so equal-distance adoptions do not depend on map order. */
+    private static boolean precedes(BlockPos candidate, BlockPos current) {
+        if (candidate.getX() != current.getX()) return candidate.getX() < current.getX();
+        if (candidate.getZ() != current.getZ()) return candidate.getZ() < current.getZ();
+        return candidate.getY() < current.getY();
     }
 
     private static boolean natural(BlockState state) {

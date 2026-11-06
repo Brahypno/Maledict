@@ -50,16 +50,21 @@ public final class WeepingWellTravel {
                 // A liquid-only entrance need not have a rim, but its paired return must still be safe.
                 Vec3 home = originLanding.orElseGet(() -> fallback(player, source));
                 var origin = new WeepingWellLinks.Endpoint(source.dimension(), sourceCore, home);
-                var built = WellPlacement.build(target, player, scaled(sourceCore, returning), links);
+                var built = WellPlacement.build(target, player, scaled(sourceCore, returning), links, true);
                 if (built.isEmpty()) return failed(player, returning);
                 destination = built.get();
-                if (returning) links.pair(destination, origin);
+                // A full site ring hands back the nearest intact pair; take over its endpoint in this dimension.
+                var claimed = links.find(destination.core());
+                if (claimed != null) links.replaceEndpoint(claimed, origin);
+                else if (returning) links.pair(destination, origin);
                 else links.pair(origin, destination);
             } else {
                 destination = link.other(identity);
                 if (!WellPlacement.isWell(target.getBlockState(destination.core().pos()))) {
-                    var rebuilt = WellPlacement.build(target, player, destination.core().pos(), links);
+                    var rebuilt = WellPlacement.build(target, player, destination.core().pos(), links, true);
                     if (rebuilt.isEmpty()) return failed(player, returning);
+                    var claimed = links.find(rebuilt.get().core());
+                    if (claimed != null) links.dissolve(claimed);
                     links.replaceEndpoint(link, rebuilt.get());
                     destination = rebuilt.get();
                 }
