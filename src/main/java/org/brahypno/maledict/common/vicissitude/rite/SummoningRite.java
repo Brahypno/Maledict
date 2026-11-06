@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.BooleanOp;
@@ -131,7 +132,7 @@ public final class SummoningRite {
 
     /** Creates the configured entity; Vicissitude enters through a suspended rift. */
     static void summon(TotemBaseBlockEntity totem, ServerLevel level, BossDifficulty difficulty) {
-        if (!MaledictConfig.SUMMONING_RITE.get()) {
+        if (!MaledictConfig.SUMMONING_RITE.get() || level.getDifficulty() == Difficulty.PEACEFUL) {
             return;
         }
         EntityType<?> type = resolveType();

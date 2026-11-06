@@ -8,7 +8,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Cow;
@@ -26,6 +29,10 @@ import org.brahypno.changelib.DamageHelper.DamageStage;
 import org.brahypno.changelib.HealthHelper.CombatProtection;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
+import org.brahypno.maledict.common.weapon.incursus.IncursusBladeAttack;
+import org.brahypno.maledict.common.weapon.incursus.IncursusBladeEnchantments;
+import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.weapon.incursus.IncursusScytheBoomerangEntity;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
@@ -168,9 +175,14 @@ public final class DemiurgeAwakeningTest {
         helper.assertTrue(CombatProtection.state(statue) != null
                           && CombatProtection.state(statue).grade() == DamageStage.D5_RECOVERY_SOURCE,
                 "The Demiurge must seal its own D5 health defense");
-        helper.assertTrue(statue.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR) == 20
+        helper.assertTrue(statue.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR) == 10
                         && statue.getHealth() == DemiurgeDifficulty.maxHealth(level.getDifficulty()),
-                "The spawned statue must receive 20 armour and its difficulty's authoritative health pool");
+                "The spawned statue must receive 10 armour and its difficulty's authoritative health pool");
+        float dormantHealth = statue.getHealth();
+        helper.assertTrue(!statue.hurt(statue.damageSources().mobAttack(statue), 100.0F)
+                        && !statue.getParts()[0].hurt(statue.damageSources().genericKill(), Float.MAX_VALUE)
+                        && statue.getHealth() == dormantHealth,
+                "The unawakened statue and its parts must reject damage, including generic kill");
         var spiritDrops = com.sammy.malum.core.listeners.SpiritDataReloadListener.SPIRIT_DATA.get(
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("maledict", "demiurge_statue"));
         helper.assertTrue(spiritDrops != null && spiritDrops.totalSpirits == 24 && spiritDrops.droppedSpirits.size() == 4,
@@ -217,6 +229,23 @@ public final class DemiurgeAwakeningTest {
         statue.mobInteract(player, InteractionHand.MAIN_HAND);
         helper.assertTrue(statue.awakeningAge(0) == -1, "An ordinary item must not awaken the statue");
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(MaledictItems.BLIGHTED_STAR.get(), 3));
+        var worldData = level.getServer().getWorldData();
+        Difficulty originalDifficulty = level.getDifficulty();
+        try {
+            worldData.setDifficulty(Difficulty.PEACEFUL);
+            helper.assertTrue(statue.mobInteract(player, InteractionHand.MAIN_HAND) == InteractionResult.FAIL
+                            && statue.awakeningAge(0) == -1 && player.getMainHandItem().getCount() == 3,
+                    "Peaceful must reject awakening without consuming a star");
+            for (var type : java.util.List.of(MaledictEntities.FIRST_VICISSITUDE.get(), MaledictEntities.DEMIURGE_STATUE.get())) {
+                var summon = type.create(level);
+                summon.setPos(statue.position().add(32, 0, 0));
+                helper.assertTrue(!level.addFreshEntity(summon), "Peaceful must reject a new boss summon: " + type);
+            }
+            statue.checkDespawn();
+            helper.assertTrue(!statue.isRemoved(), "An existing statue must remain when difficulty changes to Peaceful");
+        } finally {
+            worldData.setDifficulty(originalDifficulty);
+        }
         statue.mobInteract(player, InteractionHand.MAIN_HAND);
         statue.mobInteract(player, InteractionHand.MAIN_HAND);
         player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(MaledictItems.BLIGHTED_STAR.get(), 2));
@@ -224,6 +253,23 @@ public final class DemiurgeAwakeningTest {
         helper.assertTrue(player.getMainHandItem().getCount() == 2 && player.getOffhandItem().getCount() == 2
                         && statue.awakeningAge(0) == 0,
                 "First use consumes exactly one; repeat and offhand use cannot consume again");
+        float beforeCapProbe = statue.getHealth();
+        float cap = statue.getMaxHealth() * 0.03F;
+        float expectedLoss = net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(cap, 10.0F, 0.0F);
+        helper.assertTrue(statue.hurt(statue.damageSources().mobAttack(statue), 100.0F),
+                "Damage immunity must end as soon as awakening starts, before its animation completes");
+        helper.assertTrue(Math.abs(beforeCapProbe - statue.getHealth() - expectedLoss) < 0.001F,
+                "A 100-damage hit must lose exactly the 3% cap after 10 armour: expected "
+                        + expectedLoss + ", actual " + (beforeCapProbe - statue.getHealth()));
+        try {
+            worldData.setDifficulty(Difficulty.PEACEFUL);
+            statue.checkDespawn();
+            helper.assertTrue(!statue.isRemoved() && statue.awakeningAge(0) == 0,
+                    "Switching to Peaceful must preserve an awakening that has already started");
+        } finally {
+            worldData.setDifficulty(originalDifficulty);
+        }
+        verifyIncursusDamage(helper, statue.position().add(24, 0, 0));
         helper.runAtTickTime(10, () -> helper.assertTrue(
                 !level.getEntitiesOfClass(DemiurgeTearEntity.class, current[0].getBoundingBox().inflate(15),
                         tear -> tear.getOwner() == current[0]).isEmpty(),
@@ -235,7 +281,13 @@ public final class DemiurgeAwakeningTest {
             old.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
             var restored = MaledictEntities.DEMIURGE_STATUE.get().create(level);
             restored.load(saved);
-            level.addFreshEntity(restored);
+            try {
+                worldData.setDifficulty(Difficulty.PEACEFUL);
+                helper.assertTrue(level.addFreshEntity(restored),
+                        "An existing ledger-bound boss must reload in Peaceful");
+            } finally {
+                worldData.setDifficulty(originalDifficulty);
+            }
             current[0] = restored;
             helper.assertTrue(restored.awakeningAge(0) == age && age > 20,
                     "Reload must preserve the actual in-progress awakening instead of restarting it");
@@ -253,6 +305,16 @@ public final class DemiurgeAwakeningTest {
             awake.readAdditionalSaveData(tag);
             helper.assertTrue(awake.isAwake() && tag.getBoolean("AwakeningRoarPlayed"),
                     "Completed awakening and the consumed roar marker survive save/load");
+            var part = awake.getParts()[0];
+            var target = ServerboundInteractPacket.createAttackPacket(part, false).getTarget(level);
+            helper.assertTrue(target == part, "The server must resolve a melee packet to the reloaded statue's part");
+            float beforeSwordHit = awake.getHealth();
+            ItemStack held = player.getMainHandItem();
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_SWORD));
+            player.attack(target);
+            player.setItemInHand(InteractionHand.MAIN_HAND, held);
+            helper.assertTrue(awake.getHealth() < beforeSwordHit,
+                    "An ordinary sword hit on an awakened statue's part must debit its D5-owned pool");
             BlockPos floor = helper.absolutePos(new BlockPos(50, 5, 50));
             for (int x = (floor.getX() - 15) >> 4; x <= (floor.getX() + 15) >> 4; x++) {
                 for (int z = (floor.getZ() - 15) >> 4; z <= (floor.getZ() + 15) >> 4; z++) {
@@ -482,6 +544,9 @@ public final class DemiurgeAwakeningTest {
             victim.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(2, 12, 2)));
             victim.setNoGravity(true);
             level.addFreshEntity(victim);
+            var awakening = victim.saveWithoutId(new CompoundTag());
+            awakening.putLong("AwakeningStart", level.getGameTime());
+            victim.readAdditionalSaveData(awakening);
             deathFixture[0] = victim;
         });
         helper.runAtTickTime(1042, () -> deathFixture[0].hurt(deathFixture[0].damageSources().genericKill(), 1));
@@ -500,6 +565,51 @@ public final class DemiurgeAwakeningTest {
             drops.forEach(ItemEntity::discard);
             helper.succeed();
         });
+    }
+
+    private static void verifyIncursusDamage(GameTestHelper helper, Vec3 position) {
+        var level = helper.getLevel();
+        for (boolean throwing : new boolean[]{false, true}) {
+            var victim = MaledictEntities.DEMIURGE_STATUE.get().create(level);
+            var state = victim.saveWithoutId(new CompoundTag());
+            state.putLong("AwakeningStart", level.getGameTime() - 140);
+            victim.load(state);
+            victim.setPos(position);
+            victim.setNoGravity(true);
+            helper.assertTrue(level.addFreshEntity(victim), "The awake Incursus fixture must join the world");
+            var attacker = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "IncursusBossTest")) {
+                @Override public float getAttackStrengthScale(float partialTick) { return 1.0F; }
+            };
+            attacker.setPos(position.add(0, 0, -5));
+            attacker.setYRot(0);
+            attacker.setXRot(0);
+            var blade = new ItemStack(MaledictItems.INCURSUS_BLADE.get());
+            IncursusBladeItem.setStat(blade, IncursusBladeItem.ATTACK_DAMAGE, throwing ? 0 : 19);
+            IncursusBladeItem.setStat(blade, IncursusBladeItem.POWDER_SNOW_DAMAGE, 6);
+            attacker.setItemInHand(InteractionHand.MAIN_HAND, blade);
+            attacker.getAttributes().addTransientAttributeModifiers(
+                    blade.getAttributeModifiers(net.minecraft.world.entity.EquipmentSlot.MAINHAND));
+            float before = victim.getHealth();
+            if (throwing) {
+                IncursusBladeEnchantments.throwScythe(level, attacker, InteractionHand.MAIN_HAND, blade);
+                var projectiles = level.getEntitiesOfClass(IncursusScytheBoomerangEntity.class,
+                        attacker.getBoundingBox().inflate(16), scythe -> scythe.getOwner() == attacker);
+                helper.assertTrue(projectiles.size() == 1, "A normal right-click must launch one Incursus scythe");
+                for (int tick = 0; tick < 12 && victim.getHealth() == before; tick++) projectiles.get(0).tick();
+                projectiles.forEach(Entity::discard);
+            } else {
+                IncursusBladeAttack.perform(attacker);
+            }
+            float loss = before - victim.getHealth();
+            helper.assertTrue(loss > 0 && loss <= victim.getMaxHealth() * 0.03F + 0.001F,
+                    "Incursus " + (throwing ? "boomerang" : "melee")
+                            + " must debit real D5-owned health through the boss cap, loss=" + loss);
+            if (throwing) {
+                helper.assertTrue(loss > 1.0F,
+                        "A mitigated melee channel must still trigger the boomerang's six-point freeze channel, loss=" + loss);
+            }
+            victim.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+        }
     }
 
     private static void verifyLaserFacing() {

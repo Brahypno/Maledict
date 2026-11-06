@@ -15,6 +15,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.gametest.GameTestHolder;
@@ -63,6 +64,22 @@ public final class FirstVicissitudeEntityTest {
                 invoke(boss, "syncCombatState", new Class<?>[0], new Object[0]);
                 helper.assertTrue(!boss.hasCombatOpponent(),
                         "An unprovoked encounter must not activate music for nearby listeners");
+
+                Difficulty originalDifficulty = helper.getLevel().getDifficulty();
+                try {
+                    helper.getLevel().getServer().getWorldData().setDifficulty(Difficulty.PEACEFUL);
+                    if (!phaseTwo) {
+                        boss.hurt(boss.damageSources().playerAttack(player), 1);
+                        helper.assertTrue(boss.saveWithoutId(new CompoundTag()).getByte("VicissitudeStage")
+                                        == VicissitudeBossStage.DORMANT.ordinal()
+                                        && !boss.isValidCombatParticipant(player),
+                                "An existing dormant Vicissitude must not awaken or register an attacker in Peaceful");
+                    }
+                    boss.checkDespawn();
+                    helper.assertTrue(!boss.isRemoved(), "Switching to Peaceful must preserve an existing Vicissitude");
+                } finally {
+                    helper.getLevel().getServer().getWorldData().setDifficulty(originalDifficulty);
+                }
 
                 boss.hurt(boss.damageSources().playerAttack(player), 1);
                 helper.assertTrue(boss.isValidCombatParticipant(player),

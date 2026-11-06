@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraftforge.event.TickEvent;
@@ -54,6 +55,12 @@ public final class VicissitudeRiteConfirmationEvents {
         if (rite == null || base.isActiveOrAssembling()) {
             if (event.getHand() == InteractionHand.MAIN_HAND) CONFIRMATIONS.remove(player.getUUID());
             return; // Preserve Malum's invalid, assembling and active interactions.
+        }
+        if (level.getDifficulty() == Difficulty.PEACEFUL) {
+            CONFIRMATIONS.remove(player.getUUID());
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.FAIL);
+            return;
         }
         // Never let the second hand establish or complete a confirmation, even on a later tick.
         if (event.getHand() == InteractionHand.OFF_HAND) {

@@ -18,7 +18,7 @@
 
 招式间隔40tick，依次使用冲撞、激光、满足近身条件的吼叫；追踪48格内的生存玩家，也会反击攻击者。远于28格时先寻路接近；冷却期间继续接近较远目标，近处则沿缓弯调整站位，每5tick检查站位，沿用尾身避让与接触拆墙。基础移动速度0.30，巡游与近处调整站位的速度系数1.0；已有实体重载时也应用新基础速度。非战斗巡游每10tick尝试选点，保留短暂停留。方块不会禁止整套招式开始，激光自行截断、冲撞遵循接触拆墙、泪雨穿过方块。沉睡、唤醒和展开阶段不发动战斗招式。冲撞前5tick逐渐加速至0.8格/tick，伤害结束后用10tick减速滑行，收速期间不再造成冲撞伤害。激光最长40格，泪雨半径5格、每tick8滴、下降速度0.9格/tick、每滴最多存在30tick。
 
-护甲20。简单、普通、困难首次生成的生命池分别为400、600、800，沿用基类的每UUID持久化账本，存档中保留生成时的血量难度。伤害使用当前世界难度：基础值×倍率，简单0.5、普通1、困难1.5，和平为0。三招分别配置 `demiurge.chargeDamage`、`laserDamage`、`rainDamage`；比例配置 `easyDamageMultiplier`、`normalDamageMultiplier`、`hardDamageMultiplier`。这些项目位于 `maledict-common.toml`，修改基础值后各难度按比例变化；原版玩家伤害不再额外缩放一遍。
+护甲10。每击上限为 3% 最大生命，在护甲前截断后过 10 甲：简单/普通/困难约 10.1/16.6/22.1。普通 7–9 伤害的武器打不到 12/18/24 的上限，仍只按 10 甲减伤。简单、普通、困难首次生成的生命池分别为400、600、800，沿用基类的每UUID持久化账本，存档中保留生成时的血量难度。伤害使用当前世界难度：基础值×倍率，简单0.5、普通1、困难1.5，和平为0。三招分别配置 `demiurge.chargeDamage`、`laserDamage`、`rainDamage`；比例配置 `easyDamageMultiplier`、`normalDamageMultiplier`、`hardDamageMultiplier`。这些项目位于 `maledict-common.toml`，修改基础值后各难度按比例变化；原版玩家伤害不再额外缩放一遍。
 
 三招统一按世界难度选择ChangeLib伤害方法：简单为LIGHT（`lighterDamageMethod`），普通为MEDIUM（`mediumDamageMethod(..., false)`），困难为FINAL（`finalDamageMethod(..., finalNoRemove(), false)`），均不追伤：第一条路径已有真实扣血后，不再补足护甲、减伤等削去的差额。按用户确认保留已删除的入口无敌帧过滤。
 

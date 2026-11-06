@@ -117,7 +117,7 @@ public final class IncursusBladeEnchantments {
                                            .deal(target,
                                                  DamageTypeHelper.create(level, DamageTypeRegistry.SCYTHE_SWEEP, player),
                                                  channels.attack())
-                                           .success();
+                                           .instantEffective();
             if (hit){
                 ItemHelper.applyEnchantments(player, target, stack);
                 int fireAspect = stack.getEnchantmentLevel(Enchantments.FIRE_ASPECT);

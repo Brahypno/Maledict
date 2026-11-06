@@ -23,6 +23,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -2416,6 +2417,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Override
     protected boolean isDamageImmune(DamageSource source) {
+        if (stage == VicissitudeBossStage.DORMANT && level().getDifficulty() == Difficulty.PEACEFUL) {
+            return true;
+        }
         if (isRiteSummoning())
             return true;
         if (stage == VicissitudeBossStage.TRANSITION || getHealth() <= 0.0F){
@@ -2440,6 +2444,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     @Override
     protected void onIncomingAttack(DamageSource source, float amount) {
+        if (stage == VicissitudeBossStage.DORMANT && level().getDifficulty() == Difficulty.PEACEFUL) {
+            return;
+        }
         if (isRiteSummoning())
             return;
         LivingEntity attacker = resolveLivingAttacker(source);

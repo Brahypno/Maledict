@@ -102,6 +102,31 @@ method directly without ever asking `isPushable`. Players touching the boss are 
 `pushEntities()`; the wing push (`Player#push`, 0.06 horizontal) is a separate, deliberate shove. Only the boss's
 own movement code may change its velocity.
 
+### Vicissitude health is an owned ChangeLib pool (`VicissitudeBossEntity`)
+
+The world `SavedData` ledger remains the only authority. The base implements `CombatProtection.OwnedHealthEntity`,
+checks the adapter by identity, and calls `CombatProtection.bindOwned` exactly once in `onAddedToWorld`, after the
+ledger record has been restored or initialized. `getHealth()` returns
+`CombatProtection.healthView(this, authorityHealth())`; clients prefer ChangeLib's committed snapshot and use
+the synced `DISPLAY_VITALITY` only before that snapshot arrives.
+
+Every authority change — damage, healing, canceled-death restore, gate and kill-attempt updates — commits one full
+record through the private controller. Resolved damage uses `commitDamage`; other owner updates use `commit`.
+The callback only writes the ledger and capability mirror; publishing and events stay outside it. The old `protect`/`unprotect` rebase and the
+per-tick grade check are gone: `unprotect`, `protect`, `authorize` and the public `attack` all refuse an owned
+binding. Direct `setHealth` and storage damage submit requests to the bound authority. At or below the defense
+grade they reenter the boss's `hurt` rules, including immunity, adaptation, cooldowns and the per-hit cap. A higher
+canonical stage may force damage through that cap. Do not reintroduce `super.setHealth` in `publishVitality`.
+
+Bind an explicit damage allowance covering the largest hit segment. Every `hurt` uses the same input ceiling,
+with or without `beginHit`; there is no unscoped-hurt exemption. Final resolved damage uses
+`vitalityController.commitDamage`, sharing the request's remaining allowance after mitigation and channel
+aggregation. Healing and lifecycle record updates keep `commit`. Low-stage probe retries cannot reopen the same
+request's allowance; the confirmed 100-health/8-limit sequence is 92 for both direct and probed 20-point hits,
+and D4 may force all 20 points through D3 to reach 80.
+Compensation does not raise the attack stage or reopen its allowance: D3 with compensation against D4 still
+stops at 92; an actual escalation to D5 may legally settle the remaining 12 damage and reach 80.
+
 ### Age of Enlightenment is a melee multiplier, not a forced crit (`AgeOfEnlightenmentEvents#onMeleeHurt`)
 
 It used to force a vanilla critical hit (`CriticalHitEvent`, `ALLOW` plus a 1.5× modifier). It is now a plain melee

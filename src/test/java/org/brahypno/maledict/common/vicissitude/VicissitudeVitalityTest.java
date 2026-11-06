@@ -5,6 +5,7 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.CombatRules;
@@ -22,6 +23,7 @@ import org.brahypno.changelib.DamageHelper.DamageStage;
 import org.brahypno.changelib.HealthHelper.CombatProtection;
 import org.brahypno.changelib.protection.ai.AiProtection;
 import org.brahypno.maledict.registry.MaledictEntities;
+import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -94,16 +96,22 @@ public final class VicissitudeVitalityTest {
     }
 
     @GameTest(template = "test_empty", timeoutTicks = 30)
-    public static void canceledDeathRevivesAndNeverFinalizes(GameTestHelper helper) {
+    @SuppressWarnings("unchecked")
+    public static void canceledDeathRevivesAndNeverFinalizes(GameTestHelper helper) throws ReflectiveOperationException {
         TestBoss boss = spawn(helper);
         boss.restoreAuthority(VicissitudeVitality.initial(boss.getMaxHealth()).withCurrent(5));
         Events listener = new Events(boss);
         listener.death = event -> event.setCanceled(true);
         withListener(listener, () -> boss.hurt(boss.damageSources().generic(), 10));
         equal(helper, 1, boss.getHealth(), "Canceled death must restore one health");
+        var field = VicissitudeBossEntity.class.getDeclaredField("DISPLAY_VITALITY");
+        field.setAccessible(true);
+        var display = (EntityDataAccessor<Float>) field.get(null);
+        boss.getEntityData().set(display, 0.0F);
         helper.runAtTickTime(25, () -> {
             helper.assertTrue(!boss.isRemoved() && boss.isAlive(), "Canceled death must survive removal deadline");
             helper.assertTrue(boss.finalDeaths == 0 && boss.lootDrops == 0, "No death callbacks or rewards");
+            equal(helper, 1, boss.getEntityData().get(display), "A stale zero display must recover without a new health commit");
             helper.succeed();
         });
     }
@@ -118,13 +126,17 @@ public final class VicissitudeVitalityTest {
         boss.useAiTarget(zombie);
         helper.assertTrue(boss.getTarget() == zombie, "The owner target path must still work");
         boss.clearAiTarget();
-        CombatProtection.unprotect(boss);
-        helper.runAtTickTime(1, () -> {
-            helper.assertTrue(CombatProtection.state(boss) != null
-                              && CombatProtection.state(boss).grade() == DamageStage.D4_CONSISTENCY_WRITE,
-                    "The sealed health defense must restore its original grade");
-            zombie.discard();
-        });
+        boolean externalUnbindRejected = false;
+        try {
+            CombatProtection.unprotect(boss);
+        } catch (IllegalArgumentException expected) {
+            externalUnbindRejected = true;
+        }
+        helper.assertTrue(externalUnbindRejected
+                          && CombatProtection.state(boss) != null
+                          && CombatProtection.state(boss).grade() == DamageStage.D4_CONSISTENCY_WRITE,
+                "The owned health binding must reject an external unbind and keep its sealed grade");
+        zombie.discard();
         float initial = boss.getHealth();
         for (int call = 0; call < 20; call++) boss.kill();
         equal(helper, initial, boss.getHealth(), "One tick of kill calls counts once");
@@ -155,6 +167,17 @@ public final class VicissitudeVitalityTest {
         boss.hurt(boss.damageSources().mobAttack(boss), 28);
         equal(helper, initial - Math.max(first, second), boss.getHealth(), "Batch must maximize reduced health loss");
         equal(helper, 0, boss.getAbsorptionAmount(), "Absorption must be consumed once available");
+        for (var tier : IncursusBladeItem.DamageTier.values()) {
+            TestBoss probed = spawn(helper);
+            probed.getAttribute(Attributes.ARMOR).setBaseValue(20);
+            probed.setAbsorptionAmount(4);
+            float before = probed.getHealth();
+            var result = tier.deal(probed, probed.damageSources().mobAttack(probed), 20);
+            equal(helper, first, before - probed.getHealth(),
+                    tier + " must settle the same mitigated loss as a direct hit");
+            helper.assertTrue(result.instantEffective(), tier + " must recognize a capped authoritative hit");
+            probed.remove(net.minecraft.world.entity.Entity.RemovalReason.UNLOADED_TO_CHUNK);
+        }
         helper.succeed();
     }
 

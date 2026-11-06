@@ -6,13 +6,26 @@ import com.sammy.malum.common.block.curiosities.totem.TotemPoleBlockEntity;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import com.sammy.malum.registry.common.block.BlockRegistry;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.util.FakePlayer;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.registry.MaledictEntities;
+import org.brahypno.maledict.registry.MaledictItems;
+import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,6 +70,29 @@ public class VicissitudeSummoningTest {
         helper.getLevel().setBlockAndUpdate(water, Blocks.AIR.defaultBlockState());
         helper.assertTrue(SummoningRite.hasSummoningSpace(helper.getLevel(), pos),
                 "Removing the obstruction must restore eligibility");
+        var level = helper.getLevel();
+        Difficulty originalDifficulty = level.getDifficulty();
+        var player = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "PeacefulSummon"));
+        var hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
+        try {
+            level.getServer().getWorldData().setDifficulty(Difficulty.PEACEFUL);
+            var egg = new ItemStack(MaledictItems.FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG.get());
+            player.setItemInHand(InteractionHand.MAIN_HAND, egg);
+            helper.assertTrue(egg.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, hit)) == InteractionResult.FAIL
+                            && egg.use(level, player, InteractionHand.MAIN_HAND).getResult() == InteractionResult.FAIL
+                            && egg.getCount() == 1,
+                    "Peaceful must reject the spawn egg without consuming it");
+            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            var interaction = player.gameMode.useItemOn(player, level, ItemStack.EMPTY, InteractionHand.MAIN_HAND, hit);
+            helper.assertTrue(interaction == InteractionResult.FAIL && !base.isActiveOrAssembling(),
+                    "Peaceful must reject the rite before assembly or consumption starts");
+            SummoningRite.summon(base, level, FirstVicissitudeBossEntity.BossDifficulty.SIMPLE);
+            helper.assertTrue(!SummoningRite.hasNearbySummon(level, pos)
+                            && level.getBlockEntity(pos) == base,
+                    "The rite execution must also reject Peaceful while preserving the totem");
+        } finally {
+            level.getServer().getWorldData().setDifficulty(originalDifficulty);
+        }
         helper.succeed();
     }
 

@@ -81,7 +81,7 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return createBossAttributes().add(Attributes.MAX_HEALTH, 600).add(Attributes.ARMOR, 20)
+        return createBossAttributes().add(Attributes.MAX_HEALTH, 600).add(Attributes.ARMOR, 10)
                 .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED).add(Attributes.FOLLOW_RANGE, 48);
     }
 
@@ -96,6 +96,26 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
 
     @Override protected float initialVitalityMaximum() {
         return DemiurgeDifficulty.maxHealth(Difficulty.byId(combatDifficulty));
+    }
+
+    /**
+     * 3% of the authoritative pool per hit, before the 10 armour. A normal 7-9 damage sword stays
+     * below this cap, so armour is the only cut it sees; a high-damage weapon is held at
+     * 12/18/24 (easy/normal/hard) and loses 10.1/16.6/22.1 after armour.
+     */
+    @Override
+    protected float getVitalityDamageLimit() {
+        return getVitalityMaximum() * 0.03F;
+    }
+
+    @Override
+    protected boolean isDamageImmune(DamageSource source) {
+        return entityData.get(AWAKENING_START) < 0L;
+    }
+
+    @Override
+    public boolean isInvulnerableTo(DamageSource source) {
+        return isDamageImmune(source) || super.isInvulnerableTo(source);
     }
 
     @Override
@@ -298,7 +318,8 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
         if (!stack.is(MaledictItems.BLIGHTED_STAR.get()) || player.isSpectator()) {
             return super.mobInteract(player, hand);
         }
-        if (!isAlive() || entityData.get(AWAKENING_START) >= 0) {
+        if (level().getDifficulty() == Difficulty.PEACEFUL
+                || !isAlive() || entityData.get(AWAKENING_START) >= 0) {
             return InteractionResult.FAIL;
         }
         if (!level().isClientSide) {

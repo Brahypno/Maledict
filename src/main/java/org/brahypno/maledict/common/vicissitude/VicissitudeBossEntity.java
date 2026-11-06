@@ -34,12 +34,13 @@ import java.util.Deque;
  *
  * Do not call ChangeLib's DamageProbe from hurt(): its basic handler calls hurt again.
  */
-public abstract class VicissitudeBossEntity extends PathfinderMob implements ProtectedAiEntity {
+public abstract class VicissitudeBossEntity extends PathfinderMob
+        implements ProtectedAiEntity, CombatProtection.OwnedHealthEntity {
     public static final MobType VICISSITUDE = new MobType();
     /** Default MAX_HEALTH; difficulty tables express their pool as a delta against this. */
     public static final double BASE_MAX_HEALTH = 1000.0D;
-    /** Highest authored hit-segment cap weight; the defense's per-hit ceiling must not be lower. */
     private static final float MAXIMUM_HIT_WEIGHT = 1.25F;
+    private static final float INITIAL_DISPLAY_VITALITY = 1.0F;
     private static final EntityDataAccessor<Float> DISPLAY_VITALITY =
             SynchedEntityData.defineId(VicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
     /** Bridges ChangeLib's defense to the authoritative vitality ledger; never calls getHealth. */
@@ -53,15 +54,18 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Pro
         public void write(LivingEntity entity, float health) {
             ((VicissitudeBossEntity) entity).writeAuthorityHealth(health);
         }
+
+        @Override
+        public boolean hurt(LivingEntity entity, DamageSource source, float amount) {
+            return entity.hurt(source, amount);
+        }
     };
     private final VitalityState vitality = new VitalityState();
     private final BossDamage damageBatch = new BossDamage();
-    /** The exact protection level bound on this instance; sealed on first join. */
-    private DamageStage sealedCombatGrade;
-    private float sealedMaximumDamage;
+    /** Sole permission to commit the ledger; binds once, when the instance first joins. */
+    private CombatProtection.Controller vitalityController;
     private AiProtection.Controller aiController;
-    /** Last value published to the vanilla health mirror; avoids a defense sync every tick. */
-    private float publishedVitality = Float.NaN;
+    private float clientVitality = INITIAL_DISPLAY_VITALITY;
 
     protected VicissitudeBossEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -77,7 +81,15 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Pro
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        entityData.define(DISPLAY_VITALITY, 1.0F);
+        entityData.define(DISPLAY_VITALITY, INITIAL_DISPLAY_VITALITY);
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (key == DISPLAY_VITALITY && level().isClientSide) {
+            clientVitality = entityData.get(DISPLAY_VITALITY);
+        }
     }
 
     @Override
@@ -106,25 +118,33 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Pro
             vitality.joined = true;
             commitVitality(saved);
         }
-        sealCombatProtection();
+        bindVitalityProtection();
         bindAiProtection();
     }
 
     /**
-     * Health defense grade for this boss. Read only once, when the entity first joins; a subclass may
-     * override it so different bosses carry different protection levels, but later rebinds reuse the
-     * sealed value rather than calling this method again.
+     * The owned binding checks the adapter by identity, so no external caller can bind a different
+     * pool before us. This is the only place the defense is attached.
      */
-    protected DamageStage combatProtectionGrade() {
-        return DamageStage.D4_CONSISTENCY_WRITE;
+    @Override
+    public final boolean ownsHealthAccess(CombatProtection.HealthAccess candidate) {
+        return candidate == VITALITY_ACCESS;
+    }
+
+    private void bindVitalityProtection() {
+        if (vitalityController == null) {
+            vitalityController = CombatProtection.bindOwned(
+                    this, combatProtectionGrade(), VITALITY_ACCESS,
+                    getVitalityDamageLimit(MAXIMUM_HIT_WEIGHT));
+        }
     }
 
     /**
-     * Ceiling for one ChangeLib health write. The boss's own per-hit cap already scales with the hit
-     * segment, so this only has to stay above the largest authored segment cap.
+     * Health defense grade for this boss. Read once when the instance binds; a subclass may override
+     * it so different bosses carry different protection levels.
      */
-    protected float combatProtectionMaximumDamage() {
-        return getVitalityDamageLimit(MAXIMUM_HIT_WEIGHT);
+    protected DamageStage combatProtectionGrade() {
+        return DamageStage.D4_CONSISTENCY_WRITE;
     }
 
     /** One definition for every Vicissitude boss; only the target rule is entity-specific. */
@@ -164,45 +184,6 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Pro
         }
     }
 
-    private void sealCombatProtection() {
-        if (sealedCombatGrade == null) {
-            sealedCombatGrade = Objects.requireNonNull(combatProtectionGrade(), "combat protection grade");
-            float maximum = combatProtectionMaximumDamage();
-            // A non-positive ceiling would turn every hurt() call into zero damage; only a limit the
-            // boss's own hurt() would reject falls back to "no extra ceiling".
-            sealedMaximumDamage = Float.isFinite(maximum) && maximum > 0.0F
-                    ? maximum : Float.MAX_VALUE;
-        }
-        rebaseCombatProtection();
-    }
-
-    /**
-     * Replaces the binding with the sealed grade and ceiling. Unprotecting first is deliberate: the
-     * old state would otherwise reconcile the authority through its previous ceiling while
-     * {@code protect()} captures the new one.
-     */
-    private void rebaseCombatProtection() {
-        if (sealedCombatGrade == null || level().isClientSide) {
-            return;
-        }
-        CombatProtection.unprotect(this);
-        CombatProtection.protect(this, sealedCombatGrade, VITALITY_ACCESS, sealedMaximumDamage);
-        // Force the next publish to refresh the vanilla mirror against the new binding.
-        publishedVitality = Float.NaN;
-    }
-
-    /** The sealed grade is re-asserted, so another mod cannot lower it for a tick. */
-    private void verifyCombatProtection() {
-        if (sealedCombatGrade == null) {
-            return;
-        }
-        CombatProtection.State state = CombatProtection.state(this);
-        if (state == null || state.grade() != sealedCombatGrade
-                || Float.compare(state.maximumDamage(), sealedMaximumDamage) != 0) {
-            rebaseCombatProtection();
-        }
-    }
-
     private float authorityHealth() {
         return verifiedVitality().current();
     }
@@ -231,31 +212,29 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Pro
             return super.getHealth();
         }
         if (level().isClientSide) {
-            return entityData.get(DISPLAY_VITALITY);
+            // The tracked display is a fallback until ChangeLib's committed health arrives.
+            // Keep the fallback cached so ChangeLib cannot capture it as a getter dependency.
+            return CombatProtection.healthView(this, clientVitality);
         }
         if (!vitality.joined) {
             return super.getHealth();
         }
-        float authority = verifiedVitality().current();
-        return CombatProtection.state(this) == null
-                ? authority : CombatProtection.healthView(this, authority);
+        // healthView also reconciles: an unowned raw change is repaired back to the committed value,
+        // so reads cannot hand out a tampered pool.
+        return CombatProtection.healthView(this, authorityHealth());
     }
 
     /**
-     * Direct setters never move the authoritative pool. The call still goes through ChangeLib's
-     * defense so that reconciliation and the protection-level bookkeeping see it.
+     * Setters submit a damage request to ChangeLib. Below-grade requests reenter hurt(), and only
+     * the resolved loss is committed; construction keeps LivingEntity's normal initialization.
      */
     @Override
     public final void setHealth(float value) {
         if (vitality == null) {
             super.setHealth(value);
-            return;
+        } else if (!level().isClientSide && vitality.joined) {
+            CombatProtection.healthWrite(this, value, () -> {});
         }
-        if (level().isClientSide || sealedCombatGrade == null) {
-            return;
-        }
-        CombatProtection.healthWrite(this, () -> {
-        });
     }
 
     /** 全身的单次命中基准上限，也就是身体（权重 1.0）那一条。 */
@@ -308,7 +287,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Pro
     /** Two serial gates; nested/same-tick channels share the maximum final health loss. */
     @Override
     public final boolean hurt(DamageSource source, float amount) {
-        if (level().isClientSide || !vitality.joined
+        if (level().isClientSide || isRemoved() || !vitality.joined
                 || Float.isNaN(amount) || amount <= 0.0F) {
             return false;
         }
@@ -394,30 +373,21 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Pro
     }
 
     /**
-     * Applies one accepted health loss to the ledger through ChangeLib's authority path. A normal
-     * hit is at most the boss's own cap, so it passes the defense ceiling; a forced kill-to-zero may
-     * exceed it and falls back to a raw write plus a rebind at the new authority.
+     * Commits the resolved loss through the same grade and request allowance used by other writes.
      */
     private void applyAuthorityDamage(float current, float loss) {
         float target = Math.max(0.0F, current - loss);
         if (target >= current) {
             return;
         }
-        boolean reached = false;
-        if (sealedCombatGrade != null && CombatProtection.state(this) != null) {
-            CombatProtection.attackAuthority(this, target);
-            reached = verifiedVitality().current() <= target + 1.0E-4F;
-        }
-        if (!reached) {
-            commitVitality(verifiedVitality().withCurrent(target));
-            return;
-        }
+        VicissitudeVitality next = verifiedVitality().withCurrent(target);
+        vitalityController.commitDamage(() -> writeAuthority(next));
         publishVitality();
     }
 
     @Override
     public final void heal(float amount) {
-        if (level().isClientSide || !vitality.joined || getHealth() <= 0.0F
+        if (level().isClientSide || isRemoved() || !vitality.joined || getHealth() <= 0.0F
                 || !vitality.frames.isEmpty() || !Float.isFinite(amount) || amount <= 0.0F) {
             return;
         }
@@ -432,7 +402,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Pro
 
     @Override
     public final void die(DamageSource source) {
-        if (level().isClientSide || vitality == null || !vitality.joined) {
+        if (level().isClientSide || isRemoved() || vitality == null || !vitality.joined) {
             return;
         }
         // Direct die() is not a kill attempt and cannot open the bypass.
@@ -524,28 +494,24 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Pro
         if (isVehicle()) {
             ejectPassengers();
         }
-        if (!level().isClientSide && vitality.joined) {
+        boolean clientSide = level().isClientSide;
+        if (clientSide || vitality.joined) {
             if (getHealth() > 0.0F) {
                 dead = false;
                 deathTime = 0;
-            } else if (!vitality.deathHandled) {
+            } else if (!clientSide && !vitality.deathHandled) {
                 die(lastKillSource());
             }
-            verifyCombatProtection();
-            publishVitality();
+            if (!clientSide) {
+                publishVitality();
+            }
         }
         super.tick();
     }
 
     private void publishVitality() {
-        float current = verifiedVitality().current();
-        if (Float.compare(current, publishedVitality) == 0) {
-            return;
-        }
-        publishedVitality = current;
-        entityData.set(DISPLAY_VITALITY, current);
-        // Vanilla health is only a display mirror, never read back into authority.
-        super.setHealth(current);
+        // SynchedEntityData compares the actual slot, including any change since the last publish.
+        entityData.set(DISPLAY_VITALITY, verifiedVitality().current());
     }
 
     /** The independent world record wins; entity NBT and ForgeCaps are not independent votes. */
@@ -561,23 +527,26 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Pro
         return vitality.snapshot;
     }
 
+    /**
+     * Commits one complete record. The controller callback must stay a raw ledger update: events,
+     * rewards and display publishing belong outside it.
+     */
     private void commitVitality(VicissitudeVitality state) {
-        float previous = vitality.snapshot == null ? Float.NaN : vitality.snapshot.current();
-        writeAuthority(state);
-        // A health change larger than the defense ceiling cannot be reconciled in place; rebase the
-        // binding on the new authority so a forced kill-to-zero (or a heal) is not clamped back.
-        if (sealedCombatGrade != null && Float.compare(previous, state.current()) != 0) {
-            rebaseCombatProtection();
+        CombatProtection.Controller controller = vitalityController;
+        if (controller == null) {
+            writeAuthority(state); // Initial commit before the instance joins and binds.
+        } else {
+            controller.commit(() -> writeAuthority(state));
         }
         publishVitality();
     }
 
-    /** Same-package repair hook for world-record edits; also rebases the bound defense. */
+    /** Same-package repair hook for world-record edits. */
     final void restoreAuthority(VicissitudeVitality state) {
         commitVitality(state);
     }
 
-    /** Writes the ledger/capability authority without publishing or touching the bound defense. */
+    /** Raw ledger/capability update; no publishing, guards or controller calls. */
     private void writeAuthority(VicissitudeVitality state) {
         vitality.ledger.commit(vitality.identity, state);
         vitality.snapshot = state;
@@ -590,7 +559,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Pro
     }
 
     private void recordKillAttempt(DamageSource source) {
-        if (level().isClientSide || !vitality.joined || vitality.finishing) {
+        if (level().isClientSide || isRemoved() || !vitality.joined || vitality.finishing) {
             return;
         }
         VicissitudeVitality state = verifiedVitality();

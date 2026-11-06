@@ -70,7 +70,7 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
                                            .deal(target,
                                                  DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, owner),
                                                  damage)
-                                           .success();
+                                           .instantEffective();
             if (hit){
                 ItemHelper.applyEnchantments(owner, target, scythe);
                 int fireAspect = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FIRE_ASPECT, scythe);
