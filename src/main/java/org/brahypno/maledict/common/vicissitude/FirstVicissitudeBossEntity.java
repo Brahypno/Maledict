@@ -22,8 +22,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -42,27 +42,27 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.event.ForgeEventFactory;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.combat.DamageAdaptation;
+import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.vicissitude.curio.VicissitudeCurioLedger;
 import org.brahypno.maledict.common.vicissitude.curio.VicissitudeCurioReturns;
-import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
-import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRig;
+import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRigData;
 import org.brahypno.maledict.common.vicissitude.rite.VicissitudeSummoning;
 import org.brahypno.maledict.common.vicissitude.rite.VicissitudeTotemConsumption;
+import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.network.VicissitudeEffectPacket;
 import org.brahypno.maledict.registry.MaledictItems;
-import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRig;
-import org.brahypno.maledict.common.vicissitude.rig.VicissitudeRigData;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.helpers.SoundHelper;
-import org.brahypno.maledict.common.combat.DamageAdaptation;
 
 import java.util.*;
 
@@ -1552,8 +1552,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         double sweep = Math.max(blade.length(), reach) + VicissitudeRig.SWING_HALF_WIDTH;
         float damage = attackDamage() * meleeMultiplier();
         for (Entity entity : level().getEntities(this,
-                new AABB(getX() - sweep, blade.minimumHitY(getY()), getZ() - sweep,
-                         getX() + sweep, blade.maximumHitY(getY()), getZ() + sweep))) {
+                                                 new AABB(getX() - sweep, blade.minimumHitY(getY()), getZ() - sweep,
+                                                          getX() + sweep, blade.maximumHitY(getY()), getZ() + sweep))) {
             if (!(entity instanceof LivingEntity living)){
                 continue;
             }
@@ -1643,7 +1643,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         DamagePress press = isPhaseOne() ? DamagePress.LIGHT : bossDifficulty.damagePress();
         return press == DamagePress.MEDIUM
                ? DamageProbe.mediumDamageMethod(victim, source, damage).success()
-               : DamageProbe.lighterDamageMethod(victim, source, damage).success();
+               : DamageProbe.lighterDamageMethod(victim, source, damage, false).success();
     }
 
     private void spawnSlashEffect(boolean vertical) {
@@ -1792,7 +1792,8 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Override
     public void onRemovedFromWorld() {
         // Unload/transfer keeps boss ownership in its saved NBT; genuine deletion settles it.
-        if (getRemovalReason() != null && getRemovalReason().shouldDestroy()) settleConfiscatedCurios();
+        if (getRemovalReason() != null && getRemovalReason().shouldDestroy())
+            settleConfiscatedCurios();
         super.onRemovedFromWorld();
     }
 
@@ -1947,15 +1948,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     private VicissitudeRig.Segment nearestHitSegment(DamageSource source) {
         List<VicissitudeRig.SegmentVolume> volumes = segmentVolumes();
-        if (source.getDirectEntity() instanceof Player player) {
+        if (source.getDirectEntity() instanceof Player player){
             Vec3 from = player.getEyePosition();
             double reach = player.getAttributeValue(ForgeMod.ENTITY_REACH.get());
             Vec3 to = from.add(player.getLookAngle().scale(reach));
             return VicissitudeRig.firstSegmentAlongRay(volumes, rigPoint(from), rigPoint(to));
         }
-        if (source.getDirectEntity() instanceof Projectile projectile) {
+        if (source.getDirectEntity() instanceof Projectile projectile){
             Vec3 impact = VicissitudeHitLocation.point(projectile, this);
-            if (impact != null) return VicissitudeRig.nearestSegment(volumes, impact.x, impact.y, impact.z);
+            if (impact != null)
+                return VicissitudeRig.nearestSegment(volumes, impact.x, impact.y, impact.z);
             Vec3 from = projectile.position();
             Vec3 to = from.add(projectile.getDeltaMovement());
             return VicissitudeRig.firstSegmentAlongRay(volumes, rigPoint(from), rigPoint(to));
@@ -2194,11 +2196,13 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             double y = getY() + offset.y();
             double z = getZ() + offset.z();
             if (y < level().getMinBuildHeight() + 1
-                || y > level().getMaxBuildHeight() - getBbHeight() - 1) return false;
+                || y > level().getMaxBuildHeight() - getBbHeight() - 1)
+                return false;
             BlockPos pos = BlockPos.containing(x, y, z);
             return level().hasChunkAt(pos) && level().isLoaded(pos) && isSpaceUsable(serverLevel, x, y, z);
         });
-        if (found == null) return false;
+        if (found == null)
+            return false;
         unstickTeleport(getX() + found.x(), getY() + found.y(), getZ() + found.z());
         return true;
     }
@@ -2381,7 +2385,9 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return phaseOneTargets.contains(living.getUUID());
     }
 
-    /** Nearby listeners may hear the fight, including players who are not combat participants. */
+    /**
+     * Nearby listeners may hear the fight, including players who are not combat participants.
+     */
     public boolean hasCombatOpponent() {
         return entityData.get(DATA_COMBAT_ACTIVE);
     }
@@ -2391,7 +2397,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             Set<UUID> roster = isPhaseTwo() ? phaseTwoParticipants : phaseOneTargets;
             boolean active = roster.stream()
                                    .map(identity -> resolveParticipant(serverLevel, identity))
-                                   .anyMatch(member -> member != null && isValidCombatParticipant(member)
+                                   .anyMatch(member -> isValidCombatParticipant(member)
                                                        && distanceToSqr(member) <= engagementRangeSqr());
             entityData.set(DATA_COMBAT_ACTIVE, active);
         }
@@ -2417,7 +2423,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
 
     @Override
     protected boolean isDamageImmune(DamageSource source) {
-        if (stage == VicissitudeBossStage.DORMANT && level().getDifficulty() == Difficulty.PEACEFUL) {
+        if (stage == VicissitudeBossStage.DORMANT && level().getDifficulty() == Difficulty.PEACEFUL){
             return true;
         }
         if (isRiteSummoning())
@@ -2444,7 +2450,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     @Override
     protected void onIncomingAttack(DamageSource source, float amount) {
-        if (stage == VicissitudeBossStage.DORMANT && level().getDifficulty() == Difficulty.PEACEFUL) {
+        if (stage == VicissitudeBossStage.DORMANT && level().getDifficulty() == Difficulty.PEACEFUL){
             return;
         }
         if (isRiteSummoning())
@@ -2677,7 +2683,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     @Override
     protected boolean canHoldAiTarget(LivingEntity candidate) {
-        if (!super.canHoldAiTarget(candidate) || isIgnoredPlayer(candidate)) {
+        if (!super.canHoldAiTarget(candidate) || isIgnoredPlayer(candidate)){
             return false;
         }
         return isPhaseTwo() ? phaseTwoParticipants.contains(candidate.getUUID())
@@ -2895,22 +2901,25 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      * Repairs virtual weapon state; a missing projectile gives the weapon back immediately.
      */
     private void tickWeaponGuard(boolean fullCheck) {
-        if (!isPhaseTwo()) return;
-        if (scytheToken != null && level() instanceof ServerLevel serverLevel) {
+        if (!isPhaseTwo())
+            return;
+        if (scytheToken != null && level() instanceof ServerLevel serverLevel){
             Entity flying = serverLevel.getEntity(scytheToken);
             if (flying instanceof VicissitudeScytheProjectileEntity scythe
-                && !scythe.isRemoved() && scythe.getOwner() == this) return;
+                && !scythe.isRemoved() && scythe.getOwner() == this)
+                return;
             cancelFlyingScythe();
             scytheRecoveryPending = true;
         }
         if (scytheToken != null){
             return;
         }
-        if (!getMainHandItem().isEmpty()) {
+        if (!getMainHandItem().isEmpty()){
             suppressHeldItemAttributes();
             setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         }
-        if (entityData.get(DATA_WEAPON_STATE) != 1 || fullCheck) equipPhaseTwoWeapon();
+        if (entityData.get(DATA_WEAPON_STATE) != 1 || fullCheck)
+            equipPhaseTwoWeapon();
     }
 
     static ItemStack createWeaponForDifficulty(BossDifficulty difficulty) {
@@ -3045,7 +3054,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         targetCursor = Math.max(0, tag.getInt("PhaseOneTargetCursor"));
         curioReturnCursor = Math.max(0, tag.getInt("CurioReturnCursor"));
         curioReturnedAt = tag.contains("CurioReturnedAt", Tag.TAG_LONG)
-                ? tag.getLong("CurioReturnedAt") : Long.MIN_VALUE;
+                          ? tag.getLong("CurioReturnedAt") : Long.MIN_VALUE;
         baseSlotIndex = Math.max(0, tag.getInt("BaseSlotIndex"));
         specialRotator = Math.max(0, tag.getInt("SpecialRotator"));
         actionSequence = tag.getInt("ActionSequence");

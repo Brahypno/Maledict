@@ -13,6 +13,7 @@ import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import com.sammy.malum.registry.common.item.EnchantmentRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -32,18 +33,23 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.changelib.DamageHelper.DamageProbeResult;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.equipment.lightward.LightwardSet;
+import org.brahypno.maledict.common.rune.RuneOfBlissItem;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 import team.lodestar.lodestone.registry.common.tag.LodestoneDamageTypeTags;
-import org.brahypno.maledict.common.rune.RuneOfBlissItem;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -63,7 +69,9 @@ public final class IncursusBladeItem extends MagicScytheItem {
     public static final String ELDRITCH_ABSORPTION = "eldritch_absorption";
     public static final String WICKED_CRITICAL_DAMAGE = "wicked_critical_damage";
 
-    /** 物品栏里眨眼用的模型覆盖谓词：{@code 1.0} 表示这一帧闭眼。 */
+    /**
+     * 物品栏里眨眼用的模型覆盖谓词：{@code 1.0} 表示这一帧闭眼。
+     */
     public static final ResourceLocation BLINK_PROPERTY =
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "blinking");
 
@@ -109,6 +117,30 @@ public final class IncursusBladeItem extends MagicScytheItem {
                 "Incursus blade magic damage", getStat(stack, MAGIC_DAMAGE),
                 AttributeModifier.Operation.ADDITION));
         return attributes.build();
+    }
+
+    @Override
+    public int getEnchantmentLevel(ItemStack stack, Enchantment enchantment) {
+        return LightwardSet.boostedEnchantmentLevel(stack, enchantment);
+    }
+
+    @Override
+    public Map<Enchantment, Integer> getAllEnchantments(ItemStack stack) {
+        return LightwardSet.boostedEnchantments(stack);
+    }
+
+    @Override
+    public int getDefaultTooltipHideFlags(ItemStack stack) {
+        return ItemStack.TooltipPart.ENCHANTMENTS.getMask();
+    }
+
+    @Override
+    public void appendHoverText(
+            ItemStack stack, @Nullable Level level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        // 套装文字只在护甲上；这里只补附魔行。
+        LightwardSet.appendEnchantments(stack, tooltip);
     }
 
     @Override
@@ -205,7 +237,9 @@ public final class IncursusBladeItem extends MagicScytheItem {
         addAbsorptionFromDamage(attacker, stack, event.getAmount());
     }
 
-    /** 镰刀熟练度缺省时当中性 1：它走 {@code getAttributeValue}，取不到给的是 0，而它当乘数用。 */
+    /**
+     * 镰刀熟练度缺省时当中性 1：它走 {@code getAttributeValue}，取不到给的是 0，而它当乘数用。
+     */
     private static double scytheProficiencyOrNeutral(double value) {
         return value > 0.0 ? value : 1.0;
     }
@@ -280,14 +314,22 @@ public final class IncursusBladeItem extends MagicScytheItem {
      * 与 {@link #FINAL_DAMAGE_LEVEL}（提示语就是「精魂之力到达神圣之数会解锁更本征的力量」）。
      */
     public enum DamageTier {
-        /** 未满 {@link #MEDIUM_DAMAGE_LEVEL}：探针只试必要的那几步，拿到真实掉血就收手。 */
+        /**
+         * 未满 {@link #MEDIUM_DAMAGE_LEVEL}：探针只试必要的那几步，拿到真实掉血就收手。
+         */
         LIGHT,
-        /** 满 {@link #MEDIUM_DAMAGE_LEVEL}：会为凑够数值继续往下找路。 */
+        /**
+         * 满 {@link #MEDIUM_DAMAGE_LEVEL}：会为凑够数值继续往下找路。
+         */
         MEDIUM,
-        /** 满 {@link #FINAL_DAMAGE_LEVEL}：终结档。 */
+        /**
+         * 满 {@link #FINAL_DAMAGE_LEVEL}：终结档。
+         */
         FINAL;
 
-        /** 抬一档；已经在顶就还是顶。无忧符文抬的就是这一档。 */
+        /**
+         * 抬一档；已经在顶就还是顶。无忧符文抬的就是这一档。
+         */
         public DamageTier raised() {
             return switch (this) {
                 case LIGHT -> MEDIUM;
@@ -295,12 +337,21 @@ public final class IncursusBladeItem extends MagicScytheItem {
             };
         }
 
-        /** 按本档打一记。 */
+        /**
+         * 按本档打一记。
+         */
         public DamageProbeResult deal(Entity target, DamageSource source, float damage) {
+            return deal(target, source, damage, false);
+        }
+
+        /**
+         * 轻档用 compensateDamage 控制补满；中 / 终档不变。
+         */
+        public DamageProbeResult deal(Entity target, DamageSource source, float damage, boolean compensateDamage) {
             return switch (this) {
-                case FINAL -> DamageProbe.finalDamageMethod(target, source, damage);
-                case MEDIUM -> DamageProbe.mediumDamageMethod(target, source, damage);
-                case LIGHT -> DamageProbe.lighterDamageMethod(target, source, damage);
+                case FINAL -> DamageProbe.finalDamageMethod(target, source, damage, compensateDamage);
+                case MEDIUM -> DamageProbe.mediumDamageMethod(target, source, damage, compensateDamage);
+                case LIGHT -> DamageProbe.lighterDamageMethod(target, source, damage, compensateDamage);
             };
         }
     }
@@ -312,8 +363,8 @@ public final class IncursusBladeItem extends MagicScytheItem {
      */
     public static DamageTier damageTier(ItemStack stack, DamageSource source) {
         DamageTier tier = hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL) ? DamageTier.FINAL
-                        : hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL) ? DamageTier.MEDIUM
-                        : DamageTier.LIGHT;
+                                                                        : hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL) ? DamageTier.MEDIUM
+                                                                                                                         : DamageTier.LIGHT;
         return raisedByBliss(tier, source.getEntity());
     }
 
@@ -327,16 +378,32 @@ public final class IncursusBladeItem extends MagicScytheItem {
         return RuneOfBlissItem.isEquipped(attacker) ? tier.raised() : tier;
     }
 
-    /** 按当前档位打一记，需要知道走了哪一档的调用方用这个。 */
+    /**
+     * 按当前档位打一记，需要知道走了哪一档的调用方用这个。
+     */
     public static DamageProbeResult dealTieredDamage(ItemStack stack, Entity target, DamageSource source, float damage) {
-        return damageTier(stack, source).deal(target, source, damage);
+        return dealTieredDamage(stack, target, source, damage, false);
     }
 
-    /** 镰刀伤害的唯一出口：按档位结算，探针进来先清无敌帧，否则同一次挥砍的后几条通道会被吃掉。 */
+    public static DamageProbeResult dealTieredDamage(
+            ItemStack stack, Entity target, DamageSource source,
+            float damage, boolean compensateDamage) {
+        return damageTier(stack, source).deal(target, source, damage, compensateDamage);
+    }
+
+    /**
+     * 镰刀伤害的唯一出口：按档位结算，探针进来先清无敌帧，否则同一次挥砍的后几条通道会被吃掉。
+     */
     public static void applyTieredDamage(ItemStack stack, Entity target, DamageSource source, float damage) {
+        applyTieredDamage(stack, target, source, damage, false);
+    }
+
+    public static void applyTieredDamage(
+            ItemStack stack, Entity target, DamageSource source, float damage,
+            boolean compensateDamage) {
         if (damage <= 0.0f || !canTakeDamage(target))
             return;
-        dealTieredDamage(stack, target, source, damage);
+        dealTieredDamage(stack, target, source, damage, compensateDamage);
     }
 
     private static boolean canTakeDamage(Entity target) {

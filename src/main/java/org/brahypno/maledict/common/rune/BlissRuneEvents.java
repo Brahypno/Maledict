@@ -64,27 +64,29 @@ public final class BlissRuneEvents {
      */
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onLivingAttack(LivingAttackEvent event) {
-        if (!event.isCanceled()) {
+        if (!event.isCanceled()){
             return;
         }
         LivingEntity victim = event.getEntity();
         Float multiplier = multiplierOf(victim, event.getSource());
-        if (multiplier == null) {
+        if (multiplier == null){
             return;
         }
         force(victim, event.getSource(), event.getAmount() * multiplier);
     }
 
-    /** 正常一记在这里乘倍率；被取消的这一记连倍率一起补进去。 */
+    /**
+     * 正常一记在这里乘倍率；被取消的这一记连倍率一起补进去。
+     */
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onLivingHurt(LivingHurtEvent event) {
         LivingEntity victim = event.getEntity();
         Float multiplier = multiplierOf(victim, event.getSource());
-        if (multiplier == null) {
+        if (multiplier == null){
             return;
         }
         float amount = event.getAmount() * multiplier;
-        if (event.isCanceled()) {
+        if (event.isCanceled()){
             force(victim, event.getSource(), amount);
             return;
         }
@@ -99,11 +101,11 @@ public final class BlissRuneEvents {
      */
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onLivingDamage(LivingDamageEvent event) {
-        if (!event.isCanceled()) {
+        if (!event.isCanceled()){
             return;
         }
         LivingEntity victim = event.getEntity();
-        if (multiplierOf(victim, event.getSource()) == null) {
+        if (multiplierOf(victim, event.getSource()) == null){
             return;
         }
         force(victim, event.getSource(), event.getAmount());
@@ -117,14 +119,14 @@ public final class BlissRuneEvents {
      */
     @Nullable
     private static Float multiplierOf(LivingEntity victim, DamageSource source) {
-        if (forcing || victim.level().isClientSide()) {
+        if (forcing || victim.level().isClientSide()){
             return null;
         }
         Entity sourceEntity = source.getEntity();
-        if (!(sourceEntity instanceof LivingEntity attacker) || attacker == victim) {
+        if (!(sourceEntity instanceof LivingEntity attacker) || attacker == victim){
             return null;
         }
-        if (!RuneOfBlissItem.isEquipped(attacker) && !RuneOfBlissItem.isEquipped(victim)) {
+        if (!RuneOfBlissItem.isEquipped(attacker) && !RuneOfBlissItem.isEquipped(victim)){
             return null;
         }
         return SharedFate.multiplier(
@@ -141,13 +143,14 @@ public final class BlissRuneEvents {
      * 对一个「让攻击能命中」的效果来说过头了。
      */
     private static void force(LivingEntity victim, DamageSource source, float amount) {
-        if (amount <= 0.0F) {
+        if (amount <= 0.0F){
             return;
         }
         forcing = true;
         try {
-            DamageProbe.lighterDamageMethod(victim, source, amount);
-        } finally {
+            DamageProbe.lighterDamageMethod(victim, source, amount, false);
+        }
+        finally {
             forcing = false;
         }
     }

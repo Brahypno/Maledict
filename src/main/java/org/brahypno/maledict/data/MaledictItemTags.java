@@ -10,6 +10,7 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.brahypno.changelib.equipment.EquipmentProtectionTags;
 import org.brahypno.maledict.Maledict;
@@ -78,7 +79,8 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(L2_NO_SEAL)
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
                      MaledictItems.HANGMAN_FOOL.get(), MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get(),
-                     MaledictItems.LOVER_AXE.get());
+                     MaledictItems.LOVER_AXE.get())
+                .addOptionalTag(MaledictTags.AUFHEBEN_LIGHTWARD_ARMOR);
         tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
         tag(CURIOS_DELUSION).add(MaledictItems.HANGMAN_FOOL.get(), MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
         tag(CURIOS_RUNE).add(MaledictItems.RUNE_OF_SATIATION.get(),
@@ -99,6 +101,28 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(EquipmentProtectionTags.CURIOS)
                 .add(MaledictItems.HANGMAN_FOOL.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
                      MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
+        tag(EquipmentProtectionTags.ARMOR)
+                .addOptionalTag(MaledictTags.AUFHEBEN_LIGHTWARD_ARMOR);
 
+        tag(MaledictTags.AUFHEBEN_LIGHTWARD_ARMOR)
+                .add(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get(),
+                     MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get(),
+                     MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS.get(),
+                     MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get());
+        tag(MaledictTags.AUFHEBEN_LIGHTWARD_WEAPONS)
+                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.LOVER_AXE.get(),
+                     MaledictItems.MELTFALL_AXE.get());
+        tag(MaledictTags.AUFHEBEN_LIGHTWARD_BLADES).add(MaledictItems.INCURSUS_BLADE.get());
+        tag(MaledictTags.AUFHEBEN_LIGHTWARD_AXES)
+                .add(MaledictItems.LOVER_AXE.get(), MaledictItems.MELTFALL_AXE.get());
+        tag(Tags.Items.ARMORS)
+                .add(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get(),
+                     MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get(),
+                     MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS.get(),
+                     MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get());
+        tag(Tags.Items.ARMORS_HELMETS).add(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get());
+        tag(Tags.Items.ARMORS_CHESTPLATES).add(MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get());
+        tag(Tags.Items.ARMORS_LEGGINGS).add(MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS.get());
+        tag(Tags.Items.ARMORS_BOOTS).add(MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get());
     }
 }

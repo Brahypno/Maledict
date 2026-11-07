@@ -106,6 +106,17 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INCURSUS_BLADE, "神侵恶刃");
             addItem(MaledictItems.LOVER_AXE, "恋人之斧");
             addItem(MaledictItems.MELTFALL_AXE, "熔坠之斧");
+            addItem(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET, "扬弃逐光头盔");
+            addItem(MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE, "扬弃逐光胸甲");
+            addItem(MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS, "扬弃逐光护腿");
+            addItem(MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS, "扬弃逐光靴子");
+            add("tooltip.maledict.aufheben_lightward.set", "套装效果（%s/6）");
+            add("tooltip.maledict.aufheben_lightward.composition", "扬弃逐光套装组成：");
+            add("tooltip.maledict.aufheben_lightward.composition.armor", "扬弃逐光头盔，扬弃逐光胸甲，扬弃逐光护腿，扬弃逐光靴子");
+            add("tooltip.maledict.aufheben_lightward.composition.weapons", "神侵恶刃，熔坠之斧，恋人之斧");
+            add("tooltip.maledict.aufheben_lightward.effect.4", "4：装备附魔等级 +3");
+            add("tooltip.maledict.aufheben_lightward.effect.5", "5：武器攻击更加真实");
+            add("tooltip.maledict.aufheben_lightward.enchantment", "%s（%s+%s）");
             add("tooltip.maledict.meltfall_axe.flavor", "熔炼，坠落，秘仪的开始");
             add("tooltip.maledict.lover_axe.flavor", "纵然是死亡也无法使我们分离");
             add("malum.gui.book.entry.maledict.meltfall_axe", "熔坠之斧");
@@ -321,7 +332,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("sounds.maledict.item.incursus_blade.slash", "神侵恶刃：侵蚀");
             add("sounds.maledict.item.incursus_blade.crit", "神侵恶刃：狂喜咆哮");
             add("tooltip.maledict.incursus_blade.description", "吞噬精魂成长，向周身挥出锋刃的凶邪镰刀。");
-            add("tooltip.maledict.incursus_blade.medium_unlock_hint", "精魂之力到达神圣之数会解锁更本征的力量");
+            add("tooltip.maledict.incursus_blade.medium_unlock_hint", "精魂之力均到达神圣之数会解锁更本征的力量");
             add("tooltip.maledict.incursus_blade.hold_shift", "按住 Shift 查看精魂详情");
             add("tooltip.maledict.incursus_blade.infusion", "在背包中拿精魂右键此物品以永久注入：");
             add("tooltip.maledict.incursus_blade.spirit.earthen", "大地 %s（%s/%s）：攻击力");
@@ -486,6 +497,21 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
             addItem(MaledictItems.LOVER_AXE, "The Lover's AX");
             addItem(MaledictItems.MELTFALL_AXE, "Meltfall Axe");
+            addItem(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET, "Aufheben Lightward Helmet");
+            addItem(MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE, "Aufheben Lightward Chestplate");
+            addItem(MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS, "Aufheben Lightward Leggings");
+            addItem(MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS, "Aufheben Lightward Boots");
+            add("tooltip.maledict.aufheben_lightward.set", "Set effect (%s/6)");
+            add("tooltip.maledict.aufheben_lightward.composition", "Aufheben Lightward set:");
+            add("tooltip.maledict.aufheben_lightward.composition.armor",
+                "Aufheben Lightward Helmet, Aufheben Lightward Chestplate, Aufheben Lightward Leggings, "
+                + "Aufheben Lightward Boots");
+            add("tooltip.maledict.aufheben_lightward.composition.weapons",
+                "The Incursus Blade, Meltfall Axe, Lover's Axe");
+            add("tooltip.maledict.aufheben_lightward.effect.4", "4: Equipment enchantments +3");
+            add("tooltip.maledict.aufheben_lightward.effect.5",
+                "5: Weapon attacks land more truly");
+            add("tooltip.maledict.aufheben_lightward.enchantment", "%s (%s+%s)");
             add("tooltip.maledict.meltfall_axe.flavor", "Smelting, falling, the beginning of the mysteries");
             add("tooltip.maledict.lover_axe.flavor", "Even death cannot part us");
             add("malum.gui.book.entry.maledict.meltfall_axe", "Meltfall Axe");
@@ -760,7 +786,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("tooltip.maledict.incursus_blade.description",
                 "A sinister scythe that grows by devouring spirits and sweeps its blade around the wielder.");
             add("tooltip.maledict.incursus_blade.medium_unlock_hint",
-                "When spirit power reaches the sacred number, a more intrinsic power is unlocked.");
+                "When all spirit power reaches the sacred number, a more intrinsic power is unlocked.");
             add("tooltip.maledict.incursus_blade.hold_shift", "Hold Shift for spirit details");
             add("tooltip.maledict.incursus_blade.infusion", "Right-click this item with spirits in the inventory to infuse them permanently:");
             add("tooltip.maledict.incursus_blade.spirit.earthen", "Earthen %s (%s/%s): Attack damage");

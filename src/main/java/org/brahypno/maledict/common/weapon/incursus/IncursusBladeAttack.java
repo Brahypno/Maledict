@@ -19,6 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
+import org.brahypno.maledict.common.equipment.lightward.LightwardSet;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
@@ -73,13 +74,16 @@ public final class IncursusBladeAttack {
         playSlashEffect(player, attackStrength);
 
         DamageChannels channels = damageChannels(player, weapon);
+        // 5 级：主手这把刀把轻档探针改成补满。
+        boolean compensateDamage = LightwardSet.unlocksWeaponTopUp(player, weapon);
         boolean attacked = false;
         boolean critical = false;
         for (Entity target : targets) {
             Swing swing = calculateDamage(player, weapon, target, channels.attack(), attackStrength, sweepingLevel);
             float damage = swing.damage();
             if (damage > 0.0f){
-                boolean reachedHurtEvent = applyScytheMeleeDamage(player, weapon, target, damage);
+                boolean reachedHurtEvent = applyScytheMeleeDamage(
+                        player, weapon, target, damage, compensateDamage);
                 if (target instanceof LivingEntity livingTarget){
                     weapon.hurtEnemy(livingTarget, player);
                     IncursusBladeEffects.applySacredEffect(player, livingTarget, weapon);
@@ -88,14 +92,16 @@ public final class IncursusBladeAttack {
                                 weapon,
                                 livingTarget,
                                 DamageTypeHelper.create(player.level(), DamageTypes.MAGIC, player),
-                                channels.magic());
+                                channels.magic(),
+                                compensateDamage);
                     }
                     // 细雪通道跟主伤害一起结算，不取决于事件链。
                     IncursusBladeItem.applyTieredDamage(
                             weapon,
                             livingTarget,
                             DamageTypeHelper.create(player.level(), DamageTypes.FREEZE, player),
-                            channels.frozen());
+                            channels.frozen(),
+                            compensateDamage);
                 }
                 attacked = true;
                 critical |= swing.critical();
@@ -138,7 +144,8 @@ public final class IncursusBladeAttack {
      * （无敌帧、免疫、setHealth 兜底）时事件没发生，返回 false。
      */
     private static boolean applyScytheMeleeDamage(
-            ServerPlayer player, ItemStack weapon, Entity target, float damage) {
+            ServerPlayer player, ItemStack weapon, Entity target, float damage,
+            boolean compensateDamage) {
         pendingMeleeTargetId = target.getId();
         pendingMeleeHurtEventSeen = false;
         try {
@@ -146,7 +153,8 @@ public final class IncursusBladeAttack {
                     weapon,
                     target,
                     DamageTypeHelper.create(player.level(), DamageTypeRegistry.SCYTHE_MELEE, player),
-                    damage);
+                    damage,
+                    compensateDamage);
             return pendingMeleeHurtEventSeen;
         }
         finally {

@@ -19,9 +19,11 @@ import team.lodestar.lodestone.systems.particle.data.spin.SpinParticleData;
 import team.lodestar.lodestone.systems.particle.render_types.LodestoneWorldParticleRenderType;
 import team.lodestar.lodestone.systems.particle.world.behaviors.components.DirectionalBehaviorComponent;
 
-import java.awt.Color;
+import java.awt.*;
 
-/** Shared Meltfall/Lover impact: dislocated rings, then opposing gold and violet debris. */
+/**
+ * Shared Meltfall/Lover impact: dislocated rings, then opposing gold and violet debris.
+ */
 public final class LoverAxeHitEffects {
     private static final Color GOLD = new Color(0xFFD979);
     private static final Color OLD_GOLD = new Color(0xAD742F);
@@ -34,7 +36,8 @@ public final class LoverAxeHitEffects {
     public static void spawn(LoverAxeHitPacket packet) {
         Minecraft minecraft = Minecraft.getInstance();
         ClientLevel level = minecraft.level;
-        if (level == null) return;
+        if (level == null)
+            return;
         Entity target = level.getEntity(packet.targetId());
         Vec3 center = center(target, packet.center());
         for (boolean inner : new boolean[]{false, true}) {
@@ -42,34 +45,33 @@ public final class LoverAxeHitEffects {
             spawnFragments(level, target, center, packet.radius(), inner);
         }
         WorldParticleBuilder.create(LodestoneParticleRegistry.WISP_PARTICLE)
-                .setColorData(ColorParticleData.create(GOLD, OLD_GOLD).build())
-                .setTransparencyData(GenericParticleData.create(0.6F, 0).build())
-                .setScaleData(GenericParticleData.create(packet.radius() * 0.65F, 0).build())
-                .setLifetime(SPLIT_TICK)
-                .enableNoClip()
-                .spawn(level, center.x, center.y, center.z);
+                            .setColorData(ColorParticleData.create(GOLD, OLD_GOLD).build())
+                            .setTransparencyData(GenericParticleData.create(0.6F, 0).build())
+                            .setScaleData(GenericParticleData.create(packet.radius() * 0.65F, 0).build())
+                            .setLifetime(SPLIT_TICK)
+                            .enableNoClip()
+                            .spawn(level, center.x, center.y, center.z);
         spawnResidue(level, target, center, packet.radius());
-        level.playLocalSound(center.x, center.y, center.z, SoundRegistry.TUNING_FORK_TINKERS.get(),
-                SoundSource.PLAYERS, 0.45F, 1.35F, false);
         minecraft.getSoundManager().playDelayed(new SimpleSoundInstance(SoundRegistry.MALIGNANT_METAL_MOTIF.get(),
-                SoundSource.PLAYERS, 0.25F, 0.65F, level.random, center.x, center.y, center.z), SPLIT_TICK);
+                                                                        SoundSource.PLAYERS, 0.25F, 0.65F, level.random, center.x, center.y, center.z),
+                                                SPLIT_TICK);
     }
 
     private static void spawnRing(ClientLevel level, Entity target, Vec3 origin, float radius, boolean inner) {
         float ringRadius = radius * (inner ? 0.8F : 1.0F);
         WorldParticleBuilder.create(ParticleRegistry.CIRCLE, new DirectionalBehaviorComponent(new Vec3(0, 1, 0)))
-                .setColorData(ColorParticleData.create(GOLD, OLD_GOLD).build())
-                .setTransparencyData(GenericParticleData.create(0.8F, 0.65F, 0).build())
-                .setScaleData(GenericParticleData.create(ringRadius).build())
-                .setSpinData(SpinParticleData.create(inner ? -0.45F : 0).build())
-                .setLifetime(BREAK_TICK)
-                .setFrictionStrength(1)
-                .enableNoClip()
-                // Actors run before vanilla movement: steer to the next sample so it interpolates normally.
-                .addTickActor(p -> p.setParticleSpeed(center(target, origin)
-                        .add(ringOffset(radius, inner, p.getAge() + 1))
-                        .subtract(p.getParticlePosition())))
-                .spawn(level, origin.x, origin.y, origin.z);
+                            .setColorData(ColorParticleData.create(GOLD, OLD_GOLD).build())
+                            .setTransparencyData(GenericParticleData.create(0.8F, 0.65F, 0).build())
+                            .setScaleData(GenericParticleData.create(ringRadius).build())
+                            .setSpinData(SpinParticleData.create(inner ? -0.45F : 0).build())
+                            .setLifetime(BREAK_TICK)
+                            .setFrictionStrength(1)
+                            .enableNoClip()
+                            // Actors run before vanilla movement: steer to the next sample so it interpolates normally.
+                            .addTickActor(p -> p.setParticleSpeed(center(target, origin)
+                                                                          .add(ringOffset(radius, inner, p.getAge() + 1))
+                                                                          .subtract(p.getParticlePosition())))
+                            .spawn(level, origin.x, origin.y, origin.z);
     }
 
     private static void spawnFragments(ClientLevel level, Entity target, Vec3 origin, float radius, boolean inner) {
@@ -78,28 +80,28 @@ public final class LoverAxeHitEffects {
             double angle = i * Math.PI * 2 / FRAGMENTS_PER_RING + (i % 3) * 0.08;
             Vec3 start = fragmentOffset(radius, inner, angle, 0);
             WorldParticleBuilder.create(ParticleRegistry.SHARP_SPARK)
-                    .setColorData(ColorParticleData.create(GOLD, OLD_GOLD).build())
-                    .setTransparencyData(GenericParticleData.create(0.85F, 0.75F, 0).build())
-                    .setScaleData(GenericParticleData.create(0.075F, 0.055F, 0).build())
-                    .setSpinData(SpinParticleData.create(inner ? -0.3F : 0.15F).setSpinOffset((float) angle).build())
-                    .setLifetime(14 + i % 5)
-                    .setFrictionStrength(1)
-                    .enableNoClip()
-                    .addTickActor(p -> {
-                        int age = p.getAge();
-                        if (age < BREAK_TICK) {
-                            p.setParticleSpeed(center(target, origin)
-                                    .add(fragmentOffset(radius, inner, angle, age + 1))
-                                    .subtract(p.getParticlePosition()));
-                        } else if (age == BREAK_TICK) {
-                            double releaseAngle = angle + rotation(inner, BREAK_TICK);
-                            p.setParticleSpeed(new Vec3(Math.cos(releaseAngle) * 0.035,
-                                    inner ? -0.06 : 0.07, Math.sin(releaseAngle) * 0.035));
-                        } else {
-                            p.setParticleSpeed(p.getParticleSpeed().add(0, -0.018, 0));
-                        }
-                    })
-                    .spawn(level, origin.x + start.x, origin.y + start.y, origin.z + start.z);
+                                .setColorData(ColorParticleData.create(GOLD, OLD_GOLD).build())
+                                .setTransparencyData(GenericParticleData.create(0.85F, 0.75F, 0).build())
+                                .setScaleData(GenericParticleData.create(0.075F, 0.055F, 0).build())
+                                .setSpinData(SpinParticleData.create(inner ? -0.3F : 0.15F).setSpinOffset((float) angle).build())
+                                .setLifetime(14 + i % 5)
+                                .setFrictionStrength(1)
+                                .enableNoClip()
+                                .addTickActor(p -> {
+                                    int age = p.getAge();
+                                    if (age < BREAK_TICK){
+                                        p.setParticleSpeed(center(target, origin)
+                                                                   .add(fragmentOffset(radius, inner, angle, age + 1))
+                                                                   .subtract(p.getParticlePosition()));
+                                    }else if (age == BREAK_TICK){
+                                        double releaseAngle = angle + rotation(inner, BREAK_TICK);
+                                        p.setParticleSpeed(new Vec3(Math.cos(releaseAngle) * 0.035,
+                                                                    inner ? -0.06 : 0.07, Math.sin(releaseAngle) * 0.035));
+                                    }else {
+                                        p.setParticleSpeed(p.getParticleSpeed().add(0, -0.018, 0));
+                                    }
+                                })
+                                .spawn(level, origin.x + start.x, origin.y + start.y, origin.z + start.z);
         }
     }
 
@@ -109,38 +111,40 @@ public final class LoverAxeHitEffects {
             Vec3 point = origin.add(Math.cos(angle) * radius * 0.65, -0.08, Math.sin(angle) * radius * 0.65);
             Vec3 smokePoint = origin.add(Math.cos(angle) * radius * 1.05, -0.08, Math.sin(angle) * radius * 1.05);
             WorldParticleBuilder.create(ParticleRegistry.STRANGE_SMOKE)
-                    // Additive blending loses near-black colors; lumitransparent keeps the violet-black smoke visible.
-                    .setRenderType(LodestoneWorldParticleRenderType.LUMITRANSPARENT)
-                    .setColorData(ColorParticleData.create(VIOLET, VOID).build())
-                    .setTransparencyData(GenericParticleData.create(0, 0.7F, 0).build())
-                    // INVISIBLE would discard this zero-alpha particle before its first fade-in tick.
-                    .setDiscardFunction(ParticleDiscardFunctionType.ENDING_CURVE_INVISIBLE)
-                    .setSpritePicker(ParticleSpritePicker.WITH_AGE)
-                    .setScaleData(GenericParticleData.create(0.18F, 0.35F, 0.16F).build())
-                    .setSpinData(SpinParticleData.create(0.06F).setSpinOffset((float) angle).build())
-                    .setLifeDelay(SPLIT_TICK)
-                    .setLifetime(15)
-                    .setFrictionStrength(1)
-                    .setMotion(0, 0.065, 0)
-                    .enableNoClip()
-                    .addTickActor(p -> {
-                        if (p.getAge() == 0) p.setParticlePosition(smokePoint.add(center(target, origin).subtract(origin)));
-                    })
-                    .spawn(level, smokePoint.x, smokePoint.y, smokePoint.z);
+                                // Additive blending loses near-black colors; lumitransparent keeps the violet-black smoke visible.
+                                .setRenderType(LodestoneWorldParticleRenderType.LUMITRANSPARENT)
+                                .setColorData(ColorParticleData.create(VIOLET, VOID).build())
+                                .setTransparencyData(GenericParticleData.create(0, 0.7F, 0).build())
+                                // INVISIBLE would discard this zero-alpha particle before its first fade-in tick.
+                                .setDiscardFunction(ParticleDiscardFunctionType.ENDING_CURVE_INVISIBLE)
+                                .setSpritePicker(ParticleSpritePicker.WITH_AGE)
+                                .setScaleData(GenericParticleData.create(0.18F, 0.35F, 0.16F).build())
+                                .setSpinData(SpinParticleData.create(0.06F).setSpinOffset((float) angle).build())
+                                .setLifeDelay(SPLIT_TICK)
+                                .setLifetime(15)
+                                .setFrictionStrength(1)
+                                .setMotion(0, 0.065, 0)
+                                .enableNoClip()
+                                .addTickActor(p -> {
+                                    if (p.getAge() == 0)
+                                        p.setParticlePosition(smokePoint.add(center(target, origin).subtract(origin)));
+                                })
+                                .spawn(level, smokePoint.x, smokePoint.y, smokePoint.z);
             WorldParticleBuilder.create(ParticleRegistry.SHARP_SPARK)
-                    .setColorData(ColorParticleData.create(GOLD, OLD_GOLD).build())
-                    .setTransparencyData(GenericParticleData.create(0.7F, 0).build())
-                    .setScaleData(GenericParticleData.create(0.055F, 0).build())
-                    .setLifeDelay(BREAK_TICK)
-                    .setLifetime(10)
-                    .setFrictionStrength(1)
-                    .setMotion(0, -0.065, 0)
-                    .setGravityStrength(0.25F)
-                    .enableNoClip()
-                    .addTickActor(p -> {
-                        if (p.getAge() == 0) p.setParticlePosition(point.add(center(target, origin).subtract(origin)));
-                    })
-                    .spawn(level, point.x, point.y, point.z);
+                                .setColorData(ColorParticleData.create(GOLD, OLD_GOLD).build())
+                                .setTransparencyData(GenericParticleData.create(0.7F, 0).build())
+                                .setScaleData(GenericParticleData.create(0.055F, 0).build())
+                                .setLifeDelay(BREAK_TICK)
+                                .setLifetime(10)
+                                .setFrictionStrength(1)
+                                .setMotion(0, -0.065, 0)
+                                .setGravityStrength(0.25F)
+                                .enableNoClip()
+                                .addTickActor(p -> {
+                                    if (p.getAge() == 0)
+                                        p.setParticlePosition(point.add(center(target, origin).subtract(origin)));
+                                })
+                                .spawn(level, point.x, point.y, point.z);
         }
     }
 

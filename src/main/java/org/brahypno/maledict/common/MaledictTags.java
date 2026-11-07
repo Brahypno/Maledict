@@ -13,6 +13,17 @@ public final class MaledictTags {
     public static final TagKey<Item> VICISSITUDE_CONFISCATION_IMMUNE = ItemTags.create(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "vicissitude_confiscation_immune"));
 
+    public static final TagKey<Item> AUFHEBEN_LIGHTWARD_ARMOR = ItemTags.create(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "aufheben_lightward_armor"));
+
+    public static final TagKey<Item> AUFHEBEN_LIGHTWARD_WEAPONS = ItemTags.create(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "aufheben_lightward_weapons"));
+
+    public static final TagKey<Item> AUFHEBEN_LIGHTWARD_BLADES = ItemTags.create(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "aufheben_lightward_blades"));
+    public static final TagKey<Item> AUFHEBEN_LIGHTWARD_AXES = ItemTags.create(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "aufheben_lightward_axes"));
+
     private MaledictTags() {
     }
 }

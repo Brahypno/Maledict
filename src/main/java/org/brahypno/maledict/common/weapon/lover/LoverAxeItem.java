@@ -19,8 +19,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
+import org.brahypno.maledict.common.equipment.lightward.LightwardSet;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.brahypno.maledict.registry.MaledictAttributes;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** One reward and one wound per completed probe, including its fallback damage. */
@@ -60,6 +63,16 @@ public final class LoverAxeItem extends AxeItem {
     }
 
     @Override
+    public int getEnchantmentLevel(ItemStack stack, Enchantment enchantment) {
+        return LightwardSet.boostedEnchantmentLevel(stack, enchantment);
+    }
+
+    @Override
+    public Map<Enchantment, Integer> getAllEnchantments(ItemStack stack) {
+        return LightwardSet.boostedEnchantments(stack);
+    }
+
+    @Override
     public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
         if (!(entity instanceof LivingEntity)) return false;
         if (player.level().isClientSide()) {
@@ -80,7 +93,8 @@ public final class LoverAxeItem extends AxeItem {
             return false;
         }
         boolean fullyCharged = attacker.getAttackStrengthScale(0.5F) >= 0.9F;
-        var result = DamageProbe.mediumDamageMethod(target, source, amount);
+        var result = DamageProbe.mediumDamageMethod(target, source, amount,
+                LightwardSet.unlocksWeaponTopUp(attacker, weapon));
         if (!result.instantEffective()) {
             return false;
         }
@@ -111,6 +125,11 @@ public final class LoverAxeItem extends AxeItem {
     }
 
     @Override
+    public int getDefaultTooltipHideFlags(ItemStack stack) {
+        return ItemStack.TooltipPart.ENCHANTMENTS.getMask();
+    }
+
+    @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         if (inflictsWounds) {
             tooltip.add(Component.translatable("tooltip.maledict.lover_axe.wound").withStyle(ChatFormatting.GRAY));
@@ -122,5 +141,7 @@ public final class LoverAxeItem extends AxeItem {
             tooltip.add(Component.translatable("tooltip.maledict." + name + ".flavor")
                     .withStyle(ChatFormatting.DARK_PURPLE));
         }
+        // 套装文字只在护甲上；这里只补附魔行。
+        LightwardSet.appendEnchantments(stack, tooltip);
     }
 }

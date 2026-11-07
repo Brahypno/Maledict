@@ -3,6 +3,7 @@ package org.brahypno.maledict.registry;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -20,6 +21,7 @@ import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
 import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossSpawnPhase;
 import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.equipment.lightward.LightwardArmorItem;
 import org.brahypno.maledict.common.rune.AttributeRuneItem;
 import org.brahypno.maledict.common.vicissitude.curio.CurioReturnTokenItem;
 import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
@@ -98,6 +100,25 @@ public final class MaledictItems {
             new IncursusBladeItem(MaledictItemTiers.INCURSUS, new Item.Properties().rarity(Rarity.EPIC)));
     public static final RegistryObject<Item> LOVER_AXE = ITEMS.register("lover_axe", LoverAxeItem::new);
     public static final RegistryObject<Item> MELTFALL_AXE = ITEMS.register("meltfall_axe", () -> new LoverAxeItem(false));
+
+    /** 扬弃逐光四件护甲。 */
+    public static final RegistryObject<Item> AUFHEBEN_LIGHTWARD_HELMET =
+            ITEMS.register("aufheben_lightward_helmet", () ->
+                    new LightwardArmorItem(ArmorItem.Type.HELMET, lightwardProperties()));
+    public static final RegistryObject<Item> AUFHEBEN_LIGHTWARD_CHESTPLATE =
+            ITEMS.register("aufheben_lightward_chestplate", () ->
+                    new LightwardArmorItem(ArmorItem.Type.CHESTPLATE, lightwardProperties()));
+    public static final RegistryObject<Item> AUFHEBEN_LIGHTWARD_LEGGINGS =
+            ITEMS.register("aufheben_lightward_leggings", () ->
+                    new LightwardArmorItem(ArmorItem.Type.LEGGINGS, lightwardProperties()));
+    public static final RegistryObject<Item> AUFHEBEN_LIGHTWARD_BOOTS =
+            ITEMS.register("aufheben_lightward_boots", () ->
+                    new LightwardArmorItem(ArmorItem.Type.BOOTS, lightwardProperties()));
+
+    private static Item.Properties lightwardProperties() {
+        return new Item.Properties().rarity(Rarity.EPIC).fireResistant();
+    }
+
     public static final RegistryObject<Item> REMEMBRANCE_BOW = ITEMS.register("remembrance_bow", () ->
             new RemembranceBowItem(new Item.Properties().durability(384).rarity(Rarity.RARE), false));
     public static final RegistryObject<Item> ELEGY_BOW = ITEMS.register("elegy_bow", () ->

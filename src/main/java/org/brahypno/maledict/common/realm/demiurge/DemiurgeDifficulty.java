@@ -49,7 +49,7 @@ public final class DemiurgeDifficulty {
             return;
         DamageSource source = source(original);
         switch (difficulty) {
-            case EASY -> DamageProbe.lighterDamageMethod(victim, source, amount);
+            case EASY -> DamageProbe.lighterDamageMethod(victim, source, amount, false);
             case NORMAL -> DamageProbe.mediumDamageMethod(victim, source, amount, false);
             case HARD -> DamageProbe.finalDamageMethod(victim, source, amount, DamageOptions.finalNoRemove(), false);
             case PEACEFUL -> {}
