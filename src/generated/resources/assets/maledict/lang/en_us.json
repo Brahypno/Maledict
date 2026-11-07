@@ -52,6 +52,8 @@
   "effect.maledict.thinning.description": "When more than eight hostile creatures of the same type surround the wearer, those on the outskirts take 1.5 damage every two seconds.",
   "enchantment.maledict.aftertaste": "Aftertaste",
   "enchantment.maledict.aftertaste.desc": "When a scythe strikes, you taste the hunger and saturation that the target's drops would restore, scaled by the damage dealt as a fraction of its maximum health. Levels 1 to 3 restore 50%, 60% and 70% of that amount, respectively. Any food effects from those drops also apply.",
+  "enchantment.maledict.diplopia": "Diplopia",
+  "enchantment.maledict.diplopia.desc": "Each level of Rebound throws one additional phantom scythe. Phantoms deal 50% of the original throw's damage",
   "enchantment.maledict.ectoplasm": "Ectoplasm",
   "enchantment.maledict.ectoplasm.desc": "Each level increases arrow speed by 8%. Each shot consumes (level + 1) / 2 spirits from your inventory; the enchantment has no effect without enough spirits.",
   "enchantment.maledict.reminiscence": "Reminiscence",
