@@ -52,6 +52,8 @@
   "effect.maledict.thinning.description": "佩戴者身边同种敌对生物超过八只时，每2秒对外围的敌人造成1.5的伤害。",
   "enchantment.maledict.aftertaste": "回味",
   "enchantment.maledict.aftertaste.desc": "镰刀命中时，按这一击占目标最大生命的比例，尝到其掉落物本可提供的饥饿与饱食度；1 至 3 级分别回复 50%、60%、70%，掉落物附带的食物效果也会一并生效。",
+  "enchantment.maledict.diplopia": "复视",
+  "enchantment.maledict.diplopia.desc": "回旋投出的镰刀每级额外分裂出一把幻影镰刀。幻影造成本体 50% 的伤害。",
   "enchantment.maledict.ectoplasm": "灵质",
   "enchantment.maledict.ectoplasm.desc": "每级使射出的箭矢速度提高 8%，每发消耗背包中（等级 + 1）÷ 2 枚精魂；精魂不足时不生效。",
   "enchantment.maledict.reminiscence": "追忆",

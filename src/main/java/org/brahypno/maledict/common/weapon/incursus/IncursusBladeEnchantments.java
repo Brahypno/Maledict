@@ -23,6 +23,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.brahypno.maledict.common.enchantment.DiplopiaThrows;
 import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.ItemHelper;
@@ -67,6 +68,10 @@ public final class IncursusBladeEnchantments {
                 1.2f,
                 RandomHelper.randomBetween(level.getRandom(), 0.95f, 1.05f));
         TemporarilyDisabledItem.disable(serverPlayer, slot);
+        DiplopiaThrows.spawnEchoes(
+                level, serverPlayer, hand, stack,
+                channels.attack(), channels.magic(), channels.frozen(),
+                enhanced, position, velocity);
         player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
         player.swing(hand, true);
     }

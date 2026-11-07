@@ -1,6 +1,7 @@
 package org.brahypno.maledict.client;
 
 import com.sammy.malum.common.item.IVoidItem;
+import com.sammy.malum.registry.common.entity.EntityRegistry;
 import com.sammy.malum.visual_effects.ScreenParticleEffects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
@@ -13,6 +14,7 @@ import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -37,6 +39,7 @@ import org.brahypno.maledict.client.vicissitude.render.VicissitudeSpiritBoltRend
 import org.brahypno.maledict.client.vicissitude.vfx.VicissitudeSummoningPostProcessor;
 import org.brahypno.maledict.client.vitals.DelayedVitalsOverlay;
 import org.brahypno.maledict.client.weapon.remembrance.SpiritArrowRenderer;
+import org.brahypno.maledict.client.weapon.scythe.DiplopiaScytheBoomerangRenderer;
 import org.brahypno.maledict.common.realm.BlightedRealm;
 import org.brahypno.maledict.common.invocation.InvocationDefinition;
 import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowItem;
@@ -91,6 +94,16 @@ public final class MaledictClientSetup {
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_LIGHT_ORB.get(), VicissitudeLightOrbRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SPIRIT_BOLT.get(), VicissitudeSpiritBoltRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SCYTHE.get(), VicissitudeScytheRenderer::new);
+    }
+
+    /**
+     * Malum registers the scythe boomerang renderer at normal priority. Running last lets the same
+     * entity type distinguish Diplopia phantoms and delegate every other scythe back to Malum.
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void overrideScytheBoomerangRenderer(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(EntityRegistry.SCYTHE_BOOMERANG.get(),
+                DiplopiaScytheBoomerangRenderer::new);
     }
 
     @SubscribeEvent

@@ -12,6 +12,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
+import org.brahypno.maledict.common.enchantment.DiplopiaThrows;
 import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.ItemHelper;
@@ -23,14 +24,25 @@ import team.lodestar.lodestone.helpers.SoundHelper;
  */
 public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
     private final float frozenDamage;
+    private final boolean echo;
 
     /** 「收回」只响一次：飞镰掉头（{@code returnTimer} 落到 0）的那一 tick。 */
     private boolean recallAnnounced;
 
     public IncursusScytheBoomerangEntity(
             Level level, double x, double y, double z, float frozenDamage) {
+        this(level, x, y, z, frozenDamage, false);
+    }
+
+    /**
+     * An echo is a Diplopia phantom: it uses the same damage channels but never touches the
+     * thrower's inventory. It discards itself on the return leg and is never saved.
+     */
+    public IncursusScytheBoomerangEntity(
+            Level level, double x, double y, double z, float frozenDamage, boolean echo) {
         super(level, x, y, z);
         this.frozenDamage = frozenDamage;
+        this.echo = echo;
     }
 
     /**
@@ -40,6 +52,14 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
      */
     @Override
     public void tick() {
+        if (echo){
+            if (!level().isClientSide() && DiplopiaThrows.reachedOwnerOnReturn(this)){
+                discard();
+                return;
+            }
+            super.tick();
+            return;
+        }
         super.tick();
         if (recallAnnounced || level().isClientSide() || returnTimer > 0) {
             return;
@@ -50,6 +70,11 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
                 MaledictSounds.INCURSUS_BLADE_RECALL.get(),
                 1.2f,
                 RandomHelper.randomBetween(level().getRandom(), 0.95f, 1.05f));
+    }
+
+    @Override
+    public boolean shouldBeSaved() {
+        return !echo && super.shouldBeSaved();
     }
 
     @Override

@@ -100,6 +100,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("enchantment.maledict.aftertaste.desc",
                 "镰刀命中时，按这一击占目标最大生命的比例，尝到其掉落物本可提供的饥饿与饱食度；"
                 + "1 至 3 级分别回复 50%、60%、70%，掉落物附带的食物效果也会一并生效。");
+            add("enchantment.maledict.diplopia", "复视");
+            add("enchantment.maledict.diplopia.desc",
+                "回旋投出的镰刀每级额外分裂出一把幻影镰刀。幻影造成本体 50% 的伤害。");
             addItem(MaledictItems.INCURSUS_BLADE, "神侵恶刃");
             addItem(MaledictItems.LOVER_AXE, "恋人之斧");
             addItem(MaledictItems.MELTFALL_AXE, "熔坠之斧");
@@ -477,6 +480,9 @@ public final class MaledictLanguage extends LanguageProvider {
                 "When a scythe strikes, you taste the hunger and saturation that the target's drops would restore, scaled "
                 + "by the damage dealt as a fraction of its maximum health. Levels 1 to 3 restore 50%, 60% and 70% of that "
                 + "amount, respectively. Any food effects from those drops also apply.");
+            add("enchantment.maledict.diplopia", "Diplopia");
+            add("enchantment.maledict.diplopia.desc",
+                "Each level of Rebound throws one additional phantom scythe. Phantoms deal 50% of the original throw's damage");
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
             addItem(MaledictItems.LOVER_AXE, "The Lover's AX");
             addItem(MaledictItems.MELTFALL_AXE, "Meltfall Axe");
