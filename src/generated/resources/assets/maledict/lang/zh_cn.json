@@ -338,7 +338,7 @@
   "tooltip.maledict.incursus_blade.description": "吞噬精魂成长，向周身挥出锋刃的凶邪镰刀。",
   "tooltip.maledict.incursus_blade.hold_shift": "按住 Shift 查看精魂详情",
   "tooltip.maledict.incursus_blade.infusion": "在背包中拿精魂右键此物品以永久注入：",
-  "tooltip.maledict.incursus_blade.medium_unlock_hint": "精魂之力到达神圣之数会解锁更本征的力量",
+  "tooltip.maledict.incursus_blade.medium_unlock_hint": "精魂之力均到达神圣之数会解锁更本征的力量",
   "tooltip.maledict.incursus_blade.spirit.aerial": "澄空 %s%%（%s/%s）：净化随机负面并获得随机正面效果",
   "tooltip.maledict.incursus_blade.spirit.aqueous": "碧水 %s（%s/%s）：冻结伤害",
   "tooltip.maledict.incursus_blade.spirit.arcane": "奥术 %s（%s/%s）：魔法伤害",

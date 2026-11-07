@@ -1,11 +1,13 @@
 package org.brahypno.maledict.data;
 
+import com.google.gson.JsonObject;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraftforge.client.model.generators.ItemModelBuilder;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
+import net.minecraftforge.client.model.generators.loaders.ItemLayerModelBuilder;
 import net.minecraftforge.client.model.generators.loaders.SeparateTransformsModelBuilder;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
@@ -50,7 +52,7 @@ public final class MaledictItemModels extends ItemModelProvider {
 
         basicItem(MaledictItems.BLEEDING_EYE.get());
         basicItem(MaledictItems.BLIGHTED_STAR.get());
-        basicItem(MaledictItems.LIGHT_FRAGMENT.get());
+        registerLightFragmentModel();
         // Match template_skull's scale and placement. The static model includes the renderer's 180-degree turn.
         getBuilder("blighted_wither_skull")
                 .parent(new ModelFile.UncheckedModelFile(modLoc("block/blighted_wither_skull")))
@@ -124,6 +126,24 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerSpawnEggModel("first_vicissitude_phase_one_spawn_egg");
         registerSpawnEggModel("raven_spawn_egg");
         registerSpawnEggModel("first_vicissitude_phase_two_spawn_egg");
+    }
+
+    private void registerLightFragmentModel() {
+        getBuilder("light_fragment")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/light_fragment"))
+                .texture("layer1", modLoc("item/light_fragment_glow"))
+                .customLoader((parent, helper) -> new ItemLayerModelBuilder<ItemModelBuilder>(parent, helper) {
+                    @Override
+                    public JsonObject toJson(JsonObject json) {
+                        JsonObject model = super.toJson(json);
+                        // Forge's builder exposes light levels, but no per-layer AO setter.
+                        model.getAsJsonObject("forge_data").getAsJsonObject("layers")
+                                .getAsJsonObject("1").addProperty("ambient_occlusion", false);
+                        return model;
+                    }
+                })
+                .emissive(15, 15, 1);
     }
 
     private void registerHangmanFoolModels() {
