@@ -1,0 +1,34 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 1,
+      "item": "malum:malignant_lead"
+    },
+    {
+      "count": 2,
+      "item": "malum:auric_embers"
+    },
+    {
+      "count": 3,
+      "item": "maledict:lumenfall_bismuth_ingot"
+    }
+  ],
+  "input": {
+    "count": 4,
+    "item": "minecraft:amethyst_shard"
+  },
+  "output": {
+    "item": "maledict:refracted_lead_bismuth_eutectic"
+  },
+  "spirits": [
+    {
+      "type": "wicked",
+      "count": 16
+    },
+    {
+      "type": "sacred",
+      "count": 16
+    }
+  ]
+}

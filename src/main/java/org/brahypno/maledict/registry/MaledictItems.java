@@ -98,6 +98,13 @@ public final class MaledictItems {
     public static final RegistryObject<Item> LUMENFALL_BISMUTH_INGOT = ITEMS.register("lumenfall_bismuth_ingot",
             () -> new Item(new Item.Properties()));
 
+    /**
+     * 折辉铅铋共晶：沉辉铋与恶念之铅经精魂灌注后析出的共晶宝石，与恶念白镴并列而非其升级品。
+     * 名字里刻意不带“锭”，它是晶体，不是可再锻的金属锭。
+     */
+    public static final RegistryObject<Item> REFRACTED_LEAD_BISMUTH_EUTECTIC =
+            ITEMS.register("refracted_lead_bismuth_eutectic", () -> new Item(new Item.Properties()));
+
     public static final RegistryObject<Item> RAVEN_SPAWN_EGG = ITEMS.register("raven_spawn_egg", () ->
             new ForgeSpawnEggItem(MaledictEntities.RAVEN, 0x151820, 0xB80F22, new Item.Properties()));
     public static final RegistryObject<Item> RAVEN_FEATHER = ITEMS.register("raven_feather", () ->

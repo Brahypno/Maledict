@@ -36,6 +36,7 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.LUMENFALL_BISMUTH_ORE.get());
                                output.accept(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get());
                                output.accept(MaledictItems.LUMENFALL_BISMUTH_INGOT.get());
+                               output.accept(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get());
                                output.accept(MaledictItems.CRYING_TAINTED_ROCK.get());
                                output.accept(MaledictItems.CRYING_TWISTED_ROCK.get());
                                output.accept(MaledictItems.BLIGHTED_WITHER_SKULL.get());

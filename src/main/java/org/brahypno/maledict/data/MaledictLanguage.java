@@ -63,6 +63,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.LUMENFALL_BISMUTH_ORE, "沉辉铋矿");
             addBlock(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK, "沉辉铋块");
             addItem(MaledictItems.LUMENFALL_BISMUTH_INGOT, "沉辉铋锭");
+            addItem(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC, "折辉铅铋共晶");
             add("message.maledict.well_unavailable", "彼端无处落足，深井将你拒回。");
             add("message.maledict.vicissitude_rite.warning", "仪式已聆听你的呼唤。然而，回应你的存在必不听命于你。");
             add("message.maledict.vicissitude_rite.confirm", "再次右键，承担随之而来的后果。");
@@ -457,6 +458,7 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.LUMENFALL_BISMUTH_ORE, "Lumenfall Bismuth Ore");
             addBlock(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK, "Block of Lumenfall Bismuth");
             addItem(MaledictItems.LUMENFALL_BISMUTH_INGOT, "Lumenfall Bismuth Ingot");
+            addItem(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC, "Refracted Lead–Bismuth Eutectic");
             add("message.maledict.well_unavailable", "There is no safe passage beyond. The well rejects you.");
             add("message.maledict.vicissitude_rite.warning", "The ritual has heard your call. What answers will not obey you.");
             add("message.maledict.vicissitude_rite.confirm", "Right-click again to embrace the consequences.");

@@ -45,14 +45,14 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 6)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/blighted_wither_skull"));
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, Items.STICK, 2)
-                .requires(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get())
-                .unlockedBy("has_fallen_branches", has(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get()))
-                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "sticks_from_fallen_branches"));
+                              .requires(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get())
+                              .unlockedBy("has_fallen_branches", has(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get()))
+                              .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "sticks_from_fallen_branches"));
         ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, MaledictItems.WITHERLIGHT_LAMP.get())
-                .requires(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get())
-                .requires(MaledictItems.WITHERLIGHT_MUSHROOM.get())
-                .unlockedBy("has_witherlight_mushroom", has(MaledictItems.WITHERLIGHT_MUSHROOM.get()))
-                .save(recipes);
+                              .requires(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get())
+                              .requires(MaledictItems.WITHERLIGHT_MUSHROOM.get())
+                              .unlockedBy("has_witherlight_mushroom", has(MaledictItems.WITHERLIGHT_MUSHROOM.get()))
+                              .save(recipes);
         new SpiritInfusionRecipeBuilder(ItemRegistry.SOUL_STAINED_STEEL_AXE.get(), 1, MaledictItems.MELTFALL_AXE.get(), 1)
                 .addExtraItem(ItemRegistry.BLIGHTED_GUNK.get(), 6)
                 .addExtraItem(ItemRegistry.LIVING_FLESH.get(), 6)
@@ -92,27 +92,37 @@ public final class MaledictRecipes extends RecipeProvider {
 
         // 沉辉铋矿整块入炉，一矿一锭；沿用远古残骸的经验与时间，高炉减半。
         SimpleCookingRecipeBuilder.smelting(Ingredient.of(MaledictItems.LUMENFALL_BISMUTH_ORE.get()),
-                        RecipeCategory.MISC, MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 2.0F, 200)
-                .unlockedBy("has_lumenfall_bismuth_ore", has(MaledictItems.LUMENFALL_BISMUTH_ORE.get()))
-                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
-                        "lumenfall_bismuth_ingot_from_smelting_lumenfall_bismuth_ore"));
+                                            RecipeCategory.MISC, MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 2.0F, 200)
+                                  .unlockedBy("has_lumenfall_bismuth_ore", has(MaledictItems.LUMENFALL_BISMUTH_ORE.get()))
+                                  .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
+                                                                                       "lumenfall_bismuth_ingot_from_smelting_lumenfall_bismuth_ore"));
         SimpleCookingRecipeBuilder.blasting(Ingredient.of(MaledictItems.LUMENFALL_BISMUTH_ORE.get()),
-                        RecipeCategory.MISC, MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 2.0F, 100)
-                .unlockedBy("has_lumenfall_bismuth_ore", has(MaledictItems.LUMENFALL_BISMUTH_ORE.get()))
-                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
-                        "lumenfall_bismuth_ingot_from_blasting_lumenfall_bismuth_ore"));
+                                            RecipeCategory.MISC, MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 2.0F, 100)
+                                  .unlockedBy("has_lumenfall_bismuth_ore", has(MaledictItems.LUMENFALL_BISMUTH_ORE.get()))
+                                  .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
+                                                                                       "lumenfall_bismuth_ingot_from_blasting_lumenfall_bismuth_ore"));
         ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, MaledictItems.LUMENFALL_BISMUTH_BLOCK.get())
-                .define('#', MaledictItems.LUMENFALL_BISMUTH_INGOT.get())
-                .pattern("###").pattern("###").pattern("###")
-                .group("lumenfall_bismuth_block")
-                .unlockedBy("has_lumenfall_bismuth_ingot", has(MaledictItems.LUMENFALL_BISMUTH_INGOT.get()))
-                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "lumenfall_bismuth_block"));
+                           .define('#', MaledictItems.LUMENFALL_BISMUTH_INGOT.get())
+                           .pattern("###").pattern("###").pattern("###")
+                           .group("lumenfall_bismuth_block")
+                           .unlockedBy("has_lumenfall_bismuth_ingot", has(MaledictItems.LUMENFALL_BISMUTH_INGOT.get()))
+                           .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "lumenfall_bismuth_block"));
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 9)
-                .requires(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get())
-                .group("lumenfall_bismuth_ingot")
-                .unlockedBy("has_lumenfall_bismuth_block", has(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get()))
-                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
-                        "lumenfall_bismuth_ingot_from_block"));
+                              .requires(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get())
+                              .group("lumenfall_bismuth_ingot")
+                              .unlockedBy("has_lumenfall_bismuth_block", has(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get()))
+                              .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
+                                                                                   "lumenfall_bismuth_ingot_from_block"));
+        
+        new SpiritInfusionRecipeBuilder(Items.AMETHYST_SHARD, 4,
+                                        MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get(), 1)
+                .addExtraItem(ItemRegistry.MALIGNANT_LEAD.get(), 1)
+                .addExtraItem(ItemRegistry.AURIC_EMBERS.get(), 2)
+                .addExtraItem(MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 3)
+                .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 16)
+                .addSpirit(SpiritTypeRegistry.SACRED_SPIRIT, 16)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "spirit_infusion/refracted_lead_bismuth_eutectic"));
 
         // Malum 的井配方本就把整块深岩珍金化作恶念之铅，碎片层沿用同一比一换算。
         new VoidFavorRecipeBuilder(
@@ -139,7 +149,7 @@ public final class MaledictRecipes extends RecipeProvider {
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/hangman_fool"));
 
         new SpiritInfusionRecipeBuilder(MaledictItems.BLEEDING_EYE.get(), 1,
-                                       MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get(), 1)
+                                        MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get(), 1)
                 .addExtraItem(ItemRegistry.SPIRIT_FABRIC.get(), 16)
                 .addExtraItem(ItemRegistry.ASTRAL_WEAVE.get(), 16)
                 .addExtraItem(ItemRegistry.CLUSTER_OF_BRILLIANCE.get(), 8)
@@ -147,7 +157,7 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.AERIAL_SPIRIT, 32)
                 .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 32)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
-                                                                    "spirit_infusion/eidolon_of_the_high_priestess"));
+                                                                      "spirit_infusion/eidolon_of_the_high_priestess"));
 
         new VoidFavorRecipeBuilder(
                 StrictNBTIngredient.of(new ItemStack(MaledictItems.HANGMAN_FOOL.get())), HangmanFoolItem.create(1))

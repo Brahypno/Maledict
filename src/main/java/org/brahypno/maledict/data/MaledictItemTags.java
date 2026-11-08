@@ -48,6 +48,8 @@ public final class MaledictItemTags extends ItemTagsProvider {
             ResourceLocation.fromNamespaceAndPath("forge", "storage_blocks/lumenfall_bismuth"));
     private static final TagKey<Item> FORGE_INGOTS_LUMENFALL_BISMUTH = TagKey.create(Registries.ITEM,
             ResourceLocation.fromNamespaceAndPath("forge", "ingots/lumenfall_bismuth"));
+    private static final TagKey<Item> FORGE_GEMS_REFRACTED_LEAD_BISMUTH_EUTECTIC = TagKey.create(Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath("forge", "gems/refracted_lead_bismuth_eutectic"));
 
     public MaledictItemTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagsProvider.TagLookup<Block>> blockTags, ExistingFileHelper existingFiles) {
         super(output, lookupProvider, blockTags, Maledict.MODID, existingFiles);
@@ -83,6 +85,9 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.LIGHT_FRAGMENT.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.ELEGY_BOW.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
+        // 折辉铅铋共晶要等腐枯界深处的沉辉铋，且是后期精魂灌注产物；在玩家抵达虚空阶段前
+        // 先别在 JEI/创造栏里剧透。
+        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get());
         tag(GOETY_GRAVE_GLOVE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(L2_NO_SEAL)
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
@@ -139,6 +144,8 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(FORGE_ORES_LUMENFALL_BISMUTH).add(MaledictItems.LUMENFALL_BISMUTH_ORE.get());
         tag(FORGE_STORAGE_BLOCKS_LUMENFALL_BISMUTH).add(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get());
         tag(FORGE_INGOTS_LUMENFALL_BISMUTH).add(MaledictItems.LUMENFALL_BISMUTH_INGOT.get());
+        tag(Tags.Items.GEMS).add(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get());
+        tag(FORGE_GEMS_REFRACTED_LEAD_BISMUTH_EUTECTIC).add(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get());
         tag(MaledictTags.BLIGHTED_REALM_ORE_ITEMS).add(
                 MaledictItems.TAINTED_MALIGNANT_LEAD_ORE.get(),
                 MaledictItems.TWISTED_MALIGNANT_LEAD_ORE.get(),
