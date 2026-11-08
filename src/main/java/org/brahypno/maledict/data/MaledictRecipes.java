@@ -86,9 +86,15 @@ public final class MaledictRecipes extends RecipeProvider {
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/lover_axe"));
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ItemRegistry.MALIGNANT_LEAD.get())
-                              .requires(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 8)
+                              .requires(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 9)
                               .unlockedBy("has_malignant_lead_fragment", has(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()))
                               .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "malignant_lead_from_fragments"));
+
+        // Malum 的井配方本就把整块深岩珍金化作恶念之铅，碎片层沿用同一比一换算。
+        new VoidFavorRecipeBuilder(
+                ItemRegistry.CTHONIC_GOLD_FRAGMENT.get(), MaledictItems.MALIGNANT_LEAD_FRAGMENT.get())
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "void_favor/malignant_lead_fragment"));
 
         for (SpiritArrowType arrowType : SpiritArrowType.values()) {
             ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, MaledictItems.getSpiritArrow(arrowType).get(), 1)

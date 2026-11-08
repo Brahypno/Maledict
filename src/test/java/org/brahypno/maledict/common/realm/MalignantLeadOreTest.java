@@ -1,5 +1,6 @@
 package org.brahypno.maledict.common.realm;
 
+import com.sammy.malum.common.recipe.FavorOfTheVoidRecipe;
 import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -26,7 +27,7 @@ import org.brahypno.maledict.registry.MaledictItems;
 public final class MalignantLeadOreTest {
 
     @GameTest(template = "test_empty", batch = "blighted_realm")
-    public static void eitherHostDropsFragmentsAndEightCraftOneLead(GameTestHelper helper) {
+    public static void eitherHostDropsFragmentsAndNineCraftOneLead(GameTestHelper helper) {
         var level = helper.getLevel();
         var pick = new ItemStack(Items.IRON_PICKAXE);
         var silk = pick.copy();
@@ -39,7 +40,8 @@ public final class MalignantLeadOreTest {
                     "Both ores require an iron-tier pickaxe or better");
             var drops = Block.getDrops(state, level, helper.absolutePos(BlockPos.ZERO), null, null, pick);
             helper.assertTrue(drops.size() == 1 && drops.get(0).is(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get())
-                            && drops.get(0).getCount() == 1, "Either host drops exactly one fragment without Fortune");
+                            && drops.get(0).getCount() >= 3 && drops.get(0).getCount() <= 4,
+                    "Either host drops three or four fragments like a Cthonic Gold Ore");
             var silkDrops = Block.getDrops(state, level, helper.absolutePos(BlockPos.ZERO), null, null, silk);
             helper.assertTrue(silkDrops.size() == 1 && silkDrops.get(0).is(ore.asItem()),
                     "Silk Touch preserves the corresponding host variant");
@@ -47,26 +49,31 @@ public final class MalignantLeadOreTest {
                     .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(helper.absolutePos(BlockPos.ZERO)))
                     .withParameter(LootContextParams.TOOL, fortune).create(LootContextParamSets.BLOCK);
             var table = level.getServer().getLootData().getLootTable(ore.getLootTable());
-            int max = 0;
             for (long seed = 1; seed <= 16; seed++) {
                 var fortunateDrops = table.getRandomItems(params, seed);
                 helper.assertTrue(fortunateDrops.size() == 1 && fortunateDrops.get(0).is(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get())
-                                && fortunateDrops.get(0).getCount() >= 1 && fortunateDrops.get(0).getCount() <= 4,
-                        "Fortune III must retain the same fragment type with vanilla ore yield bounds");
-                max = Math.max(max, fortunateDrops.get(0).getCount());
+                                && fortunateDrops.get(0).getCount() >= 3 && fortunateDrops.get(0).getCount() <= 4,
+                        "Fortune III must not raise the Cthonic-Gold yield of three to four fragments");
             }
-            helper.assertTrue(max > 1, "Fortune must be able to increase the fragment yield");
         }
         var recipe = (CraftingRecipe) level.getRecipeManager().byKey(
                 ResourceLocation.fromNamespaceAndPath("maledict", "malignant_lead_from_fragments")).orElseThrow();
         var grid = new TransientCraftingContainer(FakePlayerFactory.getMinecraft(level).inventoryMenu, 3, 3);
-        for (int slot = 0; slot < 8; slot++) grid.setItem(slot, new ItemStack(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()));
-        helper.assertTrue(recipe.matches(grid, level), "Eight fragments craft without a required arrangement");
+        for (int slot = 0; slot < 9; slot++) grid.setItem(slot, new ItemStack(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()));
+        helper.assertTrue(recipe.matches(grid, level), "Nine fragments craft without a required arrangement");
         var result = recipe.assemble(grid, level.registryAccess());
         helper.assertTrue(result.is(ItemRegistry.MALIGNANT_LEAD.get()) && result.getCount() == 1,
                 "The result is one existing Malum malignant lead, not a second resource");
-        grid.setItem(7, ItemStack.EMPTY);
-        helper.assertTrue(!recipe.matches(grid, level), "Seven fragments must not craft a lead");
+        grid.setItem(8, ItemStack.EMPTY);
+        helper.assertTrue(!recipe.matches(grid, level), "Eight fragments must not craft a lead");
+        var favor = (FavorOfTheVoidRecipe) level.getRecipeManager().byKey(
+                ResourceLocation.fromNamespaceAndPath("maledict", "void_favor/malignant_lead_fragment")).orElseThrow();
+        helper.assertTrue(favor.doesInputMatch(new ItemStack(ItemRegistry.CTHONIC_GOLD_FRAGMENT.get())),
+                "The weeping well swallows a Cthonic Gold Fragment");
+        helper.assertTrue(favor.output.is(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()) && favor.output.getCount() == 1,
+                "The well returns one malignant lead fragment per cthonic gold fragment");
+        helper.assertTrue(!favor.doesInputMatch(new ItemStack(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get())),
+                "The well does not swallow the fragment it produces");
         helper.succeed();
     }
 }

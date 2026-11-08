@@ -3,6 +3,9 @@ package org.brahypno.maledict.data;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
+import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import org.brahypno.maledict.registry.MaledictBlocks;
 import org.brahypno.maledict.registry.MaledictItems;
 
@@ -27,8 +30,15 @@ public final class MaledictBlockLoot extends BlockLootSubProvider {
         dropSelf(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get());
         dropSelf(MaledictBlocks.WITHERLIGHT_MUSHROOM.get());
         dropSelf(MaledictBlocks.WITHERLIGHT_LAMP.get());
-        add(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), block -> createOreDrop(block, MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()));
-        add(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(), block -> createOreDrop(block, MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()));
+        malignantLeadOre(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get());
+        malignantLeadOre(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get());
+    }
+
+    /** Malum's Cthonic Gold Ore drops a uniform three or four fragments and has no Fortune bonus. */
+    private void malignantLeadOre(Block block) {
+        add(block, ore -> createSilkTouchDispatchTable(ore, applyExplosionDecay(block,
+                LootItem.lootTableItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get())
+                        .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 4.0F))))));
     }
 
     @Override
