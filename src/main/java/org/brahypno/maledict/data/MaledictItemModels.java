@@ -125,6 +125,9 @@ public final class MaledictItemModels extends ItemModelProvider {
                         ResourceLocation.fromNamespaceAndPath("malum", "item/runewood_obelisk")))
                 .texture("0", modLoc("block/runewood_obelisk"));
 
+        withExistingParent("lightfall_codex", mcLoc("item/generated"))
+                .texture("layer0", modLoc("item/lightfall_codex"));
+
         registerSpawnEggModel("first_vicissitude_phase_one_spawn_egg");
         registerSpawnEggModel("raven_spawn_egg");
         registerSpawnEggModel("first_vicissitude_phase_two_spawn_egg");

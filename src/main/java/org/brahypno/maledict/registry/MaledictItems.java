@@ -16,6 +16,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.invocation.InvocationSigilItem;
+import org.brahypno.maledict.common.item.codex.LightfallCodexItem;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
 import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
@@ -145,6 +146,8 @@ public final class MaledictItems {
     public static final RegistryObject<Item> HANGMAN_FOOL = ITEMS.register("hangman_fool", HangmanFoolItem::new);
     public static final RegistryObject<Item> EIDOLON_OF_THE_HIGH_PRIESTESS =
             ITEMS.register("eidolon_of_the_high_priestess", EidolonOfTheHighPriestessItem::new);
+    public static final RegistryObject<Item> LIGHTFALL_CODEX =
+            ITEMS.register("lightfall_codex", LightfallCodexItem::new);
 
     public static final RegistryObject<Item> BLEEDING_EYE = ITEMS.register("bleeding_eye", () ->
             new Item(new Item.Properties()) {

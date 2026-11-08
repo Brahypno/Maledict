@@ -1,20 +1,26 @@
 package org.brahypno.maledict.common.realm;
 
 import com.sammy.malum.registry.common.block.BlockRegistry;
+import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerSetSpawnEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.Set;
 
@@ -60,6 +66,29 @@ public final class BlightedRealmEvents {
     @SubscribeEvent
     public static void noRespawn(PlayerSetSpawnEvent event) {
         if (event.getSpawnLevel().equals(BlightedRealm.LEVEL)) event.setCanceled(true);
+    }
+
+    /**
+     * The realm hands its visitors its own book: Malum's Encyclopedia Esoterica becomes the
+     * Lightfall Codex, whose Arcana view keeps the same entries and adds the Void and Lightfall
+     * pages. The swap is in place, so the slot, count and custom name stay where they were.
+     */
+    @SubscribeEvent
+    public static void replaceCodexOnEntry(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (!event.getTo().equals(BlightedRealm.LEVEL) || !(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        Inventory inventory = player.getInventory();
+        boolean replaced = false;
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (!stack.is(ItemRegistry.ENCYCLOPEDIA_ESOTERICA.get())) continue;
+            ItemStack codex = new ItemStack(MaledictItems.LIGHTFALL_CODEX.get(), stack.getCount());
+            if (stack.hasTag()) codex.setTag(stack.getTag().copy());
+            inventory.setItem(slot, codex);
+            replaced = true;
+        }
+        if (replaced) inventory.setChanged();
     }
 
     @SubscribeEvent

@@ -113,7 +113,7 @@ public final class MaledictRecipes extends RecipeProvider {
                               .unlockedBy("has_lumenfall_bismuth_block", has(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get()))
                               .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
                                                                                    "lumenfall_bismuth_ingot_from_block"));
-        
+
         new SpiritInfusionRecipeBuilder(Items.AMETHYST_SHARD, 4,
                                         MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get(), 1)
                 .addExtraItem(ItemRegistry.MALIGNANT_LEAD.get(), 1)

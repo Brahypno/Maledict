@@ -405,6 +405,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.headline." + HIGH_PRIESTESS_PAGE, "女祭司之灵相");
             add("malum.gui.book.entry.page.text." + HIGH_PRIESTESS_PAGE + ".1",
                 "在面纱之后，渴望超越的道路");
+            addItem(MaledictItems.LIGHTFALL_CODEX, "坠光秘典");
+            add("malum.gui.book.entry.maledict.lightfall.descent", "降临别传");
+            add("malum.gui.book.entry.maledict.lightfall.descent.description", "光不在的故事");
         }else {
             addBlock(MaledictBlocks.CRYING_TAINTED_ROCK, "Crying Tainted Rock");
             addBlock(MaledictBlocks.CRYING_TWISTED_ROCK, "Crying Twisted Rock");
@@ -886,6 +889,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("malum.gui.book.entry.page.headline." + HIGH_PRIESTESS_PAGE, "Eidolon of the High Priestess");
             add("malum.gui.book.entry.page.text." + HIGH_PRIESTESS_PAGE + ".1",
                 "Beyond the veil, yearning for the path to transcendence.");
+            addItem(MaledictItems.LIGHTFALL_CODEX, "Lightfall Codex");
+            add("malum.gui.book.entry.maledict.lightfall.descent", "The Descent");
+            add("malum.gui.book.entry.maledict.lightfall.descent.description", "The Tale Without Light");
         }
     }
 

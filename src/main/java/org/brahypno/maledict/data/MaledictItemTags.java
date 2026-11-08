@@ -43,13 +43,16 @@ public final class MaledictItemTags extends ItemTagsProvider {
             ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "rune"));
 
     private static final TagKey<Item> FORGE_ORES_LUMENFALL_BISMUTH = TagKey.create(Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath("forge", "ores/lumenfall_bismuth"));
+                                                                                   ResourceLocation.fromNamespaceAndPath("forge", "ores/lumenfall_bismuth"));
     private static final TagKey<Item> FORGE_STORAGE_BLOCKS_LUMENFALL_BISMUTH = TagKey.create(Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath("forge", "storage_blocks/lumenfall_bismuth"));
+                                                                                             ResourceLocation.fromNamespaceAndPath("forge",
+                                                                                                                                   "storage_blocks/lumenfall_bismuth"));
     private static final TagKey<Item> FORGE_INGOTS_LUMENFALL_BISMUTH = TagKey.create(Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath("forge", "ingots/lumenfall_bismuth"));
+                                                                                     ResourceLocation.fromNamespaceAndPath("forge",
+                                                                                                                           "ingots/lumenfall_bismuth"));
     private static final TagKey<Item> FORGE_GEMS_REFRACTED_LEAD_BISMUTH_EUTECTIC = TagKey.create(Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath("forge", "gems/refracted_lead_bismuth_eutectic"));
+                                                                                                 ResourceLocation.fromNamespaceAndPath("forge",
+                                                                                                                                       "gems/refracted_lead_bismuth_eutectic"));
 
     public MaledictItemTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagsProvider.TagLookup<Block>> blockTags, ExistingFileHelper existingFiles) {
         super(output, lookupProvider, blockTags, Maledict.MODID, existingFiles);
@@ -67,6 +70,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
                 .add(MaledictItems.AQUEOUS_SPIRIT_ARROW.get())
                 .add(MaledictItems.EARTHEN_SPIRIT_ARROW.get())
                 .add(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
+        tag(ItemTags.BOOKSHELF_BOOKS).add(MaledictItems.LIGHTFALL_CODEX.get());
         tag(FORGE_SCYTHE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(ItemTagRegistry.SCYTHE)
                 .add(MaledictItems.INCURSUS_BLADE.get())
@@ -78,13 +82,11 @@ public final class MaledictItemTags extends ItemTagsProvider {
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.LOVER_AXE.get(), MaledictItems.MELTFALL_AXE.get());
         tag(ItemTagRegistry.MAGIC_CAPABLE_WEAPON)
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.LOVER_AXE.get(), MaledictItems.MELTFALL_AXE.get());
-        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.INCURSUS_BLADE.get());
-        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.CRYING_TAINTED_ROCK.get(),
+        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get(),
+                                                   MaledictItems.MALIGNANT_PEWTER_TABLET.get(),
+                                                   MaledictItems.CRYING_TAINTED_ROCK.get(),
                                                    MaledictItems.CRYING_TWISTED_ROCK.get(), MaledictItems.BLIGHTED_WITHER_SKULL.get(),
-                                                   MaledictItems.BLIGHTED_STAR.get());
-        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.LIGHT_FRAGMENT.get());
-        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.ELEGY_BOW.get());
-        tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
+                                                   MaledictItems.BLIGHTED_STAR.get(), MaledictItems.LIGHT_FRAGMENT.get(), MaledictItems.LIGHTFALL_CODEX.get());
         // 折辉铅铋共晶要等腐枯界深处的沉辉铋，且是后期精魂灌注产物；在玩家抵达虚空阶段前
         // 先别在 JEI/创造栏里剧透。
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get());

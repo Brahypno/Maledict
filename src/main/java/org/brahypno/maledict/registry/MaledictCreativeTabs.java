@@ -65,6 +65,7 @@ public final class MaledictCreativeTabs {
                                    output.accept(org.brahypno.maledict.common.curio.priestess.EidolonOfTheHighPriestessItem.create(stage));
                                }
                                output.accept(MaledictItems.BLEEDING_EYE.get());
+                               output.accept(MaledictItems.LIGHTFALL_CODEX.get());
                                output.accept(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
                                output.accept(MaledictItems.RUNE_OF_SATIATION.get());
                                output.accept(MaledictItems.RUNE_OF_DECAY.get());

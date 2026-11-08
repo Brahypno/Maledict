@@ -191,7 +191,7 @@ public final class MaledictClientSetup {
             ParticleEmitterHandler.registerItemParticleEmitter(
                     ESOTERICA_PARTICLES,
                     MaledictItems.ELEGY_BOW.get(), MaledictItems.BLEEDING_EYE.get(), MaledictItems.HANGMAN_FOOL.get(),
-                    MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
+                    MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get(), MaledictItems.LIGHTFALL_CODEX.get());
         });
     }
 

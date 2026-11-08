@@ -6,6 +6,7 @@ import com.sammy.malum.common.capability.MalumPlayerDataCapability;
 import com.sammy.malum.core.handlers.TouchOfDarknessHandler;
 import com.sammy.malum.registry.common.MobEffectRegistry;
 import com.sammy.malum.registry.common.block.BlockRegistry;
+import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -23,6 +24,7 @@ import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.registry.MaledictBlocks;
+import org.brahypno.maledict.registry.MaledictItems;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.capability.ICurio;
 import top.theillusivec4.curios.common.inventory.CurioStacksHandler;
@@ -37,6 +39,7 @@ public final class BlightedRealmTest {
     @GameTest(template = "test_empty", batch = "blighted_realm", timeoutTicks = 400)
     public static void rejectionHookBuildsAndReturnsThroughPairedWell(GameTestHelper helper) {
         FakePlayer player = player(helper.getLevel());
+        player.getInventory().setItem(0, new ItemStack(ItemRegistry.ENCYCLOPEDIA_ESOTERICA.get()));
         verifyGroundcoverSite(helper, player);
         BlockPos core = makeSource(helper, player);
         var inventory = CuriosApi.getCuriosInventory(player).orElseThrow(IllegalStateException::new);
@@ -49,6 +52,8 @@ public final class BlightedRealmTest {
         check(helper, BlightedRealm.is(player.serverLevel()), "The real 61st-tick rejection call must traverse through the mixin; dimension="
                 + player.level().dimension().location() + ", rejection=" + darkness.rejection + ", contact=" + darkness.progressToRejection
                 + ", eligible=" + WellAdmission.hasVisionEquipment(player));
+        check(helper, player.getInventory().getItem(0).is(MaledictItems.LIGHTFALL_CODEX.get()),
+                "Entering the realm must replace the Encyclopedia Esoterica with the Lightfall Codex in place");
         var links = WeepingWellLinks.get(player.serverLevel());
         var link = links.find(GlobalPos.of(Level.OVERWORLD, core));
         check(helper, link != null && player.serverLevel().getBlockState(link.realm().core().pos()).is(BlockRegistry.VOID_CONDUIT.get()),
