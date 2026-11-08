@@ -7,7 +7,10 @@ import com.sammy.malum.client.screen.codex.BookWidgetStyle;
 import com.sammy.malum.client.screen.codex.PlacedBookEntry;
 import com.sammy.malum.client.screen.codex.PlacedBookEntryBuilder;
 import com.sammy.malum.client.screen.codex.objects.progression.ScreenOpenerObject;
+import com.sammy.malum.client.screen.codex.pages.CyclingPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.SpiritInfusionPage;
+import com.sammy.malum.client.screen.codex.pages.recipe.vanilla.SmeltingPage;
+import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextItemPage;
 import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextPage;
 import com.sammy.malum.client.screen.codex.pages.text.TextPage;
 import com.sammy.malum.client.screen.codex.screens.AbstractProgressionCodexScreen;
@@ -29,6 +32,22 @@ public final class LightfallCodexScreen extends AbstractProgressionCodexScreen {
             Maledict.MODID, "textures/gui/book/lightfall_background.png");
 
     private static final String WEEPING_WITHER = "void.maledict.weeping_wither";
+    private static final String LUMENFALL_BISMUTH_ENTRY = "void.maledict.lumenfall_bismuth";
+    private static final String EUTECTIC_ENTRY = "void.maledict.refracted_lead_bismuth_eutectic";
+    private static final String AUFHEBEN_ARMOR_ENTRY = "void.maledict.aufheben_lightward";
+
+    /**
+     * 三个 Lumenfall 条目直接照抄奥秘全典里对应条目的坐标，不另起一列：
+     * 恶念之铅 (2,3)、恶念白镴 (3,9)、恶念要塞盔甲 (4,12)。
+     * 这一页原有的腐枯凋灵在 (0,5)，回程节点在 (0,1)/(0,0)，都不会撞上。
+     */
+    private static final int LUMENFALL_BISMUTH_X = 2;
+    private static final int LUMENFALL_BISMUTH_Y = 3;
+    private static final int EUTECTIC_X = 3;
+    private static final int EUTECTIC_Y = 9;
+    private static final int AUFHEBEN_ARMOR_X = 4;
+    private static final int AUFHEBEN_ARMOR_Y = 12;
+
     private static final String SOUL_BACK = "chronicles_of_the_soul";
     private static final String VOID_BACK = "chronicles_of_the_void";
     private static final ResourceLocation SOUL_ICON =
@@ -81,6 +100,9 @@ public final class LightfallCodexScreen extends AbstractProgressionCodexScreen {
 
     private void buildEntries() {
         entries.add(buildWeepingWither());
+        entries.add(buildLumenfallBismuth());
+        entries.add(buildEutectic());
+        entries.add(buildAufhebenArmor());
         entries.add(buildBack(SOUL_BACK, 0, 1, SOUL_ICON,
                               BookWidgetStyle.DARK_GRAND_SOULWOOD, LightfallArcanaScreen::openCodexViaItem));
         entries.add(buildBack(VOID_BACK, 0, 0, VOID_ICON,
@@ -88,7 +110,7 @@ public final class LightfallCodexScreen extends AbstractProgressionCodexScreen {
     }
 
     private PlacedBookEntry buildWeepingWither() {
-        PlacedBookEntryBuilder builder = BookEntry.build(WEEPING_WITHER, 0, 5);
+        PlacedBookEntryBuilder builder = BookEntry.build(WEEPING_WITHER, 0, 10);
         builder.configureWidget(widget -> widget.setIcon(MaledictItems.BLIGHTED_STAR)
                                                 .setStyle(BookWidgetStyle.SOULWOOD));
         builder.addPage(new HeadlineTextPage(WEEPING_WITHER, WEEPING_WITHER + ".1"));
@@ -97,6 +119,68 @@ public final class LightfallCodexScreen extends AbstractProgressionCodexScreen {
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.CRYING_TAINTED_ROCK.get()));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.CRYING_TWISTED_ROCK.get()));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.BLIGHTED_WITHER_SKULL.get()));
+        return builder.build();
+    }
+
+    /**
+     * 沉辉铋：矿石烧炼成锭，因此正文之后补一页烧炼配方。
+     */
+    private PlacedBookEntry buildLumenfallBismuth() {
+        PlacedBookEntryBuilder builder = BookEntry.build(
+                LUMENFALL_BISMUTH_ENTRY, LUMENFALL_BISMUTH_X, LUMENFALL_BISMUTH_Y);
+        builder.configureWidget(widget -> widget
+                .setIcon(MaledictItems.LUMENFALL_BISMUTH_INGOT)
+                .setStyle(BookWidgetStyle.SOULWOOD));
+        builder.addPage(new HeadlineTextItemPage(
+                LUMENFALL_BISMUTH_ENTRY,
+                LUMENFALL_BISMUTH_ENTRY + ".1",
+                MaledictItems.LUMENFALL_BISMUTH_INGOT.get()));
+        builder.addPage(new TextPage(LUMENFALL_BISMUTH_ENTRY + ".2"));
+        builder.addPage(new TextPage(LUMENFALL_BISMUTH_ENTRY + ".3"));
+        builder.addPage(new SmeltingPage(
+                MaledictItems.LUMENFALL_BISMUTH_ORE.get(),
+                MaledictItems.LUMENFALL_BISMUTH_INGOT.get()));
+        return builder.build();
+    }
+
+    /**
+     * 折辉铅铋共晶：正文之后接精魂灌注配方页。
+     */
+    private PlacedBookEntry buildEutectic() {
+        PlacedBookEntryBuilder builder = BookEntry.build(
+                EUTECTIC_ENTRY, EUTECTIC_X, EUTECTIC_Y);
+        builder.configureWidget(widget -> widget
+                .setIcon(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC)
+                .setStyle(BookWidgetStyle.SOULWOOD));
+        builder.addPage(new HeadlineTextPage(EUTECTIC_ENTRY, EUTECTIC_ENTRY + ".1"));
+        builder.addPage(new TextPage(EUTECTIC_ENTRY + ".2"));
+        builder.addPage(new TextPage(EUTECTIC_ENTRY + ".3"));
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get()));
+        return builder.build();
+    }
+
+    /**
+     * 扬弃逐光盔甲：四件共用一张翻页配方页，写法与 Malum 的恶念要塞盔甲一致。
+     */
+    private PlacedBookEntry buildAufhebenArmor() {
+        PlacedBookEntryBuilder builder = BookEntry.build(
+                AUFHEBEN_ARMOR_ENTRY, AUFHEBEN_ARMOR_X, AUFHEBEN_ARMOR_Y);
+        builder.configureWidget(widget -> widget
+                .setIcon(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET)
+                .setStyle(BookWidgetStyle.SOULWOOD));
+        builder.addPage(new HeadlineTextItemPage(
+                AUFHEBEN_ARMOR_ENTRY,
+                AUFHEBEN_ARMOR_ENTRY + ".1",
+                MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get()));
+        builder.addPage(new TextPage(AUFHEBEN_ARMOR_ENTRY + ".2"));
+        builder.addPage(new TextPage(AUFHEBEN_ARMOR_ENTRY + ".3"));
+        builder.addPage(new TextPage(AUFHEBEN_ARMOR_ENTRY + ".4"));
+        builder.addPage(new TextPage(AUFHEBEN_ARMOR_ENTRY + ".5"));
+        builder.addPage(new CyclingPage(
+                SpiritInfusionPage.fromOutput(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get()),
+                SpiritInfusionPage.fromOutput(MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get()),
+                SpiritInfusionPage.fromOutput(MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS.get()),
+                SpiritInfusionPage.fromOutput(MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get())));
         return builder.build();
     }
 

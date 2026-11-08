@@ -40,11 +40,10 @@ public final class MaledictItemModels extends ItemModelProvider {
         loverAxeModel("lover_axe", "lover_axe");
         loverAxeModel("meltfall_axe", "lover_axe_lavender");
 
-        // 贴图待补，四件共用占位图。
-        registerLightwardArmorModel("aufheben_lightward_helmet");
-        registerLightwardArmorModel("aufheben_lightward_chestplate");
-        registerLightwardArmorModel("aufheben_lightward_leggings");
-        registerLightwardArmorModel("aufheben_lightward_boots");
+        basicItem(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get());
+        basicItem(MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get());
+        basicItem(MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS.get());
+        basicItem(MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get());
 
         registerAgeOfEnlightenmentModel();
         registerHangmanFoolModels();
@@ -210,12 +209,6 @@ public final class MaledictItemModels extends ItemModelProvider {
 
     private void registerSpawnEggModel(String name) {
         getBuilder(name).parent(new ModelFile.UncheckedModelFile(mcLoc("item/template_spawn_egg")));
-    }
-
-    private void registerLightwardArmorModel(String name) {
-        getBuilder(name)
-                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
-                .texture("layer0", modLoc("item/aufheben_lightward_placeholder"));
     }
 
     private void registerAgeOfEnlightenmentModel() {

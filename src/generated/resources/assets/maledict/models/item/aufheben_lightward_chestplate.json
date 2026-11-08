@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "maledict:item/aufheben_lightward_placeholder"
+    "layer0": "maledict:item/aufheben_lightward_chestplate"
   }
 }

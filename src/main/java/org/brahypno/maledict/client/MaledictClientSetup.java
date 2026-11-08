@@ -23,6 +23,8 @@ import org.brahypno.maledict.client.curio.enlightenment.AgeOfEnlightenmentCurioR
 import org.brahypno.maledict.client.curio.enlightenment.AgeOfEnlightenmentModel;
 import org.brahypno.maledict.client.curio.hangman.HangmanTrapRenderer;
 import org.brahypno.maledict.client.curio.priestess.SoulEchoRenderer;
+import org.brahypno.maledict.client.equipment.lightward.LightwardArmorClientExtensions;
+import org.brahypno.maledict.client.equipment.lightward.LightwardArmorModel;
 import org.brahypno.maledict.client.infrared.InfraredPostProcessor;
 import org.brahypno.maledict.client.raven.RavenFeatherRenderer;
 import org.brahypno.maledict.client.raven.RavenModel;
@@ -118,10 +120,14 @@ public final class MaledictClientSetup {
         event.registerLayerDefinition(AgeOfEnlightenmentModel.LAYER,
                                       AgeOfEnlightenmentModel::createBodyLayer);
         event.registerLayerDefinition(RavenModel.LAYER, RavenModel::createBodyLayer);
+        event.registerLayerDefinition(LightwardArmorModel.HELMET_LAYER, LightwardArmorModel::createHelmetLayer);
+        event.registerLayerDefinition(LightwardArmorModel.CHESTPLATE_LAYER, LightwardArmorModel::createChestplateLayer);
+        event.registerLayerDefinition(LightwardArmorModel.TEARS_LAYER, LightwardArmorModel::createTearsLayer);
     }
 
     @SubscribeEvent
     public static void bakeLayers(EntityRenderersEvent.AddLayers event) {
+        LightwardArmorClientExtensions.bake(event.getEntityModels());
         ageOfEnlightenmentModel = new AgeOfEnlightenmentModel(
                 event.getEntityModels().bakeLayer(AgeOfEnlightenmentModel.LAYER));
         for (String skin : event.getSkins()) {

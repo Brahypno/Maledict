@@ -118,7 +118,12 @@ public final class MaledictLanguage extends LanguageProvider {
             add("tooltip.maledict.aufheben_lightward.composition", "扬弃逐光套装组成：");
             add("tooltip.maledict.aufheben_lightward.composition.armor", "扬弃逐光头盔，扬弃逐光胸甲，扬弃逐光护腿，扬弃逐光靴子");
             add("tooltip.maledict.aufheben_lightward.composition.weapons", "神侵恶刃，熔坠之斧，恋人之斧");
-            add("tooltip.maledict.aufheben_lightward.effect.4", "4：装备附魔等级 +3");
+            add("tooltip.maledict.aufheben_lightward.effect.2",
+                "2：弃形：灵魂护盾尚存时移动速度 +15%");
+            add("tooltip.maledict.aufheben_lightward.effect.3",
+                "3：以魂代形：灵魂护盾尚存时额外抵消 %s%% 的最终伤害");
+            add("tooltip.maledict.aufheben_lightward.effect.4",
+                "4：未竟飞升：附魔等级按灵魂护盾充盈度 +1 / +2 / +3");
             add("tooltip.maledict.aufheben_lightward.effect.5", "5：武器攻击更加真实");
             add("tooltip.maledict.aufheben_lightward.enchantment", "%s（%s+%s）");
             add("tooltip.maledict.meltfall_axe.flavor", "熔炼，坠落，秘仪的开始");
@@ -408,6 +413,37 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.LIGHTFALL_CODEX, "坠光秘典");
             add("malum.gui.book.entry.maledict.lightfall.descent", "降临别传");
             add("malum.gui.book.entry.maledict.lightfall.descent.description", "光不在的故事");
+            add("malum.gui.book.entry." + LUMENFALL_BISMUTH_ENTRY, "沉辉铋");
+            add("malum.gui.book.entry." + LUMENFALL_BISMUTH_ENTRY + ".description", "光曾抵达的证明");
+            add("malum.gui.book.entry.page.headline." + LUMENFALL_BISMUTH_ENTRY, "沉辉铋");
+            add("malum.gui.book.entry.page.text." + LUMENFALL_BISMUTH_ENTRY + ".1",
+                "腐枯界早已无力孕生属于自己 的光。然而，从主世界坠入此 地的事物，仍携带着微不足道 的光辉。它们无法使这片行将 枯竭的土地重获光明。");
+            add("malum.gui.book.entry.page.text." + LUMENFALL_BISMUTH_ENTRY + ".2",
+                "那些光从坠落之物中缓缓逸散 ，沉入岩层，历经漫长的积聚 ，终于凝结为灰白色的晶体。 晶体的外表黯淡，近乎枯骨与 冷却的灰烬。唯有经过冶炼， 其内部的虹彩才逐渐显露。");
+            add("malum.gui.book.entry.page.text." + LUMENFALL_BISMUTH_ENTRY + ".3",
+                "紫、青与金色交错于晶面，仿 佛一些不属于此界的光，仍拒 绝彻底消失。它们无法拯救腐 枯界，却证明光曾经抵达这里 。我将这种晶体称为沉辉铋。");
+            add("malum.gui.book.entry." + EUTECTIC_ENTRY, "折辉铅铋共晶");
+            add("malum.gui.book.entry." + EUTECTIC_ENTRY + ".description", "否定而不归于虚无");
+            add("malum.gui.book.entry.page.headline." + EUTECTIC_ENTRY, "折辉铅铋共晶");
+            add("malum.gui.book.entry.page.text." + EUTECTIC_ENTRY + ".1",
+                "沉辉铋保存着异乡坠落之物所 遗留的微光，恶念之铅则承载 着截然不同的沉重本质。我以 灵气余焰促使二者熔合，借紫 水晶碎片引导其结晶，并以邪 恶与神圣的精魂完成灌注。");
+            add("malum.gui.book.entry.page.text." + EUTECTIC_ENTRY + ".2",
+                "最终所得并非寻常金属，而是 一种深银色的共晶：其晶面在 暗处近乎铅黑，转动时却显现 青紫交错的折辉。光未曾驱逐 恶念，恶念亦未曾吞没光。二 者原本的形态遭到否定，却没 有被彻底抹去。");
+            add("malum.gui.book.entry.page.text." + EUTECTIC_ENTRY + ".3",
+                "它们在新的晶体中得以保存， 也因这种结合而发生改变。我 借用「扬弃」来理解这一过程 ：否定而不归于虚无，保存而 不拘泥于原状。然而，这种晶 体既不宣称救赎，也不许诺圆 满。它只是将矛盾留在自身的 结构之中。");
+            add("malum.gui.book.entry." + AUFHEBEN_ARMOR_ENTRY, "扬弃逐光盔甲");
+            add("malum.gui.book.entry." + AUFHEBEN_ARMOR_ENTRY + ".description", "未竟的飞升");
+            add("malum.gui.book.entry.page.headline." + AUFHEBEN_ARMOR_ENTRY, "扬弃逐光盔甲");
+            add("malum.gui.book.entry.page.text." + AUFHEBEN_ARMOR_ENTRY + ".1",
+                "魂染钢曾以灵魂庇护肉体。我 以折辉铅铋共晶重塑其甲胄， 又将一颗下界之星纳入锻造。");
+            add("malum.gui.book.entry.page.text." + AUFHEBEN_ARMOR_ENTRY + ".2",
+                "这份庇护由此走向更为激进的 形态：舍去一部分血肉的防御 ，将更多伤害托付给灵魂承担 。这副盔甲呈银色，晶体 表面的青紫折辉隐约流转。");
+            add("malum.gui.book.entry.page.text." + AUFHEBEN_ARMOR_ENTRY + ".3",
+                "头盔之上的冠冕始终无法闭合 ，胸前的光则仿佛被封存在残 缺的圣龛中。那不是已经完成 的飞升，而是对飞升不肯止息 的渴望。");
+            add("malum.gui.book.entry.page.text." + AUFHEBEN_ARMOR_ENTRY + ".4",
+                "穿戴者没有因披上它而脱离堕 落。肉体依旧脆弱，灵魂的庇 护也终有耗尽之时。唯有当灵 魂趋近完整，刻印于器物之上 的魔咒才得以越过原有的界限 。");
+            add("malum.gui.book.entry.page.text." + AUFHEBEN_ARMOR_ENTRY + ".5",
+                "我将这套甲胄称为扬弃逐光： 所弃者是对肉体的依赖，所扬 者是灵魂对圆满的追求。因为 圆满尚未抵达，逐光便不能停 止。");
         }else {
             addBlock(MaledictBlocks.CRYING_TAINTED_ROCK, "Crying Tainted Rock");
             addBlock(MaledictBlocks.CRYING_TWISTED_ROCK, "Crying Twisted Rock");
@@ -519,7 +555,12 @@ public final class MaledictLanguage extends LanguageProvider {
                 + "Aufheben Lightward Boots");
             add("tooltip.maledict.aufheben_lightward.composition.weapons",
                 "The Incursus Blade, Meltfall Axe, Lover's Axe");
-            add("tooltip.maledict.aufheben_lightward.effect.4", "4: Equipment enchantments +3");
+            add("tooltip.maledict.aufheben_lightward.effect.2",
+                "2: Abnegation of Flesh: +15% movement speed while the Soul Ward holds");
+            add("tooltip.maledict.aufheben_lightward.effect.3",
+                "3: Soul over Flesh: absorb a further %s%% of the final damage while the Soul Ward holds");
+            add("tooltip.maledict.aufheben_lightward.effect.4",
+                "4: Unfulfilled Ascension: enchantment levels +1 / +2 / +3 by Soul Ward fill");
             add("tooltip.maledict.aufheben_lightward.effect.5",
                 "5: Weapon attacks land more truly");
             add("tooltip.maledict.aufheben_lightward.enchantment", "%s (%s+%s)");
@@ -892,6 +933,61 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.LIGHTFALL_CODEX, "Lightfall Codex");
             add("malum.gui.book.entry.maledict.lightfall.descent", "The Descent");
             add("malum.gui.book.entry.maledict.lightfall.descent.description", "The Tale Without Light");
+            add("malum.gui.book.entry." + LUMENFALL_BISMUTH_ENTRY, "Lumenfall Bismuth");
+            add("malum.gui.book.entry." + LUMENFALL_BISMUTH_ENTRY + ".description", "Proof that light once reached here");
+            add("malum.gui.book.entry.page.headline." + LUMENFALL_BISMUTH_ENTRY, "Lumenfall Bismuth");
+            add("malum.gui.book.entry.page.text." + LUMENFALL_BISMUTH_ENTRY + ".1",
+                "The withering realm has long since lost the power to bring forth light of its own. Yet the things "
+                + "that fall into it from the Overworld still carry the faintest traces of radiance. They cannot "
+                + "restore the dying land.");
+            add("malum.gui.book.entry.page.text." + LUMENFALL_BISMUTH_ENTRY + ".2",
+                "Instead, that light slowly escapes its fallen vessels, sinks into the strata below, and, over "
+                + "countless years, condenses into pale, ash-white crystals. Their surfaces are dull, resembling old "
+                + "bone and cold ash. Only under the heat of the crucible do their hidden colors emerge.");
+            add("malum.gui.book.entry.page.text." + LUMENFALL_BISMUTH_ENTRY + ".3",
+                "Violet, cyan, and gold pass across crystalline facets, as though some remnant of a foreign light "
+                + "still refuses to vanish. These crystals cannot save the realm. They are proof, however, that light "
+                + "once reached it. I call them Lumenfall Bismuth.");
+            add("malum.gui.book.entry." + EUTECTIC_ENTRY, "Refracted Lead–Bismuth Eutectic");
+            add("malum.gui.book.entry." + EUTECTIC_ENTRY + ".description", "Negated, yet not reduced to nothing");
+            add("malum.gui.book.entry.page.headline." + EUTECTIC_ENTRY, "Refracted Lead–Bismuth Eutectic");
+            add("malum.gui.book.entry.page.text." + EUTECTIC_ENTRY + ".1",
+                "Lumenfall Bismuth preserves the faint light left behind by things fallen from another world. "
+                + "Malignant Lead bears a different, far heavier nature. I bring the two together with Auric Embers, "
+                + "guide their crystallization with Amethyst Shards, and complete the infusion with Wicked and Sacred "
+                + "Spirits.");
+            add("malum.gui.book.entry.page.text." + EUTECTIC_ENTRY + ".2",
+                "What emerges is no ordinary metal, but a dark-silver eutectic crystal: nearly lead-black in shadow, "
+                + "yet alive with refracted violet and cyan when turned toward the light. The light has not driven out "
+                + "the malice, nor has the malice swallowed the light. Their former states are negated, but neither is "
+                + "simply erased.");
+            add("malum.gui.book.entry.page.text." + EUTECTIC_ENTRY + ".3",
+                "Both are preserved within a new crystalline structure, and both are changed by their union. I "
+                + "understand this transformation through Aufheben: to negate without reducing to nothing, to preserve "
+                + "without leaving unchanged. Yet the crystal promises neither salvation nor perfection. It merely "
+                + "holds the contradiction within itself.");
+            add("malum.gui.book.entry." + AUFHEBEN_ARMOR_ENTRY, "Aufheben Lightward Armor");
+            add("malum.gui.book.entry." + AUFHEBEN_ARMOR_ENTRY + ".description", "Ascension unfulfilled");
+            add("malum.gui.book.entry.page.headline." + AUFHEBEN_ARMOR_ENTRY, "Aufheben Lightward Armor");
+            add("malum.gui.book.entry.page.text." + AUFHEBEN_ARMOR_ENTRY + ".1",
+                "Soulstained Steel once sheltered the flesh through the strength of the soul. I have reshaped that "
+                + "armor with Refracted Lead–Bismuth Eutectic and worked a Nether Star into its forging.");
+            add("malum.gui.book.entry.page.text." + AUFHEBEN_ARMOR_ENTRY + ".2",
+                "That protection now takes a more radical form: surrender a measure of the body's defenses, and "
+                + "entrust more of its suffering to the soul. The armor is silver with crystalline surfaces "
+                + "touched by faint refractions of violet and cyan.");
+            add("malum.gui.book.entry.page.text." + AUFHEBEN_ARMOR_ENTRY + ".3",
+                "The crown above its helm can never quite close; the light upon its breast seems sealed within a "
+                + "broken reliquary. This is not ascension fulfilled, but a longing for ascension that refuses to "
+                + "cease.");
+            add("malum.gui.book.entry.page.text." + AUFHEBEN_ARMOR_ENTRY + ".4",
+                "The wearer is not freed from the Fall by donning it. Flesh remains frail, and even the soul's ward "
+                + "can be exhausted. Only as the soul approaches wholeness do the enchantments inscribed upon one's "
+                + "possessions reach beyond their former limits.");
+            add("malum.gui.book.entry.page.text." + AUFHEBEN_ARMOR_ENTRY + ".5",
+                "I call this armor AUFHEBEN_LIGHTWARD: the relinquishing of reliance upon flesh, and the elevation of "
+                + "the soul's longing for the Pleroma. So long as wholeness remains beyond reach, the pursuit of "
+                + "light must continue.");
         }
     }
 
@@ -962,6 +1058,9 @@ public final class MaledictLanguage extends LanguageProvider {
     private static final String BLEEDING_EYE_ENTRY = "void.maledict.bleeding_eye";
     private static final String HANGMAN_FOOL_PAGE = BLEEDING_EYE_ENTRY + ".hangman_fool";
     private static final String HIGH_PRIESTESS_PAGE = BLEEDING_EYE_ENTRY + ".high_priestess";
+    private static final String LUMENFALL_BISMUTH_ENTRY = "void.maledict.lumenfall_bismuth";
+    private static final String EUTECTIC_ENTRY = "void.maledict.refracted_lead_bismuth_eutectic";
+    private static final String AUFHEBEN_ARMOR_ENTRY = "void.maledict.aufheben_lightward";
     private static final String TOTEMIC_RUNES_CONTINUED_ENTRY = "maledict.totemic_runes_continued";
     private static final String RUNE_OF_SATIATION_ENTRY = "maledict.rune_of_satiation";
     private static final String RUNE_OF_DECAY_ENTRY = "maledict.rune_of_decay";

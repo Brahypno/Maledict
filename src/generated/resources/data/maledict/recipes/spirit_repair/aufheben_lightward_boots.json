@@ -1,0 +1,27 @@
+{
+  "type": "malum:spirit_repair",
+  "durabilityPercentage": 1.0,
+  "inputs": [
+    "maledict:aufheben_lightward_boots"
+  ],
+  "itemIdRegex": "",
+  "modIdRegex": "",
+  "repairMaterial": {
+    "count": 1,
+    "item": "maledict:refracted_lead_bismuth_eutectic"
+  },
+  "spirits": [
+    {
+      "type": "arcane",
+      "count": 32
+    },
+    {
+      "type": "eldritch",
+      "count": 16
+    },
+    {
+      "type": "infernal",
+      "count": 16
+    }
+  ]
+}

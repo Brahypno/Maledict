@@ -24,6 +24,7 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue WICKED_UPGRADE_COST_COEFFICIENT;
     public static final ForgeConfigSpec.DoubleValue ENLIGHTENMENT_COOLDOWN_SPEED;
     public static final ForgeConfigSpec.DoubleValue ENLIGHTENMENT_MELEE_DAMAGE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue LIGHTWARD_ABNEGATION_REDUCTION;
     public static final ForgeConfigSpec.BooleanValue INFRARED_ENABLED;
     public static final ForgeConfigSpec.DoubleValue INFRARED_INTENSITY;
     public static final ForgeConfigSpec.DoubleValue INFRARED_GRAYSCALE_THRESHOLD;
@@ -138,6 +139,19 @@ public final class MaledictConfig {
                 .comment("Registry name of the entity the Vicissitude Rites create.")
                 .define("summoningRiteEntity", "maledict:first_vicissitude");
         builder.pop();
+        builder.pop();
+        builder.push("aufhebenLightward");
+        LIGHTWARD_ABNEGATION_REDUCTION = builder
+                .comment("The 3 piece effect, Soul over Flesh: while the wearer still has soul ward,",
+                         "this share of the final damage is absorbed once more. It runs on",
+                         "LivingDamageEvent, so the amount is what is left after armour, protection",
+                         "enchantments and absorption - the damage that would leave the health bar.",
+                         "Malum's own soul ward already ran earlier, on LivingHurtEvent; its 30%",
+                         "physical / 90% magic split is deliberately not repeated here, this is one",
+                         "flat share for every damage type. The absorbed share is paid out of the",
+                         "soul ward, divided by Soul Ward Integrity, exactly like Malum's own",
+                         "absorption. 0.0 turns the effect off, 1.0 absorbs everything.")
+                .defineInRange("abnegationReduction", 0.25D, 0.0D, 1.0D);
         builder.pop();
         COMMON_SPEC = builder.build();
 

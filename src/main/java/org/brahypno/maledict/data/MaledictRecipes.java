@@ -10,6 +10,7 @@ import com.sammy.malum.registry.common.item.ItemRegistry;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.*;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -311,6 +312,39 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 11)
                 .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 11)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/elegy_bow"));
+
+        // 扬弃逐光四件：魂染钢装备就地精魂灌注，固定 3 共晶 + 1 下界之星，32 奥术 / 16 邪术 / 16 炽炭；
+        // 修复只吃 1 个共晶，精魂成本与灌注同档。
+        lightwardArmorRecipes(recipes,
+                              ItemRegistry.SOUL_STAINED_STEEL_HELMET.get(), MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get(),
+                              "aufheben_lightward_helmet");
+        lightwardArmorRecipes(recipes,
+                              ItemRegistry.SOUL_STAINED_STEEL_CHESTPLATE.get(),
+                              MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get(), "aufheben_lightward_chestplate");
+        lightwardArmorRecipes(recipes,
+                              ItemRegistry.SOUL_STAINED_STEEL_LEGGINGS.get(), MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS.get(),
+                              "aufheben_lightward_leggings");
+        lightwardArmorRecipes(recipes,
+                              ItemRegistry.SOUL_STAINED_STEEL_BOOTS.get(), MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get(),
+                              "aufheben_lightward_boots");
+    }
+
+    /** 一件扬弃逐光护甲的灌注配方与同档修复配方。 */
+    private static void lightwardArmorRecipes(Consumer<FinishedRecipe> recipes, Item soulStainedSteel,
+                                              Item lightward, String name) {
+        new SpiritInfusionRecipeBuilder(soulStainedSteel, 1, lightward, 1)
+                .addExtraItem(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get(), 3)
+                .addExtraItem(Items.NETHER_STAR, 1)
+                .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 32)
+                .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 16)
+                .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 16)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_infusion/" + name));
+        new SpiritRepairRecipeBuilder(1.0f, Ingredient.of(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get()), 1)
+                .addItem(lightward)
+                .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 32)
+                .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 16)
+                .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 16)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/" + name));
     }
 
     /**

@@ -1,0 +1,34 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 3,
+      "item": "maledict:refracted_lead_bismuth_eutectic"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:nether_star"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "malum:soul_stained_steel_leggings"
+  },
+  "output": {
+    "item": "maledict:aufheben_lightward_leggings"
+  },
+  "spirits": [
+    {
+      "type": "arcane",
+      "count": 32
+    },
+    {
+      "type": "eldritch",
+      "count": 16
+    },
+    {
+      "type": "infernal",
+      "count": 16
+    }
+  ]
+}

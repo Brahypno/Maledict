@@ -1,5 +1,7 @@
 package org.brahypno.maledict.common.equipment.lightward;
 
+import com.sammy.malum.common.capability.MalumPlayerDataCapability;
+import com.sammy.malum.registry.common.AttributeRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -8,6 +10,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -23,10 +26,19 @@ import java.util.Map;
 
 /** 扬弃逐光六件套：四件护甲 + 神侵恶刃 + 一把斧；只算穿戴 / 手持的件数。 */
 public final class LightwardSet {
+    /** 2 级：弃形，灵魂护盾尚存时 +15% 移速。 */
+    public static final int SPEED_THRESHOLD = 2;
+    /** 3 级：以魂代形，灵魂护盾尚存时追加抵消最终伤害。 */
+    public static final int ABNEGATION_THRESHOLD = 3;
+    /** 4 级：未竟飞升，附魔增幅按灵魂护盾充盈度取 0..3。 */
     public static final int ENCHANT_THRESHOLD = 4;
     public static final int WEAPON_THRESHOLD = 5;
     public static final int FULL_SET = 6;
-    public static final int ENCHANT_BONUS = 3;
+
+    /** 充盈度分档：≤30% 给 +1，≤60% 给 +2，其余 +3；0% 一点都不给。 */
+    public static final double ASCENSION_LOW_FILL = 0.30D;
+    public static final double ASCENSION_MID_FILL = 0.60D;
+    public static final int ASCENSION_MAX_BONUS = 3;
 
     public static final String ENCHANTMENT_TOOLTIP_KEY =
             "tooltip.maledict.aufheben_lightward.enchantment";
@@ -104,13 +116,85 @@ public final class LightwardSet {
     }
 
     public static int enchantBonus(ItemStack stack) {
-        return isSetPiece(stack) && activeLevelFor(stack) >= ENCHANT_THRESHOLD ? ENCHANT_BONUS : 0;
+        if (!isSetPiece(stack)) {
+            return 0;
+        }
+        LivingEntity owner = activeOwner(stack);
+        return owner == null ? 0 : enchantBonus(owner, stack);
     }
 
+    /**
+     * 未竟飞升：充盈度 = 灵魂护盾实际值 / 容量。0% 不增幅，≤30% 给 +1，≤60% 给 +2，其余 +3。
+     * 容量为 0 时视作充盈度 0。
+     */
     public static int enchantBonus(LivingEntity owner, ItemStack stack) {
-        return isSetPiece(stack) && levelIfEquipped(owner, stack) >= ENCHANT_THRESHOLD
-               ? ENCHANT_BONUS
-               : 0;
+        if (owner == null || levelIfEquipped(owner, stack) < ENCHANT_THRESHOLD) {
+            return 0;
+        }
+        double fill = soulWardFill(owner);
+        if (fill <= 0.0D) {
+            return 0;
+        }
+        if (fill <= ASCENSION_LOW_FILL) {
+            return 1;
+        }
+        return fill <= ASCENSION_MID_FILL ? 2 : ASCENSION_MAX_BONUS;
+    }
+
+    /** 灵魂护盾当前值，直接读 Malum 的玩家数据；非玩家恒为 0。 */
+    public static double soulWard(LivingEntity owner) {
+        if (!(owner instanceof Player player)) {
+            return 0.0D;
+        }
+        return MalumPlayerDataCapability.getCapability(player).soulWardHandler.soulWard;
+    }
+
+    /** 灵魂护盾理论值，即 Malum 的灵魂护盾容量属性。 */
+    public static double soulWardCapacity(LivingEntity owner) {
+        return owner == null ? 0.0D : owner.getAttributeValue(AttributeRegistry.SOUL_WARD_CAP.get());
+    }
+
+    /** 实际值 / 理论值，夹在 0..1；容量非正时算 0。 */
+    public static double soulWardFill(LivingEntity owner) {
+        double capacity = soulWardCapacity(owner);
+        if (capacity <= 0.0D) {
+            return 0.0D;
+        }
+        return Math.min(1.0D, Math.max(0.0D, soulWard(owner) / capacity));
+    }
+
+    public static boolean hasSoulWard(LivingEntity owner) {
+        return soulWard(owner) > 0.0D;
+    }
+
+    /** 2 件套：灵魂护盾尚存时给移速。 */
+    public static boolean grantsSpeedBonus(LivingEntity owner) {
+        return owner != null && equippedPieces(owner) >= SPEED_THRESHOLD && hasSoulWard(owner);
+    }
+
+    /** 3 件套：灵魂护盾尚存时追加抵消最终伤害。 */
+    public static boolean grantsAbnegation(LivingEntity owner) {
+        return owner != null && equippedPieces(owner) >= ABNEGATION_THRESHOLD && hasSoulWard(owner);
+    }
+
+    /** 与 {@link #activeLevelFor} 同一套反查，但返回唯一持有者本身，护盾值只能从他的数据里取。 */
+    public static LivingEntity activeOwner(ItemStack stack) {
+        if (!isSetPiece(stack)) {
+            return null;
+        }
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server != null && server.isSameThread()) {
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                if (isEquipped(player, stack)) {
+                    return player;
+                }
+            }
+            return null;
+        }
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            return LightwardClientState.activeOwnerFor(stack);
+        }
+        return null;
     }
 
     public static boolean unlocksWeaponTopUp(LivingEntity owner, ItemStack stack) {
@@ -147,6 +231,14 @@ public final class LightwardSet {
 
     public static boolean viewerMainhandUnlocked() {
         return FMLEnvironment.dist == Dist.CLIENT && LightwardClientState.viewerMainhandUnlocked();
+    }
+
+    public static boolean viewerHasSoulWard() {
+        return FMLEnvironment.dist == Dist.CLIENT && LightwardClientState.viewerHasSoulWard();
+    }
+
+    public static double viewerSoulWardFill() {
+        return FMLEnvironment.dist == Dist.CLIENT ? LightwardClientState.viewerSoulWardFill() : 0.0D;
     }
 
     /** 原版附魔行已被藏起，这里按 NBT 顺序补回；4 级起显示「有效等级（真实等级+增幅）」。 */
