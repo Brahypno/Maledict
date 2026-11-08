@@ -7,6 +7,7 @@ import net.minecraft.world.level.block.CryingObsidianBlock;
 import com.sammy.malum.registry.common.block.MalumBlockProperties;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
@@ -51,6 +52,13 @@ public final class MaledictBlocks {
             () -> new Block(BlockBehaviour.Properties.copy(Blocks.GOLD_ORE)));
     public static final RegistryObject<Block> TWISTED_MALIGNANT_LEAD_ORE = BLOCKS.register("twisted_malignant_lead_ore",
             () -> new Block(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_GOLD_ORE)));
+
+    /** 深层矿：沿用远古残骸的硬度、抗爆与音效，只有钻石镐能取出矿石本身。 */
+    public static final RegistryObject<Block> LUMENFALL_BISMUTH_ORE = BLOCKS.register("lumenfall_bismuth_ore",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.ANCIENT_DEBRIS).mapColor(MapColor.STONE)));
+    /** 沉辉铋的储藏块，按远古残骸同档金属块处理。 */
+    public static final RegistryObject<Block> LUMENFALL_BISMUTH_BLOCK = BLOCKS.register("lumenfall_bismuth_block",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.NETHERITE_BLOCK).mapColor(MapColor.METAL)));
 
     private static final BlockBehaviour.Properties OBELISK_PROPERTIES = BlockBehaviour.Properties.of()
                                                                                                  .strength(2.5f, 6.0f)

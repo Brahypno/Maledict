@@ -66,6 +66,7 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(0, 180, 0).scale(1).end()
                 .end();
         basicItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get());
+        basicItem(MaledictItems.LUMENFALL_BISMUTH_INGOT.get());
 
         withExistingParent("raven_feather", mcLoc("item/generated"))
                 .texture("layer0", modLoc("entity/raven_feather"));

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "lumenfall_bismuth_ingot",
+  "ingredients": [
+    {
+      "item": "maledict:lumenfall_bismuth_block"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "item": "maledict:lumenfall_bismuth_ingot"
+  }
+}

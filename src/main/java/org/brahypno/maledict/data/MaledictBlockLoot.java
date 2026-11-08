@@ -32,6 +32,8 @@ public final class MaledictBlockLoot extends BlockLootSubProvider {
         dropSelf(MaledictBlocks.WITHERLIGHT_LAMP.get());
         malignantLeadOre(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get());
         malignantLeadOre(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get());
+        dropSelf(MaledictBlocks.LUMENFALL_BISMUTH_ORE.get());
+        dropSelf(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get());
     }
 
     /** Malum's Cthonic Gold Ore drops a uniform three or four fragments and has no Fortune bonus. */
@@ -56,6 +58,8 @@ public final class MaledictBlockLoot extends BlockLootSubProvider {
                 MaledictBlocks.WITHERLIGHT_MUSHROOM.get(),
                 MaledictBlocks.WITHERLIGHT_LAMP.get(),
                 MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(),
-                MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get());
+                MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(),
+                MaledictBlocks.LUMENFALL_BISMUTH_ORE.get(),
+                MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get());
     }
 }

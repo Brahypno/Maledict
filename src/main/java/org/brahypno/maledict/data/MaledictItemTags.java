@@ -2,6 +2,7 @@ package org.brahypno.maledict.data;
 
 import com.sammy.malum.registry.common.item.ItemTagRegistry;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.ItemTagsProvider;
 import net.minecraft.data.tags.TagsProvider;
@@ -40,6 +41,13 @@ public final class MaledictItemTags extends ItemTagsProvider {
      */
     private static final TagKey<Item> CURIOS_RUNE =
             ItemTags.create(ResourceLocation.fromNamespaceAndPath("curios", "rune"));
+
+    private static final TagKey<Item> FORGE_ORES_LUMENFALL_BISMUTH = TagKey.create(Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath("forge", "ores/lumenfall_bismuth"));
+    private static final TagKey<Item> FORGE_STORAGE_BLOCKS_LUMENFALL_BISMUTH = TagKey.create(Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath("forge", "storage_blocks/lumenfall_bismuth"));
+    private static final TagKey<Item> FORGE_INGOTS_LUMENFALL_BISMUTH = TagKey.create(Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath("forge", "ingots/lumenfall_bismuth"));
 
     public MaledictItemTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagsProvider.TagLookup<Block>> blockTags, ExistingFileHelper existingFiles) {
         super(output, lookupProvider, blockTags, Maledict.MODID, existingFiles);
@@ -124,5 +132,16 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(Tags.Items.ARMORS_CHESTPLATES).add(MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get());
         tag(Tags.Items.ARMORS_LEGGINGS).add(MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS.get());
         tag(Tags.Items.ARMORS_BOOTS).add(MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get());
+
+        tag(Tags.Items.ORES).add(MaledictItems.LUMENFALL_BISMUTH_ORE.get());
+        tag(Tags.Items.STORAGE_BLOCKS).add(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get());
+        tag(Tags.Items.INGOTS).add(MaledictItems.LUMENFALL_BISMUTH_INGOT.get());
+        tag(FORGE_ORES_LUMENFALL_BISMUTH).add(MaledictItems.LUMENFALL_BISMUTH_ORE.get());
+        tag(FORGE_STORAGE_BLOCKS_LUMENFALL_BISMUTH).add(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get());
+        tag(FORGE_INGOTS_LUMENFALL_BISMUTH).add(MaledictItems.LUMENFALL_BISMUTH_INGOT.get());
+        tag(MaledictTags.BLIGHTED_REALM_ORE_ITEMS).add(
+                MaledictItems.TAINTED_MALIGNANT_LEAD_ORE.get(),
+                MaledictItems.TWISTED_MALIGNANT_LEAD_ORE.get(),
+                MaledictItems.LUMENFALL_BISMUTH_ORE.get());
     }
 }

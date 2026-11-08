@@ -30,6 +30,10 @@ public final class MaledictBlockStates extends BlockStateProvider {
                 mcLoc("block/end_stone_bricks"), mcLoc("block/crying_obsidian")));
         leadOre(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), "tainted/tainted_rock");
         leadOre(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(), "twisted/twisted_rock");
+        simpleBlockWithItem(MaledictBlocks.LUMENFALL_BISMUTH_ORE.get(),
+                cubeAll(MaledictBlocks.LUMENFALL_BISMUTH_ORE.get()));
+        simpleBlockWithItem(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get(),
+                cubeAll(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get()));
         groundcoverModels();
 
         ModelFile mnemonic = models().getBuilder("mnemonic_obelisk")

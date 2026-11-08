@@ -187,3 +187,32 @@
 本轮未做客户端视觉验收，遗迹外观、实际照明与自然生成疏密仍需游戏内观察。
 井室加深至十二格后重跑 `runGameTestServer --offline`，50 项游戏测试通过，覆盖延长梯道、
 深层容器避让及井底通往储藏间的完整通路。
+
+## 沉辉铋（深层矿）
+
+新增 `lumenfall_bismuth_ore`（沉辉铋矿）、`lumenfall_bismuth_block`（沉辉铋块）与
+`lumenfall_bismuth_ingot`（沉辉铋锭）。矿石只生成在腐枯界的扭曲石深层，沿用远古残骸的密度与暴露规则：
+
+- `minecraft:scattered_ore` 两个配置：大脉 3 格、小脉 2 格，空气暴露丢弃率均为 1.0。
+- 大脉在 `above_bottom(8)` 至 `above_bottom(24)`（当前维度 Y=-56..-40）上作三角分布；小脉在
+  `above_bottom(8)` 至 Y=0 上作均匀分布。两种矿脉各每区块一次尝试，与实际远古残骸一致，
+  且都落在扭曲石层内；已生成区块不回填。
+- 矿石需要钻石镐，普通挖掘直接掉落矿石本身，时运不增加产量；矿石与储藏块均沿用
+  `survives_explosion` 的自掉落表。矿石为独立整块纹理，不覆盖 Malum 岩石贴图。
+
+加工与标签：
+
+- 矿石整块烧炼为 1 锭，经验 2.0、时间 200 tick；高炉 100 tick、经验 2.0。9 锭合成 1 块，1 块分解为 9 锭。
+- 方块标签：`minecraft:mineable/pickaxe`、`minecraft:needs_diamond_tool`、`forge:ores`、
+  `forge:storage_blocks`、`forge:ores/lumenfall_bismuth`、`forge:storage_blocks/lumenfall_bismuth`；
+  另有 `maledict:blighted_realm_ores`，收录本模组在腐枯界生成或替换的三种矿石
+  （污秽石恶念之铅矿石、扭曲石恶念之铅矿石、沉辉铋矿）。腐枯界的扭曲石不加入 Forge 的
+  `deepslate` 地面分类；原版矿脉仍按各自标签生成。模组包可自行向该 tag 追加其他矿石。
+- 物品标签：`forge:ores`、`forge:storage_blocks`、`forge:ingots`、
+  `forge:ores/lumenfall_bismuth`、`forge:storage_blocks/lumenfall_bismuth`、`forge:ingots/lumenfall_bismuth`，
+  以及同名的 `maledict:blighted_realm_ores` 物品标签。
+- 创造栏新增矿石、储藏块与锭；中英文名分别为“沉辉铋矿 / Lumenfall Bismuth Ore”、
+  “沉辉铋块 / Block of Lumenfall Bismuth”、“沉辉铋锭 / Lumenfall Bismuth Ingot”。
+
+验证记录：`runData` 与 `compileTestJava` 通过；`test --offline` 的 50 项 GameTest 与 50 项 JUnit
+全部通过。矿脉外观、实际生成疏密与深层探索体验仍需游戏内验收。

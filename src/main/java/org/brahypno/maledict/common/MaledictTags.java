@@ -1,13 +1,21 @@
 package org.brahypno.maledict.common;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
 import org.brahypno.maledict.Maledict;
 
-/** Shared tag keys; generated JSON lives under {@code data/maledict/tags/items}. */
+/** Shared tag keys; generated JSON lives under {@code data/maledict/tags/items} and {@code .../blocks}. */
 public final class MaledictTags {
+    /** Ores this mod generates in the Blighted Realm; modpacks may extend either side. */
+    public static final TagKey<Block> BLIGHTED_REALM_ORES = BlockTags.create(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "blighted_realm_ores"));
+    public static final TagKey<Item> BLIGHTED_REALM_ORE_ITEMS = ItemTags.create(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "blighted_realm_ores"));
+
     /** Confiscation-immune curios; the generated tag is empty on purpose, modpacks extend it via a data pack. */
 
     public static final TagKey<Item> VICISSITUDE_CONFISCATION_IMMUNE = ItemTags.create(

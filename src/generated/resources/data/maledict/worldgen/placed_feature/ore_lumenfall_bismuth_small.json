@@ -1,0 +1,23 @@
+{
+  "feature": "maledict:ore_lumenfall_bismuth_small",
+  "placement": [
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "type": "minecraft:height_range",
+      "height": {
+        "type": "minecraft:uniform",
+        "max_inclusive": {
+          "absolute": 0
+        },
+        "min_inclusive": {
+          "above_bottom": 8
+        }
+      }
+    },
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

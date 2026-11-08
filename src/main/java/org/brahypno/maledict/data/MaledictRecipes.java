@@ -90,6 +90,30 @@ public final class MaledictRecipes extends RecipeProvider {
                               .unlockedBy("has_malignant_lead_fragment", has(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()))
                               .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "malignant_lead_from_fragments"));
 
+        // 沉辉铋矿整块入炉，一矿一锭；沿用远古残骸的经验与时间，高炉减半。
+        SimpleCookingRecipeBuilder.smelting(Ingredient.of(MaledictItems.LUMENFALL_BISMUTH_ORE.get()),
+                        RecipeCategory.MISC, MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 2.0F, 200)
+                .unlockedBy("has_lumenfall_bismuth_ore", has(MaledictItems.LUMENFALL_BISMUTH_ORE.get()))
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
+                        "lumenfall_bismuth_ingot_from_smelting_lumenfall_bismuth_ore"));
+        SimpleCookingRecipeBuilder.blasting(Ingredient.of(MaledictItems.LUMENFALL_BISMUTH_ORE.get()),
+                        RecipeCategory.MISC, MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 2.0F, 100)
+                .unlockedBy("has_lumenfall_bismuth_ore", has(MaledictItems.LUMENFALL_BISMUTH_ORE.get()))
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
+                        "lumenfall_bismuth_ingot_from_blasting_lumenfall_bismuth_ore"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, MaledictItems.LUMENFALL_BISMUTH_BLOCK.get())
+                .define('#', MaledictItems.LUMENFALL_BISMUTH_INGOT.get())
+                .pattern("###").pattern("###").pattern("###")
+                .group("lumenfall_bismuth_block")
+                .unlockedBy("has_lumenfall_bismuth_ingot", has(MaledictItems.LUMENFALL_BISMUTH_INGOT.get()))
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "lumenfall_bismuth_block"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 9)
+                .requires(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get())
+                .group("lumenfall_bismuth_ingot")
+                .unlockedBy("has_lumenfall_bismuth_block", has(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get()))
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
+                        "lumenfall_bismuth_ingot_from_block"));
+
         // Malum 的井配方本就把整块深岩珍金化作恶念之铅，碎片层沿用同一比一换算。
         new VoidFavorRecipeBuilder(
                 ItemRegistry.CTHONIC_GOLD_FRAGMENT.get(), MaledictItems.MALIGNANT_LEAD_FRAGMENT.get())

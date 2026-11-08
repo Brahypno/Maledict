@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "lumenfall_bismuth_block",
+  "key": {
+    "#": {
+      "item": "maledict:lumenfall_bismuth_ingot"
+    }
+  },
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "result": {
+    "item": "maledict:lumenfall_bismuth_block"
+  },
+  "show_notification": true
+}

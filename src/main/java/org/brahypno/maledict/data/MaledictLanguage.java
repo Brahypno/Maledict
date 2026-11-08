@@ -60,6 +60,9 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE, "污秽石恶念之铅矿石");
             addBlock(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE, "扭曲石恶念之铅矿石");
             addItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT, "恶念之铅碎片");
+            addBlock(MaledictBlocks.LUMENFALL_BISMUTH_ORE, "沉辉铋矿");
+            addBlock(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK, "沉辉铋块");
+            addItem(MaledictItems.LUMENFALL_BISMUTH_INGOT, "沉辉铋锭");
             add("message.maledict.well_unavailable", "彼端无处落足，深井将你拒回。");
             add("message.maledict.vicissitude_rite.warning", "仪式已聆听你的呼唤。然而，回应你的存在必不听命于你。");
             add("message.maledict.vicissitude_rite.confirm", "再次右键，承担随之而来的后果。");
@@ -451,6 +454,9 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE, "Tainted Malignant Lead Ore");
             addBlock(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE, "Twisted Malignant Lead Ore");
             addItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT, "Malignant Lead Fragment");
+            addBlock(MaledictBlocks.LUMENFALL_BISMUTH_ORE, "Lumenfall Bismuth Ore");
+            addBlock(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK, "Block of Lumenfall Bismuth");
+            addItem(MaledictItems.LUMENFALL_BISMUTH_INGOT, "Lumenfall Bismuth Ingot");
             add("message.maledict.well_unavailable", "There is no safe passage beyond. The well rejects you.");
             add("message.maledict.vicissitude_rite.warning", "The ritual has heard your call. What answers will not obey you.");
             add("message.maledict.vicissitude_rite.confirm", "Right-click again to embrace the consequences.");
