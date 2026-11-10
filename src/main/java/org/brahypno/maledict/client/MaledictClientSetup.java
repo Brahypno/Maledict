@@ -8,11 +8,7 @@ import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.EntityRenderersEvent;
-import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
-import net.minecraftforge.client.event.RegisterColorHandlersEvent;
-import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
-import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
+import net.minecraftforge.client.event.*;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -42,8 +38,8 @@ import org.brahypno.maledict.client.vicissitude.vfx.VicissitudeSummoningPostProc
 import org.brahypno.maledict.client.vitals.DelayedVitalsOverlay;
 import org.brahypno.maledict.client.weapon.remembrance.SpiritArrowRenderer;
 import org.brahypno.maledict.client.weapon.scythe.DiplopiaScytheBoomerangRenderer;
-import org.brahypno.maledict.common.realm.BlightedRealm;
 import org.brahypno.maledict.common.invocation.InvocationDefinition;
+import org.brahypno.maledict.common.realm.BlightedRealm;
 import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowItem;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
@@ -81,9 +77,9 @@ public final class MaledictClientSetup {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(MaledictEntities.WEEPING_WITHER.get(),
-                org.brahypno.maledict.client.realm.WeepingWitherRenderer::new);
+                                     org.brahypno.maledict.client.realm.WeepingWitherRenderer::new);
         event.registerEntityRenderer(MaledictEntities.WEEPING_WITHER_SKULL.get(),
-                org.brahypno.maledict.client.realm.WeepingWitherSkullRenderer::new);
+                                     org.brahypno.maledict.client.realm.WeepingWitherSkullRenderer::new);
         event.registerEntityRenderer(MaledictEntities.SOUL_ECHO.get(), SoulEchoRenderer::new);
         event.registerEntityRenderer(MaledictEntities.HANGMAN_TRAP.get(), HangmanTrapRenderer::new);
         event.registerEntityRenderer(MaledictEntities.SPIRIT_ARROW.get(), SpiritArrowRenderer::new);
@@ -92,7 +88,7 @@ public final class MaledictClientSetup {
         event.registerEntityRenderer(MaledictEntities.FIRST_VICISSITUDE.get(), FirstVicissitudeBossRenderer::new);
         event.registerEntityRenderer(MaledictEntities.DEMIURGE_STATUE.get(), DemiurgeStatueRenderer::new);
         event.registerEntityRenderer(MaledictEntities.DEMIURGE_TEAR.get(),
-                org.brahypno.maledict.client.realm.demiurge.DemiurgeTearRenderer::new);
+                                     org.brahypno.maledict.client.realm.demiurge.DemiurgeTearRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_LIGHT_ORB.get(), VicissitudeLightOrbRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SPIRIT_BOLT.get(), VicissitudeSpiritBoltRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SCYTHE.get(), VicissitudeScytheRenderer::new);
@@ -105,7 +101,7 @@ public final class MaledictClientSetup {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void overrideScytheBoomerangRenderer(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(EntityRegistry.SCYTHE_BOOMERANG.get(),
-                DiplopiaScytheBoomerangRenderer::new);
+                                     DiplopiaScytheBoomerangRenderer::new);
     }
 
     @SubscribeEvent
@@ -122,7 +118,7 @@ public final class MaledictClientSetup {
         event.registerLayerDefinition(RavenModel.LAYER, RavenModel::createBodyLayer);
         event.registerLayerDefinition(LightwardArmorModel.HELMET_LAYER, LightwardArmorModel::createHelmetLayer);
         event.registerLayerDefinition(LightwardArmorModel.CHESTPLATE_LAYER, LightwardArmorModel::createChestplateLayer);
-        event.registerLayerDefinition(LightwardArmorModel.TEARS_LAYER, LightwardArmorModel::createTearsLayer);
+        event.registerLayerDefinition(LightwardArmorModel.HELMET_DETAILS_LAYER, LightwardArmorModel::createHelmetDetailsLayer);
     }
 
     @SubscribeEvent
@@ -168,7 +164,8 @@ public final class MaledictClientSetup {
     @SubscribeEvent
     public static void registerItemColors(RegisterColorHandlersEvent.Item event) {
         event.register((stack, tintIndex) -> {
-            if (tintIndex != 0) return 0xFFFFFFFF;
+            if (tintIndex != 0)
+                return 0xFFFFFFFF;
             InvocationDefinition definition = InvocationDefinition.find(Minecraft.getInstance().level, stack);
             return definition == null ? 0xFFFFFFFF : 0xFF000000 | definition.tint();
         }, MaledictItems.INVOCATION_SIGIL.get());

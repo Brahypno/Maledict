@@ -28,6 +28,15 @@ JAR = next((Path.home()/'.gradle/caches/modules-2/files-2.1/curse.maven/malum-48
 REF['helmet']['nodes']['tears'] = dict(name='tears',parent='head',offset=[0,0,0],rotation=[0,0,0],cubes=[
     dict(pos=[-3,-3,-5.25],size=[2,3,1],uv=[84,34],inflate=0,mirror=False),
     dict(pos=[1,-3,-5.25],size=[2,3,1],uv=[84,34],inflate=0,mirror=True)])
+REAR_GUARD = dict(pos=[-4.5,-8.5,4.5],size=[9,9,1],uv=[92,34],inflate=0,mirror=False)
+REAR_LAME = dict(pos=[-1,-2.5,-.5],size=[2,5,1],uv=[92,46],inflate=0,mirror=False)
+NAPE_LAME = dict(pos=[-3.5,-2.25,5.25],size=[7,2,1],uv=[100,46],inflate=0,mirror=False)
+REF['helmet']['nodes']['rear_guard'] = dict(name='rear_guard',parent='head',offset=[0,0,0],
+                                          rotation=[0,0,0],cubes=[REAR_GUARD,NAPE_LAME])
+for side,sign in (('left',-1),('right',1)):
+    name = f'{side}_rear_lame'
+    REF['helmet']['nodes'][name] = dict(name=name,parent='head',offset=[sign*2.65,-4.6,5.5],
+                                       rotation=[0,0,sign*.22],cubes=[dict(REAR_LAME,mirror=sign > 0)])
 
 
 def png_read(data):
@@ -98,6 +107,30 @@ def gild(pixels,x,y,position):
         pixels[y][x] = tuple(round(a+(b-a)*level) for a,b in zip(shadow,highlight))+(old[3],)
 
 
+def paint_rear_armor(pixels,source):
+    palette = {'W':'D3DAF7','P':'BDC4DE','S':'989DB2','M':'737786',
+               'B':'2D2F35','A':'1E1F24','D':'111214'}
+    guard = ('MSPWWWPSM',
+             'SPPSSSPPS',
+             'SPPBABPPS',
+             'SPBAAABPS',
+             'SMBADABMS',
+             'SMPBABPMS',
+             'MSPSBSPSM',
+             'BSPSSSPSB',
+             'BMSSSSSMB')
+    lame = ('WP','PS','SB','SP','MS')
+    nape = ('MSPWPSM','BMSPSMB')
+    edges = {'up':'P','down':'B','east':'M','west':'M','north':'A'}
+    for cube,back in ((REAR_GUARD,guard),(REAR_LAME,lame),(NAPE_LAME,nape)):
+        for face,(u,v,width,height) in face_uv(cube).items():
+            for y in range(height):
+                for x in range(width):
+                    assert source[v+y][u+x][3] == 0, 'Rear armor UV overlaps the original helmet'
+                    shade = back[y][x] if face == 'south' else edges[face]
+                    pixels[v+y][u+x] = tuple(bytes.fromhex(palette[shade]))+(255,)
+
+
 def retexture(slot,source):
     # Sampled from the chestplate's black panels, silver planes and bevels.
     metal_ramp = [(limit,tuple(bytes.fromhex(color))) for limit,color in
@@ -142,6 +175,7 @@ def retexture(slot,source):
         for y,color in zip(range(35,38),('8308E4','6006AB','2B0178')):
             pixels[y][86] = tuple(bytes.fromhex(color))+(255,)
         pixels[34][86] = (131,8,228,255)
+        paint_rear_armor(pixels,source)
     elif slot == 'chestplate':
         # The existing inclined upper breastplate, including its thin overlay.
         for u in (14,56):
@@ -202,8 +236,9 @@ def retexture(slot,source):
             for y,row in enumerate(wing_rows,124):
                 for x,color in enumerate(row[::-1] if mirrored else row):
                     paint(pixels,u+x,y,color)
+    helmet_tiles = ((84,34,6,4),(92,34,20,10),(92,46,6,6),(100,46,16,3)) if slot == 'helmet' else ()
     assert all(p[3] == source[y][x][3] for y,row in enumerate(pixels) for x,p in enumerate(row)
-               if not (slot == 'helmet' and 84 <= x < 90 and 34 <= y < 38)), 'Original source alpha changed'
+               if not any(u <= x < u+width and v <= y < v+height for u,v,width,height in helmet_tiles)), 'Original source alpha changed'
     return pixels
 
 
@@ -402,10 +437,11 @@ def eye_clearance():
     nodes = REF['helmet']['nodes']
     for ex in (-2.5,-1.5,1.5,2.5):
         for key,node in nodes.items():
-            assert node['rotation'] == [0,0,0]
+            assert node['rotation'][:2] == [0,0]
             transform = node_matrix(nodes,key)
             for c in node['cubes']:
                 x,y,z = transform @ Vector(c['pos']); w,h,d = c['size']; q = c['inflate']
+                assert node['rotation'][2] == 0 or z-q >= -4
                 assert not (x-q < ex < x+w+q and y-q < -3.5 < y+h+q and z-q < -4), 'Eye is occluded'
 
 
