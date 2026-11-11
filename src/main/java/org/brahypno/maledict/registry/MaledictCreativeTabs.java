@@ -19,6 +19,8 @@ public final class MaledictCreativeTabs {
                                for (String target : org.brahypno.maledict.common.invocation.InvocationSigilItem.TARGETS) {
                                    output.accept(org.brahypno.maledict.common.invocation.InvocationSigilItem.create(target));
                                }
+                               output.accept(MaledictItems.SOULBINDING_SCROLL.get());
+                               output.accept(MaledictItems.SOULBINDING_SEAL.get());
                                output.accept(MaledictItems.INCURSUS_BLADE.get());
                                output.accept(MaledictItems.LOVER_AXE.get());
                                output.accept(MaledictItems.MELTFALL_AXE.get());

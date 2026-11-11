@@ -1,0 +1,30 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 4,
+      "item": "malum:hex_ash"
+    },
+    {
+      "count": 4,
+      "item": "malum:void_salts"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "malum:processed_soulstone"
+  },
+  "output": {
+    "item": "maledict:soulbinding_seal"
+  },
+  "spirits": [
+    {
+      "type": "eldritch",
+      "count": 16
+    },
+    {
+      "type": "wicked",
+      "count": 16
+    }
+  ]
+}

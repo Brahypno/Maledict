@@ -27,6 +27,12 @@ public final class MaledictItemModels extends ItemModelProvider {
         getBuilder("invocation_sigil")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", modLoc("item/invocation_sigil"));
+        // Textures are intentionally out of scope; these reuse existing artwork until the real
+        // icons arrive, so datagen never points at a missing texture.
+        withExistingParent("soulbinding_scroll", mcLoc("item/generated"))
+                .texture("layer0", mcLoc("item/paper"));
+        withExistingParent("soulbinding_seal", mcLoc("item/generated"))
+                .texture("layer0", ResourceLocation.fromNamespaceAndPath("malum", "item/processed_soulstone"));
         for (SpiritArrowType arrowType : SpiritArrowType.values()) {
             getBuilder(arrowType.name().toLowerCase() + "_spirit_arrow")
                     .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))

@@ -60,6 +60,8 @@ public final class MaledictDataGenerators {
         generator.addProvider(event.includeServer(), blockTags);
         generator.addProvider(event.includeServer(), new MaledictItemTags(
                 output, event.getLookupProvider(), blockTags.contentsGetter(), existingFiles));
+        generator.addProvider(event.includeServer(), new MaledictEntityTypeTags(
+                output, event.getLookupProvider(), existingFiles));
     }
 
     private MaledictDataGenerators() {

@@ -30,6 +30,20 @@ public final class MaledictRecipes extends RecipeProvider {
     @Override
     protected void buildRecipes(Consumer<FinishedRecipe> recipes) {
         InvocationRecipes.build(recipes);
+        new SpiritInfusionRecipeBuilder(ItemRegistry.PROCESSED_SOULSTONE.get(), 1,
+                                        MaledictItems.SOULBINDING_SEAL.get(), 1)
+                .addExtraItem(ItemRegistry.HEX_ASH.get(), 4)
+                .addExtraItem(ItemRegistry.VOID_SALTS.get(), 4)
+                .addSpirit(SpiritTypeRegistry.ELDRITCH_SPIRIT, 16)
+                .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 16)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "spirit_infusion/soulbinding_seal"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, Items.PAPER, 3)
+                              .requires(MaledictItems.SOULBINDING_SCROLL.get())
+                              .unlockedBy("has_soulbinding_scroll",
+                                          has(MaledictItems.SOULBINDING_SCROLL.get()))
+                              .save(recipes, ResourceLocation.fromNamespaceAndPath(
+                                      Maledict.MODID, "paper_from_soulbinding_scroll"));
         new SpiritInfusionRecipeBuilder(ItemRegistry.TAINTED_ROCK.get(), 4, MaledictItems.CRYING_TAINTED_ROCK.get(), 4)
                 .addExtraItem(Items.CRYING_OBSIDIAN, 4)
                 .addSpirit(SpiritTypeRegistry.SACRED_SPIRIT, 6)

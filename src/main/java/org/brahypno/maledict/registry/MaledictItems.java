@@ -25,6 +25,7 @@ import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.equipment.lightward.LightwardArmorItem;
 import org.brahypno.maledict.common.rune.AttributeRuneItem;
 import org.brahypno.maledict.common.vicissitude.curio.CurioReturnTokenItem;
+import org.brahypno.maledict.common.soulbinding.SoulbindingScrollItem;
 import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.common.curio.priestess.EidolonOfTheHighPriestessItem;
 import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
@@ -50,6 +51,14 @@ public final class MaledictItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Maledict.MODID);
 
     public static final RegistryObject<Item> INVOCATION_SIGIL = ITEMS.register("invocation_sigil", InvocationSigilItem::new);
+
+    /** Scroll that teaches the Rite of Soulbinding; how it is acquired is out of scope. */
+    public static final RegistryObject<Item> SOULBINDING_SCROLL =
+            ITEMS.register("soulbinding_scroll", SoulbindingScrollItem::new);
+
+    /** Spirit-infused seal consumed by the Soulwood half of the rite. */
+    public static final RegistryObject<Item> SOULBINDING_SEAL =
+            ITEMS.register("soulbinding_seal", () -> new Item(new Item.Properties()));
 
     public static final RegistryObject<Item> CRYING_TAINTED_ROCK = ITEMS.register("crying_tainted_rock",
             () -> new BlockItem(MaledictBlocks.CRYING_TAINTED_ROCK.get(), new Item.Properties()));
