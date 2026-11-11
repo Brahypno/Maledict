@@ -1,5 +1,6 @@
 package org.brahypno.maledict.data;
 
+import com.sammy.malum.registry.common.item.ItemRegistry;
 import com.sammy.malum.registry.common.item.ItemTagRegistry;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
@@ -152,5 +153,23 @@ public final class MaledictItemTags extends ItemTagsProvider {
                 MaledictItems.TAINTED_MALIGNANT_LEAD_ORE.get(),
                 MaledictItems.TWISTED_MALIGNANT_LEAD_ORE.get(),
                 MaledictItems.LUMENFALL_BISMUTH_ORE.get());
+
+        // The five vanilla categories cover properly classified melee tools. Malum does not add its
+        // own tools to those vanilla tags, so its scythes, steel tools and special weapons are
+        // named explicitly instead of pulling in another mod's weapon system.
+        tag(MaledictTags.SOUL_BINDABLE)
+                .addTag(ItemTags.SWORDS)
+                .addTag(ItemTags.AXES)
+                .addTag(ItemTags.PICKAXES)
+                .addTag(ItemTags.SHOVELS)
+                .addTag(ItemTags.HOES)
+                .addTag(ItemTagRegistry.SCYTHE)
+                .add(ItemRegistry.SOUL_STAINED_STEEL_SWORD.get(),
+                     ItemRegistry.SOUL_STAINED_STEEL_AXE.get(),
+                     ItemRegistry.SOUL_STAINED_STEEL_PICKAXE.get(),
+                     ItemRegistry.SOUL_STAINED_STEEL_SHOVEL.get(),
+                     ItemRegistry.SOUL_STAINED_STEEL_HOE.get(),
+                     ItemRegistry.TYRVING.get(),
+                     ItemRegistry.WEIGHT_OF_WORLDS.get());
     }
 }

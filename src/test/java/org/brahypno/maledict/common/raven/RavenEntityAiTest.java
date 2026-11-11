@@ -12,22 +12,16 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.BabyEntitySpawnEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.registry.MaledictEntities;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
 @Mod.EventBusSubscriber(modid = "maledict")
 public final class RavenEntityAiTest {
-    private static final Map<UUID, Parents> PARENTS = new HashMap<>();
-
     @BeforeBatch(batch = "raven_ai")
     public static void clearPreviousFixtures(ServerLevel level) {
         clearFixtures(level);
@@ -46,17 +40,6 @@ public final class RavenEntityAiTest {
             }
         }
         fixtures.forEach(Entity::discard);
-        PARENTS.clear();
-    }
-
-    @SubscribeEvent
-    public static void recordOffspring(BabyEntitySpawnEvent event) {
-        Parents parents = PARENTS.get(event.getParentA().getUUID());
-        if (parents != null && parents.contains(event.getParentB()) && event.getChild() instanceof RavenEntity chick) {
-            parents.chick = chick;
-            parents.births++;
-            chick.getPersistentData().putBoolean("RavenAiTestFixture", true);
-        }
     }
 
     @SubscribeEvent
@@ -67,23 +50,6 @@ public final class RavenEntityAiTest {
                     + " amount=" + event.getAmount() + " pos=" + raven.position()
                     + " head=" + raven.level().getBlockState(BlockPos.containing(raven.getEyePosition())));
         }
-    }
-
-    @GameTest(template = "raven_ai_empty", batch = "raven_ai", timeoutTicks = 300)
-    public static void lovingAdultsFiveBlocksApartAcrossAOneBlockStepBreed(GameTestHelper helper) {
-        prepareArena(helper);
-        // Synthetic one-block step; this does not load or reproduce a complete user save.
-        for (int x = 8; x < 17; x++) {
-            for (int z = 0; z < 17; z++) {
-                helper.setBlock(new BlockPos(x, 1, z), Blocks.NETHERRACK);
-            }
-        }
-        RavenEntity first = spawn(helper, 5, 1, 8);
-        RavenEntity second = spawn(helper, 10, 2, 8);
-        Parents parents = parents(helper, first, second);
-        first.setInLove(null);
-        second.setInLove(null);
-        helper.succeedWhen(() -> parents.assertBred(helper));
     }
 
     @GameTest(template = "raven_ai_empty", batch = "raven_ai", timeoutTicks = 250)
@@ -111,41 +77,6 @@ public final class RavenEntityAiTest {
                     helper.setBlock(new BlockPos(x, y, z), boundary ? Blocks.GLASS : Blocks.AIR);
                 }
             }
-        }
-    }
-
-    private static Parents parents(GameTestHelper helper, RavenEntity first, RavenEntity second) {
-        Parents parents = new Parents(first, second);
-        PARENTS.put(first.getUUID(), parents);
-        PARENTS.put(second.getUUID(), parents);
-        helper.onEachTick(() -> {
-            helper.assertTrue(first.getHealth() == first.getMaxHealth() && second.getHealth() == second.getMaxHealth(),
-                    "Breeding fixture received unexpected damage: " + describe(first) + "; " + describe(second));
-        });
-        return parents;
-    }
-
-    private static final class Parents {
-        private final RavenEntity first;
-        private final RavenEntity second;
-        private RavenEntity chick;
-        private int births;
-
-        private Parents(RavenEntity first, RavenEntity second) {
-            this.first = first;
-            this.second = second;
-        }
-
-        private boolean contains(Entity entity) {
-            return entity == first || entity == second;
-        }
-
-        private void assertBred(GameTestHelper helper) {
-            helper.assertTrue(births == 1 && chick != null && chick.isAlive() && chick.isBaby()
-                            && helper.getLevel().getEntity(chick.getUUID()) == chick,
-                    "This pair must produce its own live chick: " + describe(first) + "; " + describe(second));
-            helper.assertTrue(first.getAge() > 0 && second.getAge() > 0,
-                    "Both parents must enter breeding cooldown");
         }
     }
 

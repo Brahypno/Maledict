@@ -1,9 +1,11 @@
 package org.brahypno.maledict.common;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import org.brahypno.maledict.Maledict;
@@ -31,6 +33,15 @@ public final class MaledictTags {
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "aufheben_lightward_blades"));
     public static final TagKey<Item> AUFHEBEN_LIGHTWARD_AXES = ItemTags.create(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "aufheben_lightward_axes"));
+
+    /** Main-hand tools the Rite of Soulbinding may arm. */
+    public static final TagKey<Item> SOUL_BINDABLE = ItemTags.create(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "soul_bindable"));
+
+    /** Entity types the Rite of Soulbinding must never capture. Empty on purpose; packs extend it. */
+    public static final TagKey<EntityType<?>> SOUL_BINDING_BLACKLIST = TagKey.create(
+            Registries.ENTITY_TYPE,
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "soul_binding_blacklist"));
 
     private MaledictTags() {
     }

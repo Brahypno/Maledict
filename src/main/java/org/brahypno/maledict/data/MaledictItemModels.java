@@ -27,6 +27,8 @@ public final class MaledictItemModels extends ItemModelProvider {
         getBuilder("invocation_sigil")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", modLoc("item/invocation_sigil"));
+        basicItem(MaledictItems.SOULBINDING_SCROLL.get());
+        basicItem(MaledictItems.SOULBINDING_SEAL.get());
         for (SpiritArrowType arrowType : SpiritArrowType.values()) {
             getBuilder(arrowType.name().toLowerCase() + "_spirit_arrow")
                     .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))

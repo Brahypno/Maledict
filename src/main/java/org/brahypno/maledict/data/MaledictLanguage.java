@@ -17,6 +17,7 @@ public final class MaledictLanguage extends LanguageProvider {
     @Override
     protected void addTranslations() {
         addInvocationTranslations();
+        addSoulbindingTranslations();
         if ("zh_cn".equals(locale)){
             addBlock(MaledictBlocks.CRYING_TAINTED_ROCK, "哭泣的污秽石");
             addBlock(MaledictBlocks.CRYING_TWISTED_ROCK, "哭泣的扭曲石");
@@ -996,6 +997,49 @@ public final class MaledictLanguage extends LanguageProvider {
         add("malum.gui.book.entry." + identifier + ".description", description);
         add("malum.gui.book.entry.page.headline." + identifier, title);
         add("malum.gui.book.entry.page.text." + identifier + ".1", text);
+    }
+
+    private void addSoulbindingTranslations() {
+        boolean chinese = "zh_cn".equals(locale);
+        addItem(MaledictItems.SOULBINDING_SCROLL, chinese ? "拘魂卷轴" : "Soulbinding Scroll");
+        addItem(MaledictItems.SOULBINDING_SEAL, chinese ? "拘魂封印" : "Soulbinding Seal");
+
+        String[][] translations = {
+                {"tooltip.maledict.soulbinding.armed", "[待拘魂]", "[Awaiting Binding]"},
+                {"tooltip.maledict.soulbinding.vacant", "精魂封印：空缺", "Soul Seal: Vacant"},
+                {"tooltip.maledict.soulbinding.next_kill", "下一次有效击杀将决定封印对象",
+                 "The next valid kill will decide the bound spirit"},
+                {"tooltip.maledict.soulbinding.bound", "[已封印]", "[Bound]"},
+                {"tooltip.maledict.soulbinding.spirit", "精魂封印：%s", "Soul Seal: %s"},
+                {"tooltip.maledict.soulbinding.unknown", "未知精魂", "Unknown Spirit"},
+                {"message.maledict.soulbinding.already_known", "你已经懂得了拘魂仪式。",
+                 "You already know the Rite of Soulbinding."},
+                {"message.maledict.soulbinding.learned", "你已习得拘魂仪式。",
+                 "You have learned the Rite of Soulbinding."},
+                {"message.maledict.soulbinding.no_advancement", "你尚未习得拘魂仪式。",
+                 "You have not learned the Rite of Soulbinding."},
+                {"message.maledict.soulbinding.invalid_tool", "主手必须持有一件可封印的工具。",
+                 "Your main hand must hold a bindable tool."},
+                {"message.maledict.soulbinding.already_armed", "这件工具已经在等待精魂或已容纳精魂。",
+                 "This tool is already awaiting a spirit or already holds one."},
+                {"message.maledict.soulbinding.no_seal", "副手需要一枚拘魂封印。",
+                 "A Soulbinding Seal is required in your offhand."},
+                {"message.maledict.soulbinding.not_armed", "主手的工具没有可解除的拘魂。",
+                 "The main-hand tool has no binding to release."},
+                {"message.maledict.soulbinding.cannot_use", "此处无法启动拘魂仪式。",
+                 "The Rite of Soulbinding cannot be started here."},
+                {"malum.gui.rite.maledict_soulbinding_rite", "拘魂仪式", "Rite of Soulbinding"},
+                {"malum.gui.rite.corrupted_maledict_soulbinding_rite", "拘魂仪式", "Rite of Soulbinding"},
+                {"malum.gui.book.entry.page.text.maledict_soulbinding_rite.hover",
+                 "在符文木上解除工具中的拘魂。",
+                 "Releases a tool's bound spirit on Runewood."},
+                {"malum.gui.book.entry.page.text.corrupt_maledict_soulbinding_rite.hover",
+                 "在灵魂木上以一枚拘魂封印使主手工具等待下一次击杀。",
+                 "On Soulwood, spends a Soulbinding Seal to ready the main-hand tool for its next kill."},
+        };
+        for (String[] translation : translations) {
+            add(translation[0], translation[chinese ? 1 : 2]);
+        }
     }
 
     private void addInvocationTranslations() {
