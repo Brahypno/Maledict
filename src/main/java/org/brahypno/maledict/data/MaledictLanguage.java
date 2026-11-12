@@ -168,6 +168,7 @@ public final class MaledictLanguage extends LanguageProvider {
         addItem(MaledictItems.LIGHT_FRAGMENT, "光的残片", "Fragment of Light");
         add("entity.maledict.weeping_wither", "腐枯凋灵", "Weeping Wither");
         add("entity.maledict.weeping_wither_skull", "腐枯凋灵之首", "Weeping Wither Skull");
+        add("entity.maledict.weeping_wither_skeleton", "腐枯凋灵骷髅", "Weeping Wither Skeleton");
 
         add("malum.gui.book.entry.void.maledict.weeping_wither", "腐枯凋灵", "Weeping Wither");
         add("malum.gui.book.entry.void.maledict.weeping_wither.description",

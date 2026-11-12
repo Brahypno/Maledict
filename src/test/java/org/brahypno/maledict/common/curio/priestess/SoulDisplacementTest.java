@@ -27,6 +27,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
+import org.brahypno.changelib.DamageHelper.DamagePolicy;
+import org.brahypno.changelib.DamageHelper.DamageStage;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictEntities;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -138,13 +140,13 @@ public final class SoulDisplacementTest {
             // Test the final life; the encounter test covers the first lethal hit's reformation.
             CompoundTag saved = wither.saveWithoutId(new CompoundTag());
             saved.putBoolean("ReformationUsed", true);
+            saved.putFloat("Health", probeFallback ? 81 : 11);
             wither.readAdditionalSaveData(saved);
             helper.getLevel().addFreshEntity(wither);
             wither.hurt(spell(wither, caster.player), 1);
             SoulEchoEntity echo = echoes(helper, wither).get(0);
             DamageSource source = spell(wither, finisher.player);
             wither.setPos(wither.position().add(6, 0, 0));
-            wither.setHealth(probeFallback ? 80 : 10);
             wither.invulnerableTime = 0;
             var bodyDeaths = new AtomicInteger();
             var echoDeaths = new AtomicInteger();
@@ -156,8 +158,14 @@ public final class SoulDisplacementTest {
             };
             MinecraftForge.EVENT_BUS.addListener(observe);
             try {
-                if (probeFallback) DamageProbe.mediumDamageMethod(echo, source, 1000);
-                else helper.assertTrue(echo.hurt(source, 20), "A regular lethal spell reaches the body");
+                if (probeFallback) {
+                    DamageProbe.mediumDamageMethod(echo, source, 1000);
+                    helper.assertTrue(wither.getHealth() >= 61 && bodyDeaths.get() == 0,
+                            "Probing the echo must respect the body's D3 cap");
+                    DamageProbe.damage(wither, source, 1000, DamagePolicy.through(DamageStage.D4_CONSISTENCY_WRITE));
+                } else {
+                    helper.assertTrue(echo.hurt(source, 20), "A regular lethal spell reaches the body");
+                }
                 echo.die(source); // A probe may try to finalize a hit whose body already handled death.
                 helper.assertTrue(bodyDeaths.get() == 1 && echoDeaths.get() == 0,
                         "Both regular spells and probe fallback must run the body's death exactly once: fallback="

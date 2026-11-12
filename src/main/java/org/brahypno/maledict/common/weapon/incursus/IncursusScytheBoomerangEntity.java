@@ -91,11 +91,9 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
             owner.setItemInHand(InteractionHand.MAIN_HAND, scythe);
             
             // 这一记写死 medium（不随精魂成长），但无忧符文对「这把刀打出的伤害」是一个口径，照抬一档。
-            boolean hit = IncursusBladeItem.raisedByBliss(IncursusBladeItem.DamageTier.MEDIUM, owner)
-                                           .deal(target,
-                                                 DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, owner),
-                                                 damage)
-                                           .instantEffective();
+            boolean hit = IncursusBladeItem.dealSkillDamage(target,
+                    DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, owner), damage)
+                    .instantEffective();
             if (hit){
                 ItemHelper.applyEnchantments(owner, target, scythe);
                 int fireAspect = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FIRE_ASPECT, scythe);

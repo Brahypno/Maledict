@@ -30,6 +30,8 @@ import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
+import org.brahypno.changelib.DamageHelper.DamageStage;
+import org.brahypno.changelib.HealthHelper.CombatProtection;
 import org.brahypno.changelib.protection.ai.AiProtection;
 import org.brahypno.changelib.protection.ai.AiProtectionDefinition;
 import org.brahypno.changelib.protection.ai.ProtectedAiEntity;
@@ -41,12 +43,29 @@ import javax.annotation.Nullable;
 import java.util.EnumSet;
 import org.joml.Vector3f;
 
-public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity {
+public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity, CombatProtection.OwnedHealthEntity {
     public static final float SCALE = 1.2F;
     private static final DustParticleOptions SEEP_DUST = new DustParticleOptions(new Vector3f(0.25F, 0.21F, 0.29F), 0.6F);
     private static final DustParticleOptions BONE_DUST = new DustParticleOptions(new Vector3f(0.55F, 0.53F, 0.54F), 0.5F);
     private static final EntityDataAccessor<Boolean> REFORMING =
             SynchedEntityData.defineId(WeepingWitherEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final CombatProtection.HealthAccess HEALTH_ACCESS = new CombatProtection.HealthAccess() {
+        @Override
+        public float read(LivingEntity entity) {
+            return ((WeepingWitherEntity) entity).authorityHealth;
+        }
+
+        @Override
+        public void write(LivingEntity entity, float health) {
+            WeepingWitherEntity wither = (WeepingWitherEntity) entity;
+            wither.authorityHealth = wither.isReforming() ? Math.max(1.0F, health) : health;
+        }
+
+        @Override
+        public boolean hurt(LivingEntity entity, DamageSource source, float amount) {
+            return entity.hurt(source, amount);
+        }
+    };
     private final WeepingWitherCombat combat = new WeepingWitherCombat();
     private static final TargetingConditions SIDE_HEAD_TARGETS = TargetingConditions.forCombat().range(20.0D)
             .selector(target -> target.getMobType() != MobType.UNDEAD && target.attackable());
@@ -58,6 +77,8 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
     @Nullable private BlockPos altarHome;
     private boolean returningHome;
     @Nullable private AiProtection.Controller aiController;
+    @Nullable private CombatProtection.Controller healthController;
+    private float authorityHealth;
     // The parent's private bar cannot be updated while its attack AI is paused.
     private final ServerBossEvent encounterBar = (ServerBossEvent) new ServerBossEvent(
             getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS).setDarkenScreen(true);
@@ -93,8 +114,36 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
     @Override
     public void onAddedToWorld() {
         super.onAddedToWorld();
-        if (!level().isClientSide && aiController == null) {
-            aiController = AiProtection.bind(this);
+        if (!level().isClientSide) {
+            if (aiController == null) aiController = AiProtection.bind(this);
+            if (healthController == null) {
+                authorityHealth = super.getHealth();
+                // The hurt path owns the cap, which follows the live max-health attribute.
+                healthController = CombatProtection.bindOwned(
+                        this, DamageStage.D3_STORAGE_WRITE, HEALTH_ACCESS, Float.POSITIVE_INFINITY);
+            }
+        }
+    }
+
+    @Override
+    public final boolean ownsHealthAccess(CombatProtection.HealthAccess candidate) {
+        return candidate == HEALTH_ACCESS;
+    }
+
+    @Override
+    public float getHealth() {
+        if (level().isClientSide) {
+            float health = super.getHealth();
+            return isReforming() ? Math.max(1.0F, health) : health;
+        }
+        return healthController == null ? super.getHealth() : CombatProtection.healthView(this, authorityHealth);
+    }
+
+    private void commitHealth(float health) {
+        if (healthController == null) {
+            super.setHealth(health);
+        } else {
+            healthController.commit(() -> authorityHealth = health);
         }
     }
 
@@ -156,7 +205,7 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
     }
 
     private void restoreReformingState() {
-        if (getHealth() <= 0.0F) setHealth(1.0F);
+        if (!level().isClientSide && getHealth() <= 0.0F) commitHealth(1.0F);
         clearDeathAnimation();
     }
 
@@ -183,6 +232,11 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         // LivingEntity.baseTick advances deathTime before aiStep. Repair before calling it,
         // on both sides, so a lingering zero-health client state cannot run the death animation.
         if (isReforming()) restoreReformingState();
+        else if (!level().isClientSide && !dead && getHealth() <= 0.0F) {
+            // A penetrating storage stage can commit zero without invoking LivingEntity.hurt.
+            DamageSource source = getLastDamageSource();
+            die(source != null ? source : damageSources().generic());
+        }
         super.tick();
         if (!level().isClientSide) encounterBar.setProgress(getHealth() / getMaxHealth());
     }
@@ -354,7 +408,8 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
 
     @Override
     protected void actuallyHurt(DamageSource source, float amount) {
-        if (isInvulnerableTo(source)) return;
+        if (isReforming() || isInvulnerableTo(source)) return;
+        amount = CombatProtection.incoming(this, source, amount);
         long now = level().getGameTime();
         if (!damageBatch.isCurrentTick(now)) {
             damageBatch.beginTick(now);
@@ -362,12 +417,14 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         }
         float finalAmount = BossDamage.resolve(this, source, amount,
                 damage -> getDamageAfterMagicAbsorb(source, getDamageAfterArmorAbsorb(source, damage)));
-        if (finalAmount <= 0.0F) return;
+        if (finalAmount <= 0.0F || isReforming() || isDeadOrDying()) return;
         float cappedLoss = Math.min(finalAmount, getMaxHealth() * 0.05F);
         float additionalLoss = damageBatch.additionalLoss(cappedLoss);
         if (additionalLoss > 0.0F) {
             getCombatTracker().recordDamage(source, additionalLoss);
-            setHealth(getHealth() - additionalLoss);
+            float remaining = Math.max(0.0F, getHealth() - additionalLoss);
+            if (healthController == null) super.setHealth(remaining);
+            else healthController.commitDamage(() -> authorityHealth = remaining);
             setAbsorptionAmount(getAbsorptionAmount() - additionalLoss);
             gameEvent(GameEvent.ENTITY_DAMAGE);
         }
@@ -375,7 +432,16 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
 
     @Override
     public void heal(float amount) {
-        if (!isReforming()) super.heal(amount);
+        if (isReforming()) return;
+        if (healthController == null) {
+            super.heal(amount);
+            return;
+        }
+        amount = ForgeEventFactory.onLivingHeal(this, amount);
+        float health = getHealth();
+        if (Float.isFinite(amount) && amount > 0.0F && health > 0.0F && !isReforming() && !isRemoved()) {
+            commitHealth(Math.min(getMaxHealth(), health + amount));
+        }
     }
 
     public void onEffectiveSkullHit(boolean alreadyWithered) {
@@ -384,8 +450,9 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
 
     @Override
     public void die(DamageSource source) {
+        if (!CombatProtection.allowDeath(this)) return;
         if (!level().isClientSide && (combat.isReforming() || combat.beginReformation())) {
-            setHealth(1.0F);
+            commitHealth(1.0F);
             clearDeathAnimation();
             entityData.set(REFORMING, true);
             setDeltaMovement(Vec3.ZERO);
@@ -398,7 +465,7 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
     }
 
     private void finishReformation() {
-        setHealth(80.0F);
+        commitHealth(Math.min(80.0F, getMaxHealth()));
         clearDeathAnimation();
         entityData.set(REFORMING, false);
         spawnExplosion();
@@ -438,7 +505,7 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         combat.restore(tag.getBoolean("ReformationUsed"), tag.getInt("ReformationTicks"), tag.getInt("ProliferationCooldown"));
         entityData.set(REFORMING, combat.isReforming());
         if (combat.isReforming()) {
-            setHealth(1.0F);
+            commitHealth(1.0F);
             clearDeathAnimation();
         } else if (combat.reformationUsed() && getHealth() > 0.0F) {
             // Repair saves written by the old implementation with positive health and stale DeathTime.

@@ -39,6 +39,9 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.changelib.DamageHelper.DamageProbeResult;
+import org.brahypno.changelib.DamageHelper.DamagePolicy;
+import org.brahypno.changelib.DamageHelper.DamageStage;
+import org.brahypno.changelib.HealthHelper.CombatProtection;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.equipment.lightward.LightwardSet;
 import org.brahypno.maledict.common.rune.RuneOfBlissItem;
@@ -345,7 +348,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
         }
 
         /**
-         * 轻档用 compensateDamage 控制补满；中 / 终档不变。
+         * 以本档的常规探针结算。
          */
         public DamageProbeResult deal(Entity target, DamageSource source, float damage, boolean compensateDamage) {
             return switch (this) {
@@ -354,6 +357,28 @@ public final class IncursusBladeItem extends MagicScytheItem {
                 case LIGHT -> DamageProbe.lighterDamageMethod(target, source, damage, compensateDamage);
             };
         }
+
+        /** 独立指定对 Maledict 自有血池可尝试的最高 ChangeLib 等级。 */
+        public DamageProbeResult deal(Entity target, DamageSource source, float damage, boolean compensateDamage,
+                                      DamageStage internalGrade) {
+            if (target instanceof LivingEntity living && living instanceof CombatProtection.OwnedHealthEntity
+                    && target.getType().builtInRegistryHolder().key().location().getNamespace().equals(Maledict.MODID)) {
+                DamageStage defense = CombatProtection.defenseGrade(living);
+                if (defense != null && internalGrade.penetrates(defense)) {
+                    return DamageProbe.damage(target, source, damage, DamagePolicy.through(internalGrade));
+                }
+            }
+            return deal(target, source, damage, compensateDamage);
+        }
+    }
+
+    /** 神侵恶刃各成长档的内部等级配置。 */
+    private static DamageStage internalAttackGrade(DamageTier tier) {
+        return switch (tier) {
+            case LIGHT -> DamageStage.D3_STORAGE_WRITE;
+            case MEDIUM -> DamageStage.D4_CONSISTENCY_WRITE;
+            case FINAL -> DamageStage.D5_RECOVERY_SOURCE;
+        };
     }
 
     /**
@@ -388,11 +413,17 @@ public final class IncursusBladeItem extends MagicScytheItem {
     public static DamageProbeResult dealTieredDamage(
             ItemStack stack, Entity target, DamageSource source,
             float damage, boolean compensateDamage) {
-        return damageTier(stack, source).deal(target, source, damage, compensateDamage);
+        DamageTier tier = damageTier(stack, source);
+        return tier.deal(target, source, damage, compensateDamage, internalAttackGrade(tier));
+    }
+
+    static DamageProbeResult dealSkillDamage(Entity target, DamageSource source, float damage) {
+        DamageTier tier = raisedByBliss(DamageTier.MEDIUM, source.getEntity());
+        return tier.deal(target, source, damage, false, internalAttackGrade(tier));
     }
 
     /**
-     * 镰刀伤害的唯一出口：按档位结算，探针进来先清无敌帧，否则同一次挥砍的后几条通道会被吃掉。
+     * 按成长档结算一次镰刀伤害。
      */
     public static void applyTieredDamage(ItemStack stack, Entity target, DamageSource source, float damage) {
         applyTieredDamage(stack, target, source, damage, false);
