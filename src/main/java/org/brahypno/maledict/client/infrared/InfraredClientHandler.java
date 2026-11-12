@@ -7,25 +7,30 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.material.FogType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.brahypno.changelib.mask.MaskPriority;
+import org.brahypno.changelib.mask.client.ClientVisualEffects;
+import org.brahypno.changelib.visual.VisualProfile;
+import org.brahypno.changelib.visual.VisualProfiles;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.realm.BlightedRealm;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 
 /**
- * 微光视觉的客户端驱动：每 tick 判一次「该不该亮」，每帧把强度推向目标，剩下的交给
- * {@link InfraredPostProcessor}。
+ * 微光视觉的客户端驱动：每 tick 判一次「该不该亮」，然后把结论作为一份<b>本地 visual profile</b>
+ * 交给 ChangeLib。画面强度、淡入淡出、后处理链都不再归本模组管——
+ * {@code InfraredCurve.approach} 那层平滑已经删掉，否则会变成两次平滑串联。
  *
  * <p><b>开关是眼槽本身，不是某个饰品。</b>本模组的 {@code delusion}（视界）槽就是那台设备：
  * 只要第一格在（贤者献祭补出来的），而且它在 Curios 界面里那只眼睛（渲染开关）是亮的，设备就算开着
@@ -36,8 +41,8 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
  * <p>亮度取相机所在方块而不是玩家脚下：第一人称、第三人称、旁观、自由视角下相机都可能离开身体，
  * 取脚下会在贴脸看暗处时还判成亮。阈值用迟滞（<=6 进，>=8 出，7 保持），免得站在阈值上闪。
  *
- * <p>夜视与伽马覆盖提供正常亮度时，后处理退场。遮挡雾另由 {@link #onRenderFog} 处理，
- * 不依赖后处理强度，所以亮处或有夜视时仍能看穿失明、水、岩浆与细雪。
+ * <p>夜视与伽马覆盖提供正常亮度时，视觉请求撤掉。遮挡雾另由 {@link #onRenderFog} 处理，
+ * 不依赖视觉请求，所以亮处或有夜视时仍能看穿失明、水、岩浆与细雪。
  * 黑暗另外会周期性压暗光照图；视界槽对黑暗的免疫在服务端效果事件里处理。
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -46,9 +51,20 @@ public final class InfraredClientHandler {
     /** 眼槽的 Curios 标识，见 {@code data/maledict/curios/slots/delusion.json}。 */
     private static final String EYE_SLOT = "delusion";
 
+    /** 本模组向 ChangeLib 登记的本地来源。服务端来源一旦出现就自动压过它。 */
+    private static final ResourceLocation LOW_LIGHT_SOURCE = ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "low_light");
+
+    /** 本地候选的优先级：只有一个来源，取库里的最低档即可。 */
+    private static final int LOW_LIGHT_PRIORITY = MaskPriority.AMBIENT;
+
     /** 原版亮度设置是 0.0 到 1.0；超出这个范围才算被外部改过（fullbright 之类）。 */
     private static final double GAMMA_LOWER_BOUND = -0.0001D;
     private static final double GAMMA_UPPER_BOUND = 1.0001D;
+
+    /** 阈值/过渡带没变就复用同一个 profile，别每个 tick 造新对象。 */
+    private static VisualProfile cachedProfile;
+    private static float cachedThreshold = Float.NaN;
+    private static float cachedSoftness = Float.NaN;
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -82,36 +98,39 @@ public final class InfraredClientHandler {
             }
         }
         InfraredClientState.setRequested(requested);
+        // 腐枯界主动关掉微光（旧实现的同名规则）：顺手清掉迟滞状态，别把上次的「暗」带出维度。
         if (level != null && BlightedRealm.is(level)) {
-            InfraredClientState.setStrength(0);
             InfraredClientState.setDarknessActive(false);
-            InfraredPostProcessor.INSTANCE.setActive(false);
         }
+        requestVisual(requested);
     }
 
     /**
-     * 每帧推进强度。优先级留在默认档：Lodestone 的 {@code PostProcessHandler} 挂在
-     * {@code AFTER_LEVEL} 的最低优先级上，所以这里改完的值就是本帧真正上传给着色器的值。
+     * 只负责生成/撤销本地 profile 请求。淡入淡出的时长与曲线由 ChangeLib 的统一调度器决定，
+     * 本模组不再自己推进强度，也不直接碰 uniform。
+     *
+     * <p>腐枯界（{@link BlightedRealm}）在上面那一层就已经让 {@code requested} 为 false，
+     * 所以这里天然会撤掉请求，不需要单独分支。
      */
-    @SubscribeEvent
-    public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
-            return;
+    private static void requestVisual(boolean requested) {
+        if (requested) {
+            // intensity 是「淡入之后能到的上限」：调低它是整层效果轻一点，不是慢一点。
+            ClientVisualEffects.put(LOW_LIGHT_SOURCE, lowLightProfile(), LOW_LIGHT_PRIORITY, InfraredSettings.intensity());
+        } else {
+            ClientVisualEffects.remove(LOW_LIGHT_SOURCE);
         }
-        if (Minecraft.getInstance().level != null && BlightedRealm.is(Minecraft.getInstance().level)) {
-            InfraredClientState.setStrength(0);
-            InfraredPostProcessor.INSTANCE.setActive(false);
-            return;
-        }
-        // intensity 是淡入之后能到的上限：调低它是"整层效果轻一点"，不是"慢一点"。
-        float target = InfraredClientState.isRequested() ? InfraredSettings.intensity() : 0.0F;
-        // 帧时长按真实时间换算：掉帧时不会比高帧率时淡得慢。
-        float deltaSeconds = Minecraft.getInstance().getDeltaFrameTime() / 20.0F;
-        float strength = InfraredCurve.approach(InfraredClientState.strength(), target, deltaSeconds);
-        InfraredClientState.setStrength(strength);
+    }
 
-        // 淡出期间必须继续激活，否则后处理会在还看得见余量的时候被关掉，fade 直接断在半路。
-        InfraredPostProcessor.INSTANCE.setActive(strength > InfraredCurve.ACTIVE_EPSILON);
+    private static VisualProfile lowLightProfile() {
+        float threshold = InfraredSettings.grayscaleThreshold();
+        float softness = InfraredSettings.grayscaleSoftness();
+        if (cachedProfile == null || Float.compare(cachedThreshold, threshold) != 0
+                || Float.compare(cachedSoftness, softness) != 0) {
+            cachedProfile = VisualProfiles.lowLight(threshold, softness);
+            cachedThreshold = threshold;
+            cachedSoftness = softness;
+        }
+        return cachedProfile;
     }
 
     /**
@@ -121,10 +140,10 @@ public final class InfraredClientHandler {
      *
      * <p><b>空气里的普通视距雾不动</b>：那是画面的远景层次，不是谁在挡你。所以空气这一支只在玩家身上
      * 真有失明/黑暗时动手——这时候原版那一支雾必定是效果的雾（空气分支里效果判断排在普通地形雾前面）。
-     * 液体与细雪按相机的 FogType 直接处理，不必等环境变暗或后处理淡入。
+     * 液体与细雪按相机的 FogType 直接处理，不必等环境变暗。
      *
-     * <p>推雾由设备开关控制，不依赖后处理强度：画面本来够亮、或已有夜视时，
-     * 后处理可以完全关闭而仍然移走遮挡雾。配置将 intensity 设为 0 时仍关闭整套画面处理。
+     * <p>推雾由设备开关控制，不依赖画面强度：画面本来够亮、或已有夜视时，
+     * 后处理可以完全不跑而仍然移走遮挡雾。配置把 intensity 设为 0 时仍关闭整套画面处理。
      */
     @SubscribeEvent
     public static void onRenderFog(ViewportEvent.RenderFog event) {
@@ -170,7 +189,7 @@ public final class InfraredClientHandler {
 
     private static void clearState() {
         InfraredClientState.reset();
-        InfraredPostProcessor.INSTANCE.setActive(false);
+        ClientVisualEffects.remove(LOW_LIGHT_SOURCE);
     }
 
     /** 只做最好情况的兼容判断：改光影、改光照图、走 mixin 的 fullbright 没有通用探测手段。 */
