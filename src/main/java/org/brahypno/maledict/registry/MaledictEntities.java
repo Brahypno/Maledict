@@ -8,11 +8,12 @@ import net.minecraftforge.registries.RegistryObject;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
 import net.minecraft.world.entity.SpawnPlacements;
-import net.minecraft.world.entity.monster.WitherSkeleton;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.realm.wither.OssuaryFangs;
+import org.brahypno.maledict.common.realm.wither.WeepingWitherSkeletonEntity;
 import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.realm.demiurge.DemiurgeStatueEntity;
 import org.brahypno.maledict.common.raven.RavenEntity;
@@ -41,10 +42,15 @@ public final class MaledictEntities {
                     .sized(0.3125F, 0.3125F).clientTrackingRange(4).updateInterval(10).fireImmune()
                     .build("weeping_wither_skull"));
 
-    public static final RegistryObject<EntityType<WitherSkeleton>> WEEPING_WITHER_SKELETON =
+    public static final RegistryObject<EntityType<WeepingWitherSkeletonEntity>> WEEPING_WITHER_SKELETON =
             ENTITY_TYPES.register("weeping_wither_skeleton", () -> EntityType.Builder
-                    .<WitherSkeleton>of(WitherSkeleton::new, MobCategory.MONSTER)
+                    .<WeepingWitherSkeletonEntity>of(WeepingWitherSkeletonEntity::new, MobCategory.MONSTER)
                     .sized(0.7F, 2.4F).clientTrackingRange(8).fireImmune().build("weeping_wither_skeleton"));
+
+    public static final RegistryObject<EntityType<OssuaryFangs>> OSSUARY_FANGS =
+            ENTITY_TYPES.register("ossuary_fangs", () -> EntityType.Builder
+                    .<OssuaryFangs>of(OssuaryFangs::new, MobCategory.MISC)
+                    .sized(0.5F, 0.8F).clientTrackingRange(6).updateInterval(2).build("ossuary_fangs"));
 
     public static final RegistryObject<EntityType<SoulEchoEntity>> SOUL_ECHO =
             ENTITY_TYPES.register("soul_echo", () -> EntityType.Builder
@@ -134,7 +140,7 @@ public final class MaledictEntities {
     @SubscribeEvent
     public static void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(WEEPING_WITHER.get(), org.brahypno.maledict.common.realm.wither.WeepingWitherEntity.createAttributes().build());
-        event.put(WEEPING_WITHER_SKELETON.get(), WitherSkeleton.createAttributes().build());
+        event.put(WEEPING_WITHER_SKELETON.get(), WeepingWitherSkeletonEntity.createAttributes().build());
         event.put(SOUL_ECHO.get(), SoulEchoEntity.createLivingAttributes().build());
         event.put(FIRST_VICISSITUDE.get(), FirstVicissitudeBossEntity.createAttributes().build());
         event.put(DEMIURGE_STATUE.get(), DemiurgeStatueEntity.createAttributes().build());
