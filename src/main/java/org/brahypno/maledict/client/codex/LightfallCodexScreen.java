@@ -9,14 +9,17 @@ import com.sammy.malum.client.screen.codex.PlacedBookEntryBuilder;
 import com.sammy.malum.client.screen.codex.objects.progression.ScreenOpenerObject;
 import com.sammy.malum.client.screen.codex.pages.CyclingPage;
 import com.sammy.malum.client.screen.codex.pages.recipe.SpiritInfusionPage;
+import com.sammy.malum.client.screen.codex.pages.recipe.SpiritRiteRecipePage;
 import com.sammy.malum.client.screen.codex.pages.recipe.vanilla.SmeltingPage;
 import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextItemPage;
 import com.sammy.malum.client.screen.codex.pages.text.HeadlineTextPage;
+import com.sammy.malum.client.screen.codex.pages.text.SpiritRiteTextPage;
 import com.sammy.malum.client.screen.codex.pages.text.TextPage;
 import com.sammy.malum.client.screen.codex.screens.AbstractProgressionCodexScreen;
 import com.sammy.malum.registry.common.SoundRegistry;
 import net.minecraft.resources.ResourceLocation;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.soulbinding.SoulbindingRite;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.ArrayList;
@@ -35,6 +38,18 @@ public final class LightfallCodexScreen extends AbstractProgressionCodexScreen {
     private static final String LUMENFALL_BISMUTH_ENTRY = "void.maledict.lumenfall_bismuth";
     private static final String EUTECTIC_ENTRY = "void.maledict.refracted_lead_bismuth_eutectic";
     private static final String AUFHEBEN_ARMOR_ENTRY = "void.maledict.aufheben_lightward";
+
+    /**
+     * 拘魂仪式：**只在学会之后出现**，坐标 (1,8) 在腐枯凋灵 (0,10) 右边一格。
+     * 两半仪式都给：灵魂木附加、符文木解除，各配一页配方。
+     */
+    private static final String SOULBINDING_RITE_ENTRY = "void.maledict.soulbinding_rite";
+    /** 灵魂木：主手工具 + 副手封印，附加后等待下一次有效击杀。key 含 corrupt，图标与标题自动走灵魂木。 */
+    private static final String SOULBINDING_ATTACH_PAGE = "corrupt_maledict_soulbinding_rite";
+    /** 符文木：解除封印，精魂与封印都不返还。 */
+    private static final String SOULBINDING_RELEASE_PAGE = "maledict_soulbinding_rite";
+    private static final int SOULBINDING_RITE_X = 1;
+    private static final int SOULBINDING_RITE_Y = 8;
 
     /**
      * 三个 Lumenfall 条目直接照抄奥秘全典里对应条目的坐标，不另起一列：
@@ -100,6 +115,7 @@ public final class LightfallCodexScreen extends AbstractProgressionCodexScreen {
 
     private void buildEntries() {
         entries.add(buildWeepingWither());
+        entries.add(buildSoulbindingRite());
         entries.add(buildLumenfallBismuth());
         entries.add(buildEutectic());
         entries.add(buildAufhebenArmor());
@@ -119,6 +135,25 @@ public final class LightfallCodexScreen extends AbstractProgressionCodexScreen {
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.CRYING_TAINTED_ROCK.get()));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.CRYING_TWISTED_ROCK.get()));
         builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.BLIGHTED_WITHER_SKULL.get()));
+        return builder.build();
+    }
+
+    private PlacedBookEntry buildSoulbindingRite() {
+        PlacedBookEntryBuilder builder = BookEntry.build(
+                SOULBINDING_RITE_ENTRY, SOULBINDING_RITE_X, SOULBINDING_RITE_Y);
+        builder.configureWidget(widget -> widget
+                .setIcon(MaledictItems.SOULBINDING_SEAL)
+                .setStyle(BookWidgetStyle.SOULWOOD));
+        builder.setEntryVisibleWhen(LightfallCodex::knowsSoulbinding);
+        builder.addPage(new HeadlineTextPage(SOULBINDING_RITE_ENTRY, SOULBINDING_RITE_ENTRY + ".1"));
+        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.SOULBINDING_SEAL.get()));
+        SoulbindingRite rite = SoulbindingRite.get();
+        if (rite != null) {
+            builder.addPage(new SpiritRiteTextPage(rite, SOULBINDING_ATTACH_PAGE));
+            builder.addPage(new SoulwoodSpiritRiteRecipePage(rite));
+            builder.addPage(new SpiritRiteTextPage(rite, SOULBINDING_RELEASE_PAGE));
+            builder.addPage(new SpiritRiteRecipePage(rite));
+        }
         return builder.build();
     }
 

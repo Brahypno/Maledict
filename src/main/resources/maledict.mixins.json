@@ -6,6 +6,7 @@
   "refmap": "maledict.refmap.json",
   "mixins": [
     "FoodDataMixin",
+    "LivingEntityHurtSoundAccess",
     "PlayerRavenShoulderMixin",
     "ProjectileAccess",
     "ReboundEnchantmentMixin",

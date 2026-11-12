@@ -128,7 +128,7 @@ public final class SoulbindingKill {
         if (!sameTool(attack.stack(), current)) {
             return;
         }
-        if (SoulbindingData.bind(current, event.getEntity())) {
+        if (SoulbindingData.bind(current, event.getEntity(), event.getSource())) {
             player.getInventory().setChanged();
             player.containerMenu.broadcastChanges();
         }

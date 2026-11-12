@@ -11,12 +11,13 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.soulbinding.Soulbinding;
 
 import java.util.Optional;
 import java.util.UUID;
 
 public final class MaledictNetwork {
-    private static final String PROTOCOL = "3";
+    private static final String PROTOCOL = "5";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "main"),
             () -> PROTOCOL,
@@ -71,6 +72,9 @@ public final class MaledictNetwork {
         CHANNEL.registerMessage(8, LoverAxeHitPacket.class,
                 LoverAxeHitPacket::encode, LoverAxeHitPacket::decode,
                 LoverAxeHitPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(9, OpenLightfallCodexPacket.class,
+                OpenLightfallCodexPacket::encode, OpenLightfallCodexPacket::decode,
+                OpenLightfallCodexPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendRadialAttack() {
@@ -117,6 +121,11 @@ public final class MaledictNetwork {
 
     public static void sendWisdomBlackout(ServerPlayer player, int ticks) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new WisdomBlackoutPacket(ticks));
+    }
+
+    public static void openLightfallCodex(ServerPlayer player) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new OpenLightfallCodexPacket(Soulbinding.knows(player)));
     }
 
     private MaledictNetwork() {
