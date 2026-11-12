@@ -11,7 +11,8 @@
 - `curio/enlightenment` 放启蒙之年的饰品模型与渲染；`curio/hangman` 放倒吊者的陷阱渲染与反射特效。
 - `raven` 放渡鸦模型、实体与羽毛渲染、玩家肩部图层。
 - `vitals` 放延迟生命池的客户端同步与红心显示。
-- `infrared` 放微光视觉的状态、曲线、眼槽开关与后处理。
+- `infrared` 放微光视觉的状态、亮度判决、眼槽开关与客户端驱动。画面强度、淡入淡出与那条后处理链
+  已交给 ChangeLib 的统一调度器（`ClientVisualEffects`），本目录不再持有后处理器或 Shader。
 - `realm` 放枯败领域的维度视觉与客户端事件；`wisdom` 放智慧牺牲的黑屏状态与绘制。
 - `tooltip` 放提示框背景注册、布局、绘制与颜色。
 - `vicissitude` 放无常 Boss 的客户端 tick 驱动与血条；其 `model`、`render`、`music`、`vfx`

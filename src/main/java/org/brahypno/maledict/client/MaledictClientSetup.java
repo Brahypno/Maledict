@@ -21,7 +21,6 @@ import org.brahypno.maledict.client.curio.hangman.HangmanTrapRenderer;
 import org.brahypno.maledict.client.curio.priestess.SoulEchoRenderer;
 import org.brahypno.maledict.client.equipment.lightward.LightwardArmorClientExtensions;
 import org.brahypno.maledict.client.equipment.lightward.LightwardArmorModel;
-import org.brahypno.maledict.client.infrared.InfraredPostProcessor;
 import org.brahypno.maledict.client.raven.RavenFeatherRenderer;
 import org.brahypno.maledict.client.raven.RavenModel;
 import org.brahypno.maledict.client.raven.RavenRenderer;
@@ -200,13 +199,14 @@ public final class MaledictClientSetup {
 
     /**
      * 常驻后处理器只登记一次；Lodestone 按 isActive 执行，首次生效时才载入链。
+     *
+     * <p>这里只剩无常召唤的特效。微光视觉不再自己注册后处理器：它的画面参数以本地 profile
+     * 交给 ChangeLib 的统一调度器（见 {@code InfraredClientHandler}），全屏后处理链由那边管理，
+     * 否则两套实现会同时提亮。
      */
     @SubscribeEvent
     public static void registerPostProcessor(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> {
-            PostProcessHandler.addInstance(InfraredPostProcessor.INSTANCE);
-            PostProcessHandler.addInstance(VicissitudeSummoningPostProcessor.INSTANCE);
-        });
+        event.enqueueWork(() -> PostProcessHandler.addInstance(VicissitudeSummoningPostProcessor.INSTANCE));
     }
 
     private MaledictClientSetup() {
