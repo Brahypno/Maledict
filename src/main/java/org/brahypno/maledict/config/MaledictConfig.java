@@ -25,6 +25,7 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue ENLIGHTENMENT_COOLDOWN_SPEED;
     public static final ForgeConfigSpec.DoubleValue ENLIGHTENMENT_MELEE_DAMAGE_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue LIGHTWARD_ABNEGATION_REDUCTION;
+    public static final ForgeConfigSpec.IntValue SOULBINDING_SPIRIT_SOUND_COOLDOWN;
     public static final ForgeConfigSpec.BooleanValue INFRARED_ENABLED;
     public static final ForgeConfigSpec.DoubleValue INFRARED_INTENSITY;
     public static final ForgeConfigSpec.DoubleValue INFRARED_GRAYSCALE_THRESHOLD;
@@ -152,6 +153,15 @@ public final class MaledictConfig {
                          "soul ward, divided by Soul Ward Integrity, exactly like Malum's own",
                          "absorption. 0.0 turns the effect off, 1.0 absorbs everything.")
                 .defineInRange("abnegationReduction", 0.25D, 0.0D, 1.0D);
+        builder.pop();
+        builder.push("soulbinding");
+        SOULBINDING_SPIRIT_SOUND_COOLDOWN = builder
+                .comment("Ticks during which a bound tool's spirit sound is not played again.",
+                         "The sound is only extra feedback on a hit that was really dealt: one",
+                         "swing can arrive as several hurts (the strike, sweep damage and the",
+                         "arcane bonus), and the cooldown folds them into one sound. It never",
+                         "suppresses damage, and 0 plays it for every hurt event.")
+                .defineInRange("spiritSoundCooldown", 10, 0, 200);
         builder.pop();
         COMMON_SPEC = builder.build();
 

@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -29,9 +30,14 @@ import java.util.UUID;
  *   State: "ARMED" | "BOUND",
  *   EntityType: "minecraft:enderman",
  *   CustomName: '{"text":"小黑"}',
- *   BaseAttributes: { "minecraft:generic.attack_damage": 7.0d, ... }
+ *   BaseAttributes: { "minecraft:generic.attack_damage": 7.0d, ... },
+ *   SoundId: "minecraft:entity.enderman.hurt"
  * }
  * }</pre>
+ *
+ * <p>{@code SoundId} is optional and only ever a registered sound id: the spirit's attack sound is
+ * resolved once, at sealing time, when the creature and its damage source still exist. A missing or
+ * unresolvable id simply means the tool is silent, never a broken sound to play.
  *
  * <p>{@code EMPTY} is the absence of the record, not a stored value. The record never leaves the
  * {@link ItemStack}; no player state mirrors it.
@@ -48,6 +54,7 @@ public final class SoulbindingData {
     private static final String ENTITY_TYPE_KEY = "EntityType";
     private static final String CUSTOM_NAME_KEY = "CustomName";
     private static final String BASE_ATTRIBUTES_KEY = "BaseAttributes";
+    private static final String SOUND_ID_KEY = "SoundId";
 
     /**
      * Exactly the seven borrowed attributes, in tooltip order, with the first-version ratios and
@@ -85,7 +92,8 @@ public final class SoulbindingData {
 
     /** Decoded {@code BOUND} payload. Only values written by this mod are accepted. */
     public record Snapshot(@Nullable ResourceLocation entityType, @Nullable Component customName,
-                           Map<Attribute, Double> baseAttributes) {
+                           Map<Attribute, Double> baseAttributes,
+                           @Nullable ResourceLocation soundId) {
         @Nullable
         public Double baseValue(Attribute attribute) {
             return baseAttributes.get(attribute);
@@ -132,8 +140,12 @@ public final class SoulbindingData {
      * Captures the entity's original base attributes and stores them on an already-armed stack.
      * Runtime modifiers, equipment, potions and temporary effects never enter the snapshot;
      * {@link AttributeInstance#getBaseValue()} is the only source.
+     *
+     * <p>The spirit's attack sound is resolved here, once, from the dying entity and the damage
+     * source that killed it. The sound is only a registry id, so a tool that outlives a datapack
+     * change stays readable; an absent id means the tool simply makes no extra sound.
      */
-    public static boolean bind(ItemStack stack, LivingEntity entity) {
+    public static boolean bind(ItemStack stack, LivingEntity entity, @Nullable DamageSource source) {
         ResourceLocation type = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         if (type == null) {
             return false;
@@ -172,6 +184,10 @@ public final class SoulbindingData {
             }
         }
         root.put(BASE_ATTRIBUTES_KEY, attributes);
+        ResourceLocation soundId = SoulbindingSoundResolver.resolve(entity, source);
+        if (soundId != null) {
+            root.putString(SOUND_ID_KEY, soundId.toString());
+        }
         stack.getOrCreateTag().put(ROOT, root);
         return true;
     }
@@ -217,7 +233,20 @@ public final class SoulbindingData {
                 }
             }
         }
-        return new Snapshot(type, customName, Map.copyOf(attributes));
+        return new Snapshot(type, customName, Map.copyOf(attributes), soundId(root));
+    }
+
+    /**
+     * The recorded sound id, if any. It is not checked against the registry here: a tool written by
+     * an older or different mod set must stay readable, and playback skips an id that no longer
+     * resolves instead of refusing the whole record.
+     */
+    @Nullable
+    private static ResourceLocation soundId(CompoundTag root) {
+        if (!root.contains(SOUND_ID_KEY, Tag.TAG_STRING)) {
+            return null;
+        }
+        return ResourceLocation.tryParse(root.getString(SOUND_ID_KEY));
     }
 
     /**

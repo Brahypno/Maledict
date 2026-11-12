@@ -18,7 +18,6 @@ import com.sammy.malum.client.screen.codex.pages.text.TextPage;
 import com.sammy.malum.client.screen.codex.screens.ArcanaProgressionScreen;
 import com.sammy.malum.client.screen.codex.screens.VoidProgressionScreen;
 import com.sammy.malum.common.events.SetupMalumCodexEntriesEvent;
-import com.sammy.malum.common.spiritrite.TotemicRiteType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -317,21 +316,6 @@ public final class MaledictCodexEntries {
                 Maledict.MODID, "spirit_infusion/eidolon_of_the_high_priestess")));
 
         VoidProgressionScreen.VOID_ENTRIES.add(builder.build());
-    }
-
-    /**
-     * 灵魂木版配方页：Malum 的 {@code SpiritRiteRecipePage} 看的是**条目 identifier** 里有没有 "corrupt"，
-     * 而 identifier 是键名、随时可能被改；这里干脆钉死成灵魂木那一套辉光，与本仪式只在灵魂木上兑现一致。
-     */
-    private static final class SoulwoodSpiritRiteRecipePage extends SpiritRiteRecipePage {
-        private SoulwoodSpiritRiteRecipePage(TotemicRiteType rite) {
-            super(rite);
-        }
-
-        @Override
-        public boolean isCorrupted() {
-            return true;
-        }
     }
 
     private static EntryReference runeEntry(String identifier, RegistryObject<Item> rune) {

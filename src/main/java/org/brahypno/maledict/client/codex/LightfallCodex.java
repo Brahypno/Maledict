@@ -13,13 +13,19 @@ public final class LightfallCodex {
     }
 
     private static View view = View.ARCANA;
+    private static boolean knowsSoulbinding;
 
-    public static void openCodexViaItem() {
-        switch (view){
+    public static void openCodexViaItem(boolean knowsSoulbinding) {
+        LightfallCodex.knowsSoulbinding = knowsSoulbinding;
+        switch (view) {
             case VOID -> LightfallVoidScreen.openCodexViaItem();
             case LIGHTFALL -> LightfallCodexScreen.openCodexViaItem();
             default -> LightfallArcanaScreen.openCodexViaItem();
         }
+    }
+
+    static boolean knowsSoulbinding() {
+        return knowsSoulbinding;
     }
 
     public static void rememberView(View remembered) {

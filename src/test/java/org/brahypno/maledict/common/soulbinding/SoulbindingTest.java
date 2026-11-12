@@ -11,12 +11,15 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -68,6 +71,16 @@ public final class SoulbindingTest {
         helper.assertTrue(SoulbindingRite.matches(helper.getLevel(), soulwood),
                 "the built poles must match the rite");
 
+        // 音效解析顺序：显式表优先于受击声。铁傀儡既在表里、又有自己的受击声，
+        // 解析结果必须是攻击声——反过来就说明顺序被写成了"先受击、最后攻击"。
+        IronGolem golem = EntityType.IRON_GOLEM.create(helper.getLevel());
+        helper.assertTrue(golem != null, "the iron golem must be creatable");
+        DamageSource probe = DamageTypeHelper.create(helper.getLevel(), DamageTypes.MAGIC, player);
+        helper.assertTrue(ResourceLocation.fromNamespaceAndPath("minecraft", "entity.iron_golem.attack")
+                                  .equals(SoulbindingSoundResolver.resolve(golem, probe)),
+                "the explicit table must win over the hurt sound for a tabled creature; got "
+                        + SoulbindingSoundResolver.resolve(golem, probe));
+
         ItemStack sword = new ItemStack(Items.IRON_SWORD);
         helper.assertTrue(sword.is(MaledictTags.SOUL_BINDABLE),
                 "iron swords must be in the soul_bindable tag");
@@ -109,6 +122,11 @@ public final class SoulbindingTest {
                             && BuiltInRegistries.ENTITY_TYPE.getKey(EntityType.ZOMBIE)
                                     .equals(snapshot.entityType()),
                     "the snapshot must record the killed entity type");
+            helper.assertTrue(snapshot.soundId() != null
+                            && snapshot.soundId().equals(BuiltInRegistries.SOUND_EVENT.getKey(
+                                    net.minecraft.sounds.SoundEvents.ZOMBIE_HURT)),
+                    "a zombie has no entity.zombie.attack sound, so the hurt sound fallback must be"
+                            + " recorded at sealing time; got " + snapshot.soundId());
             helper.assertTrue(sword.getAttributeModifiers(EquipmentSlot.MAINHAND)
                                      .get(Attributes.ATTACK_DAMAGE).stream()
                                      .anyMatch(modifier -> modifier.getId()
