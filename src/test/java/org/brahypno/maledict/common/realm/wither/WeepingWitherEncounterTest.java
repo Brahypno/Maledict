@@ -140,6 +140,13 @@ public final class WeepingWitherEncounterTest {
                 realm.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
             }
             wither.setPos(Vec3.atBottomCenterOf(combatPos));
+            // A guaranteed floor for the half-health summon: the reliquary roof may have gaps.
+            for (BlockPos pos : BlockPos.betweenClosed(combatPos.offset(-8, -6, -8), combatPos.offset(8, -6, 8))) {
+                realm.setBlock(pos, Blocks.STONE.defaultBlockState(), 2);
+            }
+            for (BlockPos pos : BlockPos.betweenClosed(combatPos.offset(-8, -5, -8), combatPos.offset(8, -1, 8))) {
+                realm.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+            }
             verifySkullDamageAndLifetime(helper, wither);
             verifyDamageLimit(helper);
             Vec3 blastCenter = new Vec3(wither.getX(), wither.getEyeY(), wither.getZ());
@@ -197,9 +204,31 @@ public final class WeepingWitherEncounterTest {
             saved.putShort("DeathTime", (short) 12);
             wither.readAdditionalSaveData(saved);
             helper.assertTrue(wither.deathTime == 0, "Old positive-health saves also lose stale death animation time");
+        });
+        helper.runAtTickTime(108, () -> {
+            var wither = encounter.get();
+            var summoned = realm.getEntitiesOfClass(WeepingWitherSkeletonEntity.class,
+                    wither.getBoundingBox().inflate(32.0D), skeleton -> skeleton.isOwnedBy(wither));
+            helper.assertTrue(summoned.size() == 3,
+                    "The first half-health drop summons exactly three owned skeletons: " + summoned.size());
+            for (var skeleton : summoned) {
+                helper.assertTrue(skeleton.getMaxHealth() == 26.0F
+                                && skeleton.getAttribute(Attributes.ATTACK_DAMAGE).getBaseValue() == 5.0D
+                                && skeleton.getAttributeValue(Attributes.ARMOR) == 2.0D
+                                && Math.abs(skeleton.getAttributeValue(Attributes.MOVEMENT_SPEED) - 0.27D) < 1.0E-6D
+                                && skeleton.getMainHandItem().is(Items.STONE_SWORD)
+                                && skeleton.remainingLifetime() == 0,
+                        "Half-health skeletons keep the confirmed stats, stone sword, wither attack and no expiry: hp="
+                                + skeleton.getMaxHealth() + ", attackBase="
+                                + skeleton.getAttribute(Attributes.ATTACK_DAMAGE).getBaseValue() + ", attack="
+                                + skeleton.getAttributeValue(Attributes.ATTACK_DAMAGE) + ", armor="
+                                + skeleton.getAttributeValue(Attributes.ARMOR) + ", speed="
+                                + skeleton.getAttributeValue(Attributes.MOVEMENT_SPEED) + ", weapon="
+                                + skeleton.getMainHandItem() + ", lifetime=" + skeleton.remainingLifetime());
+            }
             IncursusBladeItem.dealTieredDamage(bladeAt(7), wither, wither.damageSources().generic(), 100);
         });
-        helper.runAtTickTime(107, () -> {
+        helper.runAtTickTime(110, () -> {
             var wither = encounter.get();
             helper.assertTrue(wither.isDeadOrDying() && !wither.isReforming() && wither.getPose() == Pose.DYING,
                     "The next lethal hit still enters real death");
@@ -208,6 +237,9 @@ public final class WeepingWitherEncounterTest {
                             .mapToInt(drop -> drop.getItem().getCount()).sum() == 1
                             && drops.stream().noneMatch(drop -> drop.getItem().is(Items.NETHER_STAR)),
                     "A real death drops exactly one Blighted Star and no vanilla Nether Star");
+            helper.assertTrue(realm.getEntitiesOfClass(WeepingWitherSkeletonEntity.class,
+                            wither.getBoundingBox().inflate(64.0D), skeleton -> skeleton.isOwnedBy(wither)).isEmpty(),
+                    "The boss's final death cleans up its summoned skeletons");
             drops.forEach(ItemEntity::discard);
         });
         helper.runAtTickTime(120, () -> {

@@ -26,6 +26,7 @@ import org.brahypno.maledict.client.raven.RavenModel;
 import org.brahypno.maledict.client.raven.RavenRenderer;
 import org.brahypno.maledict.client.raven.RavenShoulderLayer;
 import org.brahypno.maledict.client.realm.BlightedRealmEffects;
+import org.brahypno.maledict.client.realm.OssuaryFangsRenderer;
 import org.brahypno.maledict.client.realm.WeepingWitherSkeletonRenderer;
 import org.brahypno.maledict.client.realm.demiurge.DemiurgeStatueRenderer;
 import org.brahypno.maledict.client.realm.demiurge.PurpleSoulFireParticle;
@@ -82,6 +83,7 @@ public final class MaledictClientSetup {
                                      org.brahypno.maledict.client.realm.WeepingWitherSkullRenderer::new);
         event.registerEntityRenderer(MaledictEntities.WEEPING_WITHER_SKELETON.get(),
                                      WeepingWitherSkeletonRenderer::new);
+        event.registerEntityRenderer(MaledictEntities.OSSUARY_FANGS.get(), OssuaryFangsRenderer::new);
         event.registerEntityRenderer(MaledictEntities.SOUL_ECHO.get(), SoulEchoRenderer::new);
         event.registerEntityRenderer(MaledictEntities.HANGMAN_TRAP.get(), HangmanTrapRenderer::new);
         event.registerEntityRenderer(MaledictEntities.SPIRIT_ARROW.get(), SpiritArrowRenderer::new);

@@ -29,6 +29,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.brahypno.changelib.DamageHelper.DamageStage;
 import org.brahypno.changelib.HealthHelper.CombatProtection;
@@ -67,10 +68,12 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         }
     };
     private final WeepingWitherCombat combat = new WeepingWitherCombat();
+    private final WeepingWitherSkillController skills = new WeepingWitherSkillController(this);
     private static final TargetingConditions SIDE_HEAD_TARGETS = TargetingConditions.forCombat().range(20.0D)
             .selector(target -> target.getMobType() != MobType.UNDEAD && target.attackable());
     private final int[] nextSideShot = new int[2];
     private final int[] idleSideShots = new int[2];
+    private int finalHeadCooldown;
     private int destroyBlocksTicks;
     private final BossDamage damageBatch = new BossDamage();
     private float tickLargestHurt;
@@ -198,6 +201,23 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         return entityData.get(REFORMING);
     }
 
+    /** True from the end of the one-time reformation onwards; the final phase never reforms again. */
+    public boolean isFinalPhase() {
+        return combat.reformationUsed() && !isReforming();
+    }
+
+    public boolean isHalfHealthEmpowered() {
+        return skills.isEmpowered();
+    }
+
+    public boolean isReturningHome() {
+        return returningHome;
+    }
+
+    void onDangerousSkullBlockHit(BlockHitResult hit) {
+        skills.onDangerousSkullBlockHit(hit);
+    }
+
     private void clearDeathAnimation() {
         dead = false;
         deathTime = 0;
@@ -243,6 +263,7 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
 
     @Override
     public void aiStep() {
+        if (!level().isClientSide) skills.tick();
         if (isReforming()) {
             setDeltaMovement(Vec3.ZERO);
             getNavigation().stop();
@@ -290,9 +311,28 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         if (!returningHome) {
             for (int side = 0; side < 2; side++) tickSideHead(side);
             setAlternativeTarget(0, getTarget() != null ? getTarget().getId() : 0);
+            tickFinalMainHead();
         }
         tickBlockDestruction();
-        if (tickCount % 20 == 0) heal(1.0F);
+        if (tickCount % 20 == 0 && !isFinalPhase()) heal(1.0F);
+    }
+
+    /** The final phase raises the main-head cadence from 40 to 32 ticks (about 25 percent faster). */
+    private void tickFinalMainHead() {
+        if (!isFinalPhase() || skills.suppressesSkullShots()) {
+            finalHeadCooldown = 0;
+            return;
+        }
+        if (finalHeadCooldown > 0) {
+            finalHeadCooldown--;
+            return;
+        }
+        LivingEntity target = getTarget();
+        if (target != null && target.isAlive() && canAttack(target) && getInvulnerableTicks() == 0
+                && hasLineOfSight(target)) {
+            shoot(0, aimAt(target), random.nextFloat() < mainHeadChargedChance());
+            finalHeadCooldown = 32;
+        }
     }
 
     private void spawnExplosion() {
@@ -301,10 +341,12 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
     }
 
     private void tickSideHead(int side) {
+        if (skills.suppressesSkullShots()) return;
         if (tickCount < nextSideShot[side]) return;
-        nextSideShot[side] = tickCount + 10 + random.nextInt(10);
+        nextSideShot[side] = tickCount + sideHeadDelay(10, 10);
+        int idleThreshold = isHalfHealthEmpowered() ? 8 : 15;
         if ((level().getDifficulty() == Difficulty.NORMAL || level().getDifficulty() == Difficulty.HARD)
-                && idleSideShots[side]++ > 15) {
+                && idleSideShots[side]++ > idleThreshold) {
             shoot(side + 1, new Vec3(Mth.nextDouble(random, getX() - 10.0D, getX() + 10.0D),
                     Mth.nextDouble(random, getY() - 5.0D, getY() + 5.0D),
                     Mth.nextDouble(random, getZ() - 10.0D, getZ() + 10.0D)), true);
@@ -314,8 +356,8 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         if (id > 0) {
             if (level().getEntity(id) instanceof LivingEntity target && canAttack(target)
                     && distanceToSqr(target) <= 900.0D && hasLineOfSight(target)) {
-                shoot(side + 1, aimAt(target), false);
-                nextSideShot[side] = tickCount + 40 + random.nextInt(20);
+                shoot(side + 1, aimAt(target), isHalfHealthEmpowered() && random.nextFloat() < 0.10F);
+                nextSideShot[side] = tickCount + sideHeadDelay(40, 20);
                 idleSideShots[side] = 0;
             } else setAlternativeTarget(side + 1, 0);
         } else {
@@ -325,11 +367,23 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         }
     }
 
+    /** The final phase raises every ordinary side-head rate by about 25 percent (interval times 0.8). */
+    private int sideHeadDelay(int base, int spread) {
+        int delay = base + random.nextInt(spread);
+        return isFinalPhase() ? Math.max(1, Math.round(delay * 0.8F)) : delay;
+    }
+
     @Override
     public void performRangedAttack(LivingEntity target, float strength) {
+        // The final phase replaces this goal-driven cadence with the faster timer below.
+        if (isFinalPhase() || skills.suppressesSkullShots()) return;
         if (canAttack(target) && getInvulnerableTicks() == 0) {
-            shoot(0, aimAt(target), random.nextFloat() < 0.001F);
+            shoot(0, aimAt(target), random.nextFloat() < mainHeadChargedChance());
         }
+    }
+
+    private float mainHeadChargedChance() {
+        return isHalfHealthEmpowered() ? 0.15F : 0.001F;
     }
 
     private static Vec3 aimAt(LivingEntity target) {
@@ -342,7 +396,8 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         return position().add(Math.cos(yaw) * 1.3D * SCALE, 2.2D * SCALE, Math.sin(yaw) * 1.3D * SCALE);
     }
 
-    private void shoot(int head, Vec3 target, boolean charged) {
+    /** Package-private bridge for the skill controller's volley. */
+    void shoot(int head, Vec3 target, boolean charged) {
         WeepingWitherSkull skull = MaledictEntities.WEEPING_WITHER_SKULL.get().create(level());
         if (skull == null) return;
         Vec3 muzzle = headPosition(head);
@@ -462,6 +517,7 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
             return;
         }
         super.die(source);
+        skills.onFinalDeath();
     }
 
     private void finishReformation() {
@@ -497,6 +553,7 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         tag.putInt("ProliferationCooldown", combat.healCooldown());
         if (altarHome != null) tag.put("AltarHome", NbtUtils.writeBlockPos(altarHome));
         tag.putBoolean("ReturningHome", returningHome);
+        skills.save(tag);
     }
 
     @Override
@@ -513,6 +570,7 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         }
         if (tag.contains("AltarHome")) setAltarHome(NbtUtils.readBlockPos(tag.getCompound("AltarHome")));
         returningHome = tag.getBoolean("ReturningHome") && altarHome != null;
+        skills.restore(tag);
     }
 
     @Override

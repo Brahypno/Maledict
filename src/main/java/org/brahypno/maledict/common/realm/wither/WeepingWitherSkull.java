@@ -10,7 +10,9 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.WitherSkull;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
 /** Vanilla flight, charged skulls and terrain explosions, with the confirmed direct-hit skills. */
 public final class WeepingWitherSkull extends WitherSkull {
@@ -41,6 +43,15 @@ public final class WeepingWitherSkull extends WitherSkull {
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         lifeTicks = Mth.clamp(tag.getInt("LifeTicks"), 0, MAX_LIFETIME_TICKS);
+    }
+
+    @Override
+    protected void onHit(HitResult result) {
+        if (!level().isClientSide && result.getType() == HitResult.Type.BLOCK && isDangerous()
+                && getOwner() instanceof WeepingWitherEntity wither) {
+            wither.onDangerousSkullBlockHit((BlockHitResult) result);
+        }
+        super.onHit(result);
     }
 
     @Override
