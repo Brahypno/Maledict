@@ -40,10 +40,13 @@ import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import org.brahypno.changelib.DamageHelper.DamageStage;
+import org.brahypno.changelib.HealthHelper.CombatProtection;
 import org.brahypno.maledict.common.realm.BlightedRealm;
 import org.brahypno.changelib.protection.ai.AiProtection;
 import org.brahypno.maledict.common.realm.reliquary.InvertedReliquaryPiece;
 import org.brahypno.maledict.common.realm.reliquary.ReliquaryEvents;
+import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
 import org.brahypno.maledict.registry.MaledictBlocks;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
@@ -129,8 +132,9 @@ public final class WeepingWitherEncounterTest {
                     "A creative player triggers one custom entity even when its spawn position contains a solid block");
             realm.setBlock(core.above(2), Blocks.AIR.defaultBlockState(), 2);
             var wither = encounter.get();
-            helper.assertTrue(AiProtection.state(wither) != null,
-                    "The summoned Weeping Wither must bind AI protection");
+            helper.assertTrue(AiProtection.state(wither) != null
+                            && CombatProtection.defenseGrade(wither) == DamageStage.D3_STORAGE_WRITE,
+                    "The summoned Weeping Wither must bind AI protection and D3 health protection");
             BlockPos combatPos = core.above(24);
             for (BlockPos pos : BlockPos.betweenClosed(combatPos.offset(-8, 0, -8), combatPos.offset(8, 13, 8))) {
                 realm.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
@@ -141,11 +145,16 @@ public final class WeepingWitherEncounterTest {
             Vec3 blastCenter = new Vec3(wither.getX(), wither.getEyeY(), wither.getZ());
             blastTarget.set(shockTarget(realm, blastCenter.add(10, 0, 0)));
             outsideTarget.set(shockTarget(realm, blastCenter.add(15, 0, 0)));
-            wither.setHealth(10.0F);
-            wither.hurt(wither.damageSources().genericKill(), Float.MAX_VALUE);
+            var hit = IncursusBladeItem.dealTieredDamage(bladeAt(7), wither, wither.damageSources().generic(), 500);
+            helper.assertTrue(hit.effectiveStage() == DamageStage.D4_CONSISTENCY_WRITE,
+                    "The medium blade can settle a lethal hit via its legitimate D4 step: " + hit.debugText());
+        });
+        helper.runAtTickTime(37, () -> {
+            var wither = encounter.get();
             helper.assertTrue(wither.isReforming() && wither.getHealth() == 1 && wither.deathTime == 0
                     && wither.getPose() == Pose.STANDING && wither.isPowered(),
                     "Refused death remains alive and upright with the half-health shield active");
+            IncursusBladeItem.dealTieredDamage(bladeAt(11), wither, wither.damageSources().generic(), 500);
             wither.setHealth(0);
             wither.deathTime = 12;
             wither.setPose(Pose.DYING);
@@ -188,8 +197,10 @@ public final class WeepingWitherEncounterTest {
             saved.putShort("DeathTime", (short) 12);
             wither.readAdditionalSaveData(saved);
             helper.assertTrue(wither.deathTime == 0, "Old positive-health saves also lose stale death animation time");
-            wither.setHealth(10.0F);
-            wither.hurt(wither.damageSources().genericKill(), Float.MAX_VALUE);
+            IncursusBladeItem.dealTieredDamage(bladeAt(7), wither, wither.damageSources().generic(), 100);
+        });
+        helper.runAtTickTime(107, () -> {
+            var wither = encounter.get();
             helper.assertTrue(wither.isDeadOrDying() && !wither.isReforming() && wither.getPose() == Pose.DYING,
                     "The next lethal hit still enters real death");
             var drops = realm.getEntitiesOfClass(ItemEntity.class, wither.getBoundingBox().inflate(3));
@@ -358,11 +369,30 @@ public final class WeepingWitherEncounterTest {
         var scaled = damageTarget(helper);
         try {
             scaled.getAttribute(Attributes.MAX_HEALTH).setBaseValue(800);
-            scaled.setHealth(100);
+            float before = scaled.getHealth();
             scaled.hurt(scaled.damageSources().generic(), 80);
-            helper.assertTrue(scaled.getHealth() == 60, "The five-percent cap uses maximum health, not current health");
+            helper.assertTrue(scaled.getHealth() == before - 40, "The five-percent cap uses live maximum health");
         } finally {
             scaled.discard();
+        }
+        for (int level : new int[]{0, 7, 11}) {
+            var target = damageTarget(helper);
+            try {
+                var hit = IncursusBladeItem.dealTieredDamage(bladeAt(level), target,
+                        target.damageSources().generic(), 80, true);
+                helper.assertTrue(target.getHealth() == (level == 0 ? 380 : 320),
+                        "Light with compensation stays capped; medium and final may penetrate D3");
+                if (level > 0) {
+                    helper.assertTrue(hit.effectiveStage() == DamageStage.D4_CONSISTENCY_WRITE,
+                            "The effective stage records the successful step, including when final stops at D4");
+                }
+                target.setHealth(0);
+                target.die(target.damageSources().genericKill());
+                helper.assertTrue(target.isAlive() && !target.isReforming(),
+                        "An external setter or direct death call cannot turn a positive pool into a kill");
+            } finally {
+                target.discard();
+            }
         }
         var nested = damageTarget(helper);
         Consumer<LivingHurtEvent> extraChannel = event -> {
@@ -400,6 +430,14 @@ public final class WeepingWitherEncounterTest {
                 cooldown.discard();
             }
         });
+    }
+
+    private static ItemStack bladeAt(int level) {
+        ItemStack stack = new ItemStack(MaledictItems.INCURSUS_BLADE.get());
+        IncursusBladeItem.initializeStats(stack);
+        CompoundTag stats = stack.getTagElement(IncursusBladeItem.STATS_TAG);
+        for (String key : stats.getAllKeys()) stats.putDouble(key, level);
+        return stack;
     }
 
     private static void verifySkullDamageAndLifetime(GameTestHelper helper, WeepingWitherEntity owner) {

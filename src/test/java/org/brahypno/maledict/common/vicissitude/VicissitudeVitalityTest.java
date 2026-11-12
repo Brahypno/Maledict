@@ -178,6 +178,27 @@ public final class VicissitudeVitalityTest {
             helper.assertTrue(result.instantEffective(), tier + " must recognize a capped authoritative hit");
             probed.remove(net.minecraft.world.entity.Entity.RemovalReason.UNLOADED_TO_CHUNK);
         }
+        TestBoss owned = spawn(helper);
+        LivingEntity external = EntityType.COW.create(helper.getLevel());
+        external.getAttribute(Attributes.MAX_HEALTH).setBaseValue(100);
+        external.setHealth(100);
+        external.setPos(owned.position());
+        helper.getLevel().addFreshEntity(external);
+        CombatProtection.protect(external, DamageStage.D4_CONSISTENCY_WRITE, 8);
+        try {
+            float before = owned.getHealth();
+            var light = IncursusBladeItem.DamageTier.LIGHT;
+            var result = light.deal(owned, owned.damageSources().mobAttack(owned), 160, false,
+                    DamageStage.D5_RECOVERY_SOURCE);
+            equal(helper, before - 160, owned.getHealth(), "Light with internal D5 can penetrate a Maledict D4 pool");
+            helper.assertTrue(result.effectiveStage() == DamageStage.D5_RECOVERY_SOURCE,
+                    "D5 must actually settle the part that D4 blocked");
+            light.deal(external, external.damageSources().generic(), 20, false, DamageStage.D5_RECOVERY_SOURCE);
+            equal(helper, 92, external.getHealth(), "Light keeps its ordinary probe on an external D4 pool");
+        } finally {
+            owned.remove(net.minecraft.world.entity.Entity.RemovalReason.UNLOADED_TO_CHUNK);
+            external.discard();
+        }
         helper.succeed();
     }
 
