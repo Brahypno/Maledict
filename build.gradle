@@ -164,6 +164,13 @@ repositories {
         name 'BlameJared Maven'
         url 'https://maven.blamejared.com'
     }
+    maven {
+        name 'Modrinth'
+        url 'https://api.modrinth.com/maven'
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 dependencies {
@@ -203,6 +210,9 @@ dependencies {
     implementation fg.deobf("curse.maven:curios-309927:6418456")
     implementation fg.deobf("curse.maven:lodestone-616457:6213794")
     implementation fg.deobf("curse.maven:malum-484064:6646111")
+    // Optional Touhou Little Maid crossover: API plus dev runtime for manual testing. The published
+    // mod guards every TLM reference at runtime and does not declare a hard dependency on TLM.
+    compileOnly fg.deobf("maven.modrinth:touhou-little-maid:g1SKoGQJ")
 
     runtimeOnly fg.deobf("curse.maven:jei-attribute-1716111:8999222") { transitive = false }
 

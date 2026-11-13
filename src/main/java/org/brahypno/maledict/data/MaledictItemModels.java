@@ -41,6 +41,10 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerIncursusBladeModels();
         loverAxeModel("lover_axe", "lover_axe");
         loverAxeModel("meltfall_axe", "lover_axe_lavender");
+        withExistingParent("yearning_sword", mcLoc("item/handheld"))
+                .texture("layer0", modLoc("item/yearning_sword"));
+        withExistingParent("forsaken_vow", mcLoc("item/handheld"))
+                .texture("layer0", modLoc("item/forsaken_vow"));
 
         basicItem(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get());
         basicItem(MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get());

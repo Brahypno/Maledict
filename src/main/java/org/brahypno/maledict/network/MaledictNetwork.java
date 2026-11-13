@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
@@ -17,7 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class MaledictNetwork {
-    private static final String PROTOCOL = "5";
+    private static final String PROTOCOL = "6";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "main"),
             () -> PROTOCOL,
@@ -75,6 +76,9 @@ public final class MaledictNetwork {
         CHANNEL.registerMessage(9, OpenLightfallCodexPacket.class,
                 OpenLightfallCodexPacket::encode, OpenLightfallCodexPacket::decode,
                 OpenLightfallCodexPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(10, MaidVoicePacket.class,
+                MaidVoicePacket::encode, MaidVoicePacket::decode,
+                MaidVoicePacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendRadialAttack() {
@@ -121,6 +125,12 @@ public final class MaledictNetwork {
 
     public static void sendWisdomBlackout(ServerPlayer player, int ticks) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new WisdomBlackoutPacket(ticks));
+    }
+
+    /** One maid-voice sound for exactly the attacking player, with no nearby-player broadcast. */
+    public static void sendMaidVoice(ServerPlayer player, ResourceLocation sound, String soundPack, Vec3 pos) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new MaidVoicePacket(sound, soundPack, pos.x, pos.y, pos.z));
     }
 
     public static void openLightfallCodex(ServerPlayer player) {

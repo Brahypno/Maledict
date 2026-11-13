@@ -17,6 +17,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.config.MaledictConfig;
+import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -68,6 +69,10 @@ public final class SoulbindingSounds {
         }
 
         ItemStack stack = player.getMainHandItem();
+        // The Forsaken Vow has a dedicated TLM voice packet. Its old/current record may still contain
+        // a TLM sound id whose ogg only exists in the sound-pack system, which would be a subtitle
+        // with no audio when played through Level#playSound.
+        if (stack.is(MaledictItems.FORSAKEN_VOW.get())) return;
         SoulbindingData.Snapshot snapshot = SoulbindingData.snapshot(stack);
         if (snapshot == null) {
             return;

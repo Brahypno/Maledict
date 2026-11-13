@@ -3,47 +3,37 @@ package org.brahypno.maledict.registry;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Rarity;
-import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.invocation.InvocationSigilItem;
-import org.brahypno.maledict.common.item.codex.LightfallCodexItem;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
-import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
-import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossSpawnPhase;
 import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
-import org.brahypno.maledict.common.equipment.lightward.LightwardArmorItem;
-import org.brahypno.maledict.common.rune.AttributeRuneItem;
-import org.brahypno.maledict.common.vicissitude.curio.CurioReturnTokenItem;
-import org.brahypno.maledict.common.soulbinding.SoulbindingScrollItem;
 import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.common.curio.priestess.EidolonOfTheHighPriestessItem;
+import org.brahypno.maledict.common.equipment.lightward.LightwardArmorItem;
+import org.brahypno.maledict.common.invocation.InvocationSigilItem;
+import org.brahypno.maledict.common.item.codex.LightfallCodexItem;
+import org.brahypno.maledict.common.rune.*;
+import org.brahypno.maledict.common.soulbinding.SoulbindingScrollItem;
+import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossSpawnPhase;
+import org.brahypno.maledict.common.vicissitude.VicissitudeSpawnEggItem;
+import org.brahypno.maledict.common.vicissitude.curio.CurioReturnTokenItem;
 import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.weapon.incursus.MaledictItemTiers;
 import org.brahypno.maledict.common.weapon.lover.LoverAxeItem;
-import org.brahypno.maledict.common.rune.PackRuneItem;
-import org.brahypno.maledict.common.rune.PulseRuneItem;
 import org.brahypno.maledict.common.weapon.remembrance.RemembranceBowItem;
-import org.brahypno.maledict.common.rune.RuneOfBlissItem;
-import org.brahypno.maledict.common.rune.RuneOfMelancholiaItem;
-import org.brahypno.maledict.common.rune.RuneOfRottenBoneItem;
-import org.brahypno.maledict.common.rune.RuneOfTheFallenItem;
 import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowItem;
 import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowType;
-import org.brahypno.maledict.common.vicissitude.VicissitudeSpawnEggItem;
+import org.brahypno.maledict.compat.maid.MaidBondSwordItem;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 import team.lodestar.lodestone.systems.multiblock.MultiBlockItem;
-import org.brahypno.maledict.common.weapon.incursus.MaledictItemTiers;
 
 import java.util.List;
 
@@ -52,61 +42,82 @@ public final class MaledictItems {
 
     public static final RegistryObject<Item> INVOCATION_SIGIL = ITEMS.register("invocation_sigil", InvocationSigilItem::new);
 
-    /** Scroll that teaches the Rite of Soulbinding; how it is acquired is out of scope. */
+    /**
+     * Scroll that teaches the Rite of Soulbinding; how it is acquired is out of scope.
+     */
     public static final RegistryObject<Item> SOULBINDING_SCROLL =
             ITEMS.register("soulbinding_scroll", SoulbindingScrollItem::new);
 
-    /** Spirit-infused seal consumed by the Soulwood half of the rite. */
+    /**
+     * Spirit-infused seal consumed by the Soulwood half of the rite.
+     */
     public static final RegistryObject<Item> SOULBINDING_SEAL =
             ITEMS.register("soulbinding_seal", () -> new Item(new Item.Properties()));
 
     public static final RegistryObject<Item> CRYING_TAINTED_ROCK = ITEMS.register("crying_tainted_rock",
-            () -> new BlockItem(MaledictBlocks.CRYING_TAINTED_ROCK.get(), new Item.Properties()));
+                                                                                  () -> new BlockItem(MaledictBlocks.CRYING_TAINTED_ROCK.get(),
+                                                                                                      new Item.Properties()));
     public static final RegistryObject<Item> CRYING_TWISTED_ROCK = ITEMS.register("crying_twisted_rock",
-            () -> new BlockItem(MaledictBlocks.CRYING_TWISTED_ROCK.get(), new Item.Properties()));
+                                                                                  () -> new BlockItem(MaledictBlocks.CRYING_TWISTED_ROCK.get(),
+                                                                                                      new Item.Properties()));
     public static final RegistryObject<Item> BLIGHTED_WITHER_SKULL = ITEMS.register("blighted_wither_skull",
-            () -> new BlockItem(MaledictBlocks.BLIGHTED_WITHER_SKULL.get(), new Item.Properties().rarity(Rarity.RARE)));
+                                                                                    () -> new BlockItem(MaledictBlocks.BLIGHTED_WITHER_SKULL.get(),
+                                                                                                        new Item.Properties().rarity(Rarity.RARE)));
     public static final RegistryObject<Item> BLIGHTED_STAR = ITEMS.register("blighted_star",
-            () -> new net.minecraft.world.item.SimpleFoiledItem(new Item.Properties().rarity(Rarity.UNCOMMON).fireResistant()));
+                                                                            () -> new net.minecraft.world.item.SimpleFoiledItem(
+                                                                                    new Item.Properties().rarity(Rarity.UNCOMMON).fireResistant()));
 
-    /** 巨匠之石像倒下后留下的光，比腐枯之星更稀有的一枚残片；掉落方式与下界之星相同。 */
+    /**
+     * 巨匠之石像倒下后留下的光，比腐枯之星更稀有的一枚残片；掉落方式与下界之星相同。
+     */
     public static final RegistryObject<Item> LIGHT_FRAGMENT = ITEMS.register("light_fragment",
-            () -> new net.minecraft.world.item.SimpleFoiledItem(new Item.Properties().rarity(Rarity.RARE).fireResistant()));
+                                                                             () -> new net.minecraft.world.item.SimpleFoiledItem(
+                                                                                     new Item.Properties().rarity(Rarity.RARE).fireResistant()));
 
     public static final RegistryObject<Item> WITHERED_LEAF_LITTER = ITEMS.register("withered_leaf_litter",
-            () -> new BlockItem(MaledictBlocks.WITHERED_LEAF_LITTER.get(), new Item.Properties()));
+                                                                                   () -> new BlockItem(MaledictBlocks.WITHERED_LEAF_LITTER.get(),
+                                                                                                       new Item.Properties()));
     public static final RegistryObject<Item> EXPOSED_SOULWOOD_ROOTS = ITEMS.register("exposed_soulwood_roots",
-            () -> new BlockItem(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS.get(), new Item.Properties()));
+                                                                                     () -> new BlockItem(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS.get(),
+                                                                                                         new Item.Properties()));
     public static final RegistryObject<Item> FALLEN_SOULWOOD_BRANCHES = ITEMS.register("fallen_soulwood_branches",
-            () -> new BlockItem(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get(), new Item.Properties()) {
-                @Override
-                public int getBurnTime(ItemStack stack, @Nullable net.minecraft.world.item.crafting.RecipeType<?> recipeType) {
-                    return 100; // Same fuel value as one vanilla stick.
-                }
-            });
+                                                                                       () -> new BlockItem(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get(),
+                                                                                                           new Item.Properties()) {
+                                                                                           @Override
+                                                                                           public int getBurnTime(ItemStack stack, @Nullable net.minecraft.world.item.crafting.RecipeType<?> recipeType) {
+                                                                                               return 100; // Same fuel value as one vanilla stick.
+                                                                                           }
+                                                                                       });
     public static final RegistryObject<Item> WITHERLIGHT_LAMP = ITEMS.register("witherlight_lamp",
-            () -> new BlockItem(MaledictBlocks.WITHERLIGHT_LAMP.get(), new Item.Properties()));
+                                                                               () -> new BlockItem(MaledictBlocks.WITHERLIGHT_LAMP.get(),
+                                                                                                   new Item.Properties()));
     public static final RegistryObject<Item> WITHERLIGHT_MUSHROOM = ITEMS.register("witherlight_mushroom",
-            () -> new BlockItem(MaledictBlocks.WITHERLIGHT_MUSHROOM.get(), new Item.Properties()) {
-                @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-                    tooltip.add(Component.translatable("tooltip.maledict.witherlight_mushroom"));
-                }
-            });
+                                                                                   () -> new BlockItem(MaledictBlocks.WITHERLIGHT_MUSHROOM.get(),
+                                                                                                       new Item.Properties()) {
+                                                                                       @Override
+                                                                                       public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+                                                                                           tooltip.add(Component.translatable(
+                                                                                                   "tooltip.maledict.witherlight_mushroom"));
+                                                                                       }
+                                                                                   });
 
     public static final RegistryObject<Item> TAINTED_MALIGNANT_LEAD_ORE = ITEMS.register("tainted_malignant_lead_ore",
-            () -> new BlockItem(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), new Item.Properties()));
+                                                                                         () -> new BlockItem(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(),
+                                                                                                             new Item.Properties()));
     public static final RegistryObject<Item> TWISTED_MALIGNANT_LEAD_ORE = ITEMS.register("twisted_malignant_lead_ore",
-            () -> new BlockItem(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(), new Item.Properties()));
+                                                                                         () -> new BlockItem(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(),
+                                                                                                             new Item.Properties()));
     public static final RegistryObject<Item> MALIGNANT_LEAD_FRAGMENT = ITEMS.register("malignant_lead_fragment",
-            () -> new Item(new Item.Properties()));
+                                                                                      () -> new Item(new Item.Properties()));
 
     public static final RegistryObject<Item> LUMENFALL_BISMUTH_ORE = ITEMS.register("lumenfall_bismuth_ore",
-            () -> new BlockItem(MaledictBlocks.LUMENFALL_BISMUTH_ORE.get(), new Item.Properties()));
+                                                                                    () -> new BlockItem(MaledictBlocks.LUMENFALL_BISMUTH_ORE.get(),
+                                                                                                        new Item.Properties()));
     public static final RegistryObject<Item> LUMENFALL_BISMUTH_BLOCK = ITEMS.register("lumenfall_bismuth_block",
-            () -> new BlockItem(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get(), new Item.Properties()));
+                                                                                      () -> new BlockItem(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get(),
+                                                                                                          new Item.Properties()));
     public static final RegistryObject<Item> LUMENFALL_BISMUTH_INGOT = ITEMS.register("lumenfall_bismuth_ingot",
-            () -> new Item(new Item.Properties()));
+                                                                                      () -> new Item(new Item.Properties()));
 
     /**
      * 折辉铅铋共晶：沉辉铋与恶念之铅经精魂灌注后析出的共晶宝石，与恶念白镴并列而非其升级品。
@@ -125,7 +136,15 @@ public final class MaledictItems {
     public static final RegistryObject<Item> LOVER_AXE = ITEMS.register("lover_axe", LoverAxeItem::new);
     public static final RegistryObject<Item> MELTFALL_AXE = ITEMS.register("meltfall_axe", () -> new LoverAxeItem(false));
 
-    /** 扬弃逐光四件护甲。 */
+    /**
+     * 东方女仆联动：赠礼之剑与其拘魂转化形态。
+     */
+    public static final RegistryObject<Item> YEARNING_SWORD = ITEMS.register("yearning_sword", () -> new MaidBondSwordItem(false));
+    public static final RegistryObject<Item> FORSAKEN_VOW = ITEMS.register("forsaken_vow", () -> new MaidBondSwordItem(true));
+
+    /**
+     * 扬弃逐光四件护甲。
+     */
     public static final RegistryObject<Item> AUFHEBEN_LIGHTWARD_HELMET =
             ITEMS.register("aufheben_lightward_helmet", () ->
                     new LightwardArmorItem(ArmorItem.Type.HELMET, lightwardProperties()));

@@ -72,6 +72,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
                 .add(MaledictItems.EARTHEN_SPIRIT_ARROW.get())
                 .add(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
         tag(ItemTags.BOOKSHELF_BOOKS).add(MaledictItems.LIGHTFALL_CODEX.get());
+        tag(ItemTags.SWORDS).add(MaledictItems.YEARNING_SWORD.get(), MaledictItems.FORSAKEN_VOW.get());
         tag(FORGE_SCYTHE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(ItemTagRegistry.SCYTHE)
                 .add(MaledictItems.INCURSUS_BLADE.get())
@@ -80,9 +81,11 @@ public final class MaledictItemTags extends ItemTagsProvider {
                 .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "dark_metal_scythe"))
                 .addOptional(ResourceLocation.fromNamespaceAndPath("goety", "dark_scythe"));
         tag(ItemTagRegistry.SOUL_HUNTER_WEAPON)
-                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.LOVER_AXE.get(), MaledictItems.MELTFALL_AXE.get());
+                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.LOVER_AXE.get(), MaledictItems.MELTFALL_AXE.get(),
+                     MaledictItems.YEARNING_SWORD.get());
         tag(ItemTagRegistry.MAGIC_CAPABLE_WEAPON)
-                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.LOVER_AXE.get(), MaledictItems.MELTFALL_AXE.get());
+                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.LOVER_AXE.get(), MaledictItems.MELTFALL_AXE.get(),
+                     MaledictItems.FORSAKEN_VOW.get());
         tag(ItemTagRegistry.HIDDEN_UNTIL_VOID).add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get(),
                                                    MaledictItems.MALIGNANT_PEWTER_TABLET.get(),
                                                    MaledictItems.CRYING_TAINTED_ROCK.get(),
@@ -171,5 +174,6 @@ public final class MaledictItemTags extends ItemTagsProvider {
                      ItemRegistry.SOUL_STAINED_STEEL_HOE.get(),
                      ItemRegistry.TYRVING.get(),
                      ItemRegistry.WEIGHT_OF_WORLDS.get());
+        tag(MaledictTags.SOUL_BINDING_TOOL_BLACKLIST).add(MaledictItems.FORSAKEN_VOW.get());
     }
 }
