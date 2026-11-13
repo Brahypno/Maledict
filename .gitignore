@@ -31,5 +31,6 @@ bgm-candidates/
 # 缺文件时按脚本里的 SOURCES 表自动下载）
 sfx-candidates/
 
-art/
+/art/*
+!/art/yearning-sword/
 

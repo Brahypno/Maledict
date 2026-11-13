@@ -1,6 +1,7 @@
 package org.brahypno.maledict.data;
 
 import com.google.gson.JsonObject;
+import net.minecraft.client.renderer.block.model.BlockModel.GuiLight;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -8,6 +9,7 @@ import net.minecraftforge.client.model.generators.ItemModelBuilder;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.client.model.generators.loaders.ItemLayerModelBuilder;
+import net.minecraftforge.client.model.generators.loaders.ObjModelBuilder;
 import net.minecraftforge.client.model.generators.loaders.SeparateTransformsModelBuilder;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
@@ -41,8 +43,7 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerIncursusBladeModels();
         loverAxeModel("lover_axe", "lover_axe");
         loverAxeModel("meltfall_axe", "lover_axe_lavender");
-        withExistingParent("yearning_sword", mcLoc("item/handheld"))
-                .texture("layer0", modLoc("item/yearning_sword"));
+        registerYearningSwordModel();
         withExistingParent("forsaken_vow", mcLoc("item/handheld"))
                 .texture("layer0", modLoc("item/forsaken_vow"));
 
@@ -136,6 +137,37 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerSpawnEggModel("first_vicissitude_phase_one_spawn_egg");
         registerSpawnEggModel("raven_spawn_egg");
         registerSpawnEggModel("first_vicissitude_phase_two_spawn_egg");
+    }
+
+    private void registerYearningSwordModel() {
+        ItemModelBuilder sword = getBuilder("yearning_sword_held")
+                .guiLight(GuiLight.FRONT)
+                .texture("surface", modLoc("item/yearning_sword_3d"))
+                .texture("particle", "#surface");
+        sword.customLoader(ObjModelBuilder::begin)
+                .modelLocation(modLoc("models/item/yearning_sword.obj"))
+                .automaticCulling(false)
+                .flipV(true)
+                .emissiveAmbient(false);
+
+        // The OBJ stands upright about the item center, so the hand poses rotate its local Y axis.
+        sword.transforms()
+                .transform(ItemDisplayContext.FIXED).rotation(0, 180, 45).translation(-1.9F, -1.5F, 0).scale(0.67F).end()
+                .transform(ItemDisplayContext.GROUND).rotation(0, 0, -60).translation(0, 3.6F, 0).scale(0.43F).end()
+                .transform(ItemDisplayContext.HEAD).rotation(0, 180, 45).translation(0, 12, 7).scale(0.72F).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(0, -52, 10).translation(0, 6.5F, 0.6F).scale(0.92F).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND).rotation(0, 52, -10).translation(0, 6.5F, 0.6F).scale(0.92F).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(-45, -52, -20).translation(1.5F, 3.65F, -4.38F).scale(0.95F).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(-45, 52, 20).translation(1.5F, 3.65F, -4.38F).scale(0.95F).end()
+                .end();
+
+        ItemModelBuilder icon = withExistingParent("yearning_sword_gui", mcLoc("item/handheld"))
+                .texture("layer0", modLoc("item/yearning_sword"));
+        withExistingParent("yearning_sword", mcLoc("item/handheld"))
+                .texture("particle", modLoc("item/yearning_sword"))
+                .customLoader(SeparateTransformsModelBuilder::begin)
+                .base(sword)
+                .perspective(ItemDisplayContext.GUI, icon);
     }
 
     private void registerLightFragmentModel() {
