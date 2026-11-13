@@ -88,7 +88,7 @@ public final class SoulbindingRitual {
             return "no_advancement";
         }
         ItemStack main = player.getMainHandItem();
-        if (main.isEmpty() || !main.is(MaledictTags.SOUL_BINDABLE)) {
+        if (!isSoulBindable(main)) {
             return "invalid_tool";
         }
         if (SoulbindingData.state(main) != SoulbindingData.State.EMPTY) {
@@ -113,6 +113,9 @@ public final class SoulbindingRitual {
             return "no_advancement";
         }
         ItemStack main = player.getMainHandItem();
+        if (!isSoulBindable(main)) {
+            return "invalid_tool";
+        }
         SoulbindingData.State state = SoulbindingData.state(main);
         if (state != SoulbindingData.State.ARMED && state != SoulbindingData.State.BOUND) {
             return "not_armed";
@@ -121,6 +124,11 @@ public final class SoulbindingRitual {
         player.getInventory().setChanged();
         player.containerMenu.broadcastChanges();
         return null;
+    }
+
+    private static boolean isSoulBindable(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(MaledictTags.SOUL_BINDABLE)
+                && !stack.is(MaledictTags.SOUL_BINDING_TOOL_BLACKLIST);
     }
 
     private SoulbindingRitual() {

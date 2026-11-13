@@ -171,8 +171,8 @@ public final class SoulbindingData {
         root.putString(STATE_KEY, "BOUND");
         root.putString(ENTITY_TYPE_KEY, type.toString());
 
-        Component customName = entity.getCustomName();
-        if (entity.hasCustomName() && customName != null && !customName.getString().isEmpty()) {
+        Component customName = bindingName(entity);
+        if (customName != null) {
             root.putString(CUSTOM_NAME_KEY, Component.Serializer.toJson(customName));
         }
 
@@ -234,6 +234,40 @@ public final class SoulbindingData {
             }
         }
         return new Snapshot(type, customName, Map.copyOf(attributes), soundId(root));
+    }
+
+    /** Removes a recorded sound without touching the spirit, attributes or custom name. */
+    public static void clearSound(ItemStack stack) {
+        CompoundTag root = root(stack);
+        if (root != null) root.remove(SOUND_ID_KEY);
+    }
+
+    /** Replaces the recorded custom name on an existing bound record. */
+    public static void setCustomName(ItemStack stack, @Nullable Component customName) {
+        CompoundTag root = root(stack);
+        if (root == null || !"BOUND".equals(root.getString(STATE_KEY))) return;
+        if (customName == null || customName.getString().isEmpty()) {
+            root.remove(CUSTOM_NAME_KEY);
+        } else {
+            root.putString(CUSTOM_NAME_KEY, Component.Serializer.toJson(customName));
+        }
+    }
+
+    /**
+     * The name worth freezing into the record: a real custom name, or a non-vanilla name supplied by
+     * a mod (TLM model names, for example). Plain {@link LivingEntity#getName()} avoids team colors
+     * and prefixes from {@code getDisplayName()}, and an unchanged localized type description is
+     * deliberately omitted so the tooltip keeps localizing itself on each client.
+     */
+    @Nullable
+    public static Component bindingName(LivingEntity entity) {
+        Component custom = entity.getCustomName();
+        if (custom != null && !custom.getString().isEmpty()) return custom;
+        Component name = entity.getName();
+        if (name == null || name.getString().isEmpty()) return null;
+        Component description = entity.getType().getDescription();
+        if (description != null && name.getString().equals(description.getString())) return null;
+        return name;
     }
 
     /**

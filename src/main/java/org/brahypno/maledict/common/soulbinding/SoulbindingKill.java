@@ -14,6 +14,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.MaledictTags;
+import org.brahypno.maledict.compat.maid.MaidBondData;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,7 +57,7 @@ public final class SoulbindingKill {
 
     @SubscribeEvent
     public static void onAttack(AttackEntityEvent event) {
-        if (event.getEntity().level().isClientSide || !(event.getEntity() instanceof ServerPlayer player)) {
+        if (event.getEntity().level().isClientSide || !(event.getEntity() instanceof ServerPlayer player)){
             return;
         }
         recordAction(player);
@@ -65,70 +66,77 @@ public final class SoulbindingKill {
     @SubscribeEvent
     public static void onHurt(LivingHurtEvent event) {
         if (event.getEntity().level().isClientSide
-                || !(event.getSource().getEntity() instanceof ServerPlayer player)) {
+            || !(event.getSource().getEntity() instanceof ServerPlayer player)){
             return;
         }
         Entity direct = event.getSource().getDirectEntity();
-        if (direct != null && direct != player) {
+        if (direct != null && direct != player){
             return;
         }
         ItemStack stack = player.getMainHandItem();
-        if (stack.isEmpty() || !stack.is(MaledictTags.SOUL_BINDABLE) || !SoulbindingData.isArmed(stack)) {
+        if (!isSoulBindable(stack)){
             return;
         }
 
         // The action is the swing itself. Standard attacks were already recorded by
         // AttackEntityEvent; the scythe's direct channel is the custom path's equivalent.
-        if (event.getSource().is(DamageTypeRegistry.SCYTHE_MELEE)) {
+        if (event.getSource().is(DamageTypeRegistry.SCYTHE_MELEE)){
             ACTIONS.put(player.getUUID(), new Action(player.level().dimension(),
-                    player.level().getGameTime(), stack.copy()));
+                                                     player.level().getGameTime(), stack.copy()));
         }
 
         Action action = ACTIONS.get(player.getUUID());
         if (action == null
-                || action.tick() != player.level().getGameTime()
-                || !action.dimension().equals(player.level().dimension())
-                || !sameTool(action.stack(), stack)) {
+            || action.tick() != player.level().getGameTime()
+            || !action.dimension().equals(player.level().dimension())
+            || !sameTool(action.stack(), stack)){
             return;
         }
         ATTACKS.put(player.getUUID(), new Attack(player.level().dimension(), event.getEntity().getId(),
-                player.level().getGameTime(), stack.copy()));
+                                                 player.level().getGameTime(), stack.copy()));
     }
 
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
-        if (event.getEntity().level().isClientSide) {
+        if (event.getEntity().level().isClientSide){
             return;
         }
-        if (event.getEntity() instanceof ServerPlayer deadPlayer) {
+        if (event.getEntity() instanceof ServerPlayer deadPlayer){
             clear(deadPlayer.getUUID());
         }
-        if (event.getEntity().getType().is(MaledictTags.SOUL_BINDING_BLACKLIST)) {
+        if (event.getEntity().getType().is(MaledictTags.SOUL_BINDING_BLACKLIST)){
             return;
         }
-        if (!(event.getSource().getEntity() instanceof ServerPlayer player)) {
+        // Maids are the dedicated crossover exception, never a generic spirit. The special sword
+        // handles its own giver in MaidEvents; every other tool must leave them alone.
+        if (MaidBondData.isMaid(event.getEntity())){
+            if (event.getSource().getEntity() instanceof ServerPlayer player)
+                clear(player.getUUID());
+            return;
+        }
+        if (!(event.getSource().getEntity() instanceof ServerPlayer player)){
             return;
         }
         Entity direct = event.getSource().getDirectEntity();
-        if (direct != null && direct != player) {
+        if (direct != null && direct != player){
             return;
         }
         Attack attack = ATTACKS.get(player.getUUID());
-        if (attack == null) {
+        if (attack == null){
             return;
         }
         if (!attack.dimension().equals(player.level().dimension())
-                || attack.targetId() != event.getEntity().getId()
-                || attack.tick() != player.level().getGameTime()) {
+            || attack.targetId() != event.getEntity().getId()
+            || attack.tick() != player.level().getGameTime()){
             return;
         }
         ATTACKS.remove(player.getUUID());
 
         ItemStack current = player.getMainHandItem();
-        if (!sameTool(attack.stack(), current)) {
+        if (!sameTool(attack.stack(), current)){
             return;
         }
-        if (SoulbindingData.bind(current, event.getEntity(), event.getSource())) {
+        if (SoulbindingData.bind(current, event.getEntity(), event.getSource())){
             player.getInventory().setChanged();
             player.containerMenu.broadcastChanges();
         }
@@ -141,11 +149,11 @@ public final class SoulbindingKill {
 
     private static void recordAction(ServerPlayer player) {
         ItemStack stack = player.getMainHandItem();
-        if (stack.isEmpty() || !stack.is(MaledictTags.SOUL_BINDABLE) || !SoulbindingData.isArmed(stack)) {
+        if (!isSoulBindable(stack)){
             return;
         }
         ACTIONS.put(player.getUUID(), new Action(player.level().dimension(),
-                player.level().getGameTime(), stack.copy()));
+                                                 player.level().getGameTime(), stack.copy()));
     }
 
     /**
@@ -157,11 +165,16 @@ public final class SoulbindingKill {
      */
     private static boolean sameTool(ItemStack previous, ItemStack current) {
         return !previous.isEmpty() && !current.isEmpty()
-                && ItemStack.isSameItem(previous, current)
-                && previous.is(MaledictTags.SOUL_BINDABLE)
-                && current.is(MaledictTags.SOUL_BINDABLE)
-                && SoulbindingData.isArmed(previous)
-                && SoulbindingData.isArmed(current);
+               && ItemStack.isSameItem(previous, current)
+               && isSoulBindable(previous)
+               && isSoulBindable(current);
+    }
+
+    private static boolean isSoulBindable(ItemStack stack) {
+        return !stack.isEmpty()
+               && stack.is(MaledictTags.SOUL_BINDABLE)
+               && !stack.is(MaledictTags.SOUL_BINDING_TOOL_BLACKLIST)
+               && SoulbindingData.isArmed(stack);
     }
 
     private static void clear(UUID player) {

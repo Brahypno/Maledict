@@ -78,6 +78,10 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.RUNE_OF_MELANCHOLIA.get());
                                output.accept(MaledictItems.RUNE_OF_BLISS.get());
                                output.accept(MaledictItems.RUNE_OF_THE_FALLEN.get());
+                               if (net.minecraftforge.fml.ModList.get().isLoaded("touhou_little_maid")) {
+                                   output.accept(MaledictItems.YEARNING_SWORD.get());
+                                   output.accept(MaledictItems.FORSAKEN_VOW.get());
+                               }
                            })
                            .build());
 

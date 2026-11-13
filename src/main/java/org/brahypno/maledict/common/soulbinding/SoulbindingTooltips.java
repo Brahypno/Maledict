@@ -7,6 +7,7 @@ import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,8 +49,14 @@ public final class SoulbindingTooltips {
             }
             lines.add(Component.translatable("tooltip.maledict.soulbinding.bound")
                                .withStyle(ChatFormatting.GOLD));
-            lines.add(Component.translatable("tooltip.maledict.soulbinding.spirit",
-                                             SoulbindingData.displayName(snapshot)));
+            if (stack.is(MaledictItems.FORSAKEN_VOW.get())) {
+                lines.add(Component.translatable("tooltip.maledict.maid_bond.forsaken",
+                                                 SoulbindingData.displayName(snapshot))
+                                   .withStyle(ChatFormatting.GRAY));
+            } else {
+                lines.add(Component.translatable("tooltip.maledict.soulbinding.spirit",
+                                                 SoulbindingData.displayName(snapshot)));
+            }
         }
         // Keep the item name on top, then the soulbinding state/name, then the vanilla attribute
         // lines. The borrowed numbers are rendered once by Forge's normal main-hand section.

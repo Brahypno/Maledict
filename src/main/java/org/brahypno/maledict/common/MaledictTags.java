@@ -38,6 +38,10 @@ public final class MaledictTags {
     public static final TagKey<Item> SOUL_BINDABLE = ItemTags.create(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "soul_bindable"));
 
+    /** Soulbinding-shaped items that must never be armed, released or re-bound (the transformed maid sword). */
+    public static final TagKey<Item> SOUL_BINDING_TOOL_BLACKLIST = ItemTags.create(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "soul_binding_tool_blacklist"));
+
     /** Entity types the Rite of Soulbinding must never capture. Empty on purpose; packs extend it. */
     public static final TagKey<EntityType<?>> SOUL_BINDING_BLACKLIST = TagKey.create(
             Registries.ENTITY_TYPE,

@@ -91,6 +91,7 @@ public final class MaledictLanguage extends LanguageProvider {
         addObelisksTranslations();
         addInvocationTranslations();
         addSoulbindingTranslations();
+        addMaidBondTranslations();
         addLightfallCodexTranslations();
         addLumenfallMaterialsTranslations();
     }
@@ -1029,10 +1030,31 @@ public final class MaledictLanguage extends LanguageProvider {
                     + "consumes one sigil.");
     }
 
+    private void addMaidBondTranslations() {
+        addItem(MaledictItems.YEARNING_SWORD, "眷恋", "Yearning");
+        addItem(MaledictItems.FORSAKEN_VOW, "弃约", "Forsaken Vow");
+        add("message.maledict.maid_bond.death_1",
+                "「主人……是我做错了什么吗？」",
+                "\"Master... did I do something wrong?\"");
+        add("message.maledict.maid_bond.death_2",
+                "「请不要这样……我会听话的。」",
+                "\"Please don't... I will be obedient.\"");
+        add("message.maledict.maid_bond.death_3",
+                "「……即使如此，我也依然爱着您。」",
+                "\"...Even so, I still love you.\"");
+        add("tooltip.maledict.maid_bond.original",
+                "羁绊证明：%s 与 %s",
+                "Proof of the bond between %s and %s");
+        add("tooltip.maledict.maid_bond.forsaken",
+                "%s的魂魄仍在此痛苦的哀嚎",
+                "%s's soul still wails here in agony");
+        add("tooltip.maledict.maid_bond.unknown_owner", "未知主人", "Unknown owner");
+        add("tooltip.maledict.maid_bond.unknown_maid", "未知女仆", "Unknown maid");
+    }
+
     private void addSoulbindingTranslations() {
         addItem(MaledictItems.SOULBINDING_SCROLL, "拘魂卷轴", "Soulbinding Scroll");
         addItem(MaledictItems.SOULBINDING_SEAL, "拘魂封印", "Soulbinding Seal");
-
         add("tooltip.maledict.soulbinding.armed", "[待拘魂]", "[Awaiting Binding]");
         add("tooltip.maledict.soulbinding.vacant", "精魂封印：空缺", "Soul Seal: Vacant");
         add("tooltip.maledict.soulbinding.next_kill",
