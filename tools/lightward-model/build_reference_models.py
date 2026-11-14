@@ -112,10 +112,12 @@ def helmet_texture():
         (0,0): ('BSBSSD', {'up': ('SPMSSSMPS','WPMSBSMPW','WPMSBSMPW',
                                   'WPMMBMMPW','WPMMBMMPW','WPMMBMMPW',
                                   'WPMSBSMPW','WPMSBSMPW','SPMSSSMPS'),
-                            'south': ('PWPPPPPWP','PSMSSSMSP','PSMMMMMSP','SMBBBBBMS')}),
+                            'south': ('PSPPPPPSP','WPMSSSMPW','WPSMMMSPW','SPMBBBMPS')}),
         (40,0): ('SBASBD', {'west': ('SPPPPPWPS','PWPPPPWPS','SWPSPPPPS','SWPSPSSSM','MSPSSSSMB')}),
-        (64,0): ('SAAAPD', {'south': ('SPWWWWWPS','SPPPPPPPS','SPPSSSPPS','SPPSMSPPS','MSPSMSPSM','BMSSSSSMB')}),
-        (88,0): ('PBAAPD', {'south': ('SPWWWPS','MSPPPSM')}),
+        # The silver bevels turn inward toward the existing nape plate.
+        (64,0): ('SAAAPD', {'south': ('SPWWPWWPS','PWSPSPSWP','SWSPPSPWS',
+                                     'MSWPSPWSM','BMSWSWSMB','ABMSMSMBA')}),
+        (88,0): ('PBAAPD', {'south': ('SPWWPPS','BMSPSMB')}),
         (104,0): ('PSAPBD', {'west': ('PPWPP',), 'east': ('BMMMM',)}),
         (0,18): ('WSPPBD', {'west': ('WCWGP','PQPPP','SPSSS'), 'north': ('CW','WP','PS')}),
         (16,18): ('WSBSBD', {'west': ('WWPP','SPWP','MSSP')}),
@@ -492,14 +494,24 @@ def preview():
     for slot in SLOTS[1:]:
         for obj in objects[slot]: obj.hide_render = True
     camera.data.ortho_scale = 15
+    scene.render.resolution_x = scene.render.resolution_y = 560
     camera.location = (20,-52,47)
     camera.rotation_euler = (Vector((0,0,29.2))-camera.location).to_track_quat('-Z','Y').to_euler()
-    scene.render.resolution_x = scene.render.resolution_y = 560
     scene.render.filepath = str(ART/'preview-helmet.png')
     bpy.ops.render.render(write_still=True)
     camera.location = (0,0,75)
     camera.rotation_euler = (0,0,0)
     scene.render.filepath = str(ART/'preview-helmet-top.png')
+    bpy.ops.render.render(write_still=True)
+
+    # Fill the rear close-up so the back plate can be inspected under direct light.
+    bpy.ops.object.light_add(type='AREA',location=(-10,20,38))
+    fill = bpy.context.object
+    fill.data.energy,fill.data.size = 3500,12
+    fill.rotation_euler = (Vector((0,0,29.2))-fill.location).to_track_quat('-Z','Y').to_euler()
+    camera.location = (0,52,32)
+    camera.rotation_euler = (Vector((0,0,29.2))-camera.location).to_track_quat('-Z','Y').to_euler()
+    scene.render.filepath = str(ART/'preview-helmet-back.png')
     bpy.ops.render.render(write_still=True)
 
 
