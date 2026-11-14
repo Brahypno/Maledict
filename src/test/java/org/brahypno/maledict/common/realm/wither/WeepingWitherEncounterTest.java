@@ -1,6 +1,8 @@
 package org.brahypno.maledict.common.realm.wither;
 
 import com.mojang.authlib.GameProfile;
+import com.sammy.malum.common.block.ether.EtherBlockEntity;
+import com.sammy.malum.registry.common.block.BlockRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
@@ -80,10 +82,37 @@ public final class WeepingWitherEncounterTest {
                 InvertedReliquaryPiece.settings(Rotation.CLOCKWISE_90), realm.random, 2), "The rotated template places inside solid terrain");
         BlockPos core = origin.offset(17, 4, 17);
         helper.assertTrue(realm.getBlockState(core).is(MaledictBlocks.RELIQUARY_ALTAR.get())
-                        && realm.getBlockState(core.above(2)).isAir() && realm.getBlockState(core.above(6)).isAir(),
-                "Placement clears the central spawn area");
+                        && realm.getBlockState(core.above(9)).is(Blocks.CRYING_OBSIDIAN),
+                "The hanging seal is centered above the altar");
+        var spawn = MaledictEntities.WEEPING_WITHER.get().create(realm);
+        spawn.setPos(Vec3.atBottomCenterOf(core.above(2)));
+        helper.assertTrue(realm.noCollision(spawn), "The real boss hitbox fits under the coffin");
         helper.assertTrue(realm.getBlockState(origin.offset(0, 6, 17)).isAir()
                         && realm.getBlockState(origin.offset(-1, 6, 17)).isAir(), "The cave connects through the broken wall");
+        BlockPos brazier = origin.offset(30, 4, 12);
+        var brazierState = realm.getBlockState(brazier);
+        helper.assertTrue(brazierState.is(BlockRegistry.TAINTED_ETHER_BRAZIER.get())
+                        && brazierState.canSurvive(realm, brazier)
+                        && realm.getBlockEntity(brazier) instanceof EtherBlockEntity ether
+                        && ether.firstColor != null && (ether.firstColor.getRGB() & 0xFFFFFF) == 0xA581CC,
+                "The floor brazier is supported and loads its flame color from the template");
+        // Clockwise rotation around the center sends (x, z) to (34 - z, x).
+        helper.assertTrue(realm.getBlockState(origin.offset(27, 16, 2)).isAir()
+                        && realm.getBlockState(origin.offset(27, 19, 4)).isAir()
+                        && !realm.getBlockState(origin.offset(17, 18, 31)).isAir(),
+                "The northwest collapse cuts the vault while the opposite wall meets it");
+        helper.assertTrue(realm.getBlockState(origin.offset(15, 11, 28)).isAir()
+                        && realm.getBlockState(origin.offset(15, 15, 20)).isAir()
+                        && realm.getBlockState(origin.offset(15, 16, 19)).is(Blocks.CHISELED_NETHER_BRICKS),
+                "The coffin stays sealed above a clear drop, without steps or a landing");
+        for (int x : new int[]{14, 20}) {
+            BlockPos pocket = origin.offset(x, 16, 17);
+            helper.assertTrue(realm.getBlockState(pocket.above()).isAir()
+                            && realm.getBlockState(pocket.above(2)).is(Blocks.BLACKSTONE)
+                            && realm.getBlockState(pocket.north(2)).is(Blocks.SMOOTH_BASALT)
+                            && realm.getBlockState(pocket.south(2)).is(Blocks.SMOOTH_BASALT),
+                    "Each chest pocket has lid clearance and is hidden by the casing");
+        }
         realm.setBlock(core.above(2), Blocks.STONE.defaultBlockState(), 2);
         AABB arena = new AABB(origin, origin.offset(35, 20, 35));
         var joins = new AtomicInteger();

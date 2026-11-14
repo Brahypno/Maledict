@@ -1,9 +1,11 @@
 package org.brahypno.maledict.data;
 
 import com.google.common.hash.Hashing;
+import com.sammy.malum.registry.common.block.BlockEntityRegistry;
 import com.sammy.malum.registry.common.block.BlockRegistry;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
@@ -13,10 +15,12 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.LanternBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.core.Direction;
+import org.brahypno.maledict.common.realm.reliquary.InvertedReliquaryStructure;
 import org.brahypno.maledict.registry.MaledictBlocks;
 
 import java.io.ByteArrayOutputStream;
@@ -52,172 +56,331 @@ public final class MaledictReliquaryTemplates implements DataProvider {
         });
     }
 
+    private static final int MAX_CRYING_STONE = 8;
+    private static final BlockState AIR = Blocks.AIR.defaultBlockState();
+    private static final BlockState BLACKSTONE = Blocks.BLACKSTONE.defaultBlockState();
+    private static final BlockState BRICKS = Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState();
+    private static final BlockState CRACKED = Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS.defaultBlockState();
+    private static final BlockState BASALT = Blocks.BASALT.defaultBlockState();
+    private static final BlockState BASALT_BEAM = BASALT.setValue(RotatedPillarBlock.AXIS, Direction.Axis.X);
+    private static final BlockState SMOOTH_BASALT = Blocks.SMOOTH_BASALT.defaultBlockState();
+    private static final BlockState NETHER_BRICKS = Blocks.NETHER_BRICKS.defaultBlockState();
+    private static final BlockState RED_NETHER_BRICKS = Blocks.RED_NETHER_BRICKS.defaultBlockState();
+    private static final BlockState NETHER_TRIM = Blocks.CHISELED_NETHER_BRICKS.defaultBlockState();
+    private static final BlockState CRACKED_NETHER = Blocks.CRACKED_NETHER_BRICKS.defaultBlockState();
+    private static final BlockState BONE = Blocks.BONE_BLOCK.defaultBlockState();
+    private static final BlockState BONE_BEAM = BONE.setValue(RotatedPillarBlock.AXIS, Direction.Axis.X);
+    private static final BlockState CHAIN = Blocks.CHAIN.defaultBlockState();
+    private static final int CENTER = InvertedReliquaryStructure.CENTER;
+    private static final int SIZE = InvertedReliquaryStructure.SIZE;
+    private static final int HEIGHT = InvertedReliquaryStructure.HEIGHT;
+
     public static CompoundTag template(String variant) {
         Builder b = new Builder();
-        boolean fractured = variant.equals("fractured");
-        boolean sunken = variant.equals("sunken");
         BlockState rock = BlockRegistry.TWISTED_ROCK.get().defaultBlockState();
-        BlockState cryingTainted = MaledictBlocks.CRYING_TAINTED_ROCK.get().defaultBlockState();
-        BlockState cryingTwisted = MaledictBlocks.CRYING_TWISTED_ROCK.get().defaultBlockState();
-        BlockState bricks = BlockRegistry.TAINTED_ROCK_BRICKS.get().defaultBlockState();
-        BlockState trim = BlockRegistry.POLISHED_TAINTED_ROCK.get().defaultBlockState();
-        BlockState tiles = BlockRegistry.TAINTED_ROCK_TILES.get().defaultBlockState();
-        BlockState runes = BlockRegistry.RUNIC_TAINTED_ROCK_BRICKS.get().defaultBlockState();
 
-        // A clipped footprint and a vaulted air volume leave the outside rock/caves untouched.
-        for (int x = 0; x < 35; x++) {
-            for (int z = 0; z < 35; z++) {
-                int dx = Math.abs(x - 17), dz = Math.abs(z - 17);
-                if (dx + dz > 29) continue;
-                int roof = 19 - Math.max(0, (dx - 10) / 2) - Math.max(0, (dz - 12) / 2);
-                int top = Math.max(dx, dz) <= 10 ? 2 : 3;
-                for (int y = 0; y <= roof; y++) {
-                    BlockState state;
-                    if (y < top) state = rock;
-                    else if (y == top) {
-                        int wear = Math.floorMod(x * 43 + z * 71, 23);
-                        state = wear < 4 ? rock : wear == 4 ? Blocks.CRACKED_NETHER_BRICKS.defaultBlockState() : tiles;
-                        if (dx == 10 || dz == 10) state = trim;
-                    } else if (y == roof && ((x * 7 + z * 11) % 9 != 0)) {
-                        boolean seep = Math.abs(x - 9) + Math.abs(z - 12) <= 3
-                                || Math.abs(x - 26) + Math.abs(z - 23) <= 2;
-                        state = seep ? cryingTwisted : rock;
-                    }
-                    else state = Blocks.AIR.defaultBlockState();
-                    b.put(x, y, z, state);
-                }
-                // Fragmentary double-thick walls. Southern and western gaps expose the hall to caves.
-                boolean wall = (dx >= 15 || dz >= 15) && dx + dz <= 28;
-                boolean doorway = (z >= 31 && dx <= 4) || (x <= 3 && Math.abs(z - 12) <= 4);
-                if (wall && !doorway) {
-                    int wallHeight = 5 + Math.floorMod(x * 13 + z * 19, 8);
-                    if (fractured && x < 8 && z < 22) wallHeight = 4;
-                    b.box(x, 4, z, x, wallHeight, z, bricks);
-                    if (Math.floorMod(x * 3 + z, 11) == 0) {
-                        b.box(x, Math.max(4, wallHeight - 3), z, x, wallHeight, z, cryingTainted);
-                    }
-                    if (Math.floorMod(x + z, 7) == 0) b.put(x, 5, z, Blocks.BONE_BLOCK.defaultBlockState());
-                }
-            }
-        }
+        hollow(b, rock);
+        entrances(b);
+        altar(b);
+        coffin(b);
+        niches(b);
 
-        // Eight columns surround, rather than obstruct, the open 21 x 21 fighting floor.
-        int index = 0;
-        for (int x : new int[]{5, 29}) {
-            for (int z : new int[]{6, 13, 21, 28}) {
-                int height = switch (index++) {
-                    case 0, 5 -> 17;
-                    case 2, 7 -> fractured ? 6 : 17;
-                    case 1, 4 -> 10;
-                    default -> 7;
-                };
-                b.box(x - 1, 4, z - 1, x + 1, 4, z + 1, trim);
-                b.box(x, 5, z, x, height, z, BlockRegistry.TAINTED_ROCK_COLUMN.get().defaultBlockState());
-                if (height == 17) b.box(x - 1, 17, z - 1, x + 1, 17, z + 1, trim);
-                else {
-                    b.put(x, height, z, rock);
-                    b.put(x, height - 1, z, cryingTainted);
-                }
-                b.put(x, 5, z - 1, Blocks.CHISELED_NETHER_BRICKS.defaultBlockState());
-            }
+        switch (variant) {
+            case "intact" -> intact(b);
+            case "fractured" -> fractured(b);
+            case "sunken" -> sunken(b, rock);
+            default -> throw new IllegalArgumentException("Unknown reliquary variant: " + variant);
         }
-
-        // Surviving overhead beams carry the inverted coffin at both ends.
-        b.box(5, 18, 9, 29, 18, 10, bricks);
-        b.box(5, 18, 24, 29, 18, 25, bricks);
-        b.box(16, 17, 9, 18, 18, 12, trim);
-        b.box(16, 17, 22, 18, 18, 25, trim);
-        // Top-wide stone casing; narrow descending lid, framed with restrained dark red masonry.
-        b.box(13, 16, 11, 21, 17, 23, bricks);
-        b.box(14, 15, 12, 20, 15, 22, trim);
-        b.box(15, 14, 13, 19, 14, 21, Blocks.NETHER_BRICKS.defaultBlockState());
-        b.box(16, 13, 14, 18, 13, 20, runes);
-        for (int z : new int[]{14, 17, 20}) {
-            b.put(17, 13, z, Blocks.END_STONE_BRICKS.defaultBlockState());
-            b.put(14, 16, z, Blocks.BONE_BLOCK.defaultBlockState());
-            b.put(20, 16, z, Blocks.BONE_BLOCK.defaultBlockState());
-        }
-        b.put(16, 13, 17, Blocks.CRYING_OBSIDIAN.defaultBlockState());
-        b.put(18, 13, 17, Blocks.CRYING_OBSIDIAN.defaultBlockState());
-        b.box(16, 15, 14, 18, 15, 20, Blocks.PURPUR_BLOCK.defaultBlockState());
-        for (int z : new int[]{15, 19}) {
-            b.box(13, 16, z, 13, 17, z, cryingTainted);
-            b.box(21, 16, z, 21, 17, z, cryingTainted);
-        }
-        b.put(15, 14, 13, cryingTainted);
-        b.put(19, 14, 21, cryingTainted);
-
-        // Low platform with a raised, visibly distinct one-use altar at its center.
-        b.box(14, 3, 12, 20, 3, 22, trim);
-        b.box(15, 3, 13, 19, 3, 21, runes);
-        b.box(17, 3, 13, 17, 3, 21, Blocks.END_STONE_BRICKS.defaultBlockState());
-        b.put(17, 4, 17, MaledictBlocks.RELIQUARY_ALTAR.get().defaultBlockState());
-
-        // Broken columns and bone-bearing rubble stay outside the central arena.
-        BlockState horizontalBone = Blocks.BONE_BLOCK.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Z);
-        b.box(7, 4, 24, 8, 5, 29, rock);
-        b.box(8, 5, 25, 8, 5, 28, horizontalBone);
-        b.box(26, 4, 7, 28, 5, 10, bricks);
-        b.put(27, 6, 8, Blocks.BONE_BLOCK.defaultBlockState());
-        for (BlockPos pos : new BlockPos[]{new BlockPos(6, 4, 16), new BlockPos(28, 4, 23), new BlockPos(11, 4, 29)}) {
-            b.put(pos.getX(), pos.getY(), pos.getZ(), Blocks.SOUL_SOIL.defaultBlockState());
-            b.put(pos.getX(), pos.getY() + 1, pos.getZ(), MaledictBlocks.WITHERLIGHT_MUSHROOM.get().defaultBlockState());
-        }
-        if (fractured) {
-            b.box(13, 14, 11, 16, 17, 13, Blocks.AIR.defaultBlockState());
-            b.box(14, 15, 14, 15, 16, 15, Blocks.PURPUR_BLOCK.defaultBlockState());
-            b.box(8, 4, 8, 11, 6, 11, bricks);
-            b.box(9, 7, 9, 10, 7, 10, trim);
-            b.put(10, 5, 12, Blocks.END_STONE_BRICKS.defaultBlockState());
-        }
-        if (sunken) {
-            for (int x = 1; x < 34; x++) {
-                for (int z = 1; z < 34; z++) {
-                    if (Math.abs(x - 17) + Math.abs(z - 17) > 28) continue;
-                    int edge = Math.max(Math.abs(x - 17), Math.abs(z - 17));
-                    if (edge < 12) continue;
-                    int height = 3 + (edge - 11) / 2 + Math.floorMod(x * 5 + z * 3, 2);
-                    b.box(x, 4, z, x, height, z, rock);
-                    if (x < 6 && z >= 18 && z <= 24 || z > 29 && x >= 23 && x <= 27) {
-                        b.put(x, height, z, cryingTwisted);
-                    }
-                    if ((x + z) % 13 == 0) b.put(x, height, z, Blocks.BONE_BLOCK.defaultBlockState());
-                }
-            }
-            // Keep the southern approach exposed despite the accumulated sediment.
-            b.box(15, 4, 27, 19, 8, 34, Blocks.AIR.defaultBlockState());
-        }
-        // Two separate burial pockets inside the overhead coffin. Clear the lid space, too.
-        b.chest(15, 16, 16, Direction.WEST);
-        b.chest(19, 16, 18, Direction.EAST);
+        braziers(b);
+        b.put(17, 18, 22, CHAIN);
+        b.chest(17, 16, 14, Direction.SOUTH);
+        b.chest(17, 16, 20, Direction.NORTH);
+        cryingStone(b, variant);
         return b.save();
+    }
+
+    private static void hollow(Builder b, BlockState rock) {
+        BlockState tiles = BlockRegistry.TAINTED_ROCK_TILES.get().defaultBlockState();
+        for (int x = 0; x < SIZE; x++) {
+            for (int z = 0; z < SIZE; z++) {
+                int dx = Math.abs(x - CENTER);
+                int dz = Math.abs(z - CENTER);
+                int edge = Math.max(dx, dz);
+                boolean south = z >= 26 && dx <= 3;
+                boolean west = x <= 8 && Math.abs(z - 12) <= 3;
+                if (dx + dz > 29 || (edge == CENTER && !south && !west)) continue;
+
+                int roof = HEIGHT - 1 - Math.max(0, (edge - 12) / 2);
+                int wear = Math.floorMod(x * 43 + z * 71, 23);
+                b.box(x, 0, z, x, 2, z, rock);
+                BlockState paving = dx <= 1 ? NETHER_BRICKS : wear < 3 ? rock : wear < 8 ? tiles : BRICKS;
+                if (dx == 10 || dz == 10) paving = BLACKSTONE;
+                if (south || west) paving = wear < 5 ? CRACKED : NETHER_BRICKS;
+                b.put(x, 3, z, paving);
+                b.box(x, 4, z, x, roof - 1, z, AIR);
+                b.put(x, roof, z, wear < 7 ? rock : BLACKSTONE);
+
+                if (edge >= 14) {
+                    // Keep masonry over both passages so the walls still meet the vault.
+                    int base = south ? 9 : west ? 8 : 4;
+                    int top = edge == 14 ? HEIGHT - 1 : roof;
+                    b.box(x, base, z, x, top, z, wear < 5 ? rock : wear < 9 ? CRACKED : BLACKSTONE);
+                    b.put(x, Math.max(base, 6), z, wear < 5 ? CRACKED_NETHER : BRICKS);
+                }
+            }
+        }
+    }
+
+    private static void entrances(Builder b) {
+        // The south gate frames the long axis. Its eastern shoulder stops at the break.
+        b.box(12, 4, 31, 14, 10, 33, BRICKS);
+        b.box(20, 4, 31, 22, 8, 33, BLACKSTONE);
+        b.box(13, 7, 31, 15, 10, 32, NETHER_BRICKS);
+        b.box(15, 9, 31, 18, 10, 32, CRACKED_NETHER);
+        b.put(19, 9, 31, NETHER_TRIM);
+        b.put(20, 8, 31, BASALT);
+        b.box(14, 4, 27, 14, 5, 28, SMOOTH_BASALT);
+        b.box(20, 4, 28, 21, 4, 29, CRACKED);
+
+        // The west approach passes a narrower, offset arch and broken column bases.
+        b.box(1, 4, 8, 3, 9, 9, BLACKSTONE);
+        b.box(1, 4, 15, 3, 8, 16, BRICKS);
+        b.box(1, 7, 9, 2, 9, 10, NETHER_BRICKS);
+        b.box(1, 8, 11, 2, 9, 13, CRACKED_NETHER);
+        b.box(2, 7, 14, 3, 8, 14, NETHER_TRIM);
+        b.box(5, 4, 15, 6, 5, 16, CRACKED);
+        b.put(5, 6, 16, BASALT);
+    }
+
+    private static void altar(Builder b) {
+        BlockState runes = BlockRegistry.RUNIC_TAINTED_ROCK_BRICKS.get().defaultBlockState();
+        b.box(13, 3, 13, 21, 3, 21, BLACKSTONE);
+        b.box(14, 3, 14, 20, 3, 20, BRICKS);
+        b.box(15, 3, 15, 19, 3, 19, runes);
+
+        // Three flush cracks leave the ritual floor passable in every direction.
+        b.box(17, 3, 13, 17, 3, 16, CRACKED_NETHER);
+        b.box(13, 3, 18, 15, 3, 18, CRACKED);
+        b.box(19, 3, 19, 21, 3, 19, CRACKED);
+        BlockState lip = Blocks.POLISHED_BLACKSTONE_BRICK_SLAB.defaultBlockState();
+        b.box(16, 4, 15, 18, 4, 15, lip);
+        b.put(15, 4, 17, lip);
+        b.put(19, 4, 17, lip);
+        b.put(13, 4, 13, CRACKED);
+        b.put(21, 4, 13, lip);
+        b.put(13, 4, 21, lip);
+        b.put(21, 4, 21, SMOOTH_BASALT);
+        b.put(17, 4, 17, MaledictBlocks.RELIQUARY_ALTAR.get().defaultBlockState());
+    }
+
+    private static void coffin(Builder b) {
+        // Taper the red casing in plan and in section. The bottom seal faces the altar.
+        b.box(17, 13, 15, 17, 13, 19, RED_NETHER_BRICKS);
+        b.box(16, 14, 14, 18, 14, 20, RED_NETHER_BRICKS);
+        b.box(16, 15, 12, 18, 17, 22, RED_NETHER_BRICKS);
+        b.box(15, 15, 14, 19, 17, 20, RED_NETHER_BRICKS);
+        b.box(16, 16, 14, 18, 17, 20, AIR);
+        b.box(16, 18, 13, 18, 18, 21, BLACKSTONE);
+        b.box(17, 15, 12, 17, 17, 12, NETHER_TRIM);
+        b.box(17, 15, 22, 17, 17, 22, NETHER_TRIM);
+        for (int z : new int[]{14, 20}) {
+            b.box(15, 15, z, 15, 17, z, SMOOTH_BASALT);
+            b.box(19, 15, z, 19, 17, z, SMOOTH_BASALT);
+            b.put(16, 15, z, BONE_BEAM);
+            b.put(18, 15, z, BONE_BEAM);
+        }
+        // Mine through the marked side seal to reach the burial pockets.
+        b.box(19, 16, 19, 19, 17, 19, NETHER_TRIM);
+        b.put(17, 13, 17, Blocks.CRYING_OBSIDIAN.defaultBlockState());
+        b.put(17, 18, 12, CHAIN);
+        b.put(17, 19, 12, BASALT);
+        b.put(17, 19, 22, BASALT);
+    }
+
+    private static void niches(Builder b) {
+        for (int x : new int[]{10, 17, 24}) {
+            b.box(x - 2, 4, 3, x + 2, 8, 3, BLACKSTONE);
+            b.box(x - 1, 5, 3, x + 1, 7, 3, AIR);
+            b.box(x - 1, 4, 4, x + 1, 4, 4, CRACKED_NETHER);
+            b.box(x - 2, 8, 4, x + 2, 8, 4, NETHER_TRIM);
+            b.put(x, 5, 3, BONE);
+        }
+        b.put(6, 6, 16, Blocks.SOUL_LANTERN.defaultBlockState());
+        b.put(20, 5, 28, Blocks.SOUL_LANTERN.defaultBlockState());
+        b.put(28, 18, 17, Blocks.SOUL_LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
+    }
+
+    private static void braziers(Builder b) {
+        BlockState brazier = BlockRegistry.TAINTED_ETHER_BRAZIER.get().defaultBlockState();
+        CompoundTag ether = new CompoundTag();
+        ether.putString("id", BlockEntityType.getKey(BlockEntityRegistry.ETHER.get()).toString());
+        // Structure placement skips the item callback that normally initializes the flame color.
+        ether.putInt("firstColor", 0xA581CC);
+        for (BlockPos pos : new BlockPos[]{
+                new BlockPos(12, 4, 4), new BlockPos(22, 4, 4),
+                new BlockPos(4, 4, 17), new BlockPos(30, 4, 17),
+                new BlockPos(10, 4, 30), new BlockPos(24, 4, 30)
+        }) {
+            b.putBlockEntity(pos, brazier, ether);
+        }
+    }
+
+    private static void column(Builder b, int x, int z, int height) {
+        b.box(x - 1, 4, z - 1, x + 1, 4, z + 1, BRICKS);
+        b.box(x, 5, z, x, height, z, BASALT);
+        b.put(x, height, z, SMOOTH_BASALT);
+        b.put(x, 5, z + 1, NETHER_TRIM);
+    }
+
+    private static void ribSide(Builder b, int z, boolean west) {
+        int side = west ? 1 : -1;
+        int edge = west ? 5 : 29;
+        b.box(edge, 14, z, edge + 2 * side, 15, z, BRICKS);
+        b.box(edge + 2 * side, 16, z, edge + 4 * side, 16, z, BASALT_BEAM);
+        b.box(edge + 4 * side, 17, z, edge + 7 * side, 17, z, BASALT_BEAM);
+        b.box(edge + 7 * side, 18, z, edge + 12 * side, 18, z, BASALT_BEAM);
+    }
+
+    private static void intact(Builder b) {
+        column(b, 5, 9, 15);
+        column(b, 30, 9, 15);
+        column(b, 5, 22, 15);
+        column(b, 30, 22, 15);
+        ribSide(b, 9, true);
+        ribSide(b, 9, false);
+        ribSide(b, 22, true);
+        ribSide(b, 22, false);
+        b.box(17, 18, 9, 17, 18, 11, BASALT_BEAM);
+        column(b, 5, 27, 7);
+        column(b, 29, 29, 9);
+        b.box(6, 4, 23, 6, 5, 25, CRACKED);
+        b.put(6, 6, 24, BONE_BEAM);
+    }
+
+    private static void fractured(Builder b) {
+        column(b, 5, 9, 7);
+        column(b, 30, 9, 15);
+        column(b, 5, 22, 15);
+        column(b, 30, 22, 15);
+        ribSide(b, 9, false);
+        ribSide(b, 22, true);
+        ribSide(b, 22, false);
+        b.box(15, 18, 9, 17, 18, 11, BASALT_BEAM);
+        b.put(15, 18, 11, CHAIN);
+        b.put(15, 17, 11, CHAIN);
+        b.put(15, 19, 11, BASALT);
+        b.box(16, 16, 12, 16, 17, 12, AIR);
+        b.box(15, 16, 11, 16, 16, 11, CRACKED_NETHER);
+        b.put(16, 17, 11, BONE_BEAM);
+
+        b.box(4, 4, 5, 9, 5, 7, CRACKED);
+        b.box(5, 6, 5, 7, 7, 6, BASALT_BEAM);
+        b.box(6, 8, 5, 7, 8, 5, SMOOTH_BASALT);
+        b.put(8, 6, 6, BONE_BEAM);
+        // The northwest collapse tears through the wall and into the first span of the vault.
+        b.box(1, 13, 6, 3, 17, 8, AIR);
+        b.box(3, 17, 6, 5, 19, 8, AIR);
+        b.box(5, 18, 7, 8, 19, 9, AIR);
+        b.box(8, 18, 9, 11, 18, 10, AIR);
+        b.box(30, 4, 25, 31, 5, 26, CRACKED);
+        b.box(30, 5, 24, 30, 7, 25, CRACKED);
+    }
+
+    private static void sunken(Builder b, BlockState rock) {
+        column(b, 5, 9, 15);
+        column(b, 30, 9, 15);
+        column(b, 5, 22, 8);
+        column(b, 30, 22, 15);
+        ribSide(b, 9, true);
+        ribSide(b, 9, false);
+        ribSide(b, 22, false);
+        b.box(17, 18, 9, 17, 18, 11, BASALT_BEAM);
+        b.box(12, 18, 22, 16, 18, 22, BASALT_BEAM);
+        b.put(13, 17, 22, CHAIN);
+
+        // Sediment breaches the southwest wall, tapering before the arena and both gates.
+        b.box(1, 14, 21, 3, 16, 26, AIR);
+        b.box(2, 13, 22, 3, 13, 25, AIR);
+        for (int x = 1; x <= 6; x++) {
+            for (int z = 18; z <= 29; z++) {
+                if (x + 34 - z < 7) continue;
+                int height = Math.max(4, 11 - x - Math.abs(z - 24) / 2);
+                b.box(x, 4, z, x, height, z, rock);
+                if ((x + z) % 4 == 0) b.put(x, height, z, Blocks.NETHERRACK.defaultBlockState());
+            }
+        }
+        b.box(5, 8, 21, 6, 8, 23, CRACKED);
+        b.put(6, 6, 25, BONE_BEAM);
+        b.put(7, 4, 26, CRACKED_NETHER);
+        b.put(8, 4, 28, rock);
+    }
+
+    private static void cryingStone(Builder b, String variant) {
+        BlockState tainted = MaledictBlocks.CRYING_TAINTED_ROCK.get().defaultBlockState();
+        BlockState twisted = MaledictBlocks.CRYING_TWISTED_ROCK.get().defaultBlockState();
+
+        b.put(16, 3, 17, tainted);
+        b.put(18, 3, 17, twisted);
+        b.put(16, 14, 17, tainted);
+        b.put(18, 14, 17, twisted);
+        switch (variant) {
+            case "intact" -> {
+                b.put(18, 17, 12, tainted);
+                b.put(5, 14, 22, twisted);
+            }
+            case "fractured" -> {
+                b.put(15, 16, 11, tainted);
+                b.put(14, 18, 9, twisted);
+            }
+            case "sunken" -> {
+                b.put(16, 18, 22, tainted);
+                b.put(3, 8, 24, twisted);
+            }
+        }
+
+        long count = b.blocks.values().stream()
+                .filter(state -> state.is(tainted.getBlock()) || state.is(twisted.getBlock()))
+                .count();
+        if (count > MAX_CRYING_STONE) {
+            throw new IllegalStateException(variant + " reliquary has " + count + " crying stones");
+        }
     }
 
     private static final class Builder {
         private final Map<BlockPos, BlockState> blocks = new LinkedHashMap<>();
         private final Map<BlockPos, BlockState> chests = new LinkedHashMap<>();
+        private final Map<BlockPos, CompoundTag> blockEntityData = new LinkedHashMap<>();
 
         void put(int x, int y, int z, BlockState state) {
             blocks.put(new BlockPos(x, y, z), state);
         }
 
+        void putBlockEntity(BlockPos pos, BlockState state, CompoundTag data) {
+            blocks.put(pos, state);
+            blockEntityData.put(pos, data);
+        }
+
         void box(int x1, int y1, int z1, int x2, int y2, int z2, BlockState state) {
-            for (BlockPos pos : BlockPos.betweenClosed(x1, y1, z1, x2, y2, z2)) {
+            for (BlockPos pos : BlockPos.betweenClosed(new BlockPos(x1, y1, z1), new BlockPos(x2, y2, z2))) {
                 blocks.put(pos.immutable(), state);
             }
         }
 
         void chest(int x, int y, int z, Direction facing) {
             BlockState chest = Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, facing);
-            chests.put(new BlockPos(x, y, z), chest);
-            put(x, y, z, chest);
+            BlockPos pos = new BlockPos(x, y, z);
+            chests.put(pos, chest);
+            CompoundTag data = new CompoundTag();
+            data.putString("id", "minecraft:chest");
+            data.putString("LootTable", MaledictRealmLoot.RELIQUARY.toString());
+            putBlockEntity(pos, chest, data);
             put(x, y + 1, z, Blocks.AIR.defaultBlockState());
         }
 
         CompoundTag save() {
             CompoundTag tag = new CompoundTag();
             tag.putInt("DataVersion", SharedConstants.getCurrentVersion().getDataVersion().getVersion());
-            tag.put("size", ints(35, 20, 35));
+            tag.put("size", ints(SIZE, HEIGHT, SIZE));
             tag.put("entities", new ListTag());
             Map<BlockState, Integer> palette = new LinkedHashMap<>();
             blocks.forEach((pos, state) -> {
@@ -229,13 +392,9 @@ public final class MaledictReliquaryTemplates implements DataProvider {
             blocks.forEach((pos, state) -> {
                 CompoundTag entry = new CompoundTag();
                 entry.put("pos", ints(pos.getX(), pos.getY(), pos.getZ()));
-                if (chests.containsKey(pos)) {
-                    entry.putInt("state", chestIds.get(pos));
-                    CompoundTag chest = new CompoundTag();
-                    chest.putString("id", "minecraft:chest");
-                    chest.putString("LootTable", MaledictRealmLoot.RELIQUARY.toString());
-                    entry.put("nbt", chest);
-                } else entry.putInt("state", palette.get(state));
+                entry.putInt("state", chests.containsKey(pos) ? chestIds.get(pos) : palette.get(state));
+                CompoundTag data = blockEntityData.get(pos);
+                if (data != null) entry.put("nbt", data);
                 entries.add(entry);
             });
             // Vanilla selects one palette uniformly from the template origin. The same origin is
