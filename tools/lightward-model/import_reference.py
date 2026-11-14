@@ -1,6 +1,6 @@
 """Import exact Malum 6646111 ModelPart geometry for editable/offline exports.
 
-Runtime uses Malum's original public layer factories, not this parsed geometry.
+The original geometry is used for offline exports and comparisons.
 Run with Blender --background --python tools/lightward-model/import_reference.py.
 """
 import hashlib

@@ -1,7 +1,7 @@
-"""Retexture the original Malum armor; retain geometry, UV, alpha and pivots.
+"""Export the custom Lightward helmet and retextured Malum armor.
 Run with Blender --background --factory-startup --python this_file.
-Runtime calls the original public layer factories; the reference manifest is
-only for editable Blockbench exports and same-camera offline comparisons.
+The helmet geometry asset is shared with the runtime layer. The Malum
+reference manifest supplies the other pieces and the same-camera comparison.
 """
 import base64
 import json
@@ -24,19 +24,14 @@ BONES = {'head':(0,0,0),'body':(0,0,0),'left_arm':(5,2,0),'right_arm':(-5,2,0),
          'left_foot':(1.9,12,0),'right_foot':(-1.9,12,0)}
 JAR = next((Path.home()/'.gradle/caches/modules-2/files-2.1/curse.maven/malum-484064/6646111').rglob('*.jar'))
 
-# Gray cheeks extend under the pupils; only their innermost front texel is purple.
-REF['helmet']['nodes']['tears'] = dict(name='tears',parent='head',offset=[0,0,0],rotation=[0,0,0],cubes=[
-    dict(pos=[-3,-3,-5.25],size=[2,3,1],uv=[84,34],inflate=0,mirror=False),
-    dict(pos=[1,-3,-5.25],size=[2,3,1],uv=[84,34],inflate=0,mirror=True)])
-REAR_GUARD = dict(pos=[-4.5,-8.5,4.5],size=[9,9,1],uv=[92,34],inflate=0,mirror=False)
-REAR_LAME = dict(pos=[-1,-2.5,-.5],size=[2,5,1],uv=[92,46],inflate=0,mirror=False)
-NAPE_LAME = dict(pos=[-3.5,-2.25,5.25],size=[7,2,1],uv=[100,46],inflate=0,mirror=False)
-REF['helmet']['nodes']['rear_guard'] = dict(name='rear_guard',parent='head',offset=[0,0,0],
-                                          rotation=[0,0,0],cubes=[REAR_GUARD,NAPE_LAME])
-for side,sign in (('left',-1),('right',1)):
-    name = f'{side}_rear_lame'
-    REF['helmet']['nodes'][name] = dict(name=name,parent='head',offset=[sign*2.65,-4.6,5.5],
-                                       rotation=[0,0,sign*.22],cubes=[dict(REAR_LAME,mirror=sign > 0)])
+ORIGINAL_HELMET = REF['helmet']['nodes']
+HELMET = json.loads((ASSETS/'models/armor/aufheben_lightward_helmet.geometry.json').read_text(encoding='utf-8'))
+REF['helmet']['nodes'] = {
+    name: dict(name=name, parent='head', offset=part.get('offset', [0,0,0]),
+               rotation=part.get('rotation', [0,0,0]),
+               cubes=[dict({'inflate':0, 'mirror':False}, **cube) for cube in part['cubes']])
+    for name,part in HELMET.items()
+}
 
 
 def png_read(data):
@@ -90,14 +85,6 @@ def paint_rows(pixels,u,v,rows):
             paint(pixels,x,y,color)
 
 
-def tint(pixels,x,y,color,strength=.8):
-    old = pixels[y][x]
-    if old[3]:
-        hue = tuple(bytes.fromhex(color))
-        light = .55+.55*(.2126*old[0]+.7152*old[1]+.0722*old[2])/200
-        pixels[y][x] = tuple(round(min(255,c*light*strength)) for c in hue)+(old[3],)
-
-
 def gild(pixels,x,y,position):
     old = pixels[y][x]
     if old[3]:
@@ -107,28 +94,63 @@ def gild(pixels,x,y,position):
         pixels[y][x] = tuple(round(a+(b-a)*level) for a,b in zip(shadow,highlight))+(old[3],)
 
 
-def paint_rear_armor(pixels,source):
-    palette = {'W':'D3DAF7','P':'BDC4DE','S':'989DB2','M':'737786',
-               'B':'2D2F35','A':'1E1F24','D':'111214'}
-    guard = ('MSPWWWPSM',
-             'SPPSSSPPS',
-             'SPPBABPPS',
-             'SPBAAABPS',
-             'SMBADABMS',
-             'SMPBABPMS',
-             'MSPSBSPSM',
-             'BSPSSSPSB',
-             'BMSSSSSMB')
-    lame = ('WP','PS','SB','SP','MS')
-    nape = ('MSPWPSM','BMSPSMB')
-    edges = {'up':'P','down':'B','east':'M','west':'M','north':'A'}
-    for cube,back in ((REAR_GUARD,guard),(REAR_LAME,lame),(NAPE_LAME,nape)):
-        for face,(u,v,width,height) in face_uv(cube).items():
-            for y in range(height):
-                for x in range(width):
-                    assert source[v+y][u+x][3] == 0, 'Rear armor UV overlaps the original helmet'
-                    shade = back[y][x] if face == 'south' else edges[face]
-                    pixels[v+y][u+x] = tuple(bytes.fromhex(palette[shade]))+(255,)
+HELMET_PALETTE = {
+    shade: tuple(bytes.fromhex(color))+(255,)
+    for shade,color in {
+        'W':'EDF1FC', 'P':'CDD4EA', 'S':'A5AEC5', 'M':'747E95',
+        'B':'494E61', 'A':'292C38', 'D':'161922',
+        'C':'A3D8DE', 'Q':'6EAAB9', 'G':'E0C28A',
+        'V':'8C51BA', 'T':'6B3692', 'U':'462362',
+    }.items()
+}
+
+
+def helmet_texture():
+    # One set of texels per plate. Paired parts mirror the same UV islands.
+    # Each first row shades up/east/north/west/south/down; face art overrides it.
+    panels = {
+        (0,0): ('BSBSSD', {'up': ('SPMSSSMPS','WPMSBSMPW','WPMSBSMPW',
+                                  'WPMMBMMPW','WPMMBMMPW','WPMMBMMPW',
+                                  'WPMSBSMPW','WPMSBSMPW','SPMSSSMPS'),
+                            'south': ('PWPPPPPWP','PSMSSSMSP','PSMMMMMSP','SMBBBBBMS')}),
+        (40,0): ('SBASBD', {'west': ('SPPPPPWPS','PWPPPPWPS','SWPSPPPPS','SWPSPSSSM','MSPSSSSMB')}),
+        (64,0): ('SAAAPD', {'south': ('SPWWWWWPS','SPPPPPPPS','SPPSSSPPS','SPPSMSPPS','MSPSMSPSM','BMSSSSSMB')}),
+        (88,0): ('PBAAPD', {'south': ('SPWWWPS','MSPPPSM')}),
+        (104,0): ('PSAPBD', {'west': ('PPWPP',), 'east': ('BMMMM',)}),
+        (0,18): ('WSPPBD', {'west': ('WCWGP','PQPPP','SPSSS'), 'north': ('CW','WP','PS')}),
+        (16,18): ('WSBSBD', {'west': ('WWPP','SPWP','MSSP')}),
+        (32,18): ('PSPPSD', {'south': ('WP','PS')}),
+        (48,18): ('WSPPBD', {'north': ('PWGWWWGWP','SCPPSPPCS'), 'up': ('PWGWWWGWP','SPPPWPPPS')}),
+        (76,18): ('PBBBBD', {'north': ('SMBBBMS',)}),
+        (96,18): ('WPWPSD', {'north': ('PWP','WWW','PWP')}),
+        (108,18): ('WPWPBD', {'north': ('W','P'), 'up': ('C',)}),
+        (116,18): ('WPWPSD', {'north': ('W','W','P'), 'west': ('WP','PS','SM'), 'east': ('WP','PS','SM')}),
+        (0,32): ('SBSBAD', {'north': ('SPMSMPS','PPSSSPP','SPPPPPS')}),
+        (20,32): ('WPWPSD', {'north': ('WP','WP','WP','WP','PS')}),
+        (30,32): ('PSPSBD', {'north': ('MSPPPSM',)}),
+        (46,32): ('PSPSBD', {'north': ('S','P','P','S')}),
+        (56,32): ('WPWPSD', {'north': ('WP','WW','PS')}),
+        (66,32): ('ABABAD', {'north': ('V','T','U')}),
+    }
+    pixels = [[(0,0,0,0) for _ in range(128)] for _ in range(128)]
+    painted = set()
+    for part in REF['helmet']['nodes'].values():
+        for cube in part['cubes']:
+            key = tuple(cube['uv'])
+            if key in painted:
+                continue
+            painted.add(key)
+            shades, patterns = panels[key]
+            faces = face_uv(cube)
+            for face,shade in zip(('up','east','north','west','south','down'),shades):
+                u,v,width,height = faces[face]
+                rows = patterns.get(face, (shade*width,)*height)
+                assert len(rows) == height and all(len(row) == width for row in rows), (key,face)
+                for y,row in enumerate(rows,v):
+                    for x,shade in enumerate(row,u):
+                        assert pixels[y][x][3] == 0, (key,face,x,y)
+                        pixels[y][x] = HELMET_PALETTE[shade]
+    return pixels
 
 
 def retexture(slot,source):
@@ -141,42 +163,13 @@ def retexture(slot,source):
         result = []
         for x,(r,g,b,a) in enumerate(row):
             tone = .2126*r+.7152*g+.0722*b
-            iris = slot == 'helmet' and 20 <= y < 24 and (9 <= x < 12 or 33 <= x < 36)
-            if slot == 'chestplate' or iris:
+            if slot == 'chestplate':
                 color = (min(255,round(.88*tone)),min(255,round(.91*tone)),min(255,round(1.03*tone)))
             else:
                 color = next(color for limit,color in metal_ramp if tone <= limit)
             result.append(color+(a,))
         pixels.append(result)
-    if slot == 'helmet':
-        # Mirrored brow and temple plates use broad black insets and silver rims.
-        for u in (6,36):
-            paint_rows(pixels,u,6,(('BDC4DE','D3DAF7','BDC4DE'),
-                                    ('989DB2','D3DAF7','BDC4DE'),
-                                    ('2D2F35','1E1F24','1E1F24'),
-                                    ('18191C','18191C','292A30')))
-        temple = (('BDC4DE','D3DAF7','D3DAF7','D3DAF7','D3DAF7','D3DAF7','BDC4DE'),
-                  ('989DB2','BDC4DE','BDC4DE','BDC4DE','BDC4DE','BDC4DE','989DB2'),
-                  ('989DB2','2D2F35','1E1F24','1E1F24','1E1F24','2D2F35','989DB2'),
-                  ('989DB2','1E1F24','18191C','111214','18191C','1E1F24','989DB2'),
-                  ('737786','1E1F24','18191C','111214','18191C','1E1F24','737786'),
-                  ('737786','2D2F35','1E1F24','1E1F24','1E1F24','2D2F35','737786'),
-                  ('565965','737786','737786','737786','737786','737786','565965'))
-        for u in (0,9,18,27):
-            paint_rows(pixels,u,32,temple)
-        for u in (9,33):
-            for y,color in zip(range(20,24),('C284E8','888DE9','4BBFD7','66CBB0')):
-                for x in range(u,u+3): tint(pixels,x,y,color,1.05 if x == u+1 else .88)
-        for u in (7,37): paint(pixels,u,6,'DFBC78')
-        assert all(source[y][x][3] == 0 for y in range(34,38) for x in range(84,90))
-        for x in range(85,89): pixels[34][x] = (211,218,247,255)
-        for y,silver in zip(range(35,38),((189,196,222),(152,157,178),(115,119,134))):
-            for x in range(84,90): pixels[y][x] = silver+(255,)
-        for y,color in zip(range(35,38),('8308E4','6006AB','2B0178')):
-            pixels[y][86] = tuple(bytes.fromhex(color))+(255,)
-        pixels[34][86] = (131,8,228,255)
-        paint_rear_armor(pixels,source)
-    elif slot == 'chestplate':
+    if slot == 'chestplate':
         # The existing inclined upper breastplate, including its thin overlay.
         for u in (14,56):
             for row,colors in enumerate((('F0DFB2','DFBC78'),('DFBC78','BF985B'),('BF985B','967341'))):
@@ -236,9 +229,6 @@ def retexture(slot,source):
             for y,row in enumerate(wing_rows,124):
                 for x,color in enumerate(row[::-1] if mirrored else row):
                     paint(pixels,u+x,y,color)
-    helmet_tiles = ((84,34,6,4),(92,34,20,10),(92,46,6,6),(100,46,16,3)) if slot == 'helmet' else ()
-    assert all(p[3] == source[y][x][3] for y,row in enumerate(pixels) for x,p in enumerate(row)
-               if not any(u <= x < u+width and v <= y < v+height for u,v,width,height in helmet_tiles)), 'Original source alpha changed'
     return pixels
 
 
@@ -256,22 +246,28 @@ def paint_icon_metal(source,rows,start_x,start_y):
     return source
 
 
-def helmet_icon(source):
-    left_rows = ('..OOO.',
-                 '.OWW.O',
-                 'OSWWBO',
-                 '.O.WPP',
-                 '.OP.S.',
-                 '.OBAA.',
-                 '.OPSA.',
-                 'OS..A.',
-                 'OPS.AB',
-                 'OSP.AA',
-                 '.OBO..')
-    paint_icon_metal(source,left_rows,2,2)
-    # Mirror across the gap between columns seven and eight, including the crown
-    # silhouette and the existing gold, iridescent and purple texels.
-    return [row[:8]+list(reversed(row[:8])) for row in source]
+def helmet_icon():
+    palette = {'.': (0,0,0,0), **HELMET_PALETTE}
+    # Keep gaps between the three supports and a single pixel across each tear.
+    left_rows = (
+        '........',
+        '........',
+        '.......B',
+        '....M..W',
+        '....P.BP',
+        '..BCPSSW',
+        '..MWPGWP',
+        '..SQMBAM',
+        '..WPDAAW',
+        '..PWSVPW',
+        '..SPSTWW',
+        '..BPSUPW',
+        '...MPSSP',
+        '...BSPWP',
+        '....BMMM',
+        '........',
+    )
+    return [[palette[shade] for shade in row+row[::-1]] for row in left_rows]
 
 
 def chestplate_icon(source):
@@ -318,8 +314,10 @@ def ident(name): return str(uuid.uuid5(uuid.NAMESPACE_URL,'maledict/lightward/re
 
 def face_uv(c):
     u,v = c['uv']; w,h,d = c['size']
-    return dict(up=(u+d,v,w,d),down=(u+d+w,v,w,d),east=(u,v+d,d,h),
-                north=(u+d,v+d,w,h),west=(u+d+w,v+d,d,h),south=(u+2*d+w,v+d,w,h))
+    # ModelPart uses negative Y above the head. The physical top uses the
+    # first horizontal tile (Direction.DOWN in the cube constructor).
+    return dict(up=(u+d,v,w,d),down=(u+d+w,v,w,d),west=(u,v+d,d,h),
+                north=(u+d,v+d,w,h),east=(u+d+w,v+d,d,h),south=(u+2*d+w,v+d,w,h))
 
 
 def blockbench():
@@ -383,8 +381,10 @@ def material(path,name):
     return mat
 
 
-def create_mesh(slot,mat):
-    objects,nodes = [],REF[slot]['nodes']
+def create_mesh(slot,mat,nodes=None):
+    objects = []
+    if nodes is None:
+        nodes = REF[slot]['nodes']
     for key,node in nodes.items():
         transform = node_matrix(nodes,key)
         for index,c in enumerate(node['cubes']):
@@ -395,14 +395,22 @@ def create_mesh(slot,mat):
             vertices = []
             for point in points:
                 a,b,cc = transform @ Vector(point); vertices.append((a,cc,24-b))
-            faces = [(0,3,2,1),(5,6,7,4),(0,1,5,4),(3,7,6,2),(1,2,6,5),(4,7,3,0)]
-            names = ['north','south','up','down','west','east']
+            # Use ModelPart's corner order and mirror both the vertices and winding.
+            faces = [(1,0,3,2),(4,5,6,7),(5,4,0,1),(2,3,7,6),(5,1,2,6),(0,4,7,3)]
+            if c['mirror']:
+                mirror_x = (1,0,3,2,5,4,7,6)
+                faces = [tuple(mirror_x[i] for i in reversed(face)) for face in faces]
+            names = ['north','south','up','down','east','west']
             mesh = bpy.data.meshes.new(key+str(index)); mesh.from_pydata(vertices,[],faces); mesh.update()
             obj = bpy.data.objects.new(slot+'/'+key+'/'+str(index),mesh); bpy.context.collection.objects.link(obj)
             obj.data.materials.append(mat); layer = mesh.uv_layers.new()
             for polygon,name in zip(mesh.polygons,names):
-                u,v,fw,fh = face_uv(c)[name]; corners = [(u,v),(u,v+fh),(u+fw,v+fh),(u+fw,v)]
-                if c['mirror']: corners = [(2*u+fw-uu,vv) for uu,vv in corners]
+                u,v,fw,fh = face_uv(c)[name]
+                corners = [(u+fw,v),(u,v),(u,v+fh),(u+fw,v+fh)]
+                if name == 'down':
+                    corners = [(uu,2*v+fh-vv) for uu,vv in corners]
+                if c['mirror']:
+                    corners.reverse()
                 for loop,(uu,vv) in zip(polygon.loop_indices,corners): layer.data[loop].uv = (uu/128,1-vv/128)
             objects.append(obj)
     return objects
@@ -435,14 +443,16 @@ def mannequin():
 
 def eye_clearance():
     nodes = REF['helmet']['nodes']
-    for ex in (-2.5,-1.5,1.5,2.5):
+    for x in (-2.5,-1.5,1.5,2.5):
+        eye = Vector((x,-3.5,-4))
         for key,node in nodes.items():
-            assert node['rotation'][:2] == [0,0]
-            transform = node_matrix(nodes,key)
-            for c in node['cubes']:
-                x,y,z = transform @ Vector(c['pos']); w,h,d = c['size']; q = c['inflate']
-                assert node['rotation'][2] == 0 or z-q >= -4
-                assert not (x-q < ex < x+w+q and y-q < -3.5 < y+h+q and z-q < -4), 'Eye is occluded'
+            inverse = node_matrix(nodes,key).inverted()
+            # Sample the short viewing ray from the skin to the front of the armor.
+            for step in range(21):
+                point = inverse @ (eye - Vector((0,0,step*.1)))
+                for cube in node['cubes']:
+                    assert not all(start < coordinate < start+length for coordinate,start,length
+                                   in zip(point,cube['pos'],cube['size'])), (key, 'Eye is occluded')
 
 
 def preview():
@@ -469,21 +479,49 @@ def preview():
         camera.location = position; camera.rotation_euler = (Vector((0,0,18))-camera.location).to_track_quat('-Z','Y').to_euler()
         scene.render.filepath = str(ART/('preview-'+name+'.png')); bpy.ops.render.render(write_still=True)
         if name == 'front':
-            for slot in objects:
+            for obj in objects['helmet']: obj.hide_render = True
+            comparison_helmet = create_mesh('helmet',original['helmet'],ORIGINAL_HELMET)
+            for slot in SLOTS[1:]:
                 for obj in objects[slot]: obj.data.materials[0] = original[slot]
             scene.render.filepath = str(ART/'preview-original-same-camera.png'); bpy.ops.render.render(write_still=True)
-            for slot in objects:
+            for obj in comparison_helmet: bpy.data.objects.remove(obj,do_unlink=True)
+            for obj in objects['helmet']: obj.hide_render = False
+            for slot in SLOTS[1:]:
                 for obj in objects[slot]: obj.data.materials[0] = mats[slot]
     bpy.ops.wm.save_as_mainfile(filepath=str(ART/'aufheben_lightward.blend'))
+    for slot in SLOTS[1:]:
+        for obj in objects[slot]: obj.hide_render = True
+    camera.data.ortho_scale = 15
+    camera.location = (20,-52,47)
+    camera.rotation_euler = (Vector((0,0,29.2))-camera.location).to_track_quat('-Z','Y').to_euler()
+    scene.render.resolution_x = scene.render.resolution_y = 560
+    scene.render.filepath = str(ART/'preview-helmet.png')
+    bpy.ops.render.render(write_still=True)
+    camera.location = (0,0,75)
+    camera.rotation_euler = (0,0,0)
+    scene.render.filepath = str(ART/'preview-helmet-top.png')
+    bpy.ops.render.render(write_still=True)
+
+
+def write_icon_previews(icons):
+    for slot,icon in icons.items():
+        png_write(ART/f'preview-{slot}-icon.png',[[pixel for pixel in row for _ in range(16)]
+                                                 for row in icon for _ in range(16)])
+    background = (105,109,121,255)
+    png_write(ART/'preview-item-set.png',[
+        [pixel if pixel[3] else background for slot in SLOTS for pixel in icons[slot][y] for _ in range(8)]
+        for y in range(16) for _ in range(8)])
 
 
 ART.mkdir(parents=True,exist_ok=True)
+eye_clearance()
 with zipfile.ZipFile(JAR) as jar:
     for slot in SLOTS:
         raw = jar.read('assets/malum/textures/armor/'+REF[slot]['texture']+'.png')
         (ART/(slot+'-original.png')).write_bytes(raw); source = png_read(raw)
         assert len(source) == len(source[0]) == 128
-        png_write(ASSETS/f'textures/models/armor/aufheben_lightward_{slot}.png',retexture(slot,source))
+        texture = helmet_texture() if slot == 'helmet' else retexture(slot,source)
+        png_write(ASSETS/f'textures/models/armor/aufheben_lightward_{slot}.png',texture)
     thigh_panel = ((4,7,'2D2F35'),(4,8,'18191C'),(4,9,'1E1F24'),(4,10,'18191C'),(5,10,'2D2F35'),
                    (4,11,'111214'),(5,11,'18191C'),(4,12,'18191C'),(5,12,'25232E'))
     leggings_accents = ((7,3,'B88CE4'),(8,3,'A181D8'),(6,4,'62C6CF'),(9,4,'57B1BF'),
@@ -493,22 +531,15 @@ with zipfile.ZipFile(JAR) as jar:
                   (4,7,'18191C'),(5,7,'1E1F24'),(4,8,'1E1F24'),(5,8,'2D2F35'),
                   (4,9,'C6CFDA'),(3,10,'A5AAB8'),(2,11,'989DB2'))
     boot_accents = boot_bevel + tuple((15-x,y,color) for x,y,color in boot_bevel)
-    icons = {}
-    for slot,recolor in (('helmet',helmet_icon),('chestplate',chestplate_icon)):
-        path = ASSETS/f'textures/item/aufheben_lightward_{slot}.png'
-        icons[slot] = recolor(png_read(path.read_bytes()))
+    chest_icon = ASSETS/'textures/item/aufheben_lightward_chestplate.png'
+    icons = dict(helmet=helmet_icon(), chestplate=chestplate_icon(png_read(chest_icon.read_bytes())))
     for slot,accents in (('leggings',leggings_accents),('boots',boot_accents)):
         source = png_read(jar.read(f'assets/malum/textures/item/soul_stained_steel_{slot}.png'))
         icons[slot] = armor_icon(source,accents)
     for slot,icon in icons.items():
         png_write(ASSETS/f'textures/item/aufheben_lightward_{slot}.png',icon)
-        png_write(ART/f'preview-{slot}-icon.png',[[pixel for pixel in row for _ in range(16)]
-                                                 for row in icon for _ in range(16)])
-    background = (105,109,121,255)
-    png_write(ART/'preview-item-set.png',[
-        [pixel if pixel[3] else background for slot in SLOTS for pixel in icons[slot][y] for _ in range(8)]
-        for y in range(16) for _ in range(8)])
-blockbench(); eye_clearance()
+    write_icon_previews(icons)
+blockbench()
 (ART/'geometry.json').write_text(json.dumps(REF,indent=2),encoding='utf-8')
 preview()
-print('Exported all four armor pieces using the original geometry and UVs. Four eye rays clear.')
+print('Exported the custom Lightward helmet and the three Malum-derived armor pieces. Four eye rays clear.')
