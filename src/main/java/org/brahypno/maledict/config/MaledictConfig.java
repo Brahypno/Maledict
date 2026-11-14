@@ -37,6 +37,11 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_CHARGE_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_LASER_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_RAIN_DAMAGE;
+    public static final ForgeConfigSpec.DoubleValue DEMIURGE_SWEEP_DAMAGE;
+    public static final ForgeConfigSpec.DoubleValue DEMIURGE_PILLAR_RISE_DAMAGE;
+    public static final ForgeConfigSpec.DoubleValue DEMIURGE_PILLAR_EXPLOSION_DAMAGE;
+    public static final ForgeConfigSpec.DoubleValue DEMIURGE_PILLAR_EMPOWERED_DAMAGE;
+    public static final ForgeConfigSpec.IntValue DEMIURGE_PILLAR_HEALTH;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_EASY_DAMAGE_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_NORMAL_DAMAGE_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_HARD_DAMAGE_MULTIPLIER;
@@ -49,7 +54,20 @@ public final class MaledictConfig {
         DEMIURGE_LASER_DAMAGE = builder.comment("Base damage per laser pulse before the world difficulty multiplier.")
                                        .defineInRange("laserDamage", 6.0D, 0.0D, 10000.0D);
         DEMIURGE_RAIN_DAMAGE = builder.comment("Base damage per tear before the world difficulty multiplier.")
-                                      .defineInRange("rainDamage", 5.0D, 0.0D, 10000.0D);
+                                      .defineInRange("rainDamage", 8.0D, 0.0D, 10000.0D);
+        DEMIURGE_SWEEP_DAMAGE = builder.comment("Base damage of one serpent sweep before the world difficulty multiplier.")
+                                       .defineInRange("sweepDamage", 10.0D, 0.0D, 10000.0D);
+        DEMIURGE_PILLAR_RISE_DAMAGE = builder.comment("Base damage when a False Creation pillar rises through a target.")
+                                             .defineInRange("pillarRiseDamage", 8.0D, 0.0D, 10000.0D);
+        DEMIURGE_PILLAR_EXPLOSION_DAMAGE = builder.comment("Base damage of a pillar's normal timed explosion.")
+                                                  .defineInRange("pillarExplosionDamage", 8.0D, 0.0D, 10000.0D);
+        DEMIURGE_PILLAR_EMPOWERED_DAMAGE = builder.comment("Base damage of a sweep-triggered empowered pillar explosion.")
+                                                  .defineInRange("pillarEmpoweredDamage", 12.0D, 0.0D, 10000.0D);
+        // Durability was left open in the design. 24 lets an iron sword break a
+        // pillar in four full hits and a netherite sword in three, so clearing a
+        // pillar is a real but affordable alternative to using it as cover.
+        DEMIURGE_PILLAR_HEALTH = builder.comment("Health of one False Creation pillar; destroyed by player damage only.")
+                                        .defineInRange("pillarHealth", 24, 1, 10000);
         DEMIURGE_EASY_DAMAGE_MULTIPLIER = builder.defineInRange("easyDamageMultiplier", 0.5D, 0.0D, 100.0D);
         DEMIURGE_NORMAL_DAMAGE_MULTIPLIER = builder.defineInRange("normalDamageMultiplier", 1.0D, 0.0D, 100.0D);
         DEMIURGE_HARD_DAMAGE_MULTIPLIER = builder.defineInRange("hardDamageMultiplier", 1.5D, 0.0D, 100.0D);

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntToDoubleFunction;
 
 /** Places rigid sections in order along one guide, advancing by each section's fixed span. */
 public final class DemiurgeBodyChain {
@@ -35,6 +36,11 @@ public final class DemiurgeBodyChain {
         return joints.size();
     }
 
+    /** Authored connection data for one rigid section; renderers use the front/back endpoints. */
+    public Joint joint(int index) {
+        return joints.get(index);
+    }
+
     /** Chain order runs head to tail, so a cut always removes whole trailing sections. */
     public int retainedJoints(int cut) {
         return Math.max(1, joints.size() - Math.max(0, Math.min(joints.size() - 1, cut)));
@@ -42,6 +48,22 @@ public final class DemiurgeBodyChain {
 
     public int lastRetainedBone(int cut) {
         return joints.get(retainedJoints(cut) - 1).bone();
+    }
+
+    /**
+     * Representative bone halfway along the swinging section. The sweep chooses its side from this
+     * midpoint instead of the rear tip, so a target near the tail still gets an arc centred on the
+     * body rather than a pivot around the last joint.
+     */
+    int sweepMidpointBone(int cut) {
+        int first = DemiurgeSweep.STABLE_GUIDE_POINTS;
+        int last = retainedJoints(cut) - 1;
+        if (last <= first) return lastRetainedBone(cut);
+        return joints.get((first + last) >>> 1).bone();
+    }
+
+    boolean canSweep(int bone) {
+        return jointByBone.getOrDefault(bone, -1) >= DemiurgeSweep.STABLE_GUIDE_POINTS;
     }
 
     /** A bone outside the chain (root, neck, head, jaw) is never hidden by the body cut. */
@@ -56,6 +78,17 @@ public final class DemiurgeBodyChain {
 
     public void follow(Vector3f[] positions, Quaternionf[] rotations, Vec3 origin, float yaw, float blend, Path path,
                        int cut) {
+        follow(positions, rotations, origin, yaw, blend, path, cut, null);
+    }
+
+    /**
+     * Places the rigid sections along the guide. {@code lateral} may add a sideways displacement
+     * (in the entity's local X axis) to each guide point; the chain still solves adjacent joints
+     * from the resulting continuous guide, so a sweep bends the body instead of translating
+     * independent sections apart.
+     */
+    public void follow(Vector3f[] positions, Quaternionf[] rotations, Vec3 origin, float yaw, float blend, Path path,
+                       int cut, IntToDoubleFunction lateral) {
         int retained = retainedJoints(cut);
         Quaternionf turn = new Quaternionf();
         Vector3f target = new Vector3f();
@@ -77,11 +110,11 @@ public final class DemiurgeBodyChain {
             if (guide.isEmpty()) {
                 rotation.transform(joint.front(), endpoint).add(position);
                 map(endpoint, target, origin, yaw, path);
-                guide.add(new Vector2f(target.x, target.z));
+                guide.add(new Vector2f((float) (target.x + side(lateral, 0)), target.z));
             }
             rotation.transform(joint.back(), endpoint).add(position);
             map(endpoint, target, origin, yaw, path);
-            guide.add(new Vector2f(target.x, target.z));
+            guide.add(new Vector2f((float) (target.x + side(lateral, index)), target.z));
         }
 
         Guide cursor = new Guide(guide);
@@ -106,6 +139,10 @@ public final class DemiurgeBodyChain {
             rotation.slerp(turn, blend);
             front.set(back);
         }
+    }
+
+    private static double side(IntToDoubleFunction lateral, int guideIndex) {
+        return lateral == null ? 0 : lateral.applyAsDouble(guideIndex);
     }
 
     private static void map(Vector3f point, Vector3f target, Vec3 origin, float yaw, Path path) {

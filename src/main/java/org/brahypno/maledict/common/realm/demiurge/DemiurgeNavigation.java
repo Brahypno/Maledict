@@ -46,7 +46,47 @@ final class DemiurgeNavigation extends GroundPathNavigation {
                         && DemiurgeBlockBreaking.canBreak(level.getBlockState(pos), level, pos, mob)) {
                     return super.getBlockPathType(new ClearedBlock(level, pos), x, y, z);
                 }
+                if (bridgesGap(level, pos)) return BlockPathTypes.WALKABLE;
                 return super.getBlockPathType(level, x, y, z);
+            }
+
+            /**
+             * The raised front is over five blocks wide; a narrow missing floor is
+             * carried by the body rather than stepped into. Treat the air over a
+             * gap as a floor only while solid ground remains within half the body
+             * width on at least one side. Wider gaps keep the normal OPEN/fall
+             * handling.
+             */
+            @Override
+            protected double getFloorLevel(BlockPos pos) {
+                double floor = super.getFloorLevel(pos);
+                if (floor < pos.getY() - .5 && bridgesGap(mob.level(), pos)) return pos.getY();
+                return floor;
+            }
+
+            private boolean bridgesGap(BlockGetter level, BlockPos pos) {
+                int range = Mth.ceil(mob.getBbWidth() * .5F);
+                if (range <= 0) return false;
+                BlockState state = level.getBlockState(pos);
+                if (!state.getFluidState().isEmpty() || !state.getCollisionShape(level, pos).isEmpty()) return false;
+                BlockPos below = pos.below();
+                if (!level.getFluidState(below).isEmpty()
+                        || !level.getBlockState(below).getCollisionShape(level, below).isEmpty()) return false;
+                boolean left = false, right = false, back = false, front = false;
+                for (int dx = -range; dx <= range; dx++) {
+                    for (int dz = -range; dz <= range; dz++) {
+                        if (dx == 0 && dz == 0) continue;
+                        BlockPos support = below.offset(dx, 0, dz);
+                        if (level.getBlockState(support).getCollisionShape(level, support).isEmpty()) continue;
+                        if (dx < 0) left = true;
+                        if (dx > 0) right = true;
+                        if (dz < 0) back = true;
+                        if (dz > 0) front = true;
+                    }
+                }
+                // Support on opposite sides means a narrow floor gap the body can
+                // span. Support on one side only is a cliff edge; do not walk off it.
+                return (left && right) || (front && back);
             }
         };
         nodeEvaluator.setCanPassDoors(true);

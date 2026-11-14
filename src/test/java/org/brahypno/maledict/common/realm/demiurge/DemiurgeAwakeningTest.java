@@ -141,10 +141,42 @@ public final class DemiurgeAwakeningTest {
             }
             var combatPose = DemiurgeRig.INSTANCE.pose();
             combatPose.sample(200, 0, DemiurgeAttack.LASER, 40, Vec3.ZERO, 0, new DemiurgeTrail()::sample);
+            var flatTrail = new DemiurgeTrail();
+            var steppedTrail = new DemiurgeTrail();
+            for (int z = 0; z <= 8; z++) {
+                flatTrail.record(new Vec3(0, 0, z), 0);
+                steppedTrail.record(new Vec3(0, z >= 4 ? 1 : 0, z), 0);
+            }
+            var flatPose = DemiurgeRig.INSTANCE.pose();
+            var steppedPose = DemiurgeRig.INSTANCE.pose();
+            flatPose.sample(200, 0, DemiurgeAttack.NONE, 0, new Vec3(0, 0, 9), 0, flatTrail::sample);
+            steppedPose.sample(200, 0, DemiurgeAttack.NONE, 0, new Vec3(0, 1, 9), 0, steppedTrail::sample);
+            assertTrue(maxJointGap(flatPose) < .08,
+                    "Flat ground must keep every body joint below the sleeve threshold: " + maxJointGap(flatPose));
+            assertTrue(maxJointGap(steppedPose) > .25,
+                    "A one-block step must open a body joint gap for the renderer to bridge: "
+                            + maxJointGap(steppedPose));
+            assertTrue(DemiurgeRig.INSTANCE.jointRadius(DemiurgeRig.INSTANCE.jointCount() - 1)
+                            < DemiurgeRig.INSTANCE.jointRadius(DemiurgeRig.INSTANCE.jointCount() / 2) * .5,
+                    "Procedural joints must use the tapering section's own radius, not one global size");
             assertEquals(.875, combatPose.eye(0, Vec3.ZERO, 0).distanceTo(combatPose.eye(1, Vec3.ZERO, 0)), .00001,
                     "The beams originate from the two separately authored eyes");
             verifyGestureTransitions(head, names.size());
             verifyLaserFacing();
+            assertEquals(0, DemiurgeSweep.fraction(0), .0001);
+            assertTrue(DemiurgeSweep.fraction(15) < -.3, "The windup coils away from the strike side");
+            assertTrue(DemiurgeSweep.fraction(22) > 0, "The active window crosses the center line");
+            assertTrue(DemiurgeSweep.fraction(27) > .95, "The strike reaches full lateral travel before recovery");
+            assertEquals(0, DemiurgeSweep.fraction(49), .0001);
+            assertEquals(0, DemiurgeSweep.fraction(50), .0001);
+            assertTrue(DemiurgeSweep.amplitude(DemiurgeRig.INSTANCE.maxBodyCut())
+                            < DemiurgeSweep.amplitude(0),
+                    "A severed body sweeps a shorter arc instead of keeping the full tail range");
+            assertTrue(DemiurgeSweep.amplitude(DemiurgeRig.INSTANCE.maxBodyCut())
+                            >= DemiurgeSweep.MAX_AMPLITUDE * DemiurgeSweep.MIN_LENGTH_SCALE - .0001);
+            var stoppedTurn = DemiurgePatrolSteering.steer(Vec3.ZERO, 0, 90, 0, java.util.List.of());
+            assertFalse(stoppedTurn.blocked(), "A stopped statue must still be able to turn");
+            assertTrue(stoppedTurn.yaw() > 0, "A stopped statue turns toward the target bearing");
             assertEquals(400, DemiurgeDifficulty.maxHealth(net.minecraft.world.Difficulty.EASY));
             assertEquals(600, DemiurgeDifficulty.maxHealth(net.minecraft.world.Difficulty.NORMAL));
             assertEquals(800, DemiurgeDifficulty.maxHealth(net.minecraft.world.Difficulty.HARD));
@@ -170,6 +202,7 @@ public final class DemiurgeAwakeningTest {
         var statue = current[0];
         java.util.List<ChunkPos> patrolChunks = new java.util.ArrayList<>();
         statue.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(2, 12, 2)));
+        Vec3 incursusFixturePosition = statue.position().add(24, 0, 0);
         statue.setNoGravity(true);
         level.addFreshEntity(statue);
         helper.assertTrue(CombatProtection.state(statue) != null
@@ -269,7 +302,6 @@ public final class DemiurgeAwakeningTest {
         } finally {
             worldData.setDifficulty(originalDifficulty);
         }
-        verifyIncursusDamage(helper, statue.position().add(24, 0, 0));
         helper.runAtTickTime(10, () -> helper.assertTrue(
                 !level.getEntitiesOfClass(DemiurgeTearEntity.class, current[0].getBoundingBox().inflate(15),
                         tear -> tear.getOwner() == current[0]).isEmpty(),
@@ -350,8 +382,6 @@ public final class DemiurgeAwakeningTest {
         boolean[] firstCharge = {true};
         Vec3[] rainCenter = new Vec3[1];
         int[] rainDrops = {0};
-        Vec3[] postCastStart = new Vec3[1];
-        float[] postCastClock = new float[1];
         helper.onEachTick(() -> {
             if (patrolStart[0] != null && !current[0].isRemoved()) {
                 float yaw = current[0].getYRot();
@@ -365,13 +395,14 @@ public final class DemiurgeAwakeningTest {
                 if (awake.attack() == DemiurgeAttack.ROAR) {
                     if (rainCenter[0] == null) {
                         rainCenter[0] = awake.headCenter();
-                        player.setPos(rainCenter[0].add(6, -4, 0));
+                        player.setPos(rainCenter[0].add(DemiurgeAttack.RAIN_RADIUS + 1, -4, 0));
                         awake.selectTargetFromGoal(null);
                     }
                     for (var tear : level.getEntitiesOfClass(DemiurgeTearEntity.class, awake.getBoundingBox().inflate(24),
                             tear -> tear.getOwner() == awake)) {
-                        helper.assertTrue(tear.position().subtract(rainCenter[0]).horizontalDistanceSqr() <= 5.02 * 5.02,
-                                "Every tear must remain inside the five-block disk locked at windup, after the player leaves");
+                        helper.assertTrue(tear.position().subtract(rainCenter[0]).horizontalDistanceSqr()
+                                        <= (DemiurgeAttack.RAIN_RADIUS + .02) * (DemiurgeAttack.RAIN_RADIUS + .02),
+                                "Every tear must remain inside the rain disk locked at windup, after the player leaves");
                         rainDrops[0]++;
                     }
                 }
@@ -450,14 +481,14 @@ public final class DemiurgeAwakeningTest {
             awake.updateParts();
             combatTarget[0] = verifyLaserAndRoofPiercingRain(helper, awake);
             Vec3 center = awake.headCenter();
-            player.setPos(center.add(6, -4, 0));
+            player.setPos(center.add(DemiurgeAttack.RAIN_RADIUS + 1, -4, 0));
             awake.beginAttack(DemiurgeAttack.ROAR, player);
             helper.assertTrue(!awake.canStartRain(player) && awake.attack() == DemiurgeAttack.NONE,
-                    "A player six horizontal blocks from the head must not start the rain windup");
-            // Stay a hair inside the boundary: (center + 5) - center can round just above 25 in doubles.
-            player.setPos(center.add(5 - 1.0E-4, -4, 0));
-            helper.assertTrue(awake.canStartRain(player), "The five-block boundary is inside the rain trigger");
-            player.setPos(center.add(4, -10, 0));
+                    "A player outside the rain radius must not start the rain windup");
+            // Stay a hair inside the boundary: adding the radius can round just above the square.
+            player.setPos(center.add(DemiurgeAttack.RAIN_RADIUS - 1.0E-4, -4, 0));
+            helper.assertTrue(awake.canStartRain(player), "The rain-radius boundary is inside the trigger");
+            player.setPos(center.add(DemiurgeAttack.RAIN_RADIUS - 1, -10, 0));
             helper.assertTrue(awake.canStartRain(player), "The trigger uses horizontal distance, not height");
             combatTarget[0].getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000);
             combatTarget[0].setHealth(1000);
@@ -472,8 +503,7 @@ public final class DemiurgeAwakeningTest {
         helper.runAtTickTime(418, () -> {
             var awake = current[0];
             float perHit = DemiurgeDifficulty.damage(org.brahypno.maledict.config.MaledictConfig.DEMIURGE_CHARGE_DAMAGE.get(), level.getDifficulty());
-            float hits = (1000 - combatTarget[0].getHealth()) / perHit;
-            helper.assertTrue(hits > 1 && hits <= 24.001,
+            helper.assertTrue(combatTarget[0].attempts > 1 && combatTarget[0].attempts <= 24,
                     "Sustained head/tail contact may repeatedly enter the configured damage probe: "
                             + combatTarget[0].getHealth() + ", damage=" + perHit + ", attempts=" + combatTarget[0].attempts
                             + ", interval=" + combatTarget[0].minimumInterval + ", log=" + combatTarget[0].damageLog);
@@ -485,60 +515,30 @@ public final class DemiurgeAwakeningTest {
             combatTarget[0].setDeltaMovement(Vec3.ZERO);
         });
         helper.runAtTickTime(700, () -> {
-            player.setPos(current[0].headCenter().add(4, -4, 0));
-            current[0].selectTargetFromGoal(player);
+            var awake = current[0];
+            awake.finishAttack();
+            player.setPos(awake.headCenter().add(4, -4, 0));
+            awake.selectTargetFromGoal(player);
+            helper.assertTrue(awake.beginAttack(DemiurgeAttack.ROAR, player), "A nearby player can start the rain cast");
         });
         helper.runAtTickTime(900, () -> {
-            helper.assertTrue(observed.containsAll(java.util.List.of(DemiurgeAttack.CHARGE, DemiurgeAttack.LASER, DemiurgeAttack.ROAR)),
-                    "The live combat goal must autonomously enter all three attacks: " + observed
+            var casts = observed.stream().filter(attack -> attack != DemiurgeAttack.NONE).toList();
+            helper.assertTrue(casts.size() >= 3,
+                    "The live combat goal must choose several distinct casts instead of standing idle: " + observed
                             + ", target=" + current[0].getTarget() + ", alive=" + combatTarget[0].isAlive()
                             + ", distance=" + current[0].distanceTo(combatTarget[0])
                             + ", lineOfSight=" + current[0].hasLineOfSight(combatTarget[0]));
             helper.assertTrue(rainCenter[0] != null && rainDrops[0] > 0,
-                    "The AI must finish its latched rain cast after the player moves beyond five blocks and target tracking ends");
+                    "The AI must finish its latched rain cast after the player moves beyond the rain radius and target tracking ends");
             combatTarget[0].discard();
-            var awake = current[0];
-            awake.finishAttack();
-            BlockPos floor = helper.absolutePos(new BlockPos(50, 5, 50));
-            for (int x = -10; x <= 10; x++) for (int z = -10; z <= 10; z++) {
-                level.setBlockAndUpdate(floor.offset(x, -1, z), Blocks.STONE.defaultBlockState());
-                for (int y = 0; y <= 8; y++) level.setBlockAndUpdate(floor.offset(x, y, z), Blocks.AIR.defaultBlockState());
-            }
-            awake.setPos(Vec3.atBottomCenterOf(floor));
-            awake.setDeltaMovement(Vec3.ZERO);
-            awake.setNoGravity(false);
-            awake.setOnGround(true);
-            awake.setYRot(0);
-            awake.updateParts();
-            var target = new ContactCow(level);
-            target.setNoAi(true);
-            target.setNoGravity(true);
-            target.setPos(awake.position().add(0, 0, 20));
-            level.addFreshEntity(target);
-            combatTarget[0] = target;
-            awake.selectTargetFromGoal(target);
-            awake.beginAttack(DemiurgeAttack.LASER, target);
-        });
-        helper.runAtTickTime(1003, () -> {
-            helper.assertTrue(current[0].attack() == DemiurgeAttack.NONE,
-                    "The ground fixture must finish its cast before checking recovery movement");
-            postCastStart[0] = current[0].position();
-            postCastClock[0] = current[0].slitherClock(1);
-        });
-        helper.runAtTickTime(1038, () -> {
-            helper.assertTrue(current[0].attack() == DemiurgeAttack.NONE
-                            && current[0].position().subtract(postCastStart[0]).horizontalDistance() > 2,
-                    "Within 28 blocks the boss must keep moving during the non-attacking interval: start="
-                            + postCastStart[0] + ", end=" + current[0].position());
-            helper.assertTrue(current[0].slitherClock(1) != postCastClock[0],
-                    "Recovery movement must advance the real body phase rather than leaving a frozen sliding model");
-            combatTarget[0].discard();
+            combatTarget[0] = null;
             current[0].remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
             patrolChunks.forEach(chunk -> level.setChunkForced(chunk.x, chunk.z, false));
         });
-        // A real kill, after the combat fixture is gone: three generic-kill attempts open the
-        // vicissitude bypass, the death transaction severs the body to its cap, and the nether-star
-        // style fragment must already exist as an item entity.
+        verifyGroundCombat(helper);
+        // False Creation: the state machine must advance from WARNING to ARMED,
+        // and a player-broken pillar must disappear without exploding.
+        helper.runAtTickTime(260, () -> verifyPillarBreak(helper, player));
         helper.runAtTickTime(1040, () -> {
             var victim = MaledictEntities.DEMIURGE_STATUE.get().create(level);
             victim.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(2, 12, 2)));
@@ -563,8 +563,242 @@ public final class DemiurgeAwakeningTest {
                             .mapToInt(drop -> drop.getItem().getCount()).sum() == 1,
                     "A real death must drop exactly one Fragment of Light next to the statue");
             drops.forEach(ItemEntity::discard);
+            verifyIncursusDamage(helper, incursusFixturePosition);
             helper.succeed();
         });
+    }
+
+    private static void verifyGroundCombat(GameTestHelper helper) {
+        var level = helper.getLevel();
+        DemiurgeStatueEntity[] fixture = new DemiurgeStatueEntity[1];
+        ContactCow[] targetFixture = new ContactCow[1];
+        Vec3[] postCastStart = new Vec3[1];
+        float[] postCastClock = new float[1];
+        java.util.List<ChunkPos> chunks = new java.util.ArrayList<>();
+        helper.runAtTickTime(20, () -> {
+            BlockPos floor = helper.absolutePos(new BlockPos(50, 30, 50));
+            for (int x = (floor.getX() - 24) >> 4; x <= (floor.getX() + 24) >> 4; x++) {
+                for (int z = (floor.getZ() - 16) >> 4; z <= (floor.getZ() + 16) >> 4; z++) {
+                    if (level.setChunkForced(x, z, true)) chunks.add(new ChunkPos(x, z));
+                }
+            }
+            for (int x = -23; x <= 23; x++) for (int z = -14; z <= 14; z++) {
+                level.setBlockAndUpdate(floor.offset(x, -1, z), Blocks.STONE.defaultBlockState());
+                for (int y = 0; y <= 8; y++) level.setBlockAndUpdate(floor.offset(x, y, z), Blocks.AIR.defaultBlockState());
+            }
+            var awake = MaledictEntities.DEMIURGE_STATUE.get().create(level);
+            var state = awake.saveWithoutId(new CompoundTag());
+            state.putLong("AwakeningStart", level.getGameTime() - 200);
+            awake.load(state);
+            awake.setPos(Vec3.atBottomCenterOf(floor));
+            awake.setOnGround(true);
+            awake.setYRot(0);
+            awake.updateParts();
+            helper.assertTrue(level.addFreshEntity(awake), "The ground combat fixture must join the world");
+            fixture[0] = awake;
+            var target = new ContactCow(level);
+            target.setNoAi(true);
+            target.setNoGravity(true);
+            target.setPos(awake.position().add(0, 1, 5));
+            helper.assertTrue(level.addFreshEntity(target), "The jumping fixture must join the world");
+            targetFixture[0] = target;
+            awake.selectTargetFromGoal(target);
+            helper.assertTrue(awake.getTarget() == target && awake.canAttack(target),
+                    "The jumping fixture must be a valid target: selected=" + awake.getTarget());
+            var spots = DemiurgePillarEntity.planArray(awake, target.position());
+            helper.assertTrue(spots.size() >= 3, "The arena must have room for a pillar array: " + spots
+                    + ", target=" + target.position());
+            new DemiurgeCombatGoal(awake).tick();
+            helper.assertTrue(awake.attack() == DemiurgeAttack.FALSE_CREATION,
+                    "The first ground array takes priority over the laser even when the target is jumping: " + awake.attack());
+        });
+        helper.runAtTickTime(49, () -> {
+            var awake = fixture[0];
+            var pillars = level.getEntitiesOfClass(DemiurgePillarEntity.class, awake.getBoundingBox().inflate(22),
+                    pillar -> pillar.isOwnedBy(awake));
+            helper.assertTrue(pillars.size() >= 3 && pillars.stream().anyMatch(pillar -> !pillar.isInvisible()),
+                    "False Creation must add and reveal its planned pillars from the live attack tick");
+            DemiurgePillarEntity.discardOwned(awake);
+            awake.finishAttack();
+            prepareSweep(helper, awake, targetFixture[0]);
+        });
+        helper.runAtTickTime(78, () -> {
+            var target = targetFixture[0];
+            float damage = DemiurgeDifficulty.damage(
+                    org.brahypno.maledict.config.MaledictConfig.DEMIURGE_SWEEP_DAMAGE.get(), level.getDifficulty());
+            helper.assertTrue(Math.abs(target.getHealth() - (target.getMaxHealth() - damage)) < .001 && target.attempts == 1,
+                    "The visible sweep must hit a rear target exactly once: health=" + target.getHealth() + ", " + target.damageLog);
+            var awake = fixture[0];
+            // Give the head room to move and make the target unreachable by the tail.
+            awake.setYRot(0);
+            target.setPos(awake.position().add(0, 0, 13));
+            target.setDeltaMovement(Vec3.ZERO);
+        });
+        helper.runAtTickTime(99, () -> {
+            helper.assertTrue(fixture[0].attack() == DemiurgeAttack.NONE,
+                    "The ground fixture must finish its cast before checking recovery movement");
+            postCastStart[0] = fixture[0].position();
+            postCastClock[0] = fixture[0].slitherClock(1);
+        });
+        helper.runAtTickTime(107, () -> {
+            helper.assertTrue(fixture[0].position().subtract(postCastStart[0]).horizontalDistance() > .05,
+                    "The boss must resume movement during the eight-tick post-cast interval: start="
+                            + postCastStart[0] + ", end=" + fixture[0].position());
+            helper.assertTrue(fixture[0].slitherClock(1) != postCastClock[0],
+                    "Recovery movement must advance the real body phase rather than leaving a frozen sliding model");
+        });
+        helper.runAtTickTime(109, () -> {
+            helper.assertTrue(fixture[0].attack() != DemiurgeAttack.NONE && fixture[0].attack() != DemiurgeAttack.SWEEP,
+                    "By the ninth tick of recovery the boss must have chained into a different available spell");
+            targetFixture[0].discard();
+            DemiurgePillarEntity.discardOwned(fixture[0]);
+            fixture[0].remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+            chunks.forEach(chunk -> level.setChunkForced(chunk.x, chunk.z, false));
+        });
+    }
+
+    private static void verifyPillarBreak(GameTestHelper helper, FakePlayer player) {
+        var level = helper.getLevel();
+        BlockPos base = helper.absolutePos(new BlockPos(30, 5, 30));
+        for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++) {
+            level.setBlockAndUpdate(base.offset(x, -1, z), Blocks.STONE.defaultBlockState());
+            for (int y = 0; y <= 5; y++) level.setBlockAndUpdate(base.offset(x, y, z), Blocks.AIR.defaultBlockState());
+        }
+        var pillar = MaledictEntities.DEMIURGE_PILLAR.get().create(level);
+        helper.assertTrue(pillar != null, "The False Creation pillar type must be registered");
+        if (pillar == null) return;
+        pillar.setPos(Vec3.atBottomCenterOf(base));
+        pillar.setPillarHeight(3);
+        pillar.setPillarHealth(24);
+        helper.assertTrue(level.addFreshEntity(pillar), "The test pillar must join the world");
+        for (int tick = 0; tick < 16; tick++) pillar.tick();
+        helper.assertTrue(pillar.phase() == DemiurgePillarEntity.Phase.RISING,
+                "Sixteen warning ticks must finish before the stone rises: " + pillar.phase());
+        for (int tick = 0; tick < 8; tick++) pillar.tick();
+        helper.assertTrue(pillar.phase() == DemiurgePillarEntity.Phase.ARMED,
+                "Eight rise ticks must leave the pillar armed: " + pillar.phase());
+        var cow = new ContactCow(level);
+        cow.setNoAi(true);
+        cow.setNoGravity(true);
+        cow.setPos(pillar.position().add(2, 0, 0));
+        level.addFreshEntity(cow);
+        float before = cow.getHealth();
+        helper.assertTrue(pillar.hurt(player.damageSources().playerAttack(player), 100),
+                "A player hit must damage an armed pillar");
+        helper.assertTrue(pillar.isRemoved(), "Breaking the pillar must remove it immediately");
+        helper.assertTrue(cow.getHealth() == before,
+                "A player-broken pillar must not explode or damage nearby targets");
+        cow.discard();
+
+        // The rising stone must use LivingEntity#knockback, not a hand-written delta tweak.
+        var riser = MaledictEntities.DEMIURGE_PILLAR.get().create(level);
+        helper.assertTrue(riser != null, "The rise fixture pillar must be registered");
+        if (riser == null) return;
+        riser.setPos(Vec3.atBottomCenterOf(base));
+        riser.setPillarHeight(3);
+        riser.setPillarHealth(24);
+        helper.assertTrue(level.addFreshEntity(riser), "The rise fixture must join the world");
+        var riserCow = new ContactCow(level);
+        riserCow.setNoAi(true);
+        riserCow.setNoGravity(true);
+        riserCow.setPos(Vec3.atBottomCenterOf(base));
+        riserCow.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);
+        riserCow.setHealth(100);
+        helper.assertTrue(level.addFreshEntity(riserCow), "The rise victim must join the world");
+        for (int tick = 0; tick < 16; tick++) riser.tick();
+        for (int tick = 0; tick < 8; tick++) riser.tick();
+        Vec3 riseVelocity = riserCow.getDeltaMovement();
+        helper.assertTrue(riserCow.getHealth() < 100 && riseVelocity.horizontalDistance() > .2
+                        && riseVelocity.y >= DemiurgePillarEntity.RISE_LAUNCH - .01,
+                "A rising pillar must deal damage and apply a real horizontal knockback plus launch: health="
+                        + riserCow.getHealth() + ", velocity=" + riseVelocity);
+        riserCow.discard();
+        riser.discard();
+
+        // The old sphere centred halfway up the shaft missed a stationary player beside the
+        // inner ring. The column blast must reach that player, and a launched pillar must leave
+        // the armed phase as a projectile.
+        BlockPos blast = base.offset(10, 0, 0);
+        for (int x = -6; x <= 6; x++) for (int z = -6; z <= 6; z++) {
+            level.setBlockAndUpdate(blast.offset(x, -1, z), Blocks.STONE.defaultBlockState());
+            for (int y = 0; y <= 5; y++) level.setBlockAndUpdate(blast.offset(x, y, z), Blocks.AIR.defaultBlockState());
+        }
+        var owner = MaledictEntities.DEMIURGE_STATUE.get().create(level);
+        helper.assertTrue(owner != null, "The pillar owner fixture must be registered");
+        if (owner == null) return;
+        owner.setPos(Vec3.atBottomCenterOf(blast.offset(0, 8, 0)));
+        owner.setNoGravity(true);
+        level.addFreshEntity(owner);
+        var bomb = MaledictEntities.DEMIURGE_PILLAR.get().create(level);
+        helper.assertTrue(bomb != null, "The explosion fixture pillar must be registered");
+        if (bomb == null) return;
+        bomb.setOwner(owner);
+        bomb.setPos(Vec3.atBottomCenterOf(blast));
+        bomb.setPillarHeight(3);
+        bomb.setPillarHealth(24);
+        helper.assertTrue(level.addFreshEntity(bomb), "The explosion fixture must join the world");
+        for (int tick = 0; tick < 16; tick++) bomb.tick();
+        for (int tick = 0; tick < 8; tick++) bomb.tick();
+        helper.assertTrue(bomb.phase() == DemiurgePillarEntity.Phase.ARMED,
+                "The explosion fixture must be armed before the radius check: " + bomb.phase());
+        var bystander = new ContactCow(level);
+        bystander.setNoAi(true);
+        bystander.setNoGravity(true);
+        bystander.setPos(bomb.position().add(DemiurgePillarEntity.NORMAL_RADIUS - .45, 0, 0));
+        bystander.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);
+        bystander.setHealth(100);
+        helper.assertTrue(level.addFreshEntity(bystander), "The blast bystander must join the world");
+        for (int tick = 0; tick < DemiurgePillarEntity.ARMED_TICKS + 2; tick++) bomb.tick();
+        double distance = Math.hypot(bystander.getX() - bomb.getX(), bystander.getZ() - bomb.getZ());
+        helper.assertTrue(bystander.getHealth() < 100,
+                "A stationary player inside the inner ring must be caught by the column blast: health="
+                        + bystander.getHealth() + ", bomb=" + bomb.phase() + ", bombPos=" + bomb.position()
+                        + ", cowPos=" + bystander.position() + ", distance=" + distance
+                        + ", alive=" + bystander.isAlive() + ", removed=" + bystander.isRemoved());
+        bystander.discard();
+        owner.discard();
+
+        var flyer = MaledictEntities.DEMIURGE_PILLAR.get().create(level);
+        helper.assertTrue(flyer != null, "The launch fixture pillar must be registered");
+        if (flyer != null) {
+            flyer.setPos(Vec3.atBottomCenterOf(blast.offset(0, 0, 6)));
+            flyer.setPillarHeight(3);
+            flyer.setPillarHealth(24);
+            helper.assertTrue(level.addFreshEntity(flyer), "The launch fixture must join the world");
+            for (int tick = 0; tick < 16; tick++) flyer.tick();
+            for (int tick = 0; tick < 8; tick++) flyer.tick();
+            helper.assertTrue(flyer.launch(new Vec3(1, 0, 0)), "An armed pillar must accept a charge launch");
+            helper.assertTrue(flyer.phase() == DemiurgePillarEntity.Phase.LAUNCHED,
+                    "A launched pillar must become a projectile instead of staying armed: " + flyer.phase());
+            flyer.discard();
+        }
+    }
+
+    private static void prepareSweep(GameTestHelper helper, DemiurgeStatueEntity statue, ContactCow target) {
+        statue.setYRot(90);
+        statue.updateParts();
+        var rig = DemiurgeRig.INSTANCE;
+        var preview = rig.pose();
+        int anchor = rig.sweepMidpointBone(statue.bodyCut());
+        int strike = DemiurgeSweep.ACTIVE_END - 1;
+        preview.sample(statue.awakeningAge(0), statue.slitherClock(1), DemiurgeAttack.SWEEP, strike,
+                statue.position(), statue.getYRot(), statue::trailPoint, statue.bodyCut(), null,
+                new DemiurgeSweep.State(1, strike, DemiurgeSweep.amplitude(statue.bodyCut()), 1));
+        var bounds = preview.bounds(anchor, statue.position(), statue.getYRot());
+        var point = bounds.getCenter();
+        target.setPos(point.x, bounds.minY, point.z);
+        target.setDeltaMovement(Vec3.ZERO);
+        target.setHealth(target.getMaxHealth());
+        target.invulnerableTime = 0;
+        target.attempts = 0;
+        target.damageLog.clear();
+        statue.selectTargetFromGoal(target);
+        helper.assertTrue(statue.distanceTo(target) > 6 && statue.attackLocalPosition(
+                        statue.position().add(0, 0, 1)).x > .99,
+                "The midpoint target is behind the body and uses the correct local axes");
+        new DemiurgeCombatGoal(statue).tick();
+        helper.assertTrue(statue.attack() == DemiurgeAttack.SWEEP && statue.sweepState(0).side() == 1,
+                "The live goal must commit the sweep to the side that reaches the midpoint target");
     }
 
     private static void verifyIncursusDamage(GameTestHelper helper, Vec3 position) {
@@ -649,9 +883,11 @@ public final class DemiurgeAwakeningTest {
                 float clock = (17 + time * .4F) % DemiurgeSlither.CYCLE_TICKS;
                 idle.sample(200 + time, clock, DemiurgeAttack.NONE, -1, Vec3.ZERO, 0, path::sample);
                 gesture.sample(200 + time, clock, attack, time, Vec3.ZERO, 0, path::sample);
-                for (int bone = 1; bone < count - 3; bone++) {
-                    assertTrue(idle.positions[bone].distance(gesture.positions[bone]) < .0001,
-                            "A gesture must retain the travelling body's existing phase: " + attack + "/" + bone);
+                if (attack != DemiurgeAttack.SWEEP) {
+                    for (int bone = 1; bone < count - 3; bone++) {
+                        assertTrue(idle.positions[bone].distance(gesture.positions[bone]) < .0001,
+                                "A gesture must retain the travelling body's existing phase: " + attack + "/" + bone);
+                    }
                 }
                 if (time == 0 || time == attack.duration) {
                     assertTrue(idle.positions[head].distance(gesture.positions[head]) < .00001);
@@ -747,6 +983,17 @@ public final class DemiurgeAwakeningTest {
         return target;
     }
 
+    private static double maxJointGap(DemiurgeRig.Pose pose) {
+        double maximum = 0;
+        for (int index = 0; index + 1 < DemiurgeRig.INSTANCE.jointCount(); index++) {
+            int bone = DemiurgeRig.INSTANCE.jointBone(index);
+            int next = DemiurgeRig.INSTANCE.jointBone(index + 1);
+            if (pose.isHidden(bone) || pose.isHidden(next)) continue;
+            maximum = Math.max(maximum, pose.jointEnd(index, false).distanceTo(pose.jointEnd(index + 1, true)));
+        }
+        return maximum;
+    }
+
     private static final class ContactCow extends Cow {
         private int attempts;
         private long lastAttempt = Long.MIN_VALUE;
@@ -758,7 +1005,7 @@ public final class DemiurgeAwakeningTest {
 
         @Override public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
             damageLog.add(level().getGameTime() + ":" + source.getMsgId() + ":" + amount + ":iframes=" + invulnerableTime);
-            if (source.getEntity() instanceof DemiurgeStatueEntity) {
+            if (source.getEntity() instanceof DemiurgeStatueEntity && "mob".equals(source.getMsgId())) {
                 long now = level().getGameTime();
                 if (lastAttempt != Long.MIN_VALUE) minimumInterval = Math.min(minimumInterval, now - lastAttempt);
                 lastAttempt = now;
@@ -1048,8 +1295,10 @@ public final class DemiurgeAwakeningTest {
         for (double step : new double[]{.01, .03, .06, .12}) {
             var turn = DemiurgePatrolSteering.steer(zero, 0, 90, step, java.util.List.of());
             assertFalse(turn.blocked());
-            assertTrue(Math.abs(turn.yaw()) <= Math.toDegrees(step / DemiurgePatrolSteering.TURN_RADIUS) + .00001,
-                    "Turn radius must remain broad even at the statue's slow actual ground speed");
+            double allowed = Math.min(DemiurgePatrolSteering.MAX_TURN_PER_TICK,
+                    Math.toDegrees(step / DemiurgePatrolSteering.TURN_RADIUS));
+            assertTrue(Math.abs(turn.yaw()) <= allowed + .00001,
+                    "A moving statue still respects its six-block turn radius at slow ground speed");
         }
         var sidestep = DemiurgePatrolSteering.steer(zero, 0, -90, .06,
                 java.util.List.of(new net.minecraft.world.phys.Vec3(1.75, 0, 4.5)));

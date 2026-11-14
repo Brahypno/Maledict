@@ -22,6 +22,7 @@ public final class DemiurgeRig {
     private final Bone[][][] attacks = new Bone[DemiurgeAttack.values().length][][];
     private final List<List<Vector3f>> vertices = new ArrayList<>();
     private final DemiurgeBodyChain chain;
+    private final float[] jointRadii;
     private final float[] rearExtents;
     private final float[] nearestExtents;
     private final int maxBodyCut;
@@ -80,6 +81,10 @@ public final class DemiurgeRig {
                     vector(joint.getAsJsonArray("front")), vector(joint.getAsJsonArray("back")), corners));
         }
         chain = new DemiurgeBodyChain(joints);
+        jointRadii = new float[joints.size()];
+        for (int index = 0; index < joints.size(); index++) {
+            jointRadii[index] = measureJointRadius(joints.get(index));
+        }
         rearExtents = new float[joints.size()];
         nearestExtents = new float[joints.size()];
         measureRearExtents(joints);
@@ -123,6 +128,24 @@ public final class DemiurgeRig {
         return Math.max(0.0F, -point.z);
     }
 
+    /**
+     * Maximum distance of the authored corner ring from the section axis. The tail tapers from
+     * roughly fifteen units to three and a half, so one fixed visual joint radius would make the
+     * last stone sections look inflated.
+     */
+    private static float measureJointRadius(DemiurgeBodyChain.Joint joint) {
+        Vector3f axis = new Vector3f(joint.back()).sub(joint.front());
+        if (axis.lengthSquared() < 1.0E-8F) return .1F;
+        axis.normalize();
+        float radius = 0.0F;
+        for (Vector3f corner : joint.corners()) {
+            Vector3f offset = new Vector3f(corner).sub(joint.front());
+            offset.sub(new Vector3f(axis).mul(offset.dot(axis)));
+            radius = Math.max(radius, offset.length());
+        }
+        return Math.max(.05F, radius);
+    }
+
     /** Largest number of trailing sections that may be lost without breaking the eight-block floor. */
     public int maxBodyCut() {
         return maxBodyCut;
@@ -130,6 +153,28 @@ public final class DemiurgeRig {
 
     public int lastRetainedBone(int cut) {
         return chain.lastRetainedBone(cut);
+    }
+
+    public int jointCount() {
+        return chain.jointCount();
+    }
+
+    public int jointBone(int index) {
+        return chain.joint(index).bone();
+    }
+
+    /** Actual half-thickness of one authored body section, used to size procedural joints. */
+    public float jointRadius(int index) {
+        return jointRadii[index];
+    }
+
+    /** Bone at the middle of the sweepable tail, used to choose the strike side. */
+    public int sweepMidpointBone(int cut) {
+        return chain.sweepMidpointBone(cut);
+    }
+
+    boolean canSweep(int bone) {
+        return chain.canSweep(bone);
     }
 
     /** Authored far end of the remaining body; drives the patrol corridor so it stops at the cut. */
@@ -163,6 +208,7 @@ public final class DemiurgeRig {
         public final Vector3f[] positions = new Vector3f[size];
         public final Quaternionf[] rotations = new Quaternionf[size];
         private int bodyCut;
+        private float groundBlend;
 
         private Pose() {
             for (int i = 0; i < size; i++) {
@@ -183,6 +229,12 @@ public final class DemiurgeRig {
 
         public void sample(float age, float clock, DemiurgeAttack attack, float attackAge,
                            Vec3 origin, float yaw, DemiurgeBodyChain.Path path, int cut, Vec3 laserDirection) {
+            sample(age, clock, attack, attackAge, origin, yaw, path, cut, laserDirection, DemiurgeSweep.State.none());
+        }
+
+        public void sample(float age, float clock, DemiurgeAttack attack, float attackAge,
+                           Vec3 origin, float yaw, DemiurgeBodyChain.Path path, int cut, Vec3 laserDirection,
+                           DemiurgeSweep.State sweep) {
             int requestedCut = Math.max(0, Math.min(chain.jointCount() - 1, cut));
             Bone[][] base = age < 100 ? awakening : age < 140 ? transition : slither;
             float time = age < 100 ? Math.max(0, age) : age < 140 ? age - 100 : clock % DemiurgeSlither.CYCLE_TICKS;
@@ -194,18 +246,30 @@ public final class DemiurgeRig {
                 if (blend > 0) addGesture(attacks[attack.ordinal()], attackAge, bone, blend);
             }
             float stance = DemiurgeSlither.groundBlend(age);
+            groundBlend = stance;
             // A coiled, still-standing statue has no floor body to lose; the cut starts with the stance.
             bodyCut = stance > 0 ? requestedCut : 0;
             if (stance > 0) breathe(age, stance * (1 - blend));
             if (attack == DemiurgeAttack.LASER && laserDirection != null && blend > 0) {
                 aimHead(DemiurgeAim.constrain(laserDirection, yaw).yRot((float) Math.toRadians(yaw)), blend);
             }
-            if (stance > 0) chain.follow(positions, rotations, origin, yaw, stance, path, bodyCut);
+            if (stance > 0) {
+                int retained = chain.retainedJoints(bodyCut);
+                float tailOffset = sweep != null && sweep.active() ? sweep.tailOffset() : 0;
+                chain.follow(positions, rotations, origin, yaw, stance, path, bodyCut,
+                        tailOffset == 0 ? null
+                                : guide -> tailOffset * DemiurgeSweep.guideWeight(guide, retained));
+            }
         }
 
         /** Sections lost to the body cut keep their authored transform but never render or collide. */
         public boolean isHidden(int bone) {
             return chain.isHidden(bone, bodyCut);
+        }
+
+        /** The laid-out floor body only exists after the awakening transition. */
+        public boolean grounded() {
+            return groundBlend > 0;
         }
 
         private void aimHead(Vec3 localDirection, float blend) {
@@ -280,6 +344,17 @@ public final class DemiurgeRig {
                 maxX = Math.max(maxX, point.x); maxY = Math.max(maxY, point.y); maxZ = Math.max(maxZ, point.z);
             }
             return vertices.get(bone).isEmpty() ? new AABB(origin, origin) : new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+        }
+
+        /**
+         * Local endpoint of one body-chain section. Adjacent sections should meet here; a terrain
+         * step separates them in Y, which is exactly where the client draws a joint sleeve.
+         */
+        public Vec3 jointEnd(int index, boolean front) {
+            var joint = chain.joint(index);
+            Vector3f point = new Vector3f(front ? joint.front() : joint.back());
+            rotations[joint.bone()].transform(point).add(positions[joint.bone()]);
+            return new Vec3(point.x, point.y, point.z);
         }
     }
 

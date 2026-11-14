@@ -37,23 +37,23 @@ public final class DemiurgeDifficulty {
         };
     }
 
-    public static void hurt(LivingEntity victim, DamageSource original, double base) {
-        hurt(victim, original, base, victim.level().getDifficulty());
+    public static boolean hurt(LivingEntity victim, DamageSource original, double base) {
+        return hurt(victim, original, base, victim.level().getDifficulty());
     }
 
-    static void hurt(LivingEntity victim, DamageSource original, double base, Difficulty difficulty) {
+    static boolean hurt(LivingEntity victim, DamageSource original, double base, Difficulty difficulty) {
         // The caller merges overlapping body contacts; ChangeLib owns delivery
         // and cooldown handling without a separate i-frame filter here.
         float amount = damage(base, difficulty);
         if (amount <= 0)
-            return;
+            return false;
         DamageSource source = source(original);
-        switch (difficulty) {
-            case EASY -> DamageProbe.lighterDamageMethod(victim, source, amount, false);
-            case NORMAL -> DamageProbe.mediumDamageMethod(victim, source, amount, false);
-            case HARD -> DamageProbe.finalDamageMethod(victim, source, amount, DamageOptions.finalNoRemove(), false);
-            case PEACEFUL -> {}
-        }
+        return switch (difficulty) {
+            case EASY -> DamageProbe.lighterDamageMethod(victim, source, amount, false).totalDealt() > 0;
+            case NORMAL -> DamageProbe.mediumDamageMethod(victim, source, amount, false).totalDealt() > 0;
+            case HARD -> DamageProbe.finalDamageMethod(victim, source, amount, DamageOptions.finalNoRemove(), false).totalDealt() > 0;
+            case PEACEFUL -> false;
+        };
     }
 
     private DemiurgeDifficulty() {}

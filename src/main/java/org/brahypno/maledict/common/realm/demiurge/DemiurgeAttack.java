@@ -5,13 +5,17 @@ public enum DemiurgeAttack {
     NONE(0, 0, 0),
     CHARGE(64, 20, 44),
     LASER(100, 24, 84),
-    ROAR(110, 20, 90);
+    ROAR(110, 20, 90),
+    /** The mid/rear body swings sideways; 0-15 windup, 16-27 damage, 28-49 retract. */
+    SWEEP(50, 16, 28),
+    /** Raise an inner ring and an outer half-ring of stone pillars; each pillar is independent. */
+    FALSE_CREATION(48, 14, 40);
 
-    public static final int COOLDOWN = 40;
     public static final int SILENCE_TICKS = 100;
     public static final int LASER_INTERVAL = 10;
     public static final double LASER_RANGE = 40;
-    public static final double RAIN_RADIUS = 5;
+    /** Shared by the roar's "target in range" check and the locked rain disk. */
+    public static final double RAIN_RADIUS = 10;
     public final int duration;
     public final int release;
     public final int recovery;

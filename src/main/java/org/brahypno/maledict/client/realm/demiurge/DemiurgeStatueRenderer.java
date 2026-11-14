@@ -15,10 +15,10 @@ import net.minecraft.world.phys.Vec3;
 
 /** Opaque carved stone with masked, pulsing violet emission that dies out with the statue. */
 public final class DemiurgeStatueRenderer extends EntityRenderer<DemiurgeStatueEntity> {
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
+    static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "textures/entity/demiurge_statue.png");
     private final DemiurgeStatueModel model;
-    private static final ResourceLocation GLOW = ResourceLocation.fromNamespaceAndPath(
+    static final ResourceLocation GLOW = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "textures/entity/demiurge_statue_emissive.png");
     /** Authored death timing: violet out, black stone, then dust. */
     private static final float BLACKEN_TICKS = 40.0F;
@@ -51,6 +51,8 @@ public final class DemiurgeStatueRenderer extends EntityRenderer<DemiurgeStatueE
             }
             if (dissolve < 1.0F) {
                 model.render(stack, buffers.getBuffer(RenderType.entityCutout(TEXTURE)), light, tint, dissolve);
+                model.renderJoints(stack, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)),
+                        light, tint, dissolve);
             }
             float awakeningAge = entity.awakeningAge(partialTick);
             float glow = DemiurgeGlow.strength(awakeningAge, entity.attack(), entity.attackAge(partialTick)) * glowScale;

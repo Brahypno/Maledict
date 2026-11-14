@@ -28,6 +28,7 @@ import org.brahypno.maledict.client.raven.RavenShoulderLayer;
 import org.brahypno.maledict.client.realm.BlightedRealmEffects;
 import org.brahypno.maledict.client.realm.OssuaryFangsRenderer;
 import org.brahypno.maledict.client.realm.WeepingWitherSkeletonRenderer;
+import org.brahypno.maledict.client.realm.demiurge.DemiurgePillarRenderer;
 import org.brahypno.maledict.client.realm.demiurge.DemiurgeStatueRenderer;
 import org.brahypno.maledict.client.realm.demiurge.PurpleSoulFireParticle;
 import org.brahypno.maledict.client.vicissitude.model.FirstVicissitudeBossModel;
@@ -93,6 +94,7 @@ public final class MaledictClientSetup {
         event.registerEntityRenderer(MaledictEntities.DEMIURGE_STATUE.get(), DemiurgeStatueRenderer::new);
         event.registerEntityRenderer(MaledictEntities.DEMIURGE_TEAR.get(),
                                      org.brahypno.maledict.client.realm.demiurge.DemiurgeTearRenderer::new);
+        event.registerEntityRenderer(MaledictEntities.DEMIURGE_PILLAR.get(), DemiurgePillarRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_LIGHT_ORB.get(), VicissitudeLightOrbRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SPIRIT_BOLT.get(), VicissitudeSpiritBoltRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SCYTHE.get(), VicissitudeScytheRenderer::new);
