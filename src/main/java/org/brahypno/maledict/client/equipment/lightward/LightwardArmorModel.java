@@ -1,73 +1,79 @@
 package org.brahypno.maledict.client.equipment.lightward;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
 import com.sammy.malum.client.model.MalignantStrongholdArmorModel;
 import com.sammy.malum.client.model.SoulStainedSteelArmorModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
-import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.server.packs.resources.ResourceManager;
 import org.brahypno.maledict.Maledict;
 import team.lodestar.lodestone.systems.model.LodestoneArmorModel;
 
-import java.util.List;
+import java.io.IOException;
 
-/** Original Malum geometry with Lightward cheek inlays and a rear helmet guard. */
 public final class LightwardArmorModel extends LodestoneArmorModel {
     public static final ModelLayerLocation HELMET_LAYER = layer("aufheben_lightward_helmet");
     public static final ModelLayerLocation CHESTPLATE_LAYER = layer("aufheben_lightward_chestplate");
-    public static final ModelLayerLocation HELMET_DETAILS_LAYER = layer("aufheben_lightward_helmet_details");
-    private final ModelPart helmetDetails;
+    public static final ModelLayerLocation LOWER_ARMOR_LAYER = layer("aufheben_lightward_lower_armor");
+    private static final ResourceLocation HELMET_GEOMETRY = ResourceLocation.fromNamespaceAndPath(
+            Maledict.MODID, "models/armor/aufheben_lightward_helmet.geometry.json");
 
     public LightwardArmorModel(ModelPart root) {
-        this(root, null);
-    }
-
-    public LightwardArmorModel(ModelPart root, ModelPart helmetDetails) {
         super(root);
-        this.helmetDetails = helmetDetails;
     }
 
     private static ModelLayerLocation layer(String name) {
         return new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(Maledict.MODID, name), "main");
     }
 
-    public static LayerDefinition createHelmetLayer() {
+    public static LayerDefinition createHelmetLayer(ResourceManager resources) {
+        var mesh = HumanoidModel.createMesh(CubeDeformation.NONE, 0);
+        PartDefinition head = createHumanoidAlias(mesh).getChild("head");
+        try (var reader = resources.getResourceOrThrow(HELMET_GEOMETRY).openAsReader()) {
+            var parts = JsonParser.parseReader(reader).getAsJsonObject();
+            for (var entry : parts.entrySet()) {
+                var part = entry.getValue().getAsJsonObject();
+                var cubes = CubeListBuilder.create();
+                for (var element : part.getAsJsonArray("cubes")) {
+                    var cube = element.getAsJsonObject();
+                    var uv = cube.getAsJsonArray("uv");
+                    var pos = cube.getAsJsonArray("pos");
+                    var size = cube.getAsJsonArray("size");
+                    cubes.texOffs(uv.get(0).getAsInt(), uv.get(1).getAsInt())
+                            .mirror(cube.has("mirror") && cube.get("mirror").getAsBoolean())
+                            .addBox(axis(pos, 0), axis(pos, 1), axis(pos, 2),
+                                    axis(size, 0), axis(size, 1), axis(size, 2));
+                }
+                var offset = part.getAsJsonArray("offset");
+                var rotation = part.getAsJsonArray("rotation");
+                head.addOrReplaceChild(entry.getKey(), cubes, PartPose.offsetAndRotation(
+                        axis(offset, 0), axis(offset, 1), axis(offset, 2),
+                        axis(rotation, 0), axis(rotation, 1), axis(rotation, 2)));
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException("Cannot load " + HELMET_GEOMETRY, exception);
+        }
+        return LayerDefinition.create(mesh, 128, 128);
+    }
+
+    private static float axis(JsonArray vector, int index) {
+        return vector == null ? 0 : vector.get(index).getAsFloat();
+    }
+
+    public static LayerDefinition createLowerArmorLayer() {
         return SoulStainedSteelArmorModel.createBodyLayer();
     }
 
     public static LayerDefinition createChestplateLayer() {
         return MalignantStrongholdArmorModel.createBodyLayer();
-    }
-
-    public static LayerDefinition createHelmetDetailsLayer() {
-        MeshDefinition mesh = new MeshDefinition();
-        PartDefinition details = mesh.getRoot().addOrReplaceChild("helmet_details", CubeListBuilder.create()
-                .texOffs(84, 34).addBox(-3.0F, -3.0F, -5.25F, 2.0F, 3.0F, 1.0F)
-                .mirror().texOffs(84, 34).addBox(1.0F, -3.0F, -5.25F, 2.0F, 3.0F, 1.0F)
-                .mirror(false).texOffs(92, 34).addBox(-4.5F, -8.5F, 4.5F, 9.0F, 9.0F, 1.0F)
-                .texOffs(100, 46).addBox(-3.5F, -2.25F, 5.25F, 7.0F, 2.0F, 1.0F),
-                PartPose.ZERO);
-        details.addOrReplaceChild("left_rear_lame", CubeListBuilder.create()
-                        .texOffs(92, 46).addBox(-1.0F, -2.5F, -0.5F, 2.0F, 5.0F, 1.0F),
-                PartPose.offsetAndRotation(-2.65F, -4.6F, 5.5F, 0, 0, -0.22F));
-        details.addOrReplaceChild("right_rear_lame", CubeListBuilder.create()
-                        .texOffs(92, 46).mirror().addBox(-1.0F, -2.5F, -0.5F, 2.0F, 5.0F, 1.0F),
-                PartPose.offsetAndRotation(2.65F, -4.6F, 5.5F, 0, 0, 0.22F));
-        return LayerDefinition.create(mesh, 128, 128);
-    }
-
-    @Override
-    protected Iterable<ModelPart> headParts() {
-        if (helmetDetails == null) {
-            return super.headParts();
-        }
-        return slot == EquipmentSlot.HEAD ? List.of(head, helmetDetails) : List.of();
     }
 
     @Override
@@ -76,8 +82,5 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
         leftLeg.copyFrom(original.leftLeg);
         rightLeg.copyFrom(original.rightLeg);
         super.copyFromDefault(original);
-        if (helmetDetails != null) {
-            helmetDetails.copyFrom(head);
-        }
     }
 }
