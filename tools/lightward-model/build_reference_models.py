@@ -250,7 +250,7 @@ def paint_icon_metal(source,rows,start_x,start_y):
 
 def helmet_icon():
     palette = {'.': (0,0,0,0), **HELMET_PALETTE}
-    # Keep gaps between the three supports and a single pixel across each tear.
+    # The darker side plates sit behind the bright, front-facing mask.
     left_rows = (
         '........',
         '........',
@@ -258,14 +258,14 @@ def helmet_icon():
         '....M..W',
         '....P.BP',
         '..BCPSSW',
-        '..MWPGWP',
-        '..SQMBAM',
-        '..WPDAAW',
-        '..PWSVPW',
-        '..SPSTWW',
-        '..BPSUPW',
-        '...MPSSP',
-        '...BSPWP',
+        '..BMSGWP',
+        '..BQMBAM',
+        '..BMDAAW',
+        '..BMPVPW',
+        '..ABPTWW',
+        '..AMSUPW',
+        '...BPSSP',
+        '...BMPWP',
         '....BMMM',
         '........',
     )
