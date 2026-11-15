@@ -51,6 +51,18 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_EASY_DAMAGE_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_NORMAL_DAMAGE_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_HARD_DAMAGE_MULTIPLIER;
+    public static final ForgeConfigSpec.BooleanValue INCURSUS_RIFT_ENABLED;
+    public static final ForgeConfigSpec.BooleanValue INCURSUS_RIFT_SHADER;
+    public static final ForgeConfigSpec.IntValue INCURSUS_RIFT_LIFETIME;
+    public static final ForgeConfigSpec.DoubleValue INCURSUS_RIFT_FADE_START;
+    public static final ForgeConfigSpec.DoubleValue INCURSUS_RIFT_INTENSITY;
+    public static final ForgeConfigSpec.DoubleValue INCURSUS_RIFT_PETAL_SIZE;
+    public static final ForgeConfigSpec.DoubleValue INCURSUS_RIFT_RADIAL_SPEED;
+    public static final ForgeConfigSpec.IntValue INCURSUS_RIFT_PETALS;
+    public static final ForgeConfigSpec.IntValue INCURSUS_RIFT_MAX_INSTANCES;
+    public static final ForgeConfigSpec.DoubleValue INCURSUS_RIFT_WIDEN;
+    public static final ForgeConfigSpec.DoubleValue INCURSUS_RIFT_STARS;
+    public static final ForgeConfigSpec.BooleanValue INCURSUS_RIFT_DEPTH_TEST;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -284,6 +296,72 @@ public final class MaledictConfig {
                          "and the threshold to 0 together leaves the picture untouched, since",
                          "nothing is dim enough to be caught.")
                 .defineInRange("grayscaleSoftness", 0.30D, 0.0D, 1.0D);
+        clientBuilder.pop();
+        clientBuilder.push("incursusRift");
+        INCURSUS_RIFT_ENABLED = clientBuilder
+                .comment("When true, the Incursus Blade's swing paints the Rift Bloom instead of the old",
+                         "Malum slash particles: the same eight crossed blade strokes, but each one is a",
+                         "cut into a starless void with a broken silver violet edge.",
+                         "Purely visual and client side. Turning this off restores the old particles.")
+                .define("enabled", true);
+        INCURSUS_RIFT_SHADER = clientBuilder
+                .comment("Whether the rift uses its own core shader (void body and star field).",
+                         "With this off the same mask and geometry are drawn with the vanilla",
+                         "position_tex_color shader in a flat near black, which is the fallback",
+                         "when the shader fails to load or another rendering mod breaks it.")
+                .define("shader", true);
+        INCURSUS_RIFT_LIFETIME = clientBuilder
+                .comment("How long one swing's rift lasts, in ticks. The old effect was 5 ticks of",
+                         "Malum's heavy slash at the project's 2.5x lifetime multiplier, so 12 ticks",
+                         "is the rhythm the current flower has; raise it for a slower unfold.")
+                .defineInRange("lifetimeTicks", 12, 4, 60);
+        INCURSUS_RIFT_FADE_START = clientBuilder
+                .comment("Where the fade out begins, as a share of the lifetime. The old particles were",
+                         "fully opaque the whole time and simply vanished at the end, so 0.95 is the",
+                         "faithful default. Lower it for an earlier, softer fade.")
+                .defineInRange("fadeStart", 0.95D, 0.10D, 0.95D);
+        INCURSUS_RIFT_INTENSITY = clientBuilder
+                .comment("Overall opacity multiplier, 1.0 as authored. Lower it to make the rift a",
+                         "lighter wash over the scene, raise it towards 2.0 for a denser black.")
+                .defineInRange("intensity", 1.0D, 0.0D, 2.0D);
+        INCURSUS_RIFT_PETAL_SIZE = clientBuilder
+                .comment("Half extent of one blade stroke's quad, in blocks, before the swing's own",
+                         "scale multiplier. The old particles used 3.0 to 4.5 blocks here, because the",
+                         "hand drawn stroke only covers a small part of its 64x64 texture; shrinking",
+                         "this number shrinks the drawn stroke with it. 3.75 is the old midpoint.")
+                .defineInRange("petalSize", 3.75D, 0.5D, 12.0D);
+        INCURSUS_RIFT_RADIAL_SPEED = clientBuilder
+                .comment("Outward travel of each petal in blocks per tick, before the swing's scale",
+                         "multiplier. The old particles drifted 0.3 to 0.4 blocks per tick for their",
+                         "whole 12 tick life, so 0.35 reproduces the same opening.")
+                .defineInRange("radialSpeed", 0.35D, 0.0D, 2.0D);
+        INCURSUS_RIFT_PETALS = clientBuilder
+                .comment("How many blade strokes form the flower. 8 matches the old ring exactly;",
+                         "lower values are cheaper and read less like a flower, higher values fill the",
+                         "ring more densely.")
+                .defineInRange("petals", 8, 4, 16);
+        INCURSUS_RIFT_MAX_INSTANCES = clientBuilder
+                .comment("How many rifts may be alive at once. Fast successive swings overlap up to",
+                         "this many; the oldest is dropped first.")
+                .defineInRange("maxInstances", 6, 1, 32);
+        INCURSUS_RIFT_WIDEN = clientBuilder
+                .comment("How far the shader widens the thin stroke into a wound body, in texture UV.",
+                         "The hand drawn stroke is only about 0.05 UV wide, and one UV unit spans the",
+                         "whole quad (7.5 blocks at the default size), so this value is much more",
+                         "powerful than it looks: 0.10 turns every stroke into a three quarter block",
+                         "halo and eight of them merge into one slab, while 0.015 adds a thin torn",
+                         "outline. 0 keeps exactly the original stroke width.")
+                .defineInRange("widen", 0.015D, 0.0D, 0.30D);
+        INCURSUS_RIFT_STARS = clientBuilder
+                .comment("Star field strength inside the void, 1.0 as authored. 0 leaves a pure black",
+                         "cut with no stars at all.")
+                .defineInRange("stars", 1.0D, 0.0D, 3.0D);
+        INCURSUS_RIFT_DEPTH_TEST = clientBuilder
+                .comment("Whether the rift is hidden by terrain and entities in front of it.",
+                         "The old slash particles used Malum's noClip particles, so the flower drew",
+                         "straight through walls; false keeps that behaviour and is the faithful",
+                         "default. Turn this on to make the rift respect world depth instead.")
+                .define("respectWorldDepth", false);
         clientBuilder.pop();
         CLIENT_SPEC = clientBuilder.build();
     }

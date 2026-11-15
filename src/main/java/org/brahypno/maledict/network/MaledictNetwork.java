@@ -18,7 +18,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class MaledictNetwork {
-    private static final String PROTOCOL = "6";
+    /** 6 -> 7: IncursusSlashPacket carries the swing seed so every client builds the same eight petals. */
+    private static final String PROTOCOL = "7";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "main"),
             () -> PROTOCOL,
@@ -87,7 +88,8 @@ public final class MaledictNetwork {
 
     public static void sendIncursusSlash(ServerPlayer player, float scale) {
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
-                new IncursusSlashPacket(player.position().add(0, player.getBbHeight() * 0.5, 0), scale));
+                new IncursusSlashPacket(player.position().add(0, player.getBbHeight() * 0.5, 0), scale,
+                        player.getRandom().nextLong()));
     }
 
     /** One notification after the entire damage probe, including fallback and lethal hits. */

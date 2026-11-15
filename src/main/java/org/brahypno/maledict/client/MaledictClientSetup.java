@@ -38,6 +38,7 @@ import org.brahypno.maledict.client.vicissitude.render.VicissitudeScytheRenderer
 import org.brahypno.maledict.client.vicissitude.render.VicissitudeSpiritBoltRenderer;
 import org.brahypno.maledict.client.vicissitude.vfx.VicissitudeSummoningPostProcessor;
 import org.brahypno.maledict.client.vitals.DelayedVitalsOverlay;
+import org.brahypno.maledict.client.weapon.incursus.rift.IncursusRiftReloadListener;
 import org.brahypno.maledict.client.weapon.remembrance.SpiritArrowRenderer;
 import org.brahypno.maledict.client.weapon.scythe.DiplopiaScytheBoomerangRenderer;
 import org.brahypno.maledict.common.invocation.InvocationDefinition;
@@ -166,6 +167,14 @@ public final class MaledictClientSetup {
                             DelayedVitalsOverlay.PENDING_HEAL);
         event.registerAbove(VanillaGuiOverlay.PLAYER_HEALTH.id(), "delayed_vitals_damage",
                             DelayedVitalsOverlay.PENDING_DAMAGE);
+    }
+
+    /**
+     * 资源重载后刀痕贴图可用性与按帧缓存的 RenderType 都要重算。
+     */
+    @SubscribeEvent
+    public static void registerReloadListeners(RegisterClientReloadListenersEvent event) {
+        event.registerReloadListener(new IncursusRiftReloadListener());
     }
 
     @SubscribeEvent
