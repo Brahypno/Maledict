@@ -131,6 +131,9 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(MaledictTags.AUFHEBEN_LIGHTWARD_WEAPONS)
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.LOVER_AXE.get(),
                      MaledictItems.MELTFALL_AXE.get());
+        tag(MaledictTags.LODESTONE_MAGIC_TAKEOVER)
+                .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.LOVER_AXE.get(),
+                     MaledictItems.MELTFALL_AXE.get());
         tag(MaledictTags.AUFHEBEN_LIGHTWARD_BLADES).add(MaledictItems.INCURSUS_BLADE.get());
         tag(MaledictTags.AUFHEBEN_LIGHTWARD_AXES)
                 .add(MaledictItems.LOVER_AXE.get(), MaledictItems.MELTFALL_AXE.get());

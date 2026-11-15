@@ -16,8 +16,9 @@ import java.util.function.Consumer;
  * 「无忧符文」：与抑郁符文成对的那一半 —— 抑郁把痛磨钝（自己少挨），无忧把两个人的命运绑在一起
  * （谁都躲不掉，而且血差多少就重多少）。
  *
- * <p>符文自己不挂效果也不 tick，全部出手点都在 {@code BlissRuneEvents}（三个伤害事件）与
- * {@code IncursusBladeItem}（抬一档）里；这里只回答一件事：**谁戴着**。
+ * <p>符文自己不挂效果也不 tick，全部出手点都在 {@code BlissRuneEvents}（三个伤害事件，加上
+ * {@code DamageRequestEvent} 的通用抬档）里；这里只回答一件事：
+ * **谁戴着**。
  */
 public final class RuneOfBlissItem extends AbstractRuneCurioItem {
 

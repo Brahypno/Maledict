@@ -47,25 +47,8 @@ public final class IncursusBladeClientEvents {
 
         List<Component> tooltip = event.getToolTip();
         addDescription(event, tooltip);
-
-        String magicDamageName = Component.translatable("attribute.name.lodestone.magic_damage").getString();
-        int insertionIndex = tooltip.size();
-        for (int i = 0; i < tooltip.size(); i++) {
-            if (tooltip.get(i).getString().contains(magicDamageName)) {
-                insertionIndex = i + 1;
-                break;
-            }
-        }
-
-        double damage = IncursusBladeItem.getStat(
-                event.getItemStack(), IncursusBladeItem.POWDER_SNOW_DAMAGE);
-        String formattedDamage = new DecimalFormat("#.##").format(damage);
-        Component line = Component.literal(" ").append(Component.translatable(
-                "attribute.modifier.equals.0",
-                formattedDamage,
-                Component.translatable("attribute.name.maledict.powder_snow_damage")))
-                .withStyle(ChatFormatting.DARK_GREEN);
-        tooltip.add(insertionIndex, line);
+        // 冻结属性已经是主手属性修饰符，原版属性 tooltip 会自己列出；
+        // 这里不再手写一行，避免同一条修饰符出现两次。
     }
 
     private static void addDescription(ItemTooltipEvent event, List<Component> tooltip) {

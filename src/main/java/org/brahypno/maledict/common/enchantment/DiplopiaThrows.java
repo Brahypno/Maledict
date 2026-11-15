@@ -62,13 +62,14 @@ public final class DiplopiaThrows {
             attackDamage *= 1.5f;
             magicDamage *= 1.5f;
         }
-        spawnEchoes(level, player, hand, scythe, attackDamage, magicDamage, 0.0f,
+        spawnEchoes(level, player, hand, scythe, attackDamage, magicDamage,
                     enhanced, position, velocity);
     }
 
     /**
      * Spawns one phantom per Diplopia level. Used by the Rebound injection above and directly by
-     * the Incursus Blade's own throw, which already has the exact channel values.
+     * the Incursus Blade's own throw, which already has the exact attack and magic values. The
+     * freezing channel rides the thrower's {@code powder_snow_damage} attribute instead.
      */
     public static void spawnEchoes(
             Level level,
@@ -77,7 +78,6 @@ public final class DiplopiaThrows {
             ItemStack scythe,
             float attackDamage,
             float magicDamage,
-            float frozenDamage,
             boolean enhanced,
             Vec3 position,
             float velocity) {
@@ -113,8 +113,7 @@ public final class DiplopiaThrows {
 
             ScytheBoomerangEntity echo = scythe.getItem() instanceof IncursusBladeItem
                                          ? new IncursusScytheBoomerangEntity(
-                                                 level, position.x, position.y, position.z,
-                                                 frozenDamage * multiplier, true)
+                                                 level, position.x, position.y, position.z, true)
                                          : new DiplopiaScytheBoomerangEntity(
                                                  level, position.x, position.y, position.z);
             echo.setData(player, attackDamage * multiplier, magicDamage * multiplier, slot, returnTimer);

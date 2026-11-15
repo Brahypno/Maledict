@@ -13,7 +13,6 @@ import com.sammy.malum.registry.common.item.EnchantmentRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -44,7 +43,7 @@ public final class IncursusBladeEnchantments {
 
         boolean enhanced = isEnhanced(player);
         IncursusBladeAttack.DamageChannels channels = IncursusBladeAttack
-                .damageChannels(player, stack)
+                .damageChannels(player)
                 .scaled(enhanced ? THROWN_DAMAGE_MULTIPLIER : 1.0f);
         float velocity = enhanced ? 3.0f : 1.75f;
         Vec3 position = player.position().add(0.0, player.getBbHeight() * 0.5f, 0.0);
@@ -56,7 +55,7 @@ public final class IncursusBladeEnchantments {
         }
 
         IncursusScytheBoomerangEntity scythe = new IncursusScytheBoomerangEntity(
-                level, position.x, position.y, position.z, channels.frozen());
+                level, position.x, position.y, position.z);
         scythe.setData(player, channels.attack(), channels.magic(), slot, 8);
         scythe.setItem(stack);
         scythe.setEnhanced(enhanced);
@@ -70,7 +69,7 @@ public final class IncursusBladeEnchantments {
         TemporarilyDisabledItem.disable(serverPlayer, slot);
         DiplopiaThrows.spawnEchoes(
                 level, serverPlayer, hand, stack,
-                channels.attack(), channels.magic(), channels.frozen(),
+                channels.attack(), channels.magic(),
                 enhanced, position, velocity);
         player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
         player.swing(hand, true);
@@ -97,7 +96,7 @@ public final class IncursusBladeEnchantments {
 
     private static void performAscensionAttack(Level level, Player player, ItemStack stack, boolean enhanced) {
         IncursusBladeAttack.DamageChannels channels = IncursusBladeAttack
-                .damageChannels(player, stack)
+                .damageChannels(player)
                 .scaled(enhanced ? ASCENSION_DAMAGE_MULTIPLIER : 1.0f);
         AABB area = player.getBoundingBox().inflate(4.0, 1.0, 4.0);
         var sound = SoundRegistry.SCYTHE_SWEEP.get();
@@ -116,8 +115,9 @@ public final class IncursusBladeEnchantments {
         }
 
         boolean hitAnything = false;
-        for (Entity target : level.getEntities(player, area, entity -> canHitEntity(player, entity))) {
-            // 飞升横扫写死 medium（不随精魂成长），无忧符文同样按「这把刀的伤害」抬一档。
+        for (Entity target : IncursusBladeAttack.uniqueLivingTargets(
+                level.getEntities(player, area, entity -> canHitEntity(player, entity)))) {
+            // 飞升横扫写死 medium（不随精魂成长）；无忧符文的抬档由 DamageRequestEvent 统一处理。
             boolean hit = IncursusBladeItem.dealSkillDamage(target,
                     DamageTypeHelper.create(level, DamageTypeRegistry.SCYTHE_SWEEP, player), channels.attack())
                     .instantEffective();
@@ -127,16 +127,7 @@ public final class IncursusBladeEnchantments {
                 if (fireAspect > 0 && target instanceof LivingEntity livingTarget){
                     livingTarget.setSecondsOnFire(fireAspect * 4);
                 }
-                IncursusBladeItem.applyTieredDamage(
-                        stack,
-                        target,
-                        DamageTypeHelper.create(level, DamageTypeRegistry.VOODOO, player),
-                        channels.magic());
-                IncursusBladeItem.applyTieredDamage(
-                        stack,
-                        target,
-                        DamageTypeHelper.create(level, DamageTypes.FREEZE, player),
-                        channels.frozen());
+                // 魔法属性由 AttributeDamageRegistry 在 scythe_sweep 命中后独立派发。
                 SoundHelper.playSound(
                         player, sound, 2.0f,
                         RandomHelper.randomBetween(level.getRandom(), 0.75f, 1.25f));

@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,13 +13,19 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import org.brahypno.changelib.DamageHelper.DamageRequestEvent;
 import org.brahypno.maledict.registry.MaledictAttributes;
 import org.brahypno.maledict.registry.MaledictItems;
+import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 @GameTestHolder("maledict")
 @PrefixGameTestTemplate(false)
@@ -30,8 +37,28 @@ public final class LoverAxeTest {
         weapon.enchant(Enchantments.SHARPNESS, 5);
         Cow victim = cow(helper);
         player.cooldownReset = false;
-        player.attack(victim);
+        List<DamageRequestEvent> magicRequests = new ArrayList<>();
+        Consumer<DamageRequestEvent> listener = event -> {
+            if (event.target() == victim
+                    && event.attribute() == LodestoneAttributeRegistry.MAGIC_DAMAGE.get()) {
+                magicRequests.add(event);
+            }
+        };
+        MinecraftForge.EVENT_BUS.addListener(listener);
+        try {
+            player.attack(victim);
+        } finally {
+            MinecraftForge.EVENT_BUS.unregister(listener);
+        }
         equal(helper, 85, victim.getHealth(), "Eleven melee damage plus Sharpness V and one magic damage");
+        helper.assertTrue(magicRequests.size() == 1,
+                "Maledict must dispatch exactly one Lodestone magic attribute request, got " + magicRequests.size());
+        helper.assertTrue(magicRequests.get(0).source() != null
+                                && magicRequests.get(0).source().is(DamageTypes.MAGIC),
+                "The magic request must execute as minecraft:magic");
+        helper.assertTrue(magicRequests.get(0).originalSource() != null
+                                && magicRequests.get(0).originalSource().is(DamageTypes.PLAYER_ATTACK),
+                "The magic request must keep the original player_attack source");
         equal(helper, 98, victim.getMaxHealth(), "Enchanted hit wounds once");
         equal(helper, 2, descent(player), "Enchanted hit rewards once");
         equal(helper, 2, weapon.getDamageValue(), "Axe melee consumes normal durability");

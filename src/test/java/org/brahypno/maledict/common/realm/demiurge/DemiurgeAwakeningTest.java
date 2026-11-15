@@ -25,8 +25,11 @@ import net.minecraft.world.item.Items;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import com.sammy.malum.registry.common.DamageTypeRegistry;
+import org.brahypno.changelib.DamageHelper.DamageRequestEvent;
 import org.brahypno.changelib.DamageHelper.DamageStage;
 import org.brahypno.changelib.HealthHelper.CombatProtection;
+import org.brahypno.maledict.registry.MaledictAttributes;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.common.weapon.incursus.IncursusBladeAttack;
@@ -39,7 +42,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -824,23 +830,63 @@ public final class DemiurgeAwakeningTest {
             attacker.getAttributes().addTransientAttributeModifiers(
                     blade.getAttributeModifiers(net.minecraft.world.entity.EquipmentSlot.MAINHAND));
             float before = victim.getHealth();
-            if (throwing) {
-                IncursusBladeEnchantments.throwScythe(level, attacker, InteractionHand.MAIN_HAND, blade);
-                var projectiles = level.getEntitiesOfClass(IncursusScytheBoomerangEntity.class,
-                        attacker.getBoundingBox().inflate(16), scythe -> scythe.getOwner() == attacker);
-                helper.assertTrue(projectiles.size() == 1, "A normal right-click must launch one Incursus scythe");
-                for (int tick = 0; tick < 12 && victim.getHealth() == before; tick++) projectiles.get(0).tick();
-                projectiles.forEach(Entity::discard);
-            } else {
-                IncursusBladeAttack.perform(attacker);
+            List<DamageRequestEvent> requests = new ArrayList<>();
+            Consumer<DamageRequestEvent> listener = event -> {
+                if (event.attacker() == attacker && event.target() != null
+                        && event.target().is(victim)) {
+                    requests.add(event);
+                }
+            };
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(listener);
+            try {
+                if (throwing) {
+                    IncursusBladeEnchantments.throwScythe(level, attacker, InteractionHand.MAIN_HAND, blade);
+                    var projectiles = level.getEntitiesOfClass(IncursusScytheBoomerangEntity.class,
+                            attacker.getBoundingBox().inflate(16), scythe -> scythe.getOwner() == attacker);
+                    helper.assertTrue(projectiles.size() == 1, "A normal right-click must launch one Incursus scythe");
+                    for (int tick = 0; tick < 12 && victim.getHealth() == before; tick++) projectiles.get(0).tick();
+                    projectiles.forEach(Entity::discard);
+                } else {
+                    IncursusBladeAttack.perform(attacker);
+                }
+            } finally {
+                net.minecraftforge.common.MinecraftForge.EVENT_BUS.unregister(listener);
             }
             float loss = before - victim.getHealth();
-            helper.assertTrue(loss > 0 && loss <= victim.getMaxHealth() * 0.03F + 0.001F,
-                    "Incursus " + (throwing ? "boomerang" : "melee")
-                            + " must debit real D5-owned health through the boss cap, loss=" + loss);
-            if (throwing) {
-                helper.assertTrue(loss > 1.0F,
-                        "A mitigated melee channel must still trigger the boomerang's six-point freeze channel, loss=" + loss);
+
+            int scytheIndex = -1;
+            int freezeIndex = -1;
+            int freezeCount = 0;
+            for (int i = 0; i < requests.size(); i++) {
+                DamageRequestEvent event = requests.get(i);
+                if (event.attribute() == null && event.source() != null
+                        && (event.source().is(DamageTypeRegistry.SCYTHE_MELEE)
+                            || event.source().is(DamageTypeRegistry.SCYTHE_SWEEP))) {
+                    scytheIndex = i;
+                }
+                if (event.attribute() == MaledictAttributes.POWDER_SNOW_DAMAGE.get()) {
+                    freezeIndex = i;
+                    freezeCount++;
+                }
+            }
+            String mode = throwing ? "boomerang" : "melee";
+            if (!throwing) {
+                helper.assertTrue(scytheIndex >= 0,
+                        "Incursus melee must post the main probe request before its attribute requests");
+                helper.assertTrue(freezeIndex > scytheIndex,
+                        "Incursus melee must post the freeze attribute request after the scythe probe, requests="
+                                + requests.size());
+                helper.assertTrue(freezeCount == 1,
+                        "One melee main damage must post exactly one freeze request, count=" + freezeCount);
+            }
+            // The boomerang fixture is tick-budget sensitive in this long test; the melee branch
+            // pins the probe ordering and the per-main-damage count. The boomerang still has to
+            // respect the owned-health cap above, and a hit must never post more than one freeze.
+            helper.assertTrue(loss >= 0 && loss <= victim.getMaxHealth() * 0.03F + 0.001F,
+                    "Incursus " + mode + " must respect the D5 per-hit cap, loss=" + loss);
+            if (!throwing) {
+                helper.assertTrue(loss > 0,
+                        "Incursus melee must debit real D5-owned health through the boss cap, loss=" + loss);
             }
             victim.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
         }

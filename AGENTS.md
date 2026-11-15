@@ -70,8 +70,11 @@ C: record [C, B]   judge C was absent → full   (A evicted, counter discarded)
 Consequences: adaptation 1 cannot reduce a three-message rotation (the previous message is always the one evicted);
 adaptation 2 also cannot, for the same reason; a **two**-message rotation under adaptation 2 is held, and reduces from
 the third hit on; adaptation 3 holds all three and reduces from the second round on. Note that the dev scythe
-(Incursus Blade) lands three messages per swing (`scythe_sweep` / `voodoo` / `freeze`), so under the default of 2 its
-damage is never adapted.
+(Incursus Blade) lands three messages per swing on its sweep paths (`scythe_sweep` / `magic` / `freeze`), so under
+the default of 2 its damage is never adapted. The `freeze` message is the independent
+`powder_snow_damage` attribute request and still uses `minecraft:freeze`; the `magic` message is the independent
+Lodestone `MAGIC_DAMAGE` attribute request (`minecraft:magic`). The old explicit `voodoo` probe is gone, and both
+attribute requests are dispatched after the scythe probe, in registration order (freeze then magic).
 
 ### Incursus Blade's arcane channel (`can_trigger_magic_damage`)
 
@@ -82,11 +85,28 @@ it deals one extra `minecraft:magic` hit worth the attribute, with a null direct
 entity, right after setting `invulnerableTime = 0`. `forge:ignores_magic_attack_cooldown_scalar` is empty, so that
 bonus is never scaled by attack strength.
 
-Consequence: a melee hit that lands **without** firing `LivingHurtEvent` — the damage probe falling back to
-`setHealth`, i-frames, immunity, a cancelled attack event — silently loses that magic damage. `IncursusBladeAttack`
-probes for exactly that: `IncursusBladeItem#hurtEvent` reports back through `markMeleeHurtEvent` during the hit's
-own resolution, and a miss is compensated with the same magic damage. The aqueous (freeze) channel left
-`hurtEvent` for the same reason: it is dealt by `IncursusBladeAttack` now, not by whatever event happens to fire.
+Maledict takes over this attribute for its tagged weapons. `MaledictAttributes` registers Lodestone's
+`MAGIC_DAMAGE` with ChangeLib's `AttributeDamageRegistry`, and
+`LodestoneAttributeEventHandlerMixin` cancels Lodestone's `processAttributes` copy when the attacker's main hand is
+in `maledict:lodestone_magic_takeover` and the original source is in `CAN_TRIGGER_MAGIC` but not `IS_MAGIC`. The
+resulting request keeps Lodestone's shape: source `minecraft:magic`, null direct entity, the attacker as causing
+entity. The old `markMeleeHurtEvent` compensation is gone.
+
+The aqueous (freeze) channel is no longer an explicit probe. `maledict:powder_snow_damage` is a registered
+attribute; the blade's NBT stat feeds a main-hand `ADDITION` modifier, and ChangeLib's `AttributeDamageRegistry`
+dispatches one independent `minecraft:freeze` request after the scythe probe. ChangeLib's `ProbeScope` records a
+probe result with `totalDealt() > 0` even when its `hurt` path was not observed (an entity that fully overrides
+`hurt`, or a probe that settled through setHealth/NBT), so the request is not limited to the vanilla `hurt` event.
+Forge multipart bosses expose the body and every animated part as separate entities; `IncursusBladeAttack.uniqueLivingTargets`
+collapses the melee and Ascension target lists onto the living root (the nearest hitbox per root), so one swing
+still opens one main probe and therefore one freeze/magic round. The boomerang hits a single part and needs no
+collapse. The blade's
+`DamageTier` still sets the request's base `priority`/`strength` in `IncursusBladeEffects` on
+`DamageRequestEvent` (NORMAL), and `BlissRuneEvents` raises it one step (LOW). The unified
+`DamageRequestEvent` also covers probe requests; `attribute() != null` distinguishes an attribute
+request. The freeze registration uses `AttributeAmountReaders.itemBacked()` so the flying scythe's
+item modifiers are composed with the attacker's attributes instead of relying on the item being in
+the main hand.
 
 ### Boss has no collision movement (`VicissitudeBossEntity`)
 

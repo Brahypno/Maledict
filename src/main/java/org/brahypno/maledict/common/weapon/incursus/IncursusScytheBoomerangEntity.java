@@ -4,7 +4,6 @@ import com.sammy.malum.common.entity.scythe.ScytheBoomerangEntity;
 import com.sammy.malum.registry.common.DamageTypeRegistry;
 import com.sammy.malum.registry.common.SoundRegistry;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -12,6 +11,8 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
+import org.brahypno.changelib.DamageHelper.LivingTargetHelper;
+import org.brahypno.changelib.DamageHelper.attribute.AttackItemProvider;
 import org.brahypno.maledict.common.enchantment.DiplopiaThrows;
 import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
@@ -19,19 +20,26 @@ import team.lodestar.lodestone.helpers.ItemHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.helpers.SoundHelper;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 /**
- * Malum's rebound projectile with the Incursus Blade's frozen damage channel.
+ * Malum's rebound projectile with the Incursus Blade's sweep and magic channels. The freezing
+ * channel is a {@code powder_snow_damage} attribute.
  */
-public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
-    private final float frozenDamage;
+public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity
+        implements AttackItemProvider {
     private final boolean echo;
 
     /** 「收回」只响一次：飞镰掉头（{@code returnTimer} 落到 0）的那一 tick。 */
     private boolean recallAnnounced;
 
-    public IncursusScytheBoomerangEntity(
-            Level level, double x, double y, double z, float frozenDamage) {
-        this(level, x, y, z, frozenDamage, false);
+    /** One living root per throw; multipart hitboxes must not re-open the probe per part. */
+    private final Set<UUID> hitLivingTargets = new HashSet<>();
+
+    public IncursusScytheBoomerangEntity(Level level, double x, double y, double z) {
+        this(level, x, y, z, false);
     }
 
     /**
@@ -39,9 +47,8 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
      * thrower's inventory. It discards itself on the return leg and is never saved.
      */
     public IncursusScytheBoomerangEntity(
-            Level level, double x, double y, double z, float frozenDamage, boolean echo) {
+            Level level, double x, double y, double z, boolean echo) {
         super(level, x, y, z);
-        this.frozenDamage = frozenDamage;
         this.echo = echo;
     }
 
@@ -77,6 +84,12 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
         return !echo && super.shouldBeSaved();
     }
 
+    /** The thrown scythe is the authoritative item snapshot while it is in flight. */
+    @Override
+    public ItemStack getAttackItem() {
+        return getItem();
+    }
+
     @Override
     protected void onHitEntity(EntityHitResult hitResult) {
         if (level().isClientSide()){
@@ -85,12 +98,17 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
 
         Entity ownerEntity = getOwner();
         if (ownerEntity instanceof LivingEntity owner){
-            Entity target = hitResult.getEntity();
+            Entity hitEntity = hitResult.getEntity();
+            LivingEntity livingRoot = LivingTargetHelper.getLivingTarget(hitEntity);
+            Entity target = livingRoot != null ? livingRoot : hitEntity;
+            if (livingRoot != null && !hitLivingTargets.add(livingRoot.getUUID())) {
+                return;
+            }
             ItemStack heldItem = owner.getMainHandItem();
             ItemStack scythe = getItem();
             owner.setItemInHand(InteractionHand.MAIN_HAND, scythe);
-            
-            // 这一记写死 medium（不随精魂成长），但无忧符文对「这把刀打出的伤害」是一个口径，照抬一档。
+
+            // 这一记写死 medium（不随精魂成长）；无忧符文的抬档由 DamageRequestEvent 统一处理。
             boolean hit = IncursusBladeItem.dealSkillDamage(target,
                     DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, owner), damage)
                     .instantEffective();
@@ -100,16 +118,7 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity {
                 if (fireAspect > 0 && target instanceof LivingEntity livingTarget){
                     livingTarget.setSecondsOnFire(fireAspect * 4);
                 }
-                IncursusBladeItem.applyTieredDamage(
-                        scythe,
-                        target,
-                        DamageTypeHelper.create(level(), DamageTypeRegistry.VOODOO, this, owner),
-                        magicDamage);
-                IncursusBladeItem.applyTieredDamage(
-                        scythe,
-                        target,
-                        DamageTypeHelper.create(level(), DamageTypes.FREEZE, this, owner),
-                        frozenDamage);
+                // 魔法属性由 AttributeDamageRegistry 在 scythe_sweep 命中后独立派发。
                 enemiesHit++;
                 returnTimer += 2;
             }

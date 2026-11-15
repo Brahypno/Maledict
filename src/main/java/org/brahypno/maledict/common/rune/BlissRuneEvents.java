@@ -10,13 +10,16 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
+import org.brahypno.changelib.DamageHelper.DamageProbeResult;
+import org.brahypno.changelib.DamageHelper.DamageRequestEvent;
+import org.brahypno.changelib.DamageHelper.DamageStage;
 import org.brahypno.maledict.Maledict;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * 「无忧符文」的出手点：把一对打得起来的人绑在同一条命运上。
  *
- * <p>两件事：
+ * <p>三件事：
  *
  * <ol>
  *   <li><b>增伤</b>：{@code 1 + 0.70 × |攻方血量比 − 守方血量比|}，攻守两侧同一个倍率（见
@@ -25,6 +28,9 @@ import org.jetbrains.annotations.Nullable;
  *   <li><b>强制命中</b>：{@code LivingAttackEvent} / {@code LivingHurtEvent} / {@code LivingDamageEvent}
  *       三个事件挂在**最低优先级**，接到已经**被取消**的那一个，就替这一记补打一次
  *       {@link DamageProbe#lighterDamageMethod}：medium 档、但**不要求打满**（只要真掉血就收手）。</li>
+ *   <li><b>通用抬档</b>：{@link DamageRequestEvent} 上把佩戴者打出的探针/属性请求的
+ *       {@code priority} 与 {@code strength} 各抬一级。神侵恶刃、恋人之斧、精魂箭矢、飞镰
+ *       都走同一条规则，武器自己不再判断符文；强制命中补打期间不抬，避免把补偿的那一记再加强。</li>
  * </ol>
  *
  * <p>为什么挂在最低优先级：这一符文要的是「最后说话」。别人的减伤、免疫、闪避都已经表过态，
@@ -48,6 +54,8 @@ public final class BlissRuneEvents {
      * <p>补打走的是探针，探针自己会再走一遍 {@code hurt} 与这三个事件：取消方多半会照旧取消，
      * 于是「取消 → 补打 → 又取消 → 再补打」可以无限递归下去。这一段里我们一律不出手，
      * 爬完剩下的梯级是探针自己的事（medium 档会继续往 {@code setHealth} 那一档找路）。
+     * 抬档处理器（{@link DamageRequestEvent}）也在这个闸门里让路：补打的那一记已经带着原始量，
+     * 不应该再吃一次符文加成。
      *
      * <p>顺带解决乘两遍：补打的那一记**已经乘过倍率**，闸门一放我们也不会再乘第二次。
      *
@@ -109,6 +117,37 @@ public final class BlissRuneEvents {
             return;
         }
         force(victim, event.getSource(), event.getAmount());
+    }
+
+    /**
+     * 佩戴者打出的所有探针/属性请求都抬一级；强制命中补打除外。
+     *
+     * <p>恋人之斧、精魂箭矢、飞镰、神侵恶刃的探针和冻结属性都走这里，武器本身不需要知道符文。
+     * 只抬 {@code priority}/{@code strength}，不改 {@code amount}，也不改补偿/改防御开关。
+     */
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onDamageRequest(DamageRequestEvent event) {
+        if (forcing){
+            return;
+        }
+        LivingEntity attacker = event.attacker();
+        if (attacker == null || !RuneOfBlissItem.isEquipped(attacker)){
+            return;
+        }
+        event.setPriority(raised(event.priority()));
+        event.setStrength(raised(event.strength()));
+    }
+
+    private static DamageStage raised(DamageStage stage) {
+        return DamageStage.byLevel(Math.min(5, stage.level() + 1));
+    }
+
+    private static DamageProbeResult.Penetration raised(DamageProbeResult.Penetration strength) {
+        return switch (strength) {
+            case RESPECT -> DamageProbeResult.Penetration.IGNORE_DECLARATION;
+            case IGNORE_DECLARATION -> DamageProbeResult.Penetration.BYPASS_GUARD;
+            case BYPASS_GUARD -> DamageProbeResult.Penetration.BYPASS_GUARD;
+        };
     }
 
     /**

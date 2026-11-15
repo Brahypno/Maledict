@@ -265,8 +265,9 @@ public final class MaledictItems {
 
     /**
      * 无忧符文：抑郁符文的另一半，虚空石符板 + 32 幽影精魂。把自己的命运和对手绑在一起 ——
-     * 血量比例差多少这一击就重多少、双方都躲不掉，佩戴者手里的神侵恶刃还整体抬一档。
-     * 见 {@link RuneOfBlissItem}、{@code BlissRuneEvents} 与 {@code IncursusBladeItem.DamageTier}。
+     * 血量比例差多少这一击就重多少、双方都躲不掉；佩戴者打出的探针与属性请求还会在
+     * {@code BlissRuneEvents} 里统一抬一级。
+     * 见 {@link RuneOfBlissItem} 与 {@code BlissRuneEvents}。
      */
     public static final RegistryObject<Item> RUNE_OF_BLISS =
             ITEMS.register("rune_of_bliss",

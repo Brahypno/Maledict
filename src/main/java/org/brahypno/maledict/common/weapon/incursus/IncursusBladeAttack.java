@@ -3,8 +3,6 @@ package org.brahypno.maledict.common.weapon.incursus;
 import com.sammy.malum.registry.common.DamageTypeRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,6 +17,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
+import org.brahypno.changelib.DamageHelper.LivingTargetHelper;
 import org.brahypno.maledict.common.equipment.lightward.LightwardSet;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictSounds;
@@ -27,22 +26,17 @@ import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.helpers.SoundHelper;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 神侵恶刃的伤害计算与近战挥砍。
  */
 public final class IncursusBladeAttack {
     private static final String LAST_ATTACK_TICK = "maledict:last_incursus_blade_attack_tick";
-    private static final int NO_PENDING_TARGET = -1;
-
-    /**
-     * 正在结算的那次近战命中打的是谁、有没有走到 {@link IncursusBladeItem#hurtEvent}；只在服务端
-     * 主线程用，不需要同步，窗口由 {@link #applyScytheMeleeDamage} 成对开关。
-     */
-    private static int pendingMeleeTargetId = NO_PENDING_TARGET;
-    private static boolean pendingMeleeHurtEventSeen;
 
     public static void perform(ServerPlayer player) {
         ItemStack weapon = player.getMainHandItem();
@@ -68,12 +62,16 @@ public final class IncursusBladeAttack {
                 searchArea,
                 target -> isValidTarget(player, target, attackOrigin, reach));
         targets.sort(Comparator.comparingDouble(player::distanceToSqr));
+        // Multipart bosses expose the body plus every animated part as separate entities. One
+        // swing must still be one main damage per living root, otherwise each part opens its own
+        // probe and the freeze/magic attribute requests would fire once per part.
+        targets = uniqueLivingTargets(targets);
 
         float attackStrength = player.getAttackStrengthScale(0.5f);
         player.swing(InteractionHand.MAIN_HAND, true);
         playSlashEffect(player, attackStrength);
 
-        DamageChannels channels = damageChannels(player, weapon);
+        DamageChannels channels = damageChannels(player);
         // 5 级：主手这把刀把轻档探针改成补满。
         boolean compensateDamage = LightwardSet.unlocksWeaponTopUp(player, weapon);
         boolean attacked = false;
@@ -82,26 +80,12 @@ public final class IncursusBladeAttack {
             Swing swing = calculateDamage(player, weapon, target, channels.attack(), attackStrength, sweepingLevel);
             float damage = swing.damage();
             if (damage > 0.0f){
-                boolean reachedHurtEvent = applyScytheMeleeDamage(
-                        player, weapon, target, damage, compensateDamage);
+                applyScytheMeleeDamage(player, weapon, target, damage, compensateDamage);
                 if (target instanceof LivingEntity livingTarget){
                     weapon.hurtEnemy(livingTarget, player);
                     IncursusBladeEffects.applySacredEffect(player, livingTarget, weapon);
-                    if (!reachedHurtEvent){
-                        IncursusBladeItem.applyTieredDamage(
-                                weapon,
-                                livingTarget,
-                                DamageTypeHelper.create(player.level(), DamageTypes.MAGIC, player),
-                                channels.magic(),
-                                compensateDamage);
-                    }
-                    // 细雪通道跟主伤害一起结算，不取决于事件链。
-                    IncursusBladeItem.applyTieredDamage(
-                            weapon,
-                            livingTarget,
-                            DamageTypeHelper.create(player.level(), DamageTypes.FREEZE, player),
-                            channels.frozen(),
-                            compensateDamage);
+                    // 冻结/魔法都是 ChangeLib 注册的属性请求；每个主伤害 probe 结束后立即按顺序
+                    // 派发，不等到整次挥砍结束。
                 }
                 attacked = true;
                 critical |= swing.critical();
@@ -117,14 +101,15 @@ public final class IncursusBladeAttack {
     }
 
     /**
-     * 一次攻击的三条伤害通道：攻击力与魔法伤害来自实体属性，冻结来自物品 NBT 的碧水等级。
+     * 投掷/幻影用的攻击渠道快照。近战主伤害只读 {@code attack}；魔法与冻结由
+     * ChangeLib 注册的 attribute 请求在主伤害 probe 之后派发。
      */
-    public record DamageChannels(float attack, float magic, float frozen) {
+    public record DamageChannels(float attack, float magic) {
         public DamageChannels scaled(float factor) {
             if (factor == 1.0f){
                 return this;
             }
-            return new DamageChannels(attack * factor, magic * factor, frozen * factor);
+            return new DamageChannels(attack * factor, magic * factor);
         }
     }
 
@@ -132,45 +117,40 @@ public final class IncursusBladeAttack {
     private record Swing(float damage, boolean critical) {
     }
 
-    public static DamageChannels damageChannels(LivingEntity attacker, ItemStack weapon) {
+    public static DamageChannels damageChannels(LivingEntity attacker) {
         return new DamageChannels(
                 (float) attacker.getAttributeValue(Attributes.ATTACK_DAMAGE),
-                (float) attacker.getAttributeValue(LodestoneAttributeRegistry.MAGIC_DAMAGE.get()),
-                (float) IncursusBladeItem.getStat(weapon, IncursusBladeItem.POWDER_SNOW_DAMAGE));
+                (float) attacker.getAttributeValue(LodestoneAttributeRegistry.MAGIC_DAMAGE.get()));
     }
 
     /**
-     * 结算近战主伤害并探测它有没有走进 {@link IncursusBladeItem#hurtEvent}；探针走回退路径
-     * （无敌帧、免疫、setHealth 兜底）时事件没发生，返回 false。
+     * Collapses Forge multipart targets onto their living root, keeping the nearest hitbox per
+     * root. This keeps one swing to one main-damage probe per boss even when every part is a
+     * separate {@link net.minecraftforge.entity.PartEntity}.
      */
-    private static boolean applyScytheMeleeDamage(
+    public static List<Entity> uniqueLivingTargets(List<Entity> targets) {
+        Map<Entity, Entity> unique = new LinkedHashMap<>();
+        for (Entity target : targets) {
+            LivingEntity living = LivingTargetHelper.getLivingTarget(target);
+            Entity root = living != null ? living : target;
+            unique.putIfAbsent(root, root);
+        }
+        return new ArrayList<>(unique.values());
+    }
+
+    /**
+     * 结算近战主伤害。冻结/魔法属性请求由 ChangeLib 的 per-probe flush 在主伤害 probe 之后
+     * 依次派发，不再由这里探测或补偿。
+     */
+    private static void applyScytheMeleeDamage(
             ServerPlayer player, ItemStack weapon, Entity target, float damage,
             boolean compensateDamage) {
-        pendingMeleeTargetId = target.getId();
-        pendingMeleeHurtEventSeen = false;
-        try {
-            IncursusBladeItem.applyTieredDamage(
-                    weapon,
-                    target,
-                    DamageTypeHelper.create(player.level(), DamageTypeRegistry.SCYTHE_MELEE, player),
-                    damage,
-                    compensateDamage);
-            return pendingMeleeHurtEventSeen;
-        }
-        finally {
-            pendingMeleeTargetId = NO_PENDING_TARGET;
-            pendingMeleeHurtEventSeen = false;
-        }
-    }
-
-    /**
-     * 由 {@link IncursusBladeItem#hurtEvent} 调用。只认「同一个目标 + scythe_melee」，
-     * Lodestone 补打的 {@code minecraft:magic} 伤害不会把自己算成主伤害。
-     */
-    public static void markMeleeHurtEvent(LivingEntity target, DamageSource source) {
-        if (pendingMeleeTargetId == target.getId() && source.is(DamageTypeRegistry.SCYTHE_MELEE)){
-            pendingMeleeHurtEventSeen = true;
-        }
+        IncursusBladeItem.applyTieredDamage(
+                weapon,
+                target,
+                DamageTypeHelper.create(player.level(), DamageTypeRegistry.SCYTHE_MELEE, player),
+                damage,
+                compensateDamage);
     }
 
     private static Swing calculateDamage(

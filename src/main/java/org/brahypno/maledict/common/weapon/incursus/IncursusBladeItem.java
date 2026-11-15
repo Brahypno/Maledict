@@ -7,7 +7,6 @@ import com.sammy.malum.common.item.curiosities.weapons.scythe.MagicScytheItem;
 import com.sammy.malum.common.item.spirit.SpiritShardItem;
 import com.sammy.malum.core.systems.spirit.MalumSpiritType;
 import com.sammy.malum.registry.common.AttributeRegistry;
-import com.sammy.malum.registry.common.DamageTypeRegistry;
 import com.sammy.malum.registry.common.DamageTypeTagRegistry;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import com.sammy.malum.registry.common.item.EnchantmentRegistry;
@@ -44,15 +43,16 @@ import org.brahypno.changelib.DamageHelper.DamageStage;
 import org.brahypno.changelib.HealthHelper.CombatProtection;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.equipment.lightward.LightwardSet;
-import org.brahypno.maledict.common.rune.RuneOfBlissItem;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
+import org.brahypno.maledict.registry.MaledictAttributes;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 import team.lodestar.lodestone.registry.common.tag.LodestoneDamageTypeTags;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -71,6 +71,10 @@ public final class IncursusBladeItem extends MagicScytheItem {
     public static final String INFERNAL_POWER = "infernal_power";
     public static final String ELDRITCH_ABSORPTION = "eldritch_absorption";
     public static final String WICKED_CRITICAL_DAMAGE = "wicked_critical_damage";
+
+    /** 主手冻结属性修饰符的稳定 id；刀 NBT 的成长值只是这个修饰符的来源。 */
+    public static final UUID POWDER_SNOW_DAMAGE_UUID =
+            UUID.fromString("e07eecfa-4019-4c60-8e61-49597f30b3fc");
 
     /**
      * 物品栏里眨眼用的模型覆盖谓词：{@code 1.0} 表示这一帧闭眼。
@@ -119,6 +123,9 @@ public final class IncursusBladeItem extends MagicScytheItem {
                 LodestoneAttributeRegistry.UUIDS.get(LodestoneAttributeRegistry.MAGIC_DAMAGE),
                 "Incursus blade magic damage", getStat(stack, MAGIC_DAMAGE),
                 AttributeModifier.Operation.ADDITION));
+        attributes.put(MaledictAttributes.POWDER_SNOW_DAMAGE.get(), new AttributeModifier(
+                POWDER_SNOW_DAMAGE_UUID, "Incursus blade freezing damage",
+                getStat(stack, POWDER_SNOW_DAMAGE), AttributeModifier.Operation.ADDITION));
         return attributes.build();
     }
 
@@ -232,11 +239,6 @@ public final class IncursusBladeItem extends MagicScytheItem {
             }
         }
 
-        if (event.getSource().is(DamageTypeRegistry.SCYTHE_MELEE)){
-            // 这次近战命中确实触发了 LivingHurtEvent；IncursusBladeAttack 靠它判断要不要补魔法伤害。
-            IncursusBladeAttack.markMeleeHurtEvent(target, event.getSource());
-        }
-
         addAbsorptionFromDamage(attacker, stack, event.getAmount());
     }
 
@@ -331,13 +333,19 @@ public final class IncursusBladeItem extends MagicScytheItem {
         FINAL;
 
         /**
-         * 抬一档；已经在顶就还是顶。无忧符文抬的就是这一档。
+         * 本档在普通目标上的 ChangeLib 探针上限与穿透。
+         *
+         * <p>LIGHT 与 MEDIUM 在探针层是同一档（medium 梯级、D3、尊重防御）；两者的差别只在
+         * 自有血池的 {@link #internalAttackGrade}。FINAL 才是 final 梯级（D4、忽略声明）。
+         * 冻结属性请求也按这张表起步，再由无忧符文的事件监听抬一级。
          */
-        public DamageTier raised() {
-            return switch (this) {
-                case LIGHT -> MEDIUM;
-                case MEDIUM, FINAL -> FINAL;
-            };
+        public DamageStage probeStage() {
+            return this == FINAL ? DamageStage.D4_CONSISTENCY_WRITE : DamageStage.D3_STORAGE_WRITE;
+        }
+
+        public DamageProbeResult.Penetration probeStrength() {
+            return this == FINAL ? DamageProbeResult.Penetration.IGNORE_DECLARATION
+                                 : DamageProbeResult.Penetration.RESPECT;
         }
 
         /**
@@ -382,25 +390,13 @@ public final class IncursusBladeItem extends MagicScytheItem {
     }
 
     /**
-     * 这一记实际走的档：先看刀自己的精魂档，攻击者戴着无忧符文再抬一档。
-     *
-     * <p>符文认的是**攻击者**：一把没喂饱的刀戴上符文就能立刻用中档，已经到终档的不会再高。
+     * 刀自己的精魂档。无忧符文不在这里判断 —— 它的抬档统一挂在
+     * {@code DamageRequestEvent} 上，所以这把刀不需要认识符文。
      */
-    public static DamageTier damageTier(ItemStack stack, DamageSource source) {
-        DamageTier tier = hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL) ? DamageTier.FINAL
-                                                                        : hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL) ? DamageTier.MEDIUM
-                                                                                                                         : DamageTier.LIGHT;
-        return raisedByBliss(tier, source.getEntity());
-    }
-
-    /**
-     * 无忧符文的抬升：佩戴者以神侵恶刃名义打出的每一记都抬一档。
-     *
-     * <p>固定档位的那几记（投掷返程撞人、飞升横扫，都写死 medium）也走这里，所以「这把刀的伤害」
-     * 只有一个口径。
-     */
-    public static DamageTier raisedByBliss(DamageTier tier, @Nullable Entity attacker) {
-        return RuneOfBlissItem.isEquipped(attacker) ? tier.raised() : tier;
+    public static DamageTier damageTier(ItemStack stack) {
+        return hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL) ? DamageTier.FINAL
+               : hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL) ? DamageTier.MEDIUM
+                                                                 : DamageTier.LIGHT;
     }
 
     /**
@@ -413,13 +409,14 @@ public final class IncursusBladeItem extends MagicScytheItem {
     public static DamageProbeResult dealTieredDamage(
             ItemStack stack, Entity target, DamageSource source,
             float damage, boolean compensateDamage) {
-        DamageTier tier = damageTier(stack, source);
+        DamageTier tier = damageTier(stack);
         return tier.deal(target, source, damage, compensateDamage, internalAttackGrade(tier));
     }
 
+    /** 投掷返程 / 飞升横扫写死 medium；无忧符文的抬档由探针事件统一处理。 */
     static DamageProbeResult dealSkillDamage(Entity target, DamageSource source, float damage) {
-        DamageTier tier = raisedByBliss(DamageTier.MEDIUM, source.getEntity());
-        return tier.deal(target, source, damage, false, internalAttackGrade(tier));
+        return DamageTier.MEDIUM.deal(target, source, damage, false,
+                                      internalAttackGrade(DamageTier.MEDIUM));
     }
 
     /**

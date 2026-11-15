@@ -34,6 +34,14 @@ public final class MaledictTags {
     public static final TagKey<Item> AUFHEBEN_LIGHTWARD_AXES = ItemTags.create(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "aufheben_lightward_axes"));
 
+    /**
+     * Weapons whose Lodestone {@code MAGIC_DAMAGE} is handled by Maledict's attribute dispatcher
+     * instead of Lodestone's own {@code LodestoneAttributeEventHandler}. Datapacks can extend this
+     * to other Maledict-compatible weapons.
+     */
+    public static final TagKey<Item> LODESTONE_MAGIC_TAKEOVER = ItemTags.create(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "lodestone_magic_takeover"));
+
     /** Main-hand tools the Rite of Soulbinding may arm. */
     public static final TagKey<Item> SOUL_BINDABLE = ItemTags.create(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "soul_bindable"));

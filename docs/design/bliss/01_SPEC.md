@@ -90,22 +90,38 @@ DamageProbe.lighterDamageMethod(victim, source, 补打的量);
 | 别的模组会把同一击**记两次账** | 探针重走一遍 `hurt` 与三个事件，别人的处理器会再跑一次（抑郁符文的适应、连击计数等） |
 | 取消方照旧取消时，medium 梯级会继续爬到 `setHealth`／私有字段／NBT 写入 | 那是 medium 档自己的梯级；此时这一击**不经过护甲、附魔、吸收**。用户明确接受：这是「强制命中」换来的强度 |
 
-## 4. 效果三：神侵恶刃整体抬一档
+## 4. 效果三：通用伤害抬一档（事件版）
 
-`IncursusBladeItem.DamageTier`：`LIGHT → MEDIUM → FINAL`（刀自己的档由精魂数决定，见
-`MEDIUM_DAMAGE_LEVEL = 7` / `FINAL_DAMAGE_LEVEL = 11`）。佩戴者的每一记都 `raised()` 一级，
-已经在顶就还是顶。
+`IncursusBladeItem` 不再判断无忧符文；`DamageTier` 只表示刀自己的精魂成长档。
+符文的抬档挂在两个 Forge 事件上，位于 `BlissRuneEvents`：
 
-覆盖「以这把刀名义打出的伤害」的全部出口（用户选定口径统一）：
+| 事件 | 对象 | 做什么 |
+| --- | --- | --- |
+| `DamageRequestEvent` | 所有 ChangeLib 探针与属性请求 | `priority` +1 `DamageStage`，`strength` +1 `Penetration` |
+| 不抬 | `forcing` 期间的补打探针 | 补打已经带着原始量，再抬会重复加成 |
 
-| 出口 | 原本的档 |
-| --- | --- |
-| 近战主伤害（`scythe_melee`） | 随精魂成长 |
-| 魔法通道 / 冻结通道 | 随精魂成长 |
-| 投掷返程撞人（`scythe_sweep`） | 写死 medium |
-| 飞升横扫（`scythe_sweep`） | 写死 medium |
+- 只认**佩戴者**：`source.getEntity()` / `event.attacker()` 戴着符文才抬。
+- 只改 `priority` / `strength`；`amount`、`compensateDamage` 不动。
+- 上限：`DamageStage` 到 D5、`Penetration` 到 `BYPASS_GUARD` 为止；已经在顶就不动。
+- 覆盖范围从「神侵恶刃的伤害」扩大为「佩戴者打出的 ChangeLib 探针 / 属性请求」：
+  神侵恶刃（近战、魔法、投掷/飞升）、恋人之斧、精魂箭矢、飞镰返程、冻结属性都走同一条规则。
+- 代价（用户确认接受）：LIGHT/MEDIUM 刀从 D3/RESPECT 直接抬到 D4/IGNORE_DECLARATION，
+  比旧的 LIGHT→MEDIUM 更强；FINAL 刀从 D4/IGNORE 抬到 D5/BYPASS_GUARD，
+  不再遵守旧的「到 FINAL 就停」。这是「只抬一档」规则在事件轴上的直接结果。
 
-读档的是**攻击者**（`source.getEntity()`）：一把没喂饱的刀戴上符文就能立刻用中档。
+### 冻结属性
+
+- 属性 id：`maledict:powder_snow_damage`；显示名沿用 `attribute.name.maledict.powder_snow_damage`
+  （冻结伤害 / Freezing Damage）。
+- 伤害类型沿用 `minecraft:freeze`，所以伤害消息仍是 `freeze`；无常的适应轮换、现有标签和测试不变。
+- 刀 NBT 的 `powder_snow_damage` 成长值仍是唯一数值来源；`getAttributeModifiers` 把它写成主手
+  `ADDITION` 修饰符，老物品不需要迁移。
+- `AttributeDamageRegistry` 在 `FMLCommonSetupEvent` 注册；原始命中完成后由 ChangeLib 自动派发。
+- 刀的基准档由 `IncursusBladeEffects#applyFreezeAttributePolicy` 在 `DamageRequestEvent`（NORMAL）
+  设置：LIGHT/MEDIUM → D3/RESPECT，FINAL → D4/IGNORE；无忧符文在 LOW 上再抬一级。
+- 无常 Boss 的 `applyWeaponAttributes` 也会烘焙这个属性，所以 Boss 的命中同样附带冻结伤害。
+- 三处显式冻结探针（`IncursusBladeAttack`、`IncursusBladeEnchantments`、`IncursusScytheBoomerangEntity`）
+  以及 `DamageChannels.frozen` / 飞镰的 `frozenDamage` 参数都已删除。
 
 ## 5. 常量表
 
@@ -113,8 +129,9 @@ DamageProbe.lighterDamageMethod(victim, source, 补打的量);
 | --- | --- | --- |
 | `SharedFate.BONUS_PER_RATIO` | `0.70F` | 比例差满格的额外伤害，倍率上限 1.70 |
 | 补打档位 | `DamageProbe.lighterDamageMethod` | medium 梯级、partial 即止 |
-| 事件优先级 | `EventPriority.LOWEST` | 三个事件一致 |
-| 抬档幅度 | `DamageTier.raised()` 一级 | LIGHT→MEDIUM→FINAL，到顶不再抬 |
+| 三个伤害事件 | `EventPriority.LOWEST` | 与抬档事件分离 |
+| 抬档事件 | `EventPriority.LOW` | 刀的冻结基准档在 `NORMAL` 先落 |
+| 抬档幅度 | `priority` / `strength` 各 +1 | 上限 D5 / `BYPASS_GUARD`；强制命中补打不抬 |
 
 数值全部写死为类内常量，不做 config（与抑郁符文一致）。
 
@@ -125,7 +142,9 @@ DamageProbe.lighterDamageMethod(victim, source, 补打的量);
 | 物品 id | `rune_of_bliss`（贴图沿用用户给的那张，见第 7 节） |
 | 两边都戴 | 倍率**只乘一次**，不叠乘 |
 | 强制命中范围 | 只在**存在攻击者**的伤害上生效；摔落/火/毒不介入 |
-| 抬档范围 | **所有**神侵恶刃伤害都抬，含两记写死 medium 的技能命中 |
+| 抬档范围 | **所有** ChangeLib 探针与属性请求：神侵恶刃、恋人之斧、精魂箭矢、飞镰、冻结属性 |
+| 抬档幅度 | `priority` / `strength` 各 +1，上限 D5 / `BYPASS_GUARD`；强制命中补打不抬 |
+| 冻结属性 | `maledict:powder_snow_damage` + `minecraft:freeze`；无常 Boss 也吃 |
 | 书页文案 | `description`＝「无爱亦无忧愁」，正文＝用户给的两句都排上 |
 | 配方 | 虚空石符板 + 32 幽影精魂 |
 
@@ -162,14 +181,15 @@ tooltip 两行（`positiveEffect`，键前缀 `malum.gui.curio.effect.`）：
 | --- | --- |
 | `common/rune/RuneOfBlissItem.java` | 符文物品：两行 tooltip + `isEquipped` |
 | `common/rune/SharedFate.java` | 倍率与血量比的纯数学 |
-| `common/rune/BlissRuneEvents.java` | 三个事件（LOWEST）、倍率落点、取消补打、防重入闸 |
-| `common/weapon/incursus/IncursusBladeItem.java` | `DamageTier`、`damageTier`、`raisedByBliss`、`dealTieredDamage` |
-| `common/weapon/incursus/IncursusScytheBoomerangEntity.java` | 投掷返程撞人那一记走抬档 |
-| `common/weapon/incursus/IncursusBladeEnchantments.java` | 飞升横扫那一记走抬档 |
+| `common/rune/BlissRuneEvents.java` | 三个伤害事件（LOWEST）、`DamageRequestEvent` 抬档（LOW）、取消补打、防重入闸 |
+| `common/weapon/incursus/IncursusBladeItem.java` | `DamageTier`、`damageTier`、`dealTieredDamage`；不再有 `raisedByBliss` |
+| `common/weapon/incursus/IncursusBladeEffects.java` | 冻结属性的刀基准档（`DamageRequestEvent`，NORMAL） |
+| `registry/MaledictAttributes.java` | `powder_snow_damage` 属性 + `AttributeDamageRegistry` 注册（`AttributeAmountReaders.itemBacked()`） |
+| `common/weapon/incursus/IncursusBladeAttack.java`、`IncursusBladeEnchantments.java`、`IncursusScytheBoomerangEntity.java` | 删除显式冻结探针与 frozen 通道 |
 | `registry/MaledictItems.java`、`registry/MaledictCreativeTabs.java` | 注册与创造栏 |
 | `data/MaledictRecipes.java`、`MaledictItemTags.java`、`MaledictItemModels.java`、`MaledictLanguage.java` | 配方 / `curios:rune` 标签 / 模型 / 中英文案 |
 | `client/codex/MaledictCodexEntries.java` | 「幽影精魂的实验」选择页加上第二枚 |
-| 测试 | `SharedFateTest`（倍率与对称性）、`IncursusBladeTierTest`（抬档一级一级、到顶不回绕） |
+| 测试 | `SharedFateTest`（倍率与对称性）、`DemiurgeAwakeningTest` / `VicissitudeVitalityTest`（冻结属性与 Boss/自有血池）、`LoverAxeTest` |
 
 ## 9. 进游戏要看的
 
@@ -182,9 +202,12 @@ tooltip 两行（`positiveEffect`，键前缀 `malum.gui.curio.effect.`）：
    > 于是「接到已取消的那一个就补打」整段是死代码。三个注解已补上该参数，本条仍待进游戏确认手感。
 2. **倍率数值**：满血打残血应当明显更重（到顶 1.70），半血对半血应当完全无感。
 3. **两边都戴**：确认倍率只乘一次（不是平方）。
-4. **神侵恶刃**：未喂饱的刀戴上符文应当直接走中档；喂满 7、11 两级各看一眼档位是否刚好抬一级，
-   投掷返程与飞升横扫也应跟着抬。
-5. 书页两行 13 字断句在游戏里排得好不好看（「谁就应该与他所爱的人 / 分担命运」这一处是硬断的）。
+4. **通用抬档**：神侵恶刃（近战、魔法、投掷、飞升）与恋人之斧各打一记，确认符文让探针的
+   `priority`/`strength` 各抬一级；冻结属性也要抬，且无常 Boss 的命中同样附带冻结伤害。
+   注意 LIGHT/MEDIUM 刀会直接到 D4/IGNORE、FINAL 刀会到 D5/BYPASS，这是新规则。
+5. **冻结属性**：主手刀时的 tooltip 应只出现一行冻结伤害（原版属性行），不再有客户端手写的重复行；
+   喂碧水精魂后数值应即时跟着更新。
+6. 书页两行 13 字断句在游戏里排得好不好看（「谁就应该与他所爱的人 / 分担命运」这一处是硬断的）。
 
 ## 10. 已否掉的方案（留档，别再走一遍）
 

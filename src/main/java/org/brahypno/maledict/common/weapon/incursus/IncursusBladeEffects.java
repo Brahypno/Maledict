@@ -8,11 +8,14 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LootingLevelEvent;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.brahypno.changelib.DamageHelper.DamageRequestEvent;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.config.MaledictConfig;
+import org.brahypno.maledict.registry.MaledictAttributes;
 import team.lodestar.lodestone.helpers.EntityHelper;
 
 import java.util.ArrayList;
@@ -30,6 +33,26 @@ public final class IncursusBladeEffects {
         }
         float bonus = (float) IncursusBladeItem.getStat(weapon, IncursusBladeItem.WICKED_CRITICAL_DAMAGE) / 100.0f;
         event.setDamageModifier(event.getDamageModifier() + bonus);
+    }
+
+    /**
+     * 冻结属性请求的基准档由刀自己的精魂档决定；无忧符文在 LOW 上再抬一级。
+     *
+     * <p>只认主手是神侵恶刃的攻击者。飞镰/幻影返程在结算前会临时把刀放回主手，
+     * 所以这里也能读到正确的成长值；无常 Boss 的主手是空的，保持 ChangeLib 默认的 D0。
+     */
+    @SubscribeEvent(priority = EventPriority.NORMAL)
+    public static void applyFreezeAttributePolicy(DamageRequestEvent event) {
+        if (event.attribute() != MaledictAttributes.POWDER_SNOW_DAMAGE.get()){
+            return;
+        }
+        ItemStack weapon = event.attacker().getMainHandItem();
+        if (!(weapon.getItem() instanceof IncursusBladeItem)){
+            return;
+        }
+        IncursusBladeItem.DamageTier tier = IncursusBladeItem.damageTier(weapon);
+        event.setPriority(tier.probeStage());
+        event.setStrength(tier.probeStrength());
     }
 
     @SubscribeEvent
