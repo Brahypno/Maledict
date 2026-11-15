@@ -32,9 +32,9 @@ import java.util.UUID;
  * <p>两处减免各记各的，绝不互相减：
  * <ol>
  *   <li>Malum 原生灵魂护盾在 {@code LivingHurtEvent} 里跑，由 {@code SoulWardHandlerMixin} 只观察
- *       Malum 自己那次 {@code setAmount} 造成的变化量，{@code MONITOR} 才认账。</li>
+ *       Malum 自己那次 {@code setAmount} 造成的变化量，{@code LOWEST} 才认账。</li>
  *   <li>逐光扬弃的额外减免在 {@code LivingDamageEvent} 里跑，由它自己把 {@code absorbed} 交给
- *       {@link RefulgencePending}，同样等 {@code MONITOR}。</li>
+ *       {@link RefulgencePending}，同样等 {@code LOWEST}。</li>
  * </ol>
  * 两处都只对「已经执行的减免」充能，不要求最后真的掉血；事件被取消就丢弃，但记录一定取走，
  * 不留在表里过夜。
@@ -52,63 +52,69 @@ public final class RefulgenceEvents {
      * <p>{@code receiveCanceled = true} 是必须的：事件一旦被取消，默认注解的监听器整个被跳过，
      * 这条待确认记录就永远留在表里。这里照样进去把它取走，取消就丢掉。
      */
-    @SubscribeEvent(priority = EventPriority.MONITOR, receiveCanceled = true)
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onLivingHurtConfirmed(LivingHurtEvent event) {
         RefulgencePending.Absorbed absorbed = RefulgencePending.takeWard(event);
-        if (absorbed != null && !event.isCanceled()) {
+        if (absorbed != null && !event.isCanceled()){
             // 护盾分流到 0 的合法攻击也要算：这里不看事件剩下多少。
             RefulgenceChargeService.charge(absorbed);
         }
     }
 
-    /** 逐光扬弃额外减免的确认点；与上一处是同一原始攻击里两个独立阶段，可以叠加。 */
-    @SubscribeEvent(priority = EventPriority.MONITOR, receiveCanceled = true)
+    /**
+     * 逐光扬弃额外减免的确认点；与上一处是同一原始攻击里两个独立阶段，可以叠加。
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onLivingDamageConfirmed(LivingDamageEvent event) {
         RefulgencePending.Absorbed absorbed = RefulgencePending.takeAbandonment(event);
-        if (absorbed != null && !event.isCanceled()) {
+        if (absorbed != null && !event.isCanceled()){
             RefulgenceChargeService.charge(absorbed);
         }
     }
 
-    /** 下一次「真的成立」的武器攻击：只排队，不动 NBT、不打伤害。 */
+    /**
+     * 下一次「真的成立」的武器攻击：只排队，不动 NBT、不打伤害。
+     */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingDamage(LivingDamageEvent event) {
         LivingEntity victim = event.getEntity();
-        if (victim.level().isClientSide() || event.isCanceled() || event.getAmount() <= 0.0F) {
+        if (victim.level().isClientSide() || event.isCanceled() || event.getAmount() <= 0.0F){
             return;
         }
         DamageSource source = event.getSource();
         // 反照自己这一发不再触发反照，否则一次命中能无限连发。
-        if (MaledictDamageTypes.is(source, MaledictDamageTypes.REFULGENCE)) {
+        if (MaledictDamageTypes.is(source, MaledictDamageTypes.REFULGENCE)){
             return;
         }
-        if (!(source.getEntity() instanceof ServerPlayer attacker) || source.getDirectEntity() != attacker) {
+        if (!(source.getEntity() instanceof ServerPlayer attacker) || source.getDirectEntity() != attacker){
             return;
         }
-        if (attacker == victim) {
+        if (attacker == victim){
             return;
         }
         ItemStack weapon = attacker.getMainHandItem();
-        if (!RefulgenceAbility.holds(attacker)) {
+        if (!RefulgenceAbility.holds(attacker)){
             return;
         }
         long tick = MaledictClock.now(victim);
         RefulgenceCharge charge = RefulgenceStore.read(weapon);
-        if (charge.isExpired(tick)) {
+        if (charge.isExpired(tick)){
             RefulgenceStore.clear(weapon);
             return;
         }
-        if (charge.isEmpty() || alreadyQueued(attacker.getUUID(), tick)) {
+        if (charge.isEmpty() || alreadyQueued(attacker.getUUID(), tick)){
             return;
         }
         RELEASES.add(new PendingRelease(weapon, attacker.getUUID(), victim.getUUID(),
                                         victim.level().dimension(), charge.charge(), tick));
     }
 
-    /** 服务端 tick 末尾统一派发：这时已经不在任何 hurt 调用栈里，可以安全地再打一记。 */
+    /**
+     * 服务端 tick 末尾统一派发：这时已经不在任何 hurt 调用栈里，可以安全地再打一记。
+     */
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || RELEASES.isEmpty()) {
+        if (event.phase != TickEvent.Phase.END || RELEASES.isEmpty()){
             return;
         }
         MinecraftServer server = event.getServer();
@@ -127,11 +133,11 @@ public final class RefulgenceEvents {
 
     private static void dispatch(MinecraftServer server, PendingRelease pending) {
         ServerLevel level = server.getLevel(pending.dimension());
-        if (level == null) {
+        if (level == null){
             return;
         }
         LivingEntity victim = level.getEntity(pending.victim()) instanceof LivingEntity living ? living : null;
-        if (victim == null || !victim.isAlive()) {
+        if (victim == null || !victim.isAlive()){
             // 那一击已经把人打死了（或者目标没了）：储能不平白丢，留到下一次有效攻击。
             return;
         }
@@ -139,7 +145,7 @@ public final class RefulgenceEvents {
         RefulgenceCharge charge = RefulgenceStore.read(weapon);
         float amount = charge.take(pending.amount());
         RefulgenceStore.write(weapon, charge);
-        if (amount <= 0.0F) {
+        if (amount <= 0.0F){
             return;
         }
         ServerPlayer attacker = server.getPlayerList().getPlayer(pending.owner());
@@ -151,10 +157,12 @@ public final class RefulgenceEvents {
         RefulgenceVisuals.release(victim);
     }
 
-    /** 同一名攻击者在同一 tick 里可能命中好几个目标（横扫、多部位），一次攻击只放一记。 */
+    /**
+     * 同一名攻击者在同一 tick 里可能命中好几个目标（横扫、多部位），一次攻击只放一记。
+     */
     private static boolean alreadyQueued(UUID owner, long tick) {
         for (PendingRelease pending : RELEASES) {
-            if (pending.owner().equals(owner) && pending.tick() == tick) {
+            if (pending.owner().equals(owner) && pending.tick() == tick){
                 return true;
             }
         }
