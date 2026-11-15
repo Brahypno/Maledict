@@ -3,6 +3,7 @@ package org.brahypno.maledict.common.equipment.lightward;
 import com.sammy.malum.common.capability.MalumPlayerDataCapability;
 import com.sammy.malum.core.handlers.SoulWardHandler;
 import com.sammy.malum.registry.common.AttributeRegistry;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -13,6 +14,8 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.refulgence.RefulgenceAbility;
+import org.brahypno.maledict.common.refulgence.RefulgencePending;
 import org.brahypno.maledict.config.MaledictConfig;
 
 import java.nio.charset.StandardCharsets;
@@ -26,33 +29,35 @@ import java.util.UUID;
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class LightwardSetEvents {
-    /** 固定 UUID：每 tick 都按它查重，换 UUID 会叠出一堆修饰符。 */
+    /**
+     * 固定 UUID：每 tick 都按它查重，换 UUID 会叠出一堆修饰符。
+     */
     private static final UUID SPEED_MODIFIER_ID = UUID.nameUUIDFromBytes(
             "maledict:aufheben_lightward/abnegation_speed".getBytes(StandardCharsets.UTF_8));
     private static final double SPEED_BONUS = 0.15D;
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.START) {
+        if (event.phase != TickEvent.Phase.START){
             return;
         }
         Player player = event.player;
         // 只在服务端挂：属性值本来就会同步给本人，客户端再挂一次会被同步包清掉又补回来，
         // 来回之间本地移速会短暂算两遍。
-        if (player.level().isClientSide()) {
+        if (player.level().isClientSide()){
             return;
         }
         AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (speed == null) {
+        if (speed == null){
             return;
         }
         boolean wanted = LightwardSet.grantsSpeedBonus(player);
         boolean present = speed.getModifier(SPEED_MODIFIER_ID) != null;
-        if (wanted && !present) {
+        if (wanted && !present){
             speed.addTransientModifier(new AttributeModifier(
                     SPEED_MODIFIER_ID, "Lightward abnegation speed", SPEED_BONUS,
                     AttributeModifier.Operation.MULTIPLY_TOTAL));
-        } else if (!wanted && present) {
+        }else if (!wanted && present){
             speed.removeModifier(SPEED_MODIFIER_ID);
         }
     }
@@ -65,29 +70,35 @@ public final class LightwardSetEvents {
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingDamage(LivingDamageEvent event) {
-        if (event.getEntity().level().isClientSide()) {
+        if (event.getEntity().level().isClientSide()){
             return;
         }
-        if (event.isCanceled() || event.getAmount() <= 0.0F) {
+        if (event.isCanceled() || event.getAmount() <= 0.0F){
             return;
         }
-        if (!(event.getEntity() instanceof Player player) || !LightwardSet.grantsAbnegation(player)) {
+        if (!(event.getEntity() instanceof Player player) || !LightwardSet.grantsAbnegation(player)){
             return;
         }
         double reduction = MaledictConfig.LIGHTWARD_ABNEGATION_REDUCTION.get();
         float amount = event.getAmount();
         float absorbed = (float) (amount * reduction);
-        if (absorbed <= 0.0F) {
+        if (absorbed <= 0.0F){
             return;
         }
         SoulWardHandler handler = MalumPlayerDataCapability.getCapability(player).soulWardHandler;
         double integrity = player.getAttributeValue(AttributeRegistry.SOUL_WARD_INTEGRITY.get());
-        if (integrity != 0.0D) {
+        if (integrity != 0.0D){
             handler.soulWard = Math.max(0.0D, handler.soulWard - absorbed / integrity);
-        } else {
+        }else {
             handler.soulWard = 0.0D;
         }
         event.setAmount(amount - absorbed);
+        // 反照的第二个充能点：这是本阶段额外减免掉的一份，和 Malum 原生护盾那一份是两笔独立账，
+        // 不能互相相减，也不重复扣护盾。只在服务端玩家身上登记，等 LivingDamageEvent 的 MONITOR 确认。
+        //需要有反照能力才会记录
+        if (player instanceof ServerPlayer serverPlayer && RefulgenceAbility.holds(player)){
+            RefulgencePending.recordAbandonment(event, serverPlayer, absorbed, event.getSource());
+        }
         MalumPlayerDataCapability.syncTrackingAndSelf(player);
     }
 

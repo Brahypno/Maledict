@@ -1,0 +1,38 @@
+{
+  "key": "lumenfall_bismuth",
+  "category": "metal",
+  "primary": 7.1,
+  "secondary": 3.8,
+  "tertiary": 3.5,
+  "durability": 2050,
+  "integrityCost": 2,
+  "integrityGain": 8,
+  "magicCapacity": 150,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 9.0,
+  "tints": {
+    "glyph": "d990e8",
+    "texture": "a9b8ef"
+  },
+  "textures": [
+    "metal",
+    "shiny",
+    "default"
+  ],
+  "material": {
+    "items": [
+      "maledict:lumenfall_bismuth_ingot"
+    ],
+    "count": 3
+  },
+  "effects": {
+    "stabilizing": 10
+  },
+  "requiredTools": {
+    "hammer_dig": "minecraft:iron"
+  },
+  "improvements": {
+    "malum.soul_strike": 0,
+    "maledict.lumenfall": 0
+  }
+}

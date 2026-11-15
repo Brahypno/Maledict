@@ -5,6 +5,8 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import org.brahypno.maledict.compat.tetra.TetraCompat;
+import org.brahypno.maledict.common.lumenfall.LumenfallRadianceEffect;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictCreativeTabs;
@@ -45,5 +47,9 @@ public final class Maledict {
         MaledictSounds.SOUND_EVENTS.register(modBus);
         MaledictCreativeTabs.CREATIVE_TABS.register(modBus);
         MaledictNetwork.register();
+        // Tetra 是可选的：这里只记一个「装没装」，装着才会去触碰桥接类里的 se.mickelus.tetra 类型。
+        TetraCompat.init();
+        // 自己那份带强度参数的放射光晕（替换哭泣之井那发）。两端都要登记，客户端才认得出这个 id。
+        LumenfallRadianceEffect.register();
     }
 }

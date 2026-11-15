@@ -114,6 +114,10 @@ public final class MaledictItemTags extends ItemTagsProvider {
                              MaledictItems.RUNE_OF_THE_FALLEN.get());
         tag(MaledictTags.VICISSITUDE_CONFISCATION_IMMUNE)
                 .addOptional(ResourceLocation.fromNamespaceAndPath("sophisticatedbackpacks", "backpack"));
+        // 沉辉与反照的能力载体：故意空着生成，数据包或以后的 Maledict 武器直接挂进来。
+        // 能力判定只认「是不是载体」，不认 Tetra —— 没装 Tetra 时这两条标签就是唯一入口。
+        tag(MaledictTags.LUMENFALL_CARRIERS);
+        tag(MaledictTags.REFULGENCE_CARRIERS);
         tag(EquipmentProtectionTags.MAINHAND)
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
         tag(EquipmentProtectionTags.OFFHAND)

@@ -1187,6 +1187,51 @@ public final class MaledictLanguage extends LanguageProvider {
             + "understand this transformation through Aufheben: to negate without reducing to nothing, to "
             + "preserve without leaving unchanged. Yet the crystal promises neither salvation nor perfection. "
             + "It merely holds the contradiction within itself.");
+
+        // Tetra 侧的显示项：材料名、强化名、死亡讯息。
+        add("tetra.material.lumenfall_bismuth", "沉辉铋", "Lumenfall Bismuth");
+        add("tetra.material.lumenfall_bismuth.prefix", "沉辉铋", "Lumenfall Bismuth");
+        add("tetra.improvement.maledict.lumenfall.name", "沉辉", "Lumenfall");
+        add("tetra.improvement.maledict.lumenfall.description",
+            "攻击积蓄残光；一定时间后或击杀时向周围扩散残光，造成伤害。",
+            "Stores traces of damage as lingering light; releases after a pause or spreads on death.");
+        add("death.attack.lumenfall_release", "%1$s被残光吞没", "%1$s was consumed by lingering light");
+        add("death.attack.lumenfall_release.player",
+            "%1$s被%2$s的残光吞没",
+            "%1$s was consumed by %2$s's lingering light");
+
+        // 反照：宝石/镶嵌两种材料定义共用一个物品，所以两个材料键都要有名字。
+        add("tetra.material.refracted_lead_bismuth_eutectic", "折辉铅铋共晶", "Refracted Lead-Bismuth Eutectic");
+        add("tetra.material.refracted_lead_bismuth_eutectic.prefix",
+            "折辉铅铋共晶",
+            "Refracted Lead-Bismuth Eutectic");
+        add("tetra.material.socket_refracted_lead_bismuth_eutectic",
+            "折辉铅铋共晶镶嵌",
+            "Refracted eutectic socket");
+        add("tetra.material.socket_refracted_lead_bismuth_eutectic.prefix",
+            "折辉铅铋共晶",
+            "Refracted eutectic");
+        add("tetra.improvement.maledict.refulgence.name", "反照", "Refulgence");
+        add("tetra.stats.maledict.refulgence", "反照", "Refulgence");
+        // Tetra 的 HoloMaterialTranslation#extractEffectLevel 先读 "<名字键>.level"，读不到才退回
+        // "tetra.stats.<效果键>"。只给名字键时这一行会退化成裸名字，等级为 0 更是整行消失，所以补全。
+        add("tetra.stats.maledict.refulgence.level", "储光", "Stored light");
+        add("tetra.stats.maledict.lumenfall", "沉辉", "Lumenfall");
+        add("tetra.stats.maledict.lumenfall.level", "残光", "Lingering light");
+        // 插槽模块（sword/socket）在 Tetra 的模块数据里没有 improvements 字段，强化名列不出来，
+        // 由客户端 tooltip 补这一行；剑身那种已经有了强化名的不会重复贴。%s 是效果等级。
+        add("tooltip.maledict.refulgence.line", "反照：储光 %s", "Refulgence: stored light %s");
+        add("tooltip.maledict.lumenfall.line", "沉辉：残光 %s", "Lumenfall: lingering light %s");
+        add("tetra.stats.maledict.refulgence.tooltip_short",
+            "将被灵魂护盾吸收的伤害转化为光并储存起来，下一次攻击释放储存的光。",
+            "Stores the damage your soul ward turns aside; the next hit releases it as light.");
+        add("tetra.improvement.maledict.refulgence.description",
+            "将被灵魂护盾吸收的伤害转化为光并储存起来，下一次攻击释放储存的光。",
+            "Stores the damage your soul ward turns aside; the next hit releases it as light.");
+        add("death.attack.refulgence", "%1$s被折辉反照", "%1$s was struck by refracted light");
+        add("death.attack.refulgence.player",
+            "%1$s被%2$s的折辉反照",
+            "%1$s was struck by %2$s's refracted light");
     }
 
     private void add(String key, String zhCn, String enUs) {

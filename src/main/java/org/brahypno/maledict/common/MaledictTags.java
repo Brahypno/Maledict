@@ -46,6 +46,17 @@ public final class MaledictTags {
     public static final TagKey<Item> SOUL_BINDABLE = ItemTags.create(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "soul_bindable"));
 
+    /**
+     * 沉辉的能力载体。空着生成，数据包或 Maledict 自己的物品可以直接挂上来 —— 能力不认 Tetra，
+     * 只认「这件东西是不是载体」，见 {@code MaledictAbilities}。
+     */
+    public static final TagKey<Item> LUMENFALL_CARRIERS = ItemTags.create(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "lumenfall_carriers"));
+
+    /** 反照的能力载体，同上。 */
+    public static final TagKey<Item> REFULGENCE_CARRIERS = ItemTags.create(
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "refulgence_carriers"));
+
     /** Soulbinding-shaped items that must never be armed, released or re-bound (the transformed maid sword). */
     public static final TagKey<Item> SOUL_BINDING_TOOL_BLACKLIST = ItemTags.create(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "soul_binding_tool_blacklist"));

@@ -34,6 +34,11 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.IntValue HANGMAN_TRAP_LIFETIME;
     public static final ForgeConfigSpec.DoubleValue HANGMAN_TRAP_RADIUS;
     public static final ForgeConfigSpec.IntValue EMPEROR_EGGSHELL_WINDOW_TICKS;
+    public static final ForgeConfigSpec.BooleanValue LUMENFALL_SPREAD_RADIANCE;
+    public static final ForgeConfigSpec.IntValue LUMENFALL_SPREAD_RADIANCE_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.DoubleValue LUMENFALL_SPREAD_RADIANCE_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue LUMENFALL_RELEASE_RADIANCE_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue LUMENFALL_RELEASE_RADIANCE_RADIUS;
     public static final ForgeConfigSpec.DoubleValue OMEN_MINIMUM_SHARE;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_CHARGE_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_LASER_DAMAGE;
@@ -192,6 +197,41 @@ public final class MaledictConfig {
                          "values at or below 20 have no visible effect; the minimum is 21.",
                          "Same-tick hits count once, at the largest raw amount.")
                 .defineInRange("windowTicks", 40, 21, 200);
+        builder.pop();
+        builder.push("lumenfall");
+        LUMENFALL_SPREAD_RADIANCE = builder
+                .comment("Whether a Lumenfall death paints the big radiance burst at the death spot.",
+                         "This reuses Malum's weeping-well radiance effect, which has no size, count or",
+                         "intensity parameter - one dispatch is as loud as the effect itself. So it is",
+                         "weakened by conditions instead: it only plays when the spread actually caught",
+                         "someone else, and at most once per dimension per cooldown below. Turn it off",
+                         "to keep only the per-target light specks.")
+                .define("spreadRadiance", true);
+        LUMENFALL_SPREAD_RADIANCE_COOLDOWN_TICKS = builder
+                .comment("Minimum ticks between two radiance bursts in the same dimension. 20 means at",
+                         "most one per second, so a row of kills cannot stack the big effect. 0 removes",
+                         "the throttle (not recommended with the burst enabled).")
+                .defineInRange("spreadRadianceCooldownTicks", 20, 0, 400);
+        LUMENFALL_SPREAD_RADIANCE_STRENGTH = builder
+                .comment("Strength of the radiance burst, 0.05 to 1.0. This is Maledict's own copy of",
+                         "Malum's weeping-well radiance (see LumenfallRadianceActor), so unlike the stock",
+                         "effect it scales: 1.0 is the full original burst, 0.5 halves the emitted",
+                         "bursts and shrinks the central sparkles, lower values fade to nothing.")
+                .defineInRange("spreadRadianceStrength", 0.5D, 0.05D, 1.0D);
+        LUMENFALL_RELEASE_RADIANCE_STRENGTH = builder
+                .comment("Strength of the smaller radiance burst painted on the target when the 80 tick",
+                         "release fires without a kill - the single-target version of the death burst,",
+                         "same effect type at a much lower intensity. This replaces the old per-target",
+                         "sparkle layer rather than adding to it. 0 turns the release visual off.")
+                .defineInRange("releaseRadianceStrength", 0.2D, 0.0D, 1.0D);
+        LUMENFALL_RELEASE_RADIANCE_RADIUS = builder
+                .comment("How far the release burst spreads, as a multiplier of the full death-burst",
+                         "extent. Strength above controls how many particles there are; this controls",
+                         "how wide they fly. The release is single target, so it must not fan out like",
+                         "the death spread: 0.35 keeps it a tight puff on the victim. Values below 0.9",
+                         "also drop the big central square flashes (fixed-size Malum pieces that only",
+                         "belong to the full-size burst).")
+                .defineInRange("releaseRadianceRadius", 0.35D, 0.1D, 1.0D);
         builder.pop();
         COMMON_SPEC = builder.build();
 

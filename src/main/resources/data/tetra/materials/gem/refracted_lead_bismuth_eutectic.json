@@ -1,0 +1,34 @@
+{
+  "key": "refracted_lead_bismuth_eutectic",
+  "category": "gem",
+  "primary": 6.2,
+  "secondary": 3.1,
+  "tertiary": 2.0,
+  "durability": 1200,
+  "integrityCost": 2,
+  "integrityGain": 2,
+  "magicCapacity": 100,
+  "toolLevel": "minecraft:diamond",
+  "toolEfficiency": 8,
+  "tints": {
+    "texture": "b486e6",
+    "glyph": "73d9d0"
+  },
+  "textures": [
+    "shiny",
+    "crude"
+  ],
+  "material": {
+    "items": [
+      "maledict:refracted_lead_bismuth_eutectic"
+    ],
+    "count": 1
+  },
+  "requiredTools": {
+    "hammer_dig": "minecraft:iron"
+  },
+  "improvements": {
+    "malum.soul_strike": 0,
+    "maledict.refulgence": 0
+  }
+}

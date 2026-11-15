@@ -11,6 +11,7 @@
     "PlayerRavenShoulderMixin",
     "ProjectileAccess",
     "ReboundEnchantmentMixin",
+    "SoulWardHandlerMixin",
     "TouchOfDarknessHandlerMixin",
     "VoidConduitBlockEntityMixin"
   ],

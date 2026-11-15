@@ -214,6 +214,9 @@ dependencies {
     // mod guards every TLM reference at runtime and does not declare a hard dependency on TLM.
     compileOnly fg.deobf("maven.modrinth:touhou-little-maid:g1SKoGQJ")
 
+    compileOnly fg.deobf("curse.maven:tetra-289712:5544287")
+    compileOnly fg.deobf("curse.maven:mutil-351914:4824501")
+
     runtimeOnly fg.deobf("curse.maven:jei-attribute-1716111:8999222") { transitive = false }
 
     // For more info:
