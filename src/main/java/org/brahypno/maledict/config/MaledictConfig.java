@@ -33,6 +33,7 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue HANGMAN_REFLECTION_BASE;
     public static final ForgeConfigSpec.IntValue HANGMAN_TRAP_LIFETIME;
     public static final ForgeConfigSpec.DoubleValue HANGMAN_TRAP_RADIUS;
+    public static final ForgeConfigSpec.IntValue EMPEROR_EGGSHELL_WINDOW_TICKS;
     public static final ForgeConfigSpec.DoubleValue OMEN_MINIMUM_SHARE;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_CHARGE_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_LASER_DAMAGE;
@@ -180,6 +181,17 @@ public final class MaledictConfig {
                          "arcane bonus), and the cooldown folds them into one sound. It never",
                          "suppresses damage, and 0 plays it for every hurt event.")
                 .defineInRange("spiritSoundCooldown", 10, 0, 200);
+        builder.pop();
+        builder.push("emperorInTheEggshell");
+        EMPEROR_EGGSHELL_WINDOW_TICKS = builder
+                .comment("How long the Eggshell Emperor's damage window lasts after a hit, in ticks.",
+                         "The opening hit (and every other hit in its tick) is full damage; after",
+                         "that, incoming damage is scaled by elapsed / windowTicks. At 40, a hit",
+                         "20 ticks later takes 50% damage and a hit at 40 ticks is full again.",
+                         "Vanilla's own 20-tick i-frame window stays in front of this one, so",
+                         "values at or below 20 have no visible effect; the minimum is 21.",
+                         "Same-tick hits count once, at the largest raw amount.")
+                .defineInRange("windowTicks", 40, 21, 200);
         builder.pop();
         COMMON_SPEC = builder.build();
 

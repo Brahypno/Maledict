@@ -12,6 +12,7 @@ import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
+import org.brahypno.maledict.common.curio.eggshell.EmperorInTheEggshellItem;
 import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
 import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.common.curio.priestess.EidolonOfTheHighPriestessItem;
@@ -171,6 +172,9 @@ public final class MaledictItems {
      * Curio amulet (charm slot) that renders a skull mask over the wearer's face.
      */
     public static final RegistryObject<Item> AGE_OF_ENLIGHTENMENT = ITEMS.register("age_of_enlightenment", AgeOfEnlightenmentItem::new);
+    /** Curio charm: a gradient damage window after each accepted hit. */
+    public static final RegistryObject<Item> EMPEROR_IN_THE_EGGSHELL = ITEMS.register(
+            "emperor_in_the_eggshell", EmperorInTheEggshellItem::new);
     public static final RegistryObject<Item> HANGMAN_FOOL = ITEMS.register("hangman_fool", HangmanFoolItem::new);
     public static final RegistryObject<Item> EIDOLON_OF_THE_HIGH_PRIESTESS =
             ITEMS.register("eidolon_of_the_high_priestess", EidolonOfTheHighPriestessItem::new);

@@ -1,0 +1,46 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 4,
+      "tag": "forge:eggs"
+    },
+    {
+      "count": 4,
+      "tag": "forge:eggs"
+    },
+    {
+      "count": 4,
+      "tag": "forge:eggs"
+    },
+    {
+      "count": 4,
+      "tag": "forge:eggs"
+    },
+    {
+      "count": 4,
+      "tag": "forge:eggs"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "maledict:light_fragment"
+  },
+  "output": {
+    "item": "maledict:emperor_in_the_eggshell"
+  },
+  "spirits": [
+    {
+      "type": "wicked",
+      "count": 16
+    },
+    {
+      "type": "sacred",
+      "count": 16
+    },
+    {
+      "type": "infernal",
+      "count": 16
+    }
+  ]
+}

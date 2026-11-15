@@ -60,6 +60,7 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.EARTHEN_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+                                output.accept(MaledictItems.EMPEROR_IN_THE_EGGSHELL.get());
                                for (int stage = 0; stage <= 3; stage++) {
                                    output.accept(org.brahypno.maledict.common.curio.hangman.HangmanFoolItem.create(stage));
                                }

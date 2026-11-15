@@ -100,7 +100,8 @@ public final class MaledictItemTags extends ItemTagsProvider {
                      MaledictItems.HANGMAN_FOOL.get(), MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get(),
                      MaledictItems.LOVER_AXE.get())
                 .addOptionalTag(MaledictTags.AUFHEBEN_LIGHTWARD_ARMOR);
-        tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+        tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
+                              MaledictItems.EMPEROR_IN_THE_EGGSHELL.get());
         tag(CURIOS_DELUSION).add(MaledictItems.HANGMAN_FOOL.get(), MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
         tag(CURIOS_RUNE).add(MaledictItems.RUNE_OF_SATIATION.get(),
                              MaledictItems.RUNE_OF_DECAY.get(),

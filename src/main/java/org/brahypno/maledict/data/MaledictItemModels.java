@@ -53,6 +53,10 @@ public final class MaledictItemModels extends ItemModelProvider {
         basicItem(MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get());
 
         registerAgeOfEnlightenmentModel();
+        // Placeholder art until the Eggshell Emperor gets a dedicated texture.
+        getBuilder("emperor_in_the_eggshell")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/placeholder"));
         registerHangmanFoolModels();
         basicItem(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
 

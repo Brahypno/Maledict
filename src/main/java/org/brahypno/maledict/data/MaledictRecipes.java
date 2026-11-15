@@ -14,6 +14,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.common.crafting.StrictNBTIngredient;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
@@ -341,11 +342,27 @@ public final class MaledictRecipes extends RecipeProvider {
         lightwardArmorRecipes(recipes,
                               ItemRegistry.SOUL_STAINED_STEEL_BOOTS.get(), MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get(),
                               "aufheben_lightward_boots");
+
+        new SpiritInfusionRecipeBuilder(MaledictItems.LIGHT_FRAGMENT.get(), 1,
+                                        MaledictItems.EMPEROR_IN_THE_EGGSHELL.get(), 1)
+                .addExtraItem(Ingredient.of(Tags.Items.EGGS), 4)
+                .addExtraItem(Ingredient.of(Tags.Items.EGGS), 4)
+                .addExtraItem(Ingredient.of(Tags.Items.EGGS), 4)
+                .addExtraItem(Ingredient.of(Tags.Items.EGGS), 4)
+                .addExtraItem(Ingredient.of(Tags.Items.EGGS), 4)
+                .addSpirit(SpiritTypeRegistry.WICKED_SPIRIT, 16)
+                .addSpirit(SpiritTypeRegistry.SACRED_SPIRIT, 16)
+                .addSpirit(SpiritTypeRegistry.INFERNAL_SPIRIT, 16)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "spirit_infusion/emperor_in_the_eggshell"));
     }
 
-    /** 一件扬弃逐光护甲的灌注配方与同档修复配方。 */
-    private static void lightwardArmorRecipes(Consumer<FinishedRecipe> recipes, Item soulStainedSteel,
-                                              Item lightward, String name) {
+    /**
+     * 一件扬弃逐光护甲的灌注配方与同档修复配方。
+     */
+    private static void lightwardArmorRecipes(
+            Consumer<FinishedRecipe> recipes, Item soulStainedSteel,
+            Item lightward, String name) {
         new SpiritInfusionRecipeBuilder(soulStainedSteel, 1, lightward, 1)
                 .addExtraItem(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get(), 3)
                 .addExtraItem(Items.NETHER_STAR, 1)
