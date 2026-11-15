@@ -124,13 +124,16 @@ final class WellPlacement {
         if (cores.size() != 1) return Optional.empty();
         var coreOffset = cores.get(0).pos();
         var size = template.get().getSize();
+        // SITES starts at {0, 0}: a destroyed paired well is first rebuilt at its recorded X/Z (Y re-derived
+        // from the current surface), like a broken Nether portal. Only an unreasonable position falls through
+        // to the 32/64 ring, and only a full ring falls through to adoption.
         for (int[] offset : SITES) {
             int x = target.getX() + offset[0];
             int z = target.getZ() + offset[1];
             BlockPos center = new BlockPos(x, 0, z);
             if (!level.getWorldBorder().isWithinBounds(center.offset(-size.getX(), 0, -size.getZ()))
                     || !level.getWorldBorder().isWithinBounds(center.offset(size.getX(), 0, size.getZ()))
-                    || links.hasWellNear(level.dimension(), center, 20)) continue;
+                    || links.hasIntactWellNear(level, center, 20)) continue;
             // Level#getHeight returns min build height for an unloaded chunk; generate before sampling it.
             level.getChunk(x >> 4, z >> 4);
             int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
