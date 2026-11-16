@@ -16,6 +16,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobType;
@@ -38,6 +39,7 @@ import org.brahypno.changelib.protection.ai.AiProtection;
 import org.brahypno.changelib.protection.ai.AiProtectionDefinition;
 import org.brahypno.changelib.protection.ai.ProtectedAiEntity;
 import org.brahypno.maledict.common.combat.BossDamage;
+import org.brahypno.maledict.common.combat.BossRecovery;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.joml.Vector3f;
 
@@ -86,6 +88,11 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
     @Nullable
     private CombatProtection.Controller healthController;
     private float authorityHealth;
+    /**
+     * Game time of the last resolved loss, or of the last scripted revival; feeds the out-of-combat
+     * memory, where a hit with no causing entity would otherwise leave no trace.
+     */
+    private long lastCombatTick = BossRecovery.NO_COMBAT_TICK;
     // The parent's private bar cannot be updated while its attack AI is paused.
     private final ServerBossEvent encounterBar = (ServerBossEvent) new ServerBossEvent(
             getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS).setDarkenScreen(true);
@@ -166,6 +173,16 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
                && candidate.level() == level()
                && !isAlliedTo(candidate) && canAttackType(candidate.getType())
                && canAttack(candidate);
+    }
+
+    /**
+     * Summoned skeletons answer to this wither; a stray arrow from one must not make the wither hunt
+     * its own minion, and the encounter's area skills keep leaving them alone.
+     */
+    @Override
+    public boolean isAlliedTo(Entity entity) {
+        return entity instanceof WeepingWitherSkeletonEntity skeleton && skeleton.isOwnedBy(this)
+               || super.isAlliedTo(entity);
     }
 
     private void selectAiTarget(@Nullable LivingEntity target) {
@@ -272,8 +289,11 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
             die(source != null ? source : damageSources().generic());
         }
         super.tick();
-        if (!level().isClientSide)
+        if (!level().isClientSide){
+            // Out of combat: no target, no remembered attacker, no recent damage, so 5% per tick.
+            BossRecovery.tick(this, getMaxHealth(), lastCombatTick);
             encounterBar.setProgress(getHealth() / getMaxHealth());
+        }
     }
 
     @Override
@@ -523,6 +543,7 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         float cappedLoss = Math.min(finalAmount, getMaxHealth() * 0.05F);
         float additionalLoss = damageBatch.additionalLoss(cappedLoss);
         if (additionalLoss > 0.0F){
+            lastCombatTick = now;
             getCombatTracker().recordDamage(source, additionalLoss);
             float remaining = Math.max(0.0F, getHealth() - additionalLoss);
             if (healthController == null)
@@ -575,6 +596,8 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
 
     private void finishReformation() {
         commitHealth(Math.min(80.0F, getMaxHealth()));
+        // Reviving is a fight beat, not a disengagement: restart the combat memory with it.
+        lastCombatTick = level().getGameTime();
         clearDeathAnimation();
         entityData.set(REFORMING, false);
         spawnExplosion();

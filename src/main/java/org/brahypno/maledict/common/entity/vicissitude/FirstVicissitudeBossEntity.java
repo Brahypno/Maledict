@@ -2421,6 +2421,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         return getVitalityMaximum() * ratio;
     }
 
+    /**
+     * The phase-one to phase-two transition clears the target for all 60 of its ticks while the boss
+     * is immune, and the summoning rite is scripted as well; neither beat is a disengagement, so the
+     * out-of-combat refill stays off there.
+     */
+    @Override
+    protected boolean recoversOutOfCombat() {
+        return stage != VicissitudeBossStage.TRANSITION && !isRiteSummoning();
+    }
+
     @Override
     protected boolean isDamageImmune(DamageSource source) {
         if (stage == VicissitudeBossStage.DORMANT && level().getDifficulty() == Difficulty.PEACEFUL){

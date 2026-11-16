@@ -22,6 +22,7 @@ import org.brahypno.changelib.protection.ai.AiProtection;
 import org.brahypno.changelib.protection.ai.AiProtectionDefinition;
 import org.brahypno.changelib.protection.ai.ProtectedAiEntity;
 import org.brahypno.maledict.common.combat.BossDamage;
+import org.brahypno.maledict.common.combat.BossRecovery;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -72,6 +73,11 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
     private CombatProtection.Controller vitalityController;
     private AiProtection.Controller aiController;
     private float clientVitality = INITIAL_DISPLAY_VITALITY;
+    /**
+     * Game time of the last resolved loss; feeds the out-of-combat memory, where a hit with no
+     * causing entity would otherwise leave no trace.
+     */
+    private long lastCombatTick = BossRecovery.NO_COMBAT_TICK;
 
     protected VicissitudeBossEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -412,6 +418,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
         if (target >= current){
             return;
         }
+        lastCombatTick = level().getGameTime();
         VicissitudeVitality next = verifiedVitality().withCurrent(target);
         vitalityController.commitDamage(() -> writeAuthority(next));
         publishVitality();
@@ -430,6 +437,14 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
                 commitVitality(state.withCurrent(Math.min(state.maximum(), state.current() + amount)));
             }
         }
+    }
+
+    /**
+     * Whether the pool may refill while the boss holds no target. A scripted beat can clear the
+     * target without the fight being over, and such a beat must not hand the whole pool back.
+     */
+    protected boolean recoversOutOfCombat() {
+        return true;
     }
 
     @Override
@@ -544,6 +559,10 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
             if (!clientSide){
                 publishVitality();
             }
+        }
+        if (!clientSide && vitality.joined && recoversOutOfCombat()){
+            // Out of combat: no target, no remembered attacker, no recent damage, so 5% per tick.
+            BossRecovery.tick(this, getVitalityMaximum(), lastCombatTick);
         }
         super.tick();
     }
