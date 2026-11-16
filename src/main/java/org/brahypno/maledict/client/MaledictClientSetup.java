@@ -124,7 +124,7 @@ public final class MaledictClientSetup {
                                       AgeOfEnlightenmentModel::createBodyLayer);
         event.registerLayerDefinition(RavenModel.LAYER, RavenModel::createBodyLayer);
         event.registerLayerDefinition(LightwardArmorModel.HELMET_LAYER,
-                () -> LightwardArmorModel.createHelmetLayer(Minecraft.getInstance().getResourceManager()));
+                                      () -> LightwardArmorModel.createHelmetLayer(Minecraft.getInstance().getResourceManager()));
         event.registerLayerDefinition(LightwardArmorModel.CHESTPLATE_LAYER, LightwardArmorModel::createChestplateLayer);
         event.registerLayerDefinition(LightwardArmorModel.LOWER_ARMOR_LAYER, LightwardArmorModel::createLowerArmorLayer);
     }
@@ -206,7 +206,7 @@ public final class MaledictClientSetup {
         event.enqueueWork(() -> {
             ParticleEmitterHandler.registerItemParticleEmitter(
                     VOID_PARTICLES,
-                    MaledictItems.INCURSUS_BLADE.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+                    MaledictItems.INCURSUS_BLADE.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(), MaledictItems.EMPEROR_IN_THE_EGGSHELL.get());
             ParticleEmitterHandler.registerItemParticleEmitter(
                     ESOTERICA_PARTICLES,
                     MaledictItems.ELEGY_BOW.get(), MaledictItems.BLEEDING_EYE.get(), MaledictItems.HANGMAN_FOOL.get(),

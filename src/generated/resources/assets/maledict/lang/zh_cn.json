@@ -309,6 +309,7 @@
   "malum.gui.curio.effect.maledict.bliss.damage": "增加对血量比例不同的造成、受到的伤害。",
   "malum.gui.curio.effect.maledict.bliss.forced_hit": "强制使双方的攻击可以命中。",
   "malum.gui.curio.effect.maledict.decay": "身边敌对之物每两秒被磨去半颗心，永不致命。",
+  "malum.gui.curio.effect.maledict.emperor_in_the_eggshell.guard": "受到的伤害不会超过最大生命的 %s%%",
   "malum.gui.curio.effect.maledict.emperor_in_the_eggshell.window": "受击后获得 %s tick 的特殊无敌帧",
   "malum.gui.curio.effect.maledict.fallen": "使对方的生命回复堕落成伤口",
   "malum.gui.curio.effect.maledict.hangman_fool.reflect": "有概率反弹弹射物，生命越低概率越高",

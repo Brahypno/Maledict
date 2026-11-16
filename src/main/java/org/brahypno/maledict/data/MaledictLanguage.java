@@ -358,6 +358,9 @@ public final class MaledictLanguage extends LanguageProvider {
         add("malum.gui.curio.effect.maledict.emperor_in_the_eggshell.window",
             "受击后获得 %s tick 的特殊无敌帧",
             "Gain %s ticks special invulnerability after hit");
+        add("malum.gui.curio.effect.maledict.emperor_in_the_eggshell.guard",
+            "受到的伤害不会超过最大生命的 %s%%",
+            "Max damage taken would not be less than %s%% of Max health");
     }
 
     private void addBleedingEyeTranslations() {

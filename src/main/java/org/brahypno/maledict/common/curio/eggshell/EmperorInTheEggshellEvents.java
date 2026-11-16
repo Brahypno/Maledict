@@ -20,8 +20,9 @@ import java.util.WeakHashMap;
  * 「蛋壳中的皇帝」的伤害窗口：同 tick 取最高，开窗批次全额，之后的命中按 {@code elapsed / N} 缩放。
  *
  * <p>为什么挂在 {@code LivingHurtEvent}：D0 普通 hurt 和 D1 直接 {@code actuallyHurt} 都会经过这里，
- * 所以它就是 D1 防御；D2+ 的 {@code setHealth} 不经过这个事件，天然穿透。不需要 mixin，也不需要
- * {@code CombatProtection.Guard}。
+ * 所以它就是 D1 防御；D2+ 的 {@code setHealth} 不经过这个事件，天然穿透。窗口只负责时间衰减，
+ * 单次命中的上限由同包的 {@code CombatProtection.Guard}（D4 层，equip 时挂、unequip 时关）管，
+ * 两者各管一段，不互相替代。
  *
  * <p>原版帧不碰：vanilla 的 20 tick 仍然在前，本窗口只处理穿过它、进入 {@code actuallyHurt} 的伤害。
  * 火/摔落等正常走原版受击的伤害会一样处理；带 {@code BYPASSES_INVULNERABILITY} 的来源（/kill、虚空等）
@@ -113,6 +114,7 @@ public final class EmperorInTheEggshellEvents {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         WINDOWS.clear();
+        EmperorInTheEggshellItem.clearWards();
     }
 
     private EmperorInTheEggshellEvents() {

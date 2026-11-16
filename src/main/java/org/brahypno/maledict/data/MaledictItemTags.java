@@ -98,7 +98,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
         tag(L2_NO_SEAL)
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
                      MaledictItems.HANGMAN_FOOL.get(), MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get(),
-                     MaledictItems.LOVER_AXE.get())
+                     MaledictItems.LOVER_AXE.get(), MaledictItems.EMPEROR_IN_THE_EGGSHELL.get())
                 .addOptionalTag(MaledictTags.AUFHEBEN_LIGHTWARD_ARMOR);
         tag(CURIOS_CHARM).add(MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
                               MaledictItems.EMPEROR_IN_THE_EGGSHELL.get());
@@ -124,7 +124,7 @@ public final class MaledictItemTags extends ItemTagsProvider {
                 .add(MaledictItems.INCURSUS_BLADE.get(), MaledictItems.ELEGY_BOW.get());
         tag(EquipmentProtectionTags.CURIOS)
                 .add(MaledictItems.HANGMAN_FOOL.get(), MaledictItems.AGE_OF_ENLIGHTENMENT.get(),
-                     MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
+                     MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get(), MaledictItems.EMPEROR_IN_THE_EGGSHELL.get());
         tag(EquipmentProtectionTags.ARMOR)
                 .addOptionalTag(MaledictTags.AUFHEBEN_LIGHTWARD_ARMOR);
 
