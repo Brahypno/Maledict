@@ -141,6 +141,10 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerSpawnEggModel("first_vicissitude_phase_one_spawn_egg");
         registerSpawnEggModel("raven_spawn_egg");
         registerSpawnEggModel("first_vicissitude_phase_two_spawn_egg");
+        registerSpawnEggModel("weeping_wither_spawn_egg");
+        registerSpawnEggModel("weeping_wither_skeleton_spawn_egg");
+        registerSpawnEggModel("demiurge_statue_spawn_egg");
+        registerSpawnEggModel("demiurge_statue_awakened_spawn_egg");
     }
 
     private void registerYearningSwordModel() {

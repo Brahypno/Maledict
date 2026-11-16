@@ -171,6 +171,10 @@ public final class MaledictLanguage extends LanguageProvider {
         add("entity.maledict.weeping_wither", "腐枯凋灵", "Weeping Wither");
         add("entity.maledict.weeping_wither_skull", "腐枯凋灵之首", "Weeping Wither Skull");
         add("entity.maledict.weeping_wither_skeleton", "腐枯凋灵骷髅", "Weeping Wither Skeleton");
+        addItem(MaledictItems.WEEPING_WITHER_SPAWN_EGG, "腐枯凋灵刷怪蛋", "Weeping Wither Spawn Egg");
+        addItem(MaledictItems.WEEPING_WITHER_SKELETON_SPAWN_EGG,
+                "腐枯凋灵骷髅刷怪蛋",
+                "Weeping Wither Skeleton Spawn Egg");
 
         add("malum.gui.book.entry.void.maledict.weeping_wither", "腐枯凋灵", "Weeping Wither");
         add("malum.gui.book.entry.void.maledict.weeping_wither.description",
@@ -198,6 +202,15 @@ public final class MaledictLanguage extends LanguageProvider {
     private void addDemiurgeTranslations() {
         addBlock(MaledictBlocks.RELIQUARY_ALTAR, "倒悬灵柩祭坛", "Inverted Reliquary Altar");
         add("entity.maledict.demiurge_statue", "亚大伯斯之石像", "Yaldabaoth Statue");
+        addItem(MaledictItems.DEMIURGE_STATUE_SPAWN_EGG,
+                "亚大伯斯之石像刷怪蛋（未激活）",
+                "Yaldabaoth Statue Spawn Egg (Dormant)");
+        addItem(MaledictItems.DEMIURGE_STATUE_AWAKENED_SPAWN_EGG,
+                "亚大伯斯之石像刷怪蛋（激活）",
+                "Yaldabaoth Statue Spawn Egg (Awakened)");
+        add("tooltip.maledict.demiurge_statue_spawn_egg",
+            "未激活的石像：用腐枯之星唤醒它",
+            "A dormant statue: awaken it with a Blighted Star");
         add("sounds.maledict.entity.demiurge.awakening_roar", "亚大伯斯之石像怒吼", "Yaldabaoth Statue roars");
     }
 

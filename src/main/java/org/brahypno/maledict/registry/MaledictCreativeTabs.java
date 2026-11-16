@@ -52,7 +52,6 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get());
                                output.accept(MaledictItems.WITHERLIGHT_MUSHROOM.get());
                                output.accept(MaledictItems.WITHERLIGHT_LAMP.get());
-                               output.accept(MaledictItems.RAVEN_SPAWN_EGG.get());
                                output.accept(MaledictItems.RAVEN_FEATHER.get());
                                output.accept(MaledictItems.SACRED_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.WICKED_SPIRIT_ARROW.get());
@@ -86,6 +85,14 @@ public final class MaledictCreativeTabs {
                                    output.accept(MaledictItems.YEARNING_SWORD.get());
                                    output.accept(MaledictItems.FORSAKEN_VOW.get());
                                }
+                               // 刷怪蛋统一收在创造栏最后：先普通生物，再是首领，石像按未激活／激活两枚。
+                               output.accept(MaledictItems.RAVEN_SPAWN_EGG.get());
+                               output.accept(MaledictItems.WEEPING_WITHER_SKELETON_SPAWN_EGG.get());
+                               output.accept(MaledictItems.WEEPING_WITHER_SPAWN_EGG.get());
+                               output.accept(MaledictItems.FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG.get());
+                               output.accept(MaledictItems.FIRST_VICISSITUDE_PHASE_TWO_SPAWN_EGG.get());
+                               output.accept(MaledictItems.DEMIURGE_STATUE_SPAWN_EGG.get());
+                               output.accept(MaledictItems.DEMIURGE_STATUE_AWAKENED_SPAWN_EGG.get());
                            })
                            .build());
 

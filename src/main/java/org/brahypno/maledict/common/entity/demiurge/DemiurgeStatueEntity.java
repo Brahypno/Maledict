@@ -592,6 +592,27 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
         return awakeningAge(0) >= DemiurgeAwakening.DURATION;
     }
 
+    /**
+     * 刷怪蛋用：把这一只直接交给世界，处于激活后的状态。激活时间轴写在同步数据里，因此在实体进入世界之前
+     * 往前拨一整段就够了 —— 觉醒的雨与怒吼被跳过，落地就是编好的终态（抬起前半身的地面站姿，
+     * {@link DemiurgeSlither#HEIGHT}），但 {@code onAddedToWorld} 仍然照常按难度评级血量池。
+     * <p>
+     * 未激活的石像不需要这个入口：那是 {@code AWAKENING_START = -1} 的默认状态，等腐枯之星来唤醒。
+     */
+    public void activateOnSpawn() {
+        if (level().isClientSide || entityData.get(AWAKENING_START) >= 0)
+            return;
+        // 刚造出来的世界里 gameTime 还没走满一整段觉醒，减出来会是负数，而负数是"从未激活"的哨兵值。
+        // 那种情况下只能从 0 起算：石像会在复活时长走够 140 tick 之后自然进入战斗姿态。
+        long start = Math.max(0L, level().getGameTime()
+                                   - DemiurgeAwakening.DURATION - DemiurgeSlither.TRANSITION_TICKS);
+        entityData.set(AWAKENING_START, start);
+        // 载入存档走的是同一条路（readAdditionalSaveData）：身高要从 awakeningAge 重算并立刻刷新碰撞箱，
+        // 否则 tick 里 height == currentHeight，这一次刷新就永远不会发生了。
+        currentHeight = DemiurgeSlither.height(awakeningAge(0));
+        refreshDimensions();
+    }
+
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         var stack = player.getItemInHand(hand);

@@ -12,10 +12,12 @@ import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
+import org.brahypno.maledict.common.entity.demiurge.DemiurgeStatueEntity;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossSpawnPhase;
 import org.brahypno.maledict.common.entity.vicissitude.VicissitudeSpawnEggItem;
 import org.brahypno.maledict.common.entity.vicissitude.curio.CurioReturnTokenItem;
+import org.brahypno.maledict.common.item.StatedSpawnEggItem;
 import org.brahypno.maledict.common.item.codex.LightfallCodexItem;
 import org.brahypno.maledict.common.item.curio.eggshell.EmperorInTheEggshellItem;
 import org.brahypno.maledict.common.item.curio.enlightenment.AgeOfEnlightenmentItem;
@@ -127,10 +129,47 @@ public final class MaledictItems {
     public static final RegistryObject<Item> REFRACTED_LEAD_BISMUTH_EUTECTIC =
             ITEMS.register("refracted_lead_bismuth_eutectic", () -> new Item(new Item.Properties()));
 
-    public static final RegistryObject<Item> RAVEN_SPAWN_EGG = ITEMS.register("raven_spawn_egg", () ->
-            new ForgeSpawnEggItem(MaledictEntities.RAVEN, 0x151820, 0xB80F22, new Item.Properties()));
     public static final RegistryObject<Item> RAVEN_FEATHER = ITEMS.register("raven_feather", () ->
             new Item(new Item.Properties()));
+
+    /**
+     * 刷怪蛋：一个生物一枚，创造栏里统一排在最后（见 {@code MaledictCreativeTabs}）。
+     * 贴图走原版刷怪蛋模板，两色染色 —— 底色铺蛋身，第二色打在标准斑纹上，不单独出 16×16 图。
+     * 石像分未激活／激活两枚：后者落地时就把觉醒时间轴拨到终点，直接是站起来的样子。
+     */
+    public static final RegistryObject<Item> RAVEN_SPAWN_EGG = ITEMS.register("raven_spawn_egg", () ->
+            new ForgeSpawnEggItem(MaledictEntities.RAVEN, 0x151820, 0xB80F22, new Item.Properties()));
+    public static final RegistryObject<Item> WEEPING_WITHER_SPAWN_EGG = ITEMS.register("weeping_wither_spawn_egg", () ->
+            new StatedSpawnEggItem(MaledictEntities.WEEPING_WITHER, 0x2A2232, 0xB03CE0,
+                                   new Item.Properties(), true));
+    public static final RegistryObject<Item> WEEPING_WITHER_SKELETON_SPAWN_EGG =
+            ITEMS.register("weeping_wither_skeleton_spawn_egg", () ->
+                    new ForgeSpawnEggItem(MaledictEntities.WEEPING_WITHER_SKELETON,
+                                          0xC9C5CB, 0x5A2E7A, new Item.Properties()));
+
+    /**
+     * 未激活的石像：落地是一尊打不动的石像，得用腐枯之星唤醒；激活版见下一枚。
+     */
+    public static final RegistryObject<Item> DEMIURGE_STATUE_SPAWN_EGG =
+            ITEMS.register("demiurge_statue_spawn_egg", () ->
+                    new ForgeSpawnEggItem(MaledictEntities.DEMIURGE_STATUE,
+                                          0x6A6472, 0xC2BCC8, new Item.Properties()) {
+                        @Override
+                        public void appendHoverText(ItemStack stack, @Nullable Level level,
+                                                    List<Component> tooltip, TooltipFlag flag) {
+                            tooltip.add(Component.translatable(
+                                    "tooltip.maledict.demiurge_statue_spawn_egg"));
+                        }
+                    });
+    public static final RegistryObject<Item> DEMIURGE_STATUE_AWAKENED_SPAWN_EGG =
+            ITEMS.register("demiurge_statue_awakened_spawn_egg", () ->
+                    new StatedSpawnEggItem(MaledictEntities.DEMIURGE_STATUE,
+                                           0x9A6BD6, 0xE8C8FF, new Item.Properties(), true,
+                                           entity -> {
+                                               if (entity instanceof DemiurgeStatueEntity statue) {
+                                                   statue.activateOnSpawn();
+                                               }
+                                           }));
 
     public static final RegistryObject<Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
             new IncursusBladeItem(MaledictItemTiers.INCURSUS, new Item.Properties().rarity(Rarity.EPIC)));
