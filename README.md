@@ -6,7 +6,8 @@ it sit spirit-fed bows and arrows, two shelves of runes, a charm that meddles wi
 the rites that call the First Vicissitude.
 
 This README is an overview of how the project is put together. What the mod contains is documented in the Encyclopedia
-Arcana, in game; the conventions and the mechanics that were expensive to get right are in [AGENTS.md](AGENTS.md).
+Arcana, in game; the confirmed mechanics and numbers are in [`docs/mechanics/`](docs/mechanics/), and the conventions
+and engineering contracts in [AGENTS.md](AGENTS.md).
 
 ## Stack
 
@@ -41,6 +42,7 @@ src/main/java/org/brahypno/maledict/
 src/main/resources/   hand-written assets
 src/generated/        data generator output — regenerate with runData, never edit by hand
 src/test/             JUnit and Forge entity tests, following production package paths
+docs/mechanics/       confirmed mechanics and combat numbers, one page per topic
 docs/design/          per-feature design and verification notes
 ```
 
@@ -57,7 +59,9 @@ artifact in `build/libs`.
 
 ## Documentation
 
-- [AGENTS.md](AGENTS.md) — conventions and confirmed mechanics. Read it before changing anything.
+- [AGENTS.md](AGENTS.md) — conventions and engineering contracts. Read it before changing anything.
+- [`docs/mechanics/`](docs/mechanics/) — confirmed player-visible mechanics and combat numbers, with a page per
+  topic; the place to tune values from.
 - `docs/design/` — design and verification notes, one directory per feature, some with an `archive/` of superseded
   iterations.
 - [CREDITS.md](src/main/resources/CREDITS.md) — licences for bundled audio and image assets.

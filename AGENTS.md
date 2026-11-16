@@ -1,5 +1,13 @@
 # Repository Instructions
 
+## Documentation map
+
+- `docs/mechanics/` — confirmed player-visible mechanics and numbers, written for the author. When a change
+  alters one of them, update the matching page in the same change. Code is the source of truth; a page that
+  disagrees with it is a bug in the page.
+- `docs/design/` — per-feature design and verification notes.
+- `README.md` — project overview and layout.
+
 ## Generated resources
 
 - Never edit any file under `src/generated` directly, including cleanup, formatting, restoration, or one-line
@@ -33,129 +41,84 @@
   unchanged). `node tools/lang-layout/check-lang-layout.mjs` measures both languages against the real layout, see
   `tools/lang-layout/README.md`.
 
-## Confirmed mechanics
+## Settled contracts
 
-These are settled behaviours, written down because each of them cost several rounds of misreading.
+Mechanics that were expensive to get right, reduced to what the code must keep doing. The player-visible side of
+each one (numbers, formulas, observable behaviour) lives in the page named at the end of the entry; read it before
+changing the mechanic.If they dont match, thats usually too lazy human dont chage doc
 
-### First Vicissitude adaptation (`DamageAdaptation`)
+### Adaptation batching (`DamageAdaptation`)
 
-A sliding window of the **most recently hit damage messages** (`DamageSource#getMsgId()`); the window size is
-`firstVicissitude.adaptationLevel` ("adaptation N", default 2).
+A sliding window of the **most recently hit damage messages** (`DamageSource#getMsgId()`), size
+`firstVicissitude.adaptationLevel`. Record first, then judge; only a message that was already in the window before
+the hit is reduced, by `e^-(hits while remembered)`; an evicted message loses its counter.
 
-- **Record first, then judge.** The incoming message is recorded into the window (moving to the front if already
-  present, otherwise inserted and the *least recently hit* entry evicted together with its counter) and only then is
-  the multiplier decided. Only a message that was **already in the window before this hit** is reduced, by
-  `e^-(times it has been hit while remembered)`. A message that was just recorded is full damage.
-- Evicted messages keep **no** state: their counter is discarded, so the next hit on them counts as the first.
-- Order matters, including inside one tick: a burst is processed one hit at a time, in call order.
-- **One tick, one hit per message** (the boss records through `adaptInBatch(message, level, tick)`). A single swing
-  lands the *same* `DamageSource` more than once — `DamageProbe` tops the amount up by hitting again with that same
-  source, and the arcane channel is cashed in inside the same `LivingHurtEvent` — so counting every call let one
-  swing adapt itself: the blade's `scythe_sweep` is dealt twice per use, the second call was already e⁻¹, and a use
-  where the other channels did not interleave pushed it to e⁻² (the taunt fired on the fifth `scythe_sweep` record).
-  Inside one tick a message that already landed is therefore **not recorded again** and **reuses the first call's
-  multiplier**; the next tick is a new batch. `RuneOfMelancholiaItem` keeps the plain `adapt`, where every call counts.
+The boss records through `adaptInBatch(message, level, tick)`: inside one tick a message that already landed is
+**not recorded again** and **reuses the first call's multiplier**, because one swing lands the same message several
+times (`DamageProbe` tops the amount up with the same source, and the arcane channel is cashed in inside the same
+`LivingHurtEvent`). Per-call counting let one swing adapt itself. `RuneOfMelancholiaItem` deliberately keeps the
+plain `adapt`, where every call counts.
 
-Trace for `adaptation 2`, A→B→C→A→B→C — **nothing is ever reduced**:
+Page: `docs/mechanics/first-vicissitude-adaptation.md`.
 
-```
-A: record [A]      judge A was absent → full
-B: record [B, A]   judge B was absent → full
-C: record [C, B]   judge C was absent → full   (A evicted, counter discarded)
-A: record [A, C]   judge A was absent → full   (B evicted, counter discarded)
-B: record [B, A]   judge B was absent → full   (C evicted, counter discarded)
-C: record [C, B]   judge C was absent → full   (A evicted, counter discarded)
-```
+### Incursus Blade channels
 
-Consequences: adaptation 1 cannot reduce a three-message rotation (the previous message is always the one evicted);
-adaptation 2 also cannot, for the same reason; a **two**-message rotation under adaptation 2 is held, and reduces from
-the third hit on; adaptation 3 holds all three and reduces from the second round on. Note that the dev scythe
-(Incursus Blade) lands three messages per swing on its sweep paths (`scythe_sweep` / `magic` / `freeze`), so under
-the default of 2 its damage is never adapted. The `freeze` message is the independent
-`powder_snow_damage` attribute request and still uses `minecraft:freeze`; the `magic` message is the independent
-Lodestone `MAGIC_DAMAGE` attribute request (`minecraft:magic`). The old explicit `voodoo` probe is gone, and both
-attribute requests are dispatched after the scythe probe, in registration order (freeze then magic).
+- Arcane: `MaledictAttributes` registers Lodestone's `MAGIC_DAMAGE` with ChangeLib's `AttributeDamageRegistry`, and
+  `LodestoneAttributeEventHandlerMixin` cancels Lodestone's own `processAttributes` copy when the weapon is in
+  `maledict:lodestone_magic_takeover`. Keep the Lodestone request shape (`minecraft:magic`, null direct entity, the
+  attacker as causing entity); do not bring back the old `markMeleeHurtEvent` compensation.
+- Aqueous: `maledict:powder_snow_damage` is an attribute request registered with
+  `AttributeAmountReaders.itemBacked()`, dispatched after the scythe probe (freeze, then magic).
+- Multipart bosses: `IncursusBladeAttack.uniqueLivingTargets` collapses the melee and Ascension target lists onto
+  the living root so one swing still opens one probe and one freeze/magic round.
+- `DamageTier` sets the request's base `priority`/`strength` in `IncursusBladeEffects` on `DamageRequestEvent`
+  (NORMAL) and `BlissRuneEvents` raises it one step (LOW). The unified `DamageRequestEvent` covers probe requests
+  too; `attribute() != null` marks an attribute request.
 
-### Incursus Blade's arcane channel (`can_trigger_magic_damage`)
+Page: `docs/mechanics/incursus-blade-channels.md`.
 
-The blade's arcane infusion (`MAGIC_DAMAGE` attribute) deals no damage by itself. Lodestone's
-`LodestoneAttributeEventHandler#processAttributes` cashes it in **inside the victim's `LivingHurtEvent`**: if the
-source type is in `forge:can_trigger_magic_damage` (Malum puts `malum:scythe_melee` and `malum:scythe_sweep` there)
-it deals one extra `minecraft:magic` hit worth the attribute, with a null direct entity and the attacker as causing
-entity, right after setting `invulnerableTime = 0`. `forge:ignores_magic_attack_cooldown_scalar` is empty, so that
-bonus is never scaled by attack strength.
+### Boss contact (`VicissitudeBossEntity`)
 
-Maledict takes over this attribute for its tagged weapons. `MaledictAttributes` registers Lodestone's
-`MAGIC_DAMAGE` with ChangeLib's `AttributeDamageRegistry`, and
-`LodestoneAttributeEventHandlerMixin` cancels Lodestone's `processAttributes` copy when the attacker's main hand is
-in `maledict:lodestone_magic_takeover` and the original source is in `CAN_TRIGGER_MAGIC` but not `IS_MAGIC`. The
-resulting request keeps Lodestone's shape: source `minecraft:magic`, null direct entity, the attacker as causing
-entity. The old `markMeleeHurtEvent` compensation is gone.
+`isPushable() == false` **and** the three-argument `push` no-op are both required. `LivingEntity#aiStep` ends with
+`pushEntities()`, which shoves pushable pairs apart straight into `deltaMovement`, and the boss blends steering with
+its previous velocity instead of overwriting it, so contact would walk it around. Ram attacks (ender dragon, ravager,
+hoglin charge, warden sonic boom, moving minecarts) and other mods call `push` directly without ever asking
+`isPushable`. Only the boss's own movement code may change its velocity; the wing push is a separate, deliberate
+shove.
 
-The aqueous (freeze) channel is no longer an explicit probe. `maledict:powder_snow_damage` is a registered
-attribute; the blade's NBT stat feeds a main-hand `ADDITION` modifier, and ChangeLib's `AttributeDamageRegistry`
-dispatches one independent `minecraft:freeze` request after the scythe probe. ChangeLib's `ProbeScope` records a
-probe result with `totalDealt() > 0` even when its `hurt` path was not observed (an entity that fully overrides
-`hurt`, or a probe that settled through setHealth/NBT), so the request is not limited to the vanilla `hurt` event.
-Forge multipart bosses expose the body and every animated part as separate entities; `IncursusBladeAttack.uniqueLivingTargets`
-collapses the melee and Ascension target lists onto the living root (the nearest hitbox per root), so one swing
-still opens one main probe and therefore one freeze/magic round. The boomerang hits a single part and needs no
-collapse. The blade's
-`DamageTier` still sets the request's base `priority`/`strength` in `IncursusBladeEffects` on
-`DamageRequestEvent` (NORMAL), and `BlissRuneEvents` raises it one step (LOW). The unified
-`DamageRequestEvent` also covers probe requests; `attribute() != null` distinguishes an attribute
-request. The freeze registration uses `AttributeAmountReaders.itemBacked()` so the flying scythe's
-item modifiers are composed with the attacker's attributes instead of relying on the item being in
-the main hand.
+Page: `docs/mechanics/boss-contact.md`.
 
-### Boss has no collision movement (`VicissitudeBossEntity`)
+### Boss vitality (`VicissitudeBossEntity`)
 
-`LivingEntity#aiStep` ends with `pushEntities()`, which shoves every pair of **pushable** living entities apart —
-`EntitySelector#pushableBy` filters the candidates, `Entity#push` guards each side — and adds that shove straight to
-`deltaMovement`, once per tick per overlapping entity. `LivingEntity#isPushable` is true for anything alive, and
-`FirstVicissitudeBossEntity`'s steering *blends* (`FLIGHT_STEERING = 0.2`) with the previous velocity instead of
-overwriting it, so a player leaning on the boss walks it around at up to ~0.18 blocks/tick.
+- The world `SavedData` ledger is the only authority. The base implements `CombatProtection.OwnedHealthEntity`;
+  `CombatProtection.bindOwned` runs exactly once in `onAddedToWorld`, after the record has been restored or
+  initialised, and `ownsHealthAccess` compares by identity. Read health through `CombatProtection.healthView`;
+  clients fall back to the synced `DISPLAY_VITALITY` only before ChangeLib's committed snapshot arrives.
+- Every authority change commits one full record through the private controller: resolved damage uses
+  `commitDamage`, everything else (healing, lifecycle) uses `commit`. The callback only writes the ledger and the
+  capability mirror — publishing and events stay outside it. Do not reintroduce `super.setHealth` in
+  `publishVitality`. `unprotect`, `protect`, `authorize` and the public `attack` all refuse an owned binding; the old
+  rebase and per-tick grade check are gone.
+- `setHealth` and storage damage submit requests to the bound authority. At or below the defense grade they reenter
+  the boss's `hurt` rules (immunity, adaptation, cooldowns, per-hit cap); a higher canonical stage may force damage
+  through that cap.
+- Bind an explicit damage allowance covering the largest hit segment. Every `hurt` uses the same input ceiling, with
+  or without `beginHit` — there is no unscoped-hurt exemption; resolved damage shares the request's remaining
+  allowance after mitigation and same-tick channel aggregation. Low-stage probe retries cannot reopen the same
+  request's allowance. Regression pins: the 100-health/8-limit sequence is 92 for both direct and probed 20-point
+  hits; D4 may force all 20 points through D3 to reach 80; compensation alone does not raise the stage or reopen the
+  allowance (D3 with compensation against D4 still stops at 92), while an actual escalation to D5 may legally settle
+  the remaining 12 damage and reach 80.
 
-`VicissitudeBossEntity` therefore answers `isPushable() == false` **and** no-ops the three-argument `push`, because
-ram attacks (ender dragon, ravager, hoglin charge, warden sonic boom, moving minecarts) and other mods call that
-method directly without ever asking `isPushable`. Players touching the boss are still separated by the boss's own
-`pushEntities()`; the wing push (`Player#push`, 0.06 horizontal) is a separate, deliberate shove. Only the boss's
-own movement code may change its velocity.
+Page: `docs/mechanics/boss-vitality.md`.
 
-### Vicissitude health is an owned ChangeLib pool (`VicissitudeBossEntity`)
+### Age of Enlightenment (`AgeOfEnlightenmentEvents#onMeleeHurt`)
 
-The world `SavedData` ledger remains the only authority. The base implements `CombatProtection.OwnedHealthEntity`,
-checks the adapter by identity, and calls `CombatProtection.bindOwned` exactly once in `onAddedToWorld`, after the
-ledger record has been restored or initialized. `getHealth()` returns
-`CombatProtection.healthView(this, authorityHealth())`; clients prefer ChangeLib's committed snapshot and use
-the synced `DISPLAY_VITALITY` only before that snapshot arrives.
+A plain melee multiplier on `LivingHurtEvent` (the damage source's direct entity is a player with the effect), not
+a forced crit. Do not restore the `CriticalHitEvent` path: the lost crit particles and the fact that a forced crit
+suppressed the scythe's sweep were given up deliberately. Config key `ageOfEnlightenment.meleeDamageMultiplier`.
 
-Every authority change — damage, healing, canceled-death restore, gate and kill-attempt updates — commits one full
-record through the private controller. Resolved damage uses `commitDamage`; other owner updates use `commit`.
-The callback only writes the ledger and capability mirror; publishing and events stay outside it. The old `protect`/`unprotect` rebase and the
-per-tick grade check are gone: `unprotect`, `protect`, `authorize` and the public `attack` all refuse an owned
-binding. Direct `setHealth` and storage damage submit requests to the bound authority. At or below the defense
-grade they reenter the boss's `hurt` rules, including immunity, adaptation, cooldowns and the per-hit cap. A higher
-canonical stage may force damage through that cap. Do not reintroduce `super.setHealth` in `publishVitality`.
-
-Bind an explicit damage allowance covering the largest hit segment. Every `hurt` uses the same input ceiling,
-with or without `beginHit`; there is no unscoped-hurt exemption. Final resolved damage uses
-`vitalityController.commitDamage`, sharing the request's remaining allowance after mitigation and channel
-aggregation. Healing and lifecycle record updates keep `commit`. Low-stage probe retries cannot reopen the same
-request's allowance; the confirmed 100-health/8-limit sequence is 92 for both direct and probed 20-point hits,
-and D4 may force all 20 points through D3 to reach 80.
-Compensation does not raise the attack stage or reopen its allowance: D3 with compensation against D4 still
-stops at 92; an actual escalation to D5 may legally settle the remaining 12 damage and reach 80.
-
-### Age of Enlightenment is a melee multiplier, not a forced crit (`AgeOfEnlightenmentEvents#onMeleeHurt`)
-
-It used to force a vanilla critical hit (`CriticalHitEvent`, `ALLOW` plus a 1.5× modifier). It is now a plain melee
-damage multiplier: `LivingHurtEvent` doubles the pre-armour amount when the damage source's **direct entity is a
-player** who has the effect. Melee only — the arcane channel, arrows and explosions carry someone else (or nothing) as
-the direct entity and keep their own numbers; sweep damage rides the same `player_attack` source, so it doubles with
-the swing. Deliberately given up with the crit: the crit particles and sound, and the fact that a forced crit
-suppresses the scythe's sweep. A real vanilla crit (the falling attack) still multiplies by 1.5 first and is doubled
-on top of that. The multiplier is `ageOfEnlightenment.meleeDamageMultiplier` in `MaledictConfig`, default 2.0.
+Page: `docs/mechanics/age-of-enlightenment.md`.
 
 ### Cancelled events never reach `@SubscribeEvent` handlers unless the annotation opts in
 
@@ -164,7 +127,8 @@ on top of that. The multiplier is `ageOfEnlightenment.meleeDamageMultiplier` in 
 earlier listener cancels the event, and priority cannot save it: `EventPriority.LOWEST` with a default annotation means
 any "look at the already-cancelled event" branch is unreachable against cancels from NORMAL/HIGH. Programmatic
 `IEventBus#addListener` reaches the same conclusion by a different route (the `checkCancelled` filter in `EventBus`).
-A handler that wants to react to a cancellation must declare `receiveCanceled = true`; `BlissRuneEvents` needed it on all
+A handler that wants to react to a cancellation must declare `receiveCanceled = true`; `BlissRuneEvents` needed it on
+all
 three handlers, where the forced-hit path had been dead code.
 
 ### Registry events: attribute fires before mob_effect, but a `RegistryObject` is still dead until its own event
@@ -191,4 +155,5 @@ Before reverse-engineering whether a foreign handle is usable at registry time, 
 When a mechanic can be read in more than one way (window/eviction order, "record then judge" vs "judge then record",
 counter lifetime, per-attacker vs global), write the intended model down first — the state transitions for a concrete
 sequence — and have it confirmed before touching code. Do not infer the model from the feature's name or from how a
-comparable mod does it. Then pin the confirmed sequence as a test case.
+comparable mod does it. Then pin the confirmed sequence as a test case, record the model in `docs/mechanics/`, and
+keep only the invariant that constrains the code in this file.
