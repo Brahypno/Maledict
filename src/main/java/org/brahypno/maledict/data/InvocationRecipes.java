@@ -11,8 +11,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraftforge.common.crafting.DifferenceIngredient;
 import net.minecraftforge.common.crafting.PartialNBTIngredient;
-import org.brahypno.maledict.common.invocation.InvocationDefinition;
-import org.brahypno.maledict.common.invocation.InvocationSigilItem;
+import org.brahypno.maledict.common.ritual.invocation.InvocationDefinition;
+import org.brahypno.maledict.common.ritual.invocation.InvocationSigilItem;
 import org.brahypno.maledict.registry.MaledictRecipeTypes;
 
 import java.util.function.Consumer;
@@ -72,19 +72,30 @@ final class InvocationRecipes {
         return ResourceLocation.fromNamespaceAndPath("maledict", "spirit_infusion/invocation_" + target);
     }
 
-    private static void definition(Consumer<FinishedRecipe> recipes, String target, String entity, String variant,
-                                   boolean soulwood, InvocationDefinition.Profile profile, int tint) {
+    private static void definition(
+            Consumer<FinishedRecipe> recipes, String target, String entity, String variant,
+            boolean soulwood, InvocationDefinition.Profile profile, int tint) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath("maledict", "invocation/" + target);
         InvocationDefinition definition = new InvocationDefinition(id,
-                ResourceLocation.fromNamespaceAndPath("minecraft", entity), variant, soulwood, profile, tint);
+                                                                   ResourceLocation.fromNamespaceAndPath("minecraft", entity), variant, soulwood, profile,
+                                                                   tint);
         recipes.accept(new FinishedRecipe() {
-            @Override public void serializeRecipeData(JsonObject json) {
+            @Override
+            public void serializeRecipeData(JsonObject json) {
                 definition.toJson().entrySet().forEach(entry -> json.add(entry.getKey(), entry.getValue()));
             }
-            @Override public ResourceLocation getId() { return id; }
-            @Override public RecipeSerializer<?> getType() { return MaledictRecipeTypes.INVOCATION_SERIALIZER.get(); }
-            @Override public JsonObject serializeAdvancement() { return null; }
-            @Override public ResourceLocation getAdvancementId() { return null; }
+
+            @Override
+            public ResourceLocation getId() {return id;}
+
+            @Override
+            public RecipeSerializer<?> getType() {return MaledictRecipeTypes.INVOCATION_SERIALIZER.get();}
+
+            @Override
+            public JsonObject serializeAdvancement() {return null;}
+
+            @Override
+            public ResourceLocation getAdvancementId() {return null;}
         });
     }
 

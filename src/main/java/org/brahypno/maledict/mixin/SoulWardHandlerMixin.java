@@ -2,7 +2,7 @@ package org.brahypno.maledict.mixin;
 
 import com.sammy.malum.core.handlers.SoulWardHandler;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import org.brahypno.maledict.common.refulgence.RefulgencePending;
+import org.brahypno.maledict.common.combat.refulgence.RefulgencePending;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

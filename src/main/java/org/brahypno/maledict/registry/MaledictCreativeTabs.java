@@ -6,6 +6,9 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.common.item.curio.priestess.EidolonOfTheHighPriestessItem;
+import org.brahypno.maledict.common.ritual.invocation.InvocationSigilItem;
 
 public final class MaledictCreativeTabs {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS =
@@ -16,8 +19,8 @@ public final class MaledictCreativeTabs {
                            .title(Component.translatable("itemGroup.maledict"))
                            .icon(() -> MaledictItems.INCURSUS_BLADE.get().getDefaultInstance())
                            .displayItems((parameters, output) -> {
-                               for (String target : org.brahypno.maledict.common.invocation.InvocationSigilItem.TARGETS) {
-                                   output.accept(org.brahypno.maledict.common.invocation.InvocationSigilItem.create(target));
+                               for (String target : InvocationSigilItem.TARGETS) {
+                                   output.accept(InvocationSigilItem.create(target));
                                }
                                output.accept(MaledictItems.SOULBINDING_SCROLL.get());
                                output.accept(MaledictItems.SOULBINDING_SEAL.get());
@@ -60,12 +63,12 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.EARTHEN_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
-                                output.accept(MaledictItems.EMPEROR_IN_THE_EGGSHELL.get());
+                               output.accept(MaledictItems.EMPEROR_IN_THE_EGGSHELL.get());
                                for (int stage = 0; stage <= 3; stage++) {
-                                   output.accept(org.brahypno.maledict.common.curio.hangman.HangmanFoolItem.create(stage));
+                                   output.accept(HangmanFoolItem.create(stage));
                                }
                                for (int stage = 0; stage <= 3; stage++) {
-                                   output.accept(org.brahypno.maledict.common.curio.priestess.EidolonOfTheHighPriestessItem.create(stage));
+                                   output.accept(EidolonOfTheHighPriestessItem.create(stage));
                                }
                                output.accept(MaledictItems.BLEEDING_EYE.get());
                                output.accept(MaledictItems.LIGHTFALL_CODEX.get());
@@ -79,7 +82,7 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.RUNE_OF_MELANCHOLIA.get());
                                output.accept(MaledictItems.RUNE_OF_BLISS.get());
                                output.accept(MaledictItems.RUNE_OF_THE_FALLEN.get());
-                               if (net.minecraftforge.fml.ModList.get().isLoaded("touhou_little_maid")) {
+                               if (net.minecraftforge.fml.ModList.get().isLoaded("touhou_little_maid")){
                                    output.accept(MaledictItems.YEARNING_SWORD.get());
                                    output.accept(MaledictItems.FORSAKEN_VOW.get());
                                }

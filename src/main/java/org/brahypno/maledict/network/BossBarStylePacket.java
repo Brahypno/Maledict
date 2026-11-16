@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import org.brahypno.maledict.client.vicissitude.VicissitudeBossBarOverlay;
+import org.brahypno.maledict.client.entity.vicissitude.VicissitudeBossBarOverlay;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -21,7 +21,9 @@ import java.util.function.Supplier;
  * 离队（{@code removePlayer}，发 {@link #STYLE_NONE} 让客户端删掉映射，避免 UUID 越攒越多）。
  */
 public record BossBarStylePacket(UUID bar, int style) {
-    /** 删掉这条血条的样式映射，回到原版渲染。 */
+    /**
+     * 删掉这条血条的样式映射，回到原版渲染。
+     */
     public static final int STYLE_NONE = -1;
 
     public static void encode(BossBarStylePacket packet, FriendlyByteBuf buffer) {
@@ -33,11 +35,12 @@ public record BossBarStylePacket(UUID bar, int style) {
         return new BossBarStylePacket(buffer.readUUID(), buffer.readVarInt());
     }
 
-    public static void handle(BossBarStylePacket packet,
-                              Supplier<NetworkEvent.Context> contextSupplier) {
+    public static void handle(
+            BossBarStylePacket packet,
+            Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> VicissitudeBossBarOverlay.accept(packet)));
+                                                               () -> () -> VicissitudeBossBarOverlay.accept(packet)));
         context.setPacketHandled(true);
     }
 }

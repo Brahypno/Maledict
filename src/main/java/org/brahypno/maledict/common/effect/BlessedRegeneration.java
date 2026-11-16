@@ -6,7 +6,9 @@ package org.brahypno.maledict.common.effect;
  */
 public final class BlessedRegeneration {
 
-    /** 每级补的份数，等级乘数由 {@link #extraHeal} 结算。 */
+    /**
+     * 每级补的份数，等级乘数由 {@link #extraHeal} 结算。
+     */
     public static final float SHARES_PER_LEVEL = 1.0F;
 
     /**
@@ -15,7 +17,7 @@ public final class BlessedRegeneration {
      * @return 额外补发的治疗量；没回血或等级非法时为 0
      */
     public static float extraHeal(float healed, int amplifier) {
-        if (healed <= 0.0F || amplifier < 0) {
+        if (healed <= 0.0F || amplifier < 0){
             return 0.0F;
         }
         return healed * SHARES_PER_LEVEL * (amplifier + 1);

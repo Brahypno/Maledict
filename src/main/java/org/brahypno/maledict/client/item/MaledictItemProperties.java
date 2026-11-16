@@ -17,11 +17,11 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
-import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
-import org.brahypno.maledict.common.weapon.incursus.IncursusBladeBlink;
-import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
-import org.brahypno.maledict.common.weapon.remembrance.RemembranceBowItem;
+import org.brahypno.maledict.common.item.curio.enlightenment.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeBlink;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.item.weapon.remembrance.RemembranceBowItem;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 
@@ -35,7 +35,7 @@ public final class MaledictItemProperties {
             registerEnlightenedProperty(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
             registerBlinkProperty(MaledictItems.INCURSUS_BLADE.get());
             ItemProperties.register(MaledictItems.HANGMAN_FOOL.get(), HangmanFoolItem.STAGE_PROPERTY,
-                    (stack, level, entity, seed) -> Math.min(2, HangmanFoolItem.stage(stack)) / 2.0F);
+                                    (stack, level, entity, seed) -> Math.min(2, HangmanFoolItem.stage(stack)) / 2.0F);
         });
     }
 
@@ -45,18 +45,20 @@ public final class MaledictItemProperties {
      */
     private static void registerEnlightenedProperty(Item item) {
         ItemProperties.register(item, AgeOfEnlightenmentItem.ENLIGHTENED_PROPERTY,
-                (stack, level, entity, seed) -> {
-                    Player player = entity instanceof Player holder ? holder : Minecraft.getInstance().player;
-                    return player != null && player.hasEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT.get())
-                            ? 1.0F : 0.0F;
-                });
+                                (stack, level, entity, seed) -> {
+                                    Player player = entity instanceof Player holder ? holder : Minecraft.getInstance().player;
+                                    return player != null && player.hasEffect(MaledictMobEffects.AGE_OF_ENLIGHTENMENT.get())
+                                           ? 1.0F : 0.0F;
+                                });
     }
 
-    /** 眨眼：置 {@code 1} 的那几帧模型整份换成闭眼贴图；节奏分三档，都在 {@link IncursusBladeBlink} 里。 */
+    /**
+     * 眨眼：置 {@code 1} 的那几帧模型整份换成闭眼贴图；节奏分三档，都在 {@link IncursusBladeBlink} 里。
+     */
     private static void registerBlinkProperty(Item item) {
         ItemProperties.register(item, IncursusBladeItem.BLINK_PROPERTY,
-                (stack, level, entity, seed) -> IncursusBladeBlink.blinkValue(
-                        IncursusBladeBlink.seedOf(stack), gazeOf(stack), blinkClock()));
+                                (stack, level, entity, seed) -> IncursusBladeBlink.blinkValue(
+                                        IncursusBladeBlink.seedOf(stack), gazeOf(stack), blinkClock()));
     }
 
     /**
@@ -65,24 +67,26 @@ public final class MaledictItemProperties {
      */
     private static IncursusBladeBlink.Gaze gazeOf(ItemStack stack) {
         Player player = Minecraft.getInstance().player;
-        if (player == null) {
+        if (player == null){
             return IncursusBladeBlink.Gaze.IDLE;
         }
-        if (Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen) {
+        if (Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen){
             Slot hovered = screen.getSlotUnderMouse();
-            if (hovered != null && hovered.getItem() == stack) {
+            if (hovered != null && hovered.getItem() == stack){
                 return IncursusBladeBlink.Gaze.HOVERED;
             }
         }
-        if (player.containerMenu.getCarried() == stack) {
+        if (player.containerMenu.getCarried() == stack){
             return IncursusBladeBlink.Gaze.HOVERED;
         }
         return player.getMainHandItem() == stack
-                ? IncursusBladeBlink.Gaze.SELECTED
-                : IncursusBladeBlink.Gaze.IDLE;
+               ? IncursusBladeBlink.Gaze.SELECTED
+               : IncursusBladeBlink.Gaze.IDLE;
     }
 
-    /** 眨眼时钟：世界时间优先，没有世界就退到真实时间的 20 tick/秒；单调，故背包、快捷栏与创造列表里眨的是同一个节奏。 */
+    /**
+     * 眨眼时钟：世界时间优先，没有世界就退到真实时间的 20 tick/秒；单调，故背包、快捷栏与创造列表里眨的是同一个节奏。
+     */
     private static long blinkClock() {
         ClientLevel level = Minecraft.getInstance().level;
         return level != null ? level.getGameTime() : Util.getMillis() / 50L;
@@ -90,20 +94,20 @@ public final class MaledictItemProperties {
 
     private static void registerBowProperties(Item item) {
         ItemProperties.register(item, ResourceLocation.fromNamespaceAndPath("minecraft", "pull"),
-                (stack, level, entity, seed) -> {
-                    if (entity == null || entity.getUseItem() != stack
-                            || !(stack.getItem() instanceof RemembranceBowItem bow)) {
-                        return 0.0F;
-                    }
-                    int usedTicks = stack.getUseDuration() - entity.getUseItemRemainingTicks();
-                    return Mth.clamp(
-                            usedTicks * bow.getDrawSpeedMultiplier(stack) / BowItem.MAX_DRAW_DURATION,
-                            0.0F, 1.0F);
-                });
+                                (stack, level, entity, seed) -> {
+                                    if (entity == null || entity.getUseItem() != stack
+                                        || !(stack.getItem() instanceof RemembranceBowItem bow)){
+                                        return 0.0F;
+                                    }
+                                    int usedTicks = stack.getUseDuration() - entity.getUseItemRemainingTicks();
+                                    return Mth.clamp(
+                                            usedTicks * bow.getDrawSpeedMultiplier(stack) / BowItem.MAX_DRAW_DURATION,
+                                            0.0F, 1.0F);
+                                });
         ItemProperties.register(item, ResourceLocation.fromNamespaceAndPath("minecraft", "pulling"),
-                (stack, level, entity, seed) -> entity != null
-                        && entity.isUsingItem()
-                        && entity.getUseItem() == stack ? 1.0F : 0.0F);
+                                (stack, level, entity, seed) -> entity != null
+                                                                && entity.isUsingItem()
+                                                                && entity.getUseItem() == stack ? 1.0F : 0.0F);
     }
 
     private MaledictItemProperties() {

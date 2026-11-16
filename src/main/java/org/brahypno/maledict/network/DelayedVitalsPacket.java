@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import org.brahypno.maledict.client.vitals.DelayedVitalsClient;
+import org.brahypno.maledict.client.combat.vitals.DelayedVitalsClient;
 
 import java.util.function.Supplier;
 
@@ -28,7 +28,7 @@ public record DelayedVitalsPacket(float pendingDamage, float pendingHeal) {
     public static void handle(DelayedVitalsPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> DelayedVitalsClient.accept(packet)));
+                                                               () -> () -> DelayedVitalsClient.accept(packet)));
         context.setPacketHandled(true);
     }
 }

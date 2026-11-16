@@ -7,17 +7,19 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import org.brahypno.maledict.client.curio.hangman.HangmanReflectionClient;
+import org.brahypno.maledict.client.item.curio.hangman.HangmanReflectionClient;
 
 import java.util.function.Supplier;
 
-/** One reflection notification updates facing, ownership, and fireball acceleration immediately on the client. */
+/**
+ * One reflection notification updates facing, ownership, and fireball acceleration immediately on the client.
+ */
 public record ProjectileReflectionPacket(int entityId, int ownerId, Vec3 position, Vec3 velocity, Vec3 power) {
     public static ProjectileReflectionPacket of(Projectile projectile) {
         Vec3 power = projectile instanceof AbstractHurtingProjectile fireball
-                ? new Vec3(fireball.xPower, fireball.yPower, fireball.zPower) : Vec3.ZERO;
+                     ? new Vec3(fireball.xPower, fireball.yPower, fireball.zPower) : Vec3.ZERO;
         return new ProjectileReflectionPacket(projectile.getId(), projectile.getOwner() == null ? -1 : projectile.getOwner().getId(),
-                projectile.position(), projectile.getDeltaMovement(), power);
+                                              projectile.position(), projectile.getDeltaMovement(), power);
     }
 
     public static void encode(ProjectileReflectionPacket packet, FriendlyByteBuf buffer) {
@@ -30,7 +32,7 @@ public record ProjectileReflectionPacket(int entityId, int ownerId, Vec3 positio
 
     public static ProjectileReflectionPacket decode(FriendlyByteBuf buffer) {
         return new ProjectileReflectionPacket(buffer.readVarInt(), buffer.readVarInt(),
-                readVector(buffer), readVector(buffer), readVector(buffer));
+                                              readVector(buffer), readVector(buffer), readVector(buffer));
     }
 
     private static void writeVector(FriendlyByteBuf buffer, Vec3 vector) {
@@ -46,7 +48,7 @@ public record ProjectileReflectionPacket(int entityId, int ownerId, Vec3 positio
     public static void handle(ProjectileReflectionPacket packet, Supplier<NetworkEvent.Context> supplier) {
         var context = supplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> HangmanReflectionClient.accept(packet)));
+                                                               () -> () -> HangmanReflectionClient.accept(packet)));
         context.setPacketHandled(true);
     }
 }

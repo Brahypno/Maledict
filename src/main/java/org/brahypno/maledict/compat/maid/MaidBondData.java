@@ -9,7 +9,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import org.brahypno.maledict.common.soulbinding.SoulbindingData;
+import org.brahypno.maledict.common.ritual.soulbinding.SoulbindingData;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.jetbrains.annotations.Nullable;
 

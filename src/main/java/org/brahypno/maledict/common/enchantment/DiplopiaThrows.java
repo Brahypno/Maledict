@@ -11,8 +11,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
-import org.brahypno.maledict.common.weapon.incursus.IncursusScytheBoomerangEntity;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusScytheBoomerangEntity;
 import org.brahypno.maledict.registry.MaledictEnchantments;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
 
@@ -90,7 +90,7 @@ public final class DiplopiaThrows {
                    ? player.getInventory().getContainerSize() - 1
                    : player.getInventory().selected;
         float multiplier = DiplopiaEnchantment.ECHO_DAMAGE_MULTIPLIER;
-        for (int i = 0; i < extra; i++){
+        for (int i = 0; i < extra; i++) {
             float yaw = player.getYRot() + Mth.nextFloat(
                     player.getRandom(),
                     -DiplopiaEnchantment.ECHO_YAW_SPREAD,
@@ -113,9 +113,9 @@ public final class DiplopiaThrows {
 
             ScytheBoomerangEntity echo = scythe.getItem() instanceof IncursusBladeItem
                                          ? new IncursusScytheBoomerangEntity(
-                                                 level, position.x, position.y, position.z, true)
+                    level, position.x, position.y, position.z, true)
                                          : new DiplopiaScytheBoomerangEntity(
-                                                 level, position.x, position.y, position.z);
+                    level, position.x, position.y, position.z);
             echo.setData(player, attackDamage * multiplier, magicDamage * multiplier, slot, returnTimer);
             echo.setItem(echoStack);
             echo.setEnhanced(enhanced);
@@ -138,22 +138,26 @@ public final class DiplopiaThrows {
         return nextPosition.distanceTo(owner.position()) < ECHO_PICKUP_GUARD;
     }
 
-    /** True when the synced item stack carries the phantom marker written by {@link #spawnEchoes}. */
+    /**
+     * True when the synced item stack carries the phantom marker written by {@link #spawnEchoes}.
+     */
     public static boolean isEcho(ScytheBoomerangEntity entity) {
         CompoundTag tag = entity.getItem().getTag();
         return tag != null && tag.getBoolean(ECHO_TAG);
     }
 
-    /** Mirrors the launch position in {@code ReboundEnchantment#throwScythe}. */
+    /**
+     * Mirrors the launch position in {@code ReboundEnchantment#throwScythe}.
+     */
     private static Vec3 throwPosition(ServerPlayer player, InteractionHand hand, boolean enhanced) {
         Vec3 position = player.position().add(0.0, player.getBbHeight() * 0.5, 0.0);
         if (enhanced){
             int angle = hand == InteractionHand.MAIN_HAND ? 225 : 90;
             double radians = Math.toRadians(angle - player.yHeadRot);
             position = player.position()
-                    .add(player.getLookAngle().scale(0.5))
-                    .add(0.75 * Math.sin(radians), player.getBbHeight() * 0.9,
-                         0.75 * Math.cos(radians));
+                             .add(player.getLookAngle().scale(0.5))
+                             .add(0.75 * Math.sin(radians), player.getBbHeight() * 0.9,
+                                  0.75 * Math.cos(radians));
         }
         return position;
     }

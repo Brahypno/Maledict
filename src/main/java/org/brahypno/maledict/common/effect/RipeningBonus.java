@@ -6,7 +6,9 @@ package org.brahypno.maledict.common.effect;
  */
 public final class RipeningBonus {
 
-    /** 每级多给的比例，{@code 0.25} 即四分之一。 */
+    /**
+     * 每级多给的比例，{@code 0.25} 即四分之一。
+     */
     public static final float RATIO_PER_LEVEL = 0.25F;
 
     /**
@@ -16,7 +18,7 @@ public final class RipeningBonus {
      * @return 加成后应发放的经验；经验不为正或等级非法时原样返回
      */
     public static int ripened(int amount, int amplifier, float roll) {
-        if (amount <= 0 || amplifier < 0) {
+        if (amount <= 0 || amplifier < 0){
             return amount;
         }
 

@@ -3,15 +3,16 @@ package org.brahypno.maledict.data;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.client.model.generators.BlockStateProvider;
-import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.client.model.generators.BlockModelBuilder;
+import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
+import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.entity.wither.BlightedWitherSkullBlock;
 import org.brahypno.maledict.registry.MaledictBlocks;
-import org.brahypno.maledict.common.realm.wither.BlightedWitherSkullBlock;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,44 +27,45 @@ public final class MaledictBlockStates extends BlockStateProvider {
         simpleBlockWithItem(MaledictBlocks.CRYING_TWISTED_ROCK.get(), cubeAll(MaledictBlocks.CRYING_TWISTED_ROCK.get()));
         blightedWitherSkull();
         simpleBlock(MaledictBlocks.RELIQUARY_ALTAR.get(), models().cubeBottomTop("reliquary_altar",
-                ResourceLocation.fromNamespaceAndPath("malum", "block/arcane_rock/tainted/runic_tainted_rock_bricks"),
-                mcLoc("block/end_stone_bricks"), mcLoc("block/crying_obsidian")));
+                                                                                 ResourceLocation.fromNamespaceAndPath("malum",
+                                                                                                                       "block/arcane_rock/tainted/runic_tainted_rock_bricks"),
+                                                                                 mcLoc("block/end_stone_bricks"), mcLoc("block/crying_obsidian")));
         leadOre(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), "tainted/tainted_rock");
         leadOre(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(), "twisted/twisted_rock");
         simpleBlockWithItem(MaledictBlocks.LUMENFALL_BISMUTH_ORE.get(),
-                cubeAll(MaledictBlocks.LUMENFALL_BISMUTH_ORE.get()));
+                            cubeAll(MaledictBlocks.LUMENFALL_BISMUTH_ORE.get()));
         simpleBlockWithItem(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get(),
-                cubeAll(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get()));
+                            cubeAll(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get()));
         groundcoverModels();
 
         ModelFile mnemonic = models().getBuilder("mnemonic_obelisk")
-                .parent(new ModelFile.UncheckedModelFile(
-                        ResourceLocation.fromNamespaceAndPath("malum", "block/runewood_obelisk")))
-                .texture("obelisk", modLoc("block/mnemonic_obelisk"));
+                                     .parent(new ModelFile.UncheckedModelFile(
+                                             ResourceLocation.fromNamespaceAndPath("malum", "block/runewood_obelisk")))
+                                     .texture("obelisk", modLoc("block/mnemonic_obelisk"));
         ModelFile mnemonicComponent = models().getBuilder("mnemonic_obelisk_component")
-                .parent(new ModelFile.UncheckedModelFile(
-                        ResourceLocation.fromNamespaceAndPath("malum", "block/runewood_obelisk_component")))
-                .texture("obelisk", modLoc("block/mnemonic_obelisk"));
+                                              .parent(new ModelFile.UncheckedModelFile(
+                                                      ResourceLocation.fromNamespaceAndPath("malum", "block/runewood_obelisk_component")))
+                                              .texture("obelisk", modLoc("block/mnemonic_obelisk"));
         simpleBlock(MaledictBlocks.MNEMONIC_OBELISK.get(), mnemonic);
         simpleBlock(MaledictBlocks.MNEMONIC_OBELISK_COMPONENT.get(), mnemonicComponent);
 
         ModelFile soulwood = models().getBuilder("soulwood_obelisk")
-                .parent(new ModelFile.UncheckedModelFile(
-                        ResourceLocation.fromNamespaceAndPath("malum", "block/runewood_obelisk")))
-                .texture("obelisk", modLoc("block/runewood_obelisk"));
+                                     .parent(new ModelFile.UncheckedModelFile(
+                                             ResourceLocation.fromNamespaceAndPath("malum", "block/runewood_obelisk")))
+                                     .texture("obelisk", modLoc("block/runewood_obelisk"));
         ModelFile soulwoodComponent = models().getBuilder("soulwood_obelisk_component")
-                .parent(new ModelFile.UncheckedModelFile(
-                        ResourceLocation.fromNamespaceAndPath("malum", "block/runewood_obelisk_component")))
-                .texture("obelisk", modLoc("block/runewood_obelisk"));
+                                              .parent(new ModelFile.UncheckedModelFile(
+                                                      ResourceLocation.fromNamespaceAndPath("malum", "block/runewood_obelisk_component")))
+                                              .texture("obelisk", modLoc("block/runewood_obelisk"));
         simpleBlock(MaledictBlocks.SOULWOOD_OBELISK.get(), soulwood);
         simpleBlock(MaledictBlocks.SOULWOOD_OBELISK_COMPONENT.get(), soulwoodComponent);
     }
 
     private void groundcoverModels() {
         var leaves = models().getBuilder("withered_leaf_litter").renderType("cutout")
-                .parent(new ModelFile.UncheckedModelFile(mcLoc("block/block")))
-                .texture("particle", "malum:block/soulwood/soulwood_leaves")
-                .texture("cover", "malum:block/soulwood/soulwood_leaves");
+                             .parent(new ModelFile.UncheckedModelFile(mcLoc("block/block")))
+                             .texture("particle", "malum:block/soulwood/soulwood_leaves")
+                             .texture("cover", "malum:block/soulwood/soulwood_leaves");
         piece(leaves, 1, 0, 2, 10, 1, 9, "cover");
         piece(leaves, 6, 0, 7, 15, 1, 15, "cover");
         piece(leaves, 2, 0, 11, 6, 1, 15, "cover");
@@ -110,11 +112,12 @@ public final class MaledictBlockStates extends BlockStateProvider {
         for (int offset = -2; offset <= 1; offset++) {
             String name = offset == 0 ? "blighted_wither_skull" : "blighted_wither_skull_offset_" + (offset + 2);
             var model = models().getBuilder(name)
-                    .parent(new ModelFile.UncheckedModelFile(mcLoc("block/block")))
-                    .ao(false)
-                    .texture("particle", modLoc("block/blighted_wither_skull/north"));
+                                .parent(new ModelFile.UncheckedModelFile(mcLoc("block/block")))
+                                .ao(false)
+                                .texture("particle", modLoc("block/blighted_wither_skull/north"));
             var head = model.element().from(4, 0, 4).to(12, 8, 12);
-            if (offset != 0) head.rotation().origin(8, 0, 8)
+            if (offset != 0)
+                head.rotation().origin(8, 0, 8)
                     .axis(net.minecraft.core.Direction.Axis.Y).angle(-offset * 22.5F).end();
             for (var direction : net.minecraft.core.Direction.values()) {
                 String face = direction.getName();
@@ -128,19 +131,19 @@ public final class MaledictBlockStates extends BlockStateProvider {
             int rotation = state.getValue(BlightedWitherSkullBlock.ROTATION);
             int quadrant = (rotation + 2) / 4;
             return new ConfiguredModel[]{new ConfiguredModel(offsets.get(rotation - quadrant * 4),
-                    0, quadrant % 4 * 90, false)};
+                                                             0, quadrant % 4 * 90, false)};
         });
     }
 
     private BlockModelBuilder woodCover(String name) {
         return models().getBuilder(name).parent(new ModelFile.UncheckedModelFile(mcLoc("block/block")))
-                .texture("particle", "malum:block/soulwood/soulwood_log")
-                .texture("wood", "malum:block/soulwood/soulwood_log");
+                       .texture("particle", "malum:block/soulwood/soulwood_log")
+                       .texture("wood", "malum:block/soulwood/soulwood_log");
     }
 
     private void piece(BlockModelBuilder model, int x, int y, int z, int endX, int endY, int endZ, String texture) {
         model.element().from(x, y, z).to(endX, endY, endZ)
-                .allFaces((direction, face) -> face.texture("#" + texture)).end();
+             .allFaces((direction, face) -> face.texture("#" + texture)).end();
     }
 
     private void cover(Block block, ModelFile model) {
@@ -152,15 +155,15 @@ public final class MaledictBlockStates extends BlockStateProvider {
 
     private void leadOre(Block block, String host) {
         var model = models().getBuilder(ForgeRegistries.BLOCKS.getKey(block).getPath())
-                .parent(new ModelFile.UncheckedModelFile(mcLoc("block/block")))
-                .renderType("cutout_mipped")
-                .texture("particle", ResourceLocation.fromNamespaceAndPath("malum", "block/arcane_rock/" + host))
-                .texture("host", ResourceLocation.fromNamespaceAndPath("malum", "block/arcane_rock/" + host))
-                .texture("ore", modLoc("block/malignant_lead_ore_overlay"));
+                            .parent(new ModelFile.UncheckedModelFile(mcLoc("block/block")))
+                            .renderType("cutout_mipped")
+                            .texture("particle", ResourceLocation.fromNamespaceAndPath("malum", "block/arcane_rock/" + host))
+                            .texture("host", ResourceLocation.fromNamespaceAndPath("malum", "block/arcane_rock/" + host))
+                            .texture("ore", modLoc("block/malignant_lead_ore_overlay"));
         model.element().from(0, 0, 0).to(16, 16, 16)
-                .allFaces((direction, face) -> face.texture("#host").cullface(direction)).end();
+             .allFaces((direction, face) -> face.texture("#host").cullface(direction)).end();
         model.element().from(0, 0, 0).to(16, 16, 16)
-                .allFaces((direction, face) -> face.texture("#ore").cullface(direction)).end();
+             .allFaces((direction, face) -> face.texture("#ore").cullface(direction)).end();
         simpleBlockWithItem(block, model);
     }
 

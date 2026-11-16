@@ -1,10 +1,10 @@
 package org.brahypno.maledict.registry;
 
 import com.sammy.malum.common.block.curiosities.obelisk.ObeliskComponentBlock;
+import com.sammy.malum.registry.common.block.MalumBlockProperties;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CryingObsidianBlock;
-import com.sammy.malum.registry.common.block.MalumBlockProperties;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -14,51 +14,71 @@ import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskCoreBlock;
 import org.brahypno.maledict.common.block.SoulwoodObeliskCoreBlock;
+import org.brahypno.maledict.common.entity.wither.BlightedWitherSkullBlock;
 import org.brahypno.maledict.common.realm.RealmGroundcoverBlock;
 import org.brahypno.maledict.common.realm.WitherlightMushroomBlock;
-import org.brahypno.maledict.common.realm.wither.BlightedWitherSkullBlock;
 
 public final class MaledictBlocks {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Maledict.MODID);
 
     public static final RegistryObject<Block> CRYING_TAINTED_ROCK = BLOCKS.register("crying_tainted_rock",
-            () -> new CryingObsidianBlock(MalumBlockProperties.TAINTED_ROCK()));
+                                                                                    () -> new CryingObsidianBlock(MalumBlockProperties.TAINTED_ROCK()));
     public static final RegistryObject<Block> CRYING_TWISTED_ROCK = BLOCKS.register("crying_twisted_rock",
-            () -> new CryingObsidianBlock(MalumBlockProperties.TWISTED_ROCK()));
+                                                                                    () -> new CryingObsidianBlock(MalumBlockProperties.TWISTED_ROCK()));
     public static final RegistryObject<Block> BLIGHTED_WITHER_SKULL = BLOCKS.register("blighted_wither_skull",
-            () -> new BlightedWitherSkullBlock(BlockBehaviour.Properties.copy(Blocks.WITHER_SKELETON_SKULL).noOcclusion()));
+                                                                                      () -> new BlightedWitherSkullBlock(
+                                                                                              BlockBehaviour.Properties.copy(Blocks.WITHER_SKELETON_SKULL)
+                                                                                                                       .noOcclusion()));
 
     public static final RegistryObject<Block> RELIQUARY_ALTAR = BLOCKS.register("reliquary_altar", () ->
             new org.brahypno.maledict.common.realm.reliquary.ReliquaryAltarBlock(
                     BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_BRICKS).lightLevel(state -> 8)));
 
     public static final RegistryObject<Block> WITHERED_LEAF_LITTER = BLOCKS.register("withered_leaf_litter",
-            () -> new RealmGroundcoverBlock(BlockBehaviour.Properties.copy(Blocks.MOSS_CARPET)
-                    .noCollission().sound(SoundType.AZALEA_LEAVES), 1));
+                                                                                     () -> new RealmGroundcoverBlock(
+                                                                                             BlockBehaviour.Properties.copy(Blocks.MOSS_CARPET)
+                                                                                                                      .noCollission()
+                                                                                                                      .sound(SoundType.AZALEA_LEAVES), 1));
     public static final RegistryObject<Block> EXPOSED_SOULWOOD_ROOTS = BLOCKS.register("exposed_soulwood_roots",
-            () -> new RealmGroundcoverBlock(BlockBehaviour.Properties.copy(Blocks.HANGING_ROOTS)
-                    .noCollission().sound(SoundType.ROOTS), 4));
+                                                                                       () -> new RealmGroundcoverBlock(
+                                                                                               BlockBehaviour.Properties.copy(Blocks.HANGING_ROOTS)
+                                                                                                                        .noCollission().sound(SoundType.ROOTS),
+                                                                                               4));
     public static final RegistryObject<Block> FALLEN_SOULWOOD_BRANCHES = BLOCKS.register("fallen_soulwood_branches",
-            () -> new RealmGroundcoverBlock(BlockBehaviour.Properties.copy(Blocks.HANGING_ROOTS)
-                    .noCollission().sound(SoundType.WOOD), 3));
+                                                                                         () -> new RealmGroundcoverBlock(
+                                                                                                 BlockBehaviour.Properties.copy(Blocks.HANGING_ROOTS)
+                                                                                                                          .noCollission().sound(SoundType.WOOD),
+                                                                                                 3));
     public static final RegistryObject<Block> WITHERLIGHT_MUSHROOM = BLOCKS.register("witherlight_mushroom",
-            () -> new WitherlightMushroomBlock(BlockBehaviour.Properties.copy(Blocks.BROWN_MUSHROOM)
-                    .lightLevel(state -> 7).sound(SoundType.FUNGUS)));
+                                                                                     () -> new WitherlightMushroomBlock(
+                                                                                             BlockBehaviour.Properties.copy(Blocks.BROWN_MUSHROOM)
+                                                                                                                      .lightLevel(state -> 7)
+                                                                                                                      .sound(SoundType.FUNGUS)));
     public static final RegistryObject<Block> WITHERLIGHT_LAMP = BLOCKS.register("witherlight_lamp",
-            () -> new RealmGroundcoverBlock(BlockBehaviour.Properties.copy(Blocks.BROWN_MUSHROOM)
-                    .noCollission().noOcclusion().strength(0.5F).lightLevel(state -> 14).sound(SoundType.WOOD), 13));
+                                                                                 () -> new RealmGroundcoverBlock(
+                                                                                         BlockBehaviour.Properties.copy(Blocks.BROWN_MUSHROOM)
+                                                                                                                  .noCollission().noOcclusion().strength(0.5F)
+                                                                                                                  .lightLevel(state -> 14)
+                                                                                                                  .sound(SoundType.WOOD), 13));
 
     public static final RegistryObject<Block> TAINTED_MALIGNANT_LEAD_ORE = BLOCKS.register("tainted_malignant_lead_ore",
-            () -> new Block(BlockBehaviour.Properties.copy(Blocks.GOLD_ORE)));
+                                                                                           () -> new Block(BlockBehaviour.Properties.copy(Blocks.GOLD_ORE)));
     public static final RegistryObject<Block> TWISTED_MALIGNANT_LEAD_ORE = BLOCKS.register("twisted_malignant_lead_ore",
-            () -> new Block(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_GOLD_ORE)));
+                                                                                           () -> new Block(
+                                                                                                   BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_GOLD_ORE)));
 
-    /** 深层矿：沿用远古残骸的硬度、抗爆与音效，只有钻石镐能取出矿石本身。 */
+    /**
+     * 深层矿：沿用远古残骸的硬度、抗爆与音效，只有钻石镐能取出矿石本身。
+     */
     public static final RegistryObject<Block> LUMENFALL_BISMUTH_ORE = BLOCKS.register("lumenfall_bismuth_ore",
-            () -> new Block(BlockBehaviour.Properties.copy(Blocks.ANCIENT_DEBRIS).mapColor(MapColor.STONE)));
-    /** 沉辉铋的储藏块，按远古残骸同档金属块处理。 */
+                                                                                      () -> new Block(BlockBehaviour.Properties.copy(Blocks.ANCIENT_DEBRIS)
+                                                                                                                               .mapColor(MapColor.STONE)));
+    /**
+     * 沉辉铋的储藏块，按远古残骸同档金属块处理。
+     */
     public static final RegistryObject<Block> LUMENFALL_BISMUTH_BLOCK = BLOCKS.register("lumenfall_bismuth_block",
-            () -> new Block(BlockBehaviour.Properties.copy(Blocks.NETHERITE_BLOCK).mapColor(MapColor.METAL)));
+                                                                                        () -> new Block(BlockBehaviour.Properties.copy(Blocks.NETHERITE_BLOCK)
+                                                                                                                                 .mapColor(MapColor.METAL)));
 
     private static final BlockBehaviour.Properties OBELISK_PROPERTIES = BlockBehaviour.Properties.of()
                                                                                                  .strength(2.5f, 6.0f)

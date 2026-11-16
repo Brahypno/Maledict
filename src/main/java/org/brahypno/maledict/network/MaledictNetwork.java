@@ -12,13 +12,15 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.soulbinding.Soulbinding;
+import org.brahypno.maledict.common.ritual.soulbinding.Soulbinding;
 
 import java.util.Optional;
 import java.util.UUID;
 
 public final class MaledictNetwork {
-    /** 6 -> 7: IncursusSlashPacket carries the swing seed so every client builds the same eight petals. */
+    /**
+     * 6 -> 7: IncursusSlashPacket carries the swing seed so every client builds the same eight petals.
+     */
     private static final String PROTOCOL = "7";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "main"),
@@ -63,23 +65,23 @@ public final class MaledictNetwork {
                 BossBarStylePacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(5, ProjectileReflectionPacket.class,
-                ProjectileReflectionPacket::encode, ProjectileReflectionPacket::decode,
-                ProjectileReflectionPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+                                ProjectileReflectionPacket::encode, ProjectileReflectionPacket::decode,
+                                ProjectileReflectionPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(6, WisdomBlackoutPacket.class,
-                WisdomBlackoutPacket::encode, WisdomBlackoutPacket::decode,
-                WisdomBlackoutPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+                                WisdomBlackoutPacket::encode, WisdomBlackoutPacket::decode,
+                                WisdomBlackoutPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(7, IncursusSlashPacket.class,
-                IncursusSlashPacket::encode, IncursusSlashPacket::decode,
-                IncursusSlashPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+                                IncursusSlashPacket::encode, IncursusSlashPacket::decode,
+                                IncursusSlashPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(8, LoverAxeHitPacket.class,
-                LoverAxeHitPacket::encode, LoverAxeHitPacket::decode,
-                LoverAxeHitPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+                                LoverAxeHitPacket::encode, LoverAxeHitPacket::decode,
+                                LoverAxeHitPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(9, OpenLightfallCodexPacket.class,
-                OpenLightfallCodexPacket::encode, OpenLightfallCodexPacket::decode,
-                OpenLightfallCodexPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+                                OpenLightfallCodexPacket::encode, OpenLightfallCodexPacket::decode,
+                                OpenLightfallCodexPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(10, MaidVoicePacket.class,
-                MaidVoicePacket::encode, MaidVoicePacket::decode,
-                MaidVoicePacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+                                MaidVoicePacket::encode, MaidVoicePacket::decode,
+                                MaidVoicePacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendRadialAttack() {
@@ -88,15 +90,17 @@ public final class MaledictNetwork {
 
     public static void sendIncursusSlash(ServerPlayer player, float scale) {
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
-                new IncursusSlashPacket(player.position().add(0, player.getBbHeight() * 0.5, 0), scale,
-                        player.getRandom().nextLong()));
+                     new IncursusSlashPacket(player.position().add(0, player.getBbHeight() * 0.5, 0), scale,
+                                             player.getRandom().nextLong()));
     }
 
-    /** One notification after the entire damage probe, including fallback and lethal hits. */
+    /**
+     * One notification after the entire damage probe, including fallback and lethal hits.
+     */
     public static void sendLoverAxeHit(Player attacker, LivingEntity target) {
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> attacker),
-                new LoverAxeHitPacket(target.getId(), target.position().add(0, target.getBbHeight() * 0.5, 0),
-                        Mth.clamp(target.getBbWidth() * 0.5F + 0.3F, 0.5F, 1.4F)));
+                     new LoverAxeHitPacket(target.getId(), target.position().add(0, target.getBbHeight() * 0.5, 0),
+                                           Mth.clamp(target.getBbWidth() * 0.5F + 0.3F, 0.5F, 1.4F)));
     }
 
     public static void sendProjectileReflection(net.minecraft.world.entity.projectile.Projectile projectile) {
@@ -108,18 +112,24 @@ public final class MaledictNetwork {
         CHANNEL.sendToServer(new InfuseSpiritPacket(containerId, inventorySlot, spiritStack));
     }
 
-    /** One shot boss presentation event for a single tracking player. */
+    /**
+     * One shot boss presentation event for a single tracking player.
+     */
     public static void sendEffect(ServerPlayer player, VicissitudeEffectPacket packet) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
 
-    /** 延迟池：入队、清零、低频校正、进世界时各发一次，不逐 tick 发。 */
+    /**
+     * 延迟池：入队、清零、低频校正、进世界时各发一次，不逐 tick 发。
+     */
     public static void sendDelayedVitals(ServerPlayer player, float pendingDamage, float pendingHeal) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                      new DelayedVitalsPacket(pendingDamage, pendingHeal));
     }
 
-    /** 血条皮肤：入队补发、阶段切换、离队清映射时各发一次。{@code style} 为 -1 表示删除映射。 */
+    /**
+     * 血条皮肤：入队补发、阶段切换、离队清映射时各发一次。{@code style} 为 -1 表示删除映射。
+     */
     public static void sendBossBarStyle(ServerPlayer player, UUID bar, int style) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                      new BossBarStylePacket(bar, style));
@@ -129,15 +139,17 @@ public final class MaledictNetwork {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new WisdomBlackoutPacket(ticks));
     }
 
-    /** One maid-voice sound for exactly the attacking player, with no nearby-player broadcast. */
+    /**
+     * One maid-voice sound for exactly the attacking player, with no nearby-player broadcast.
+     */
     public static void sendMaidVoice(ServerPlayer player, ResourceLocation sound, String soundPack, Vec3 pos) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new MaidVoicePacket(sound, soundPack, pos.x, pos.y, pos.z));
+                     new MaidVoicePacket(sound, soundPack, pos.x, pos.y, pos.z));
     }
 
     public static void openLightfallCodex(ServerPlayer player) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new OpenLightfallCodexPacket(Soulbinding.knows(player)));
+                     new OpenLightfallCodexPacket(Soulbinding.knows(player)));
     }
 
     private MaledictNetwork() {

@@ -9,7 +9,7 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
-import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.registry.MaledictEntities;
 
 import java.util.function.BiConsumer;
@@ -20,7 +20,9 @@ import java.util.function.BiConsumer;
  */
 public final class MaledictEntityLoot implements LootTableSubProvider {
 
-    /** 深岩珍金块的块数：两块即 18 个珍金锭。 */
+    /**
+     * 深岩珍金块的块数：两块即 18 个珍金锭。
+     */
     private static final float CTHONIC_GOLD_BLOCKS = 2.0F;
 
     private static final float NULL_SLATE = 6.0F;
@@ -37,15 +39,15 @@ public final class MaledictEntityLoot implements LootTableSubProvider {
 
     private static LootTable.Builder table() {
         return LootTable.lootTable()
-                .withPool(pool(ItemRegistry.BLOCK_OF_CTHONIC_GOLD.get(), CTHONIC_GOLD_BLOCKS))
-                .withPool(pool(ItemRegistry.NULL_SLATE.get(), NULL_SLATE))
-                .withPool(pool(ItemRegistry.VOID_SALTS.get(), VOID_SALTS));
+                        .withPool(pool(ItemRegistry.BLOCK_OF_CTHONIC_GOLD.get(), CTHONIC_GOLD_BLOCKS))
+                        .withPool(pool(ItemRegistry.NULL_SLATE.get(), NULL_SLATE))
+                        .withPool(pool(ItemRegistry.VOID_SALTS.get(), VOID_SALTS));
     }
 
     private static LootPool.Builder pool(Item item, float count) {
         return LootPool.lootPool()
-                .setRolls(ConstantValue.exactly(1.0F))
-                .add(LootItem.lootTableItem(item)
-                        .apply(SetItemCountFunction.setCount(ConstantValue.exactly(count))));
+                       .setRolls(ConstantValue.exactly(1.0F))
+                       .add(LootItem.lootTableItem(item)
+                                    .apply(SetItemCountFunction.setCount(ConstantValue.exactly(count))));
     }
 }

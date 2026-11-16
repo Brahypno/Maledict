@@ -6,7 +6,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.brahypno.maledict.compat.tetra.TetraCompat;
-import org.brahypno.maledict.common.lumenfall.LumenfallRadianceEffect;
+import org.brahypno.maledict.common.combat.lumenfall.LumenfallRadianceEffect;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictCreativeTabs;

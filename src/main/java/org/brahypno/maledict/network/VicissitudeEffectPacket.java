@@ -5,7 +5,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import org.brahypno.maledict.client.vicissitude.vfx.FirstVicissitudeClientEvents;
+import org.brahypno.maledict.client.entity.vicissitude.vfx.FirstVicissitudeClientEvents;
 
 import java.util.function.Supplier;
 
@@ -37,15 +37,16 @@ public record VicissitudeEffectPacket(int entityId, int eventId, int actionSeque
 
     public static VicissitudeEffectPacket decode(FriendlyByteBuf buffer) {
         return new VicissitudeEffectPacket(buffer.readVarInt(), buffer.readVarInt(),
-                buffer.readVarInt(), new Vec3(buffer.readDouble(), buffer.readDouble(),
-                buffer.readDouble()));
+                                           buffer.readVarInt(), new Vec3(buffer.readDouble(), buffer.readDouble(),
+                                                                         buffer.readDouble()));
     }
 
-    public static void handle(VicissitudeEffectPacket packet,
-                              Supplier<NetworkEvent.Context> contextSupplier) {
+    public static void handle(
+            VicissitudeEffectPacket packet,
+            Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> FirstVicissitudeClientEvents.accept(packet)));
+                                                               () -> () -> FirstVicissitudeClientEvents.accept(packet)));
         context.setPacketHandled(true);
     }
 }

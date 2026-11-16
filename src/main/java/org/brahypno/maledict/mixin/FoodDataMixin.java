@@ -19,7 +19,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(FoodData.class)
 public abstract class FoodDataMixin {
 
-    /** 本 tick 开始时的血量。{@code FoodData} 每个玩家一个实例，服务端逐 tick 串行处理，安全。 */
+    /**
+     * 本 tick 开始时的血量。{@code FoodData} 每个玩家一个实例，服务端逐 tick 串行处理，安全。
+     */
     @Unique
     private float maledict$healthBeforeTick;
 
@@ -31,17 +33,17 @@ public abstract class FoodDataMixin {
     @Inject(method = "tick", at = @At("RETURN"))
     private void maledict$blessNaturalRegeneration(Player player, CallbackInfo callback) {
         float healed = player.getHealth() - maledict$healthBeforeTick;
-        if (healed <= 0.0F || player.level().isClientSide) {
+        if (healed <= 0.0F || player.level().isClientSide){
             return;
         }
 
         MobEffectInstance blessing = player.getEffect(MaledictMobEffects.BLESSING_OF_LIFE.get());
-        if (blessing == null) {
+        if (blessing == null){
             return;
         }
 
         float extra = BlessedRegeneration.extraHeal(healed, blessing.getAmplifier());
-        if (extra > 0.0F) {
+        if (extra > 0.0F){
             player.heal(extra);
         }
     }

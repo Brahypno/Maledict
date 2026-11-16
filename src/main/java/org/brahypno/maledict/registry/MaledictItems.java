@@ -12,25 +12,25 @@ import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.block.MnemonicObeliskBlockEntity;
 import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
-import org.brahypno.maledict.common.curio.eggshell.EmperorInTheEggshellItem;
-import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
-import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
-import org.brahypno.maledict.common.curio.priestess.EidolonOfTheHighPriestessItem;
-import org.brahypno.maledict.common.equipment.lightward.LightwardArmorItem;
-import org.brahypno.maledict.common.invocation.InvocationSigilItem;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossSpawnPhase;
+import org.brahypno.maledict.common.entity.vicissitude.VicissitudeSpawnEggItem;
+import org.brahypno.maledict.common.entity.vicissitude.curio.CurioReturnTokenItem;
 import org.brahypno.maledict.common.item.codex.LightfallCodexItem;
-import org.brahypno.maledict.common.rune.*;
-import org.brahypno.maledict.common.soulbinding.SoulbindingScrollItem;
-import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
-import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity.BossSpawnPhase;
-import org.brahypno.maledict.common.vicissitude.VicissitudeSpawnEggItem;
-import org.brahypno.maledict.common.vicissitude.curio.CurioReturnTokenItem;
-import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
-import org.brahypno.maledict.common.weapon.incursus.MaledictItemTiers;
-import org.brahypno.maledict.common.weapon.lover.LoverAxeItem;
-import org.brahypno.maledict.common.weapon.remembrance.RemembranceBowItem;
-import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowItem;
-import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowType;
+import org.brahypno.maledict.common.item.curio.eggshell.EmperorInTheEggshellItem;
+import org.brahypno.maledict.common.item.curio.enlightenment.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.common.item.curio.priestess.EidolonOfTheHighPriestessItem;
+import org.brahypno.maledict.common.item.curio.rune.*;
+import org.brahypno.maledict.common.item.equipment.lightward.LightwardArmorItem;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.item.weapon.incursus.MaledictItemTiers;
+import org.brahypno.maledict.common.item.weapon.lover.LoverAxeItem;
+import org.brahypno.maledict.common.item.weapon.remembrance.RemembranceBowItem;
+import org.brahypno.maledict.common.item.weapon.remembrance.SpiritArrowItem;
+import org.brahypno.maledict.common.item.weapon.remembrance.SpiritArrowType;
+import org.brahypno.maledict.common.ritual.invocation.InvocationSigilItem;
+import org.brahypno.maledict.common.ritual.soulbinding.SoulbindingScrollItem;
 import org.brahypno.maledict.compat.maid.MaidBondSwordItem;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.registry.common.LodestoneAttributeRegistry;
@@ -172,7 +172,9 @@ public final class MaledictItems {
      * Curio amulet (charm slot) that renders a skull mask over the wearer's face.
      */
     public static final RegistryObject<Item> AGE_OF_ENLIGHTENMENT = ITEMS.register("age_of_enlightenment", AgeOfEnlightenmentItem::new);
-    /** Curio charm: a gradient damage window after each accepted hit. */
+    /**
+     * Curio charm: a gradient damage window after each accepted hit.
+     */
     public static final RegistryObject<Item> EMPEROR_IN_THE_EGGSHELL = ITEMS.register(
             "emperor_in_the_eggshell", EmperorInTheEggshellItem::new);
     public static final RegistryObject<Item> HANGMAN_FOOL = ITEMS.register("hangman_fool", HangmanFoolItem::new);

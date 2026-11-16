@@ -5,7 +5,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import org.brahypno.maledict.client.weapon.incursus.IncursusBladeSlashEffects;
+import org.brahypno.maledict.client.item.weapon.incursus.IncursusBladeSlashEffects;
 
 import java.util.function.Supplier;
 
@@ -33,7 +33,7 @@ public record IncursusSlashPacket(Vec3 center, float scale, long seed) {
     public static void handle(IncursusSlashPacket packet, Supplier<NetworkEvent.Context> supplier) {
         var context = supplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> IncursusBladeSlashEffects.spawn(packet)));
+                                                               () -> () -> IncursusBladeSlashEffects.spawn(packet)));
         context.setPacketHandled(true);
     }
 }

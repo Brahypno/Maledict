@@ -15,18 +15,22 @@ import java.util.UUID;
 public final class AgeOfEnlightenmentEffect extends MobEffect {
     public static final int COLOR = 0xFFC64B;
 
-    /** 每级额外给的法杖暂存弹数，等级乘数由原版补上。 */
+    /**
+     * 每级额外给的法杖暂存弹数，等级乘数由原版补上。
+     */
     public static final double RESERVE_STAFF_CHARGES_PER_LEVEL = 1.0D;
 
-    /** UUID 必须固定：原版移除属性修饰符时按 UUID 认，否则效果到期摘不干净。 */
+    /**
+     * UUID 必须固定：原版移除属性修饰符时按 UUID 认，否则效果到期摘不干净。
+     */
     private static final UUID RESERVE_STAFF_CHARGES_MODIFIER_ID = UUID.nameUUIDFromBytes(
             "maledict:age_of_enlightenment/reserve_staff_charges".getBytes(StandardCharsets.UTF_8));
 
     public AgeOfEnlightenmentEffect() {
         super(MobEffectCategory.BENEFICIAL, COLOR);
         addAttributeModifier(AttributeRegistry.RESERVE_STAFF_CHARGES.get(),
-                RESERVE_STAFF_CHARGES_MODIFIER_ID.toString(),
-                RESERVE_STAFF_CHARGES_PER_LEVEL,
-                AttributeModifier.Operation.ADDITION);
+                             RESERVE_STAFF_CHARGES_MODIFIER_ID.toString(),
+                             RESERVE_STAFF_CHARGES_PER_LEVEL,
+                             AttributeModifier.Operation.ADDITION);
     }
 }

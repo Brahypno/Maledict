@@ -13,10 +13,10 @@ import net.minecraftforge.client.model.generators.loaders.ObjModelBuilder;
 import net.minecraftforge.client.model.generators.loaders.SeparateTransformsModelBuilder;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.curio.enlightenment.AgeOfEnlightenmentItem;
-import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
-import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
-import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowType;
+import org.brahypno.maledict.common.item.curio.enlightenment.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.item.weapon.remembrance.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
 
 public final class MaledictItemModels extends ItemModelProvider {
@@ -149,21 +149,21 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .texture("surface", modLoc("item/yearning_sword_3d"))
                 .texture("particle", "#surface");
         sword.customLoader(ObjModelBuilder::begin)
-                .modelLocation(modLoc("models/item/yearning_sword.obj"))
-                .automaticCulling(false)
-                .flipV(true)
-                .emissiveAmbient(false);
+             .modelLocation(modLoc("models/item/yearning_sword.obj"))
+             .automaticCulling(false)
+             .flipV(true)
+             .emissiveAmbient(false);
 
         // The OBJ stands upright about the item center, so the hand poses rotate its local Y axis.
         sword.transforms()
-                .transform(ItemDisplayContext.FIXED).rotation(0, 180, 45).translation(-1.9F, -1.5F, 0).scale(0.67F).end()
-                .transform(ItemDisplayContext.GROUND).rotation(0, 0, -60).translation(0, 3.6F, 0).scale(0.43F).end()
-                .transform(ItemDisplayContext.HEAD).rotation(0, 180, 45).translation(0, 12, 7).scale(0.72F).end()
-                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(0, -52, 10).translation(0, 6.5F, 0.6F).scale(0.92F).end()
-                .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND).rotation(0, 52, -10).translation(0, 6.5F, 0.6F).scale(0.92F).end()
-                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(-45, -52, -20).translation(1.5F, 3.65F, -4.38F).scale(0.95F).end()
-                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(-45, 52, 20).translation(1.5F, 3.65F, -4.38F).scale(0.95F).end()
-                .end();
+             .transform(ItemDisplayContext.FIXED).rotation(0, 180, 45).translation(-1.9F, -1.5F, 0).scale(0.67F).end()
+             .transform(ItemDisplayContext.GROUND).rotation(0, 0, -60).translation(0, 3.6F, 0).scale(0.43F).end()
+             .transform(ItemDisplayContext.HEAD).rotation(0, 180, 45).translation(0, 12, 7).scale(0.72F).end()
+             .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(0, -52, 10).translation(0, 6.5F, 0.6F).scale(0.92F).end()
+             .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND).rotation(0, 52, -10).translation(0, 6.5F, 0.6F).scale(0.92F).end()
+             .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(-45, -52, -20).translation(1.5F, 3.65F, -4.38F).scale(0.95F).end()
+             .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(-45, 52, 20).translation(1.5F, 3.65F, -4.38F).scale(0.95F).end()
+             .end();
 
         ItemModelBuilder icon = withExistingParent("yearning_sword_gui", mcLoc("item/handheld"))
                 .texture("layer0", modLoc("item/yearning_sword"));
@@ -185,7 +185,7 @@ public final class MaledictItemModels extends ItemModelProvider {
                         JsonObject model = super.toJson(json);
                         // Forge's builder exposes light levels, but no per-layer AO setter.
                         model.getAsJsonObject("forge_data").getAsJsonObject("layers")
-                                .getAsJsonObject("1").addProperty("ambient_occlusion", false);
+                             .getAsJsonObject("1").addProperty("ambient_occlusion", false);
                         return model;
                     }
                 })
@@ -207,7 +207,9 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .override().predicate(HangmanFoolItem.STAGE_PROPERTY, 1.0F).model(third).end();
     }
 
-    /** 神侵恶刃的眨眼：只有 GUI 那层换成闭眼贴图，base 与 fixed 与常态相同，所以只在物品栏里看得见。 */
+    /**
+     * 神侵恶刃的眨眼：只有 GUI 那层换成闭眼贴图，base 与 fixed 与常态相同，所以只在物品栏里看得见。
+     */
     private void registerIncursusBladeModels() {
         ItemModelBuilder handheld = getBuilder("incursus_blade_handheld")
                 .parent(new ModelFile.UncheckedModelFile(
@@ -220,19 +222,19 @@ public final class MaledictItemModels extends ItemModelProvider {
 
         ItemModelBuilder blink = withExistingParent("incursus_blade_blink", mcLoc("item/handheld"));
         blink.customLoader(SeparateTransformsModelBuilder::begin)
-                .base(handheld)
-                .perspective(ItemDisplayContext.GUI, blinkGui)
-                .perspective(ItemDisplayContext.FIXED, gui);
+             .base(handheld)
+             .perspective(ItemDisplayContext.GUI, blinkGui)
+             .perspective(ItemDisplayContext.FIXED, gui);
 
         ItemModelBuilder blade = withExistingParent("incursus_blade", mcLoc("item/handheld"));
         blade.customLoader(SeparateTransformsModelBuilder::begin)
-                .base(handheld)
-                .perspective(ItemDisplayContext.GUI, gui)
-                .perspective(ItemDisplayContext.FIXED, gui);
+             .base(handheld)
+             .perspective(ItemDisplayContext.GUI, gui)
+             .perspective(ItemDisplayContext.FIXED, gui);
         blade.override()
-                .predicate(IncursusBladeItem.BLINK_PROPERTY, 0.5F)
-                .model(blink)
-                .end();
+             .predicate(IncursusBladeItem.BLINK_PROPERTY, 0.5F)
+             .model(blink)
+             .end();
     }
 
     private ItemModelBuilder loverAxeModel(String name, String texture) {
@@ -244,8 +246,8 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .texture("layer0", modLoc("item/" + texture));
         ItemModelBuilder model = withExistingParent(name, "item/handheld");
         model.customLoader(SeparateTransformsModelBuilder::begin).base(handheld)
-                .perspective(ItemDisplayContext.GUI, inventory)
-                .perspective(ItemDisplayContext.FIXED, inventory);
+             .perspective(ItemDisplayContext.GUI, inventory)
+             .perspective(ItemDisplayContext.FIXED, inventory);
         return model;
     }
 
@@ -298,9 +300,9 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .texture("layer0", modLoc("item/" + name + "_huge"));
         ItemModelBuilder model = withExistingParent(name, mcLoc("item/bow"));
         model.customLoader(SeparateTransformsModelBuilder::begin)
-                .base(handheld)
-                .perspective(ItemDisplayContext.GUI, inventory)
-                .perspective(ItemDisplayContext.FIXED, inventory);
+             .base(handheld)
+             .perspective(ItemDisplayContext.GUI, inventory)
+             .perspective(ItemDisplayContext.FIXED, inventory);
         return model;
     }
 }

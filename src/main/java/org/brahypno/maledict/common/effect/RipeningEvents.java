@@ -18,17 +18,17 @@ public final class RipeningEvents {
 
     @SubscribeEvent
     public static void onXpChange(PlayerXpEvent.XpChange event) {
-        if (event.isCanceled()) {
+        if (event.isCanceled()){
             return;
         }
 
         Player player = event.getEntity();
-        if (player.level().isClientSide) {
+        if (player.level().isClientSide){
             return;
         }
 
         MobEffectInstance ripening = player.getEffect(MaledictMobEffects.RIPENING.get());
-        if (ripening == null) {
+        if (ripening == null){
             return;
         }
 

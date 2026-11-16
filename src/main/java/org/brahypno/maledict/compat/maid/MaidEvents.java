@@ -36,7 +36,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.brahypno.maledict.common.MaledictTags;
-import org.brahypno.maledict.common.soulbinding.SoulbindingData;
+import org.brahypno.maledict.common.ritual.soulbinding.SoulbindingData;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictItems;

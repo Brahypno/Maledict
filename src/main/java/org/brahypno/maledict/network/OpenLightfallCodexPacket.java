@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import org.brahypno.maledict.client.codex.LightfallCodex;
+import org.brahypno.maledict.client.item.codex.LightfallCodex;
 
 import java.util.function.Supplier;
 
@@ -20,7 +20,7 @@ public record OpenLightfallCodexPacket(boolean knowsSoulbinding) {
     public static void handle(OpenLightfallCodexPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> LightfallCodex.openCodexViaItem(packet.knowsSoulbinding)));
+                                                               () -> () -> LightfallCodex.openCodexViaItem(packet.knowsSoulbinding)));
         context.setPacketHandled(true);
     }
 }

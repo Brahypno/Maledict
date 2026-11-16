@@ -2,54 +2,58 @@ package org.brahypno.maledict.registry;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
+import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
-import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
-import net.minecraft.world.entity.SpawnPlacements;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.realm.wither.OssuaryFangs;
-import org.brahypno.maledict.common.realm.wither.WeepingWitherSkeletonEntity;
-import org.brahypno.maledict.common.vicissitude.FirstVicissitudeBossEntity;
-import org.brahypno.maledict.common.realm.demiurge.DemiurgeStatueEntity;
-import org.brahypno.maledict.common.raven.RavenEntity;
-import org.brahypno.maledict.common.raven.RavenFeatherEntity;
-import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowEntity;
-import org.brahypno.maledict.common.curio.hangman.HangmanTrapEntity;
-import org.brahypno.maledict.common.curio.priestess.SoulEchoEntity;
-import org.brahypno.maledict.common.vicissitude.VicissitudeLightOrbEntity;
-import org.brahypno.maledict.common.vicissitude.VicissitudeScytheProjectileEntity;
-import org.brahypno.maledict.common.vicissitude.VicissitudeSpiritBoltEntity;
+import org.brahypno.maledict.common.entity.demiurge.DemiurgePillarEntity;
+import org.brahypno.maledict.common.entity.demiurge.DemiurgeStatueEntity;
+import org.brahypno.maledict.common.entity.demiurge.DemiurgeTearEntity;
+import org.brahypno.maledict.common.entity.raven.RavenEntity;
+import org.brahypno.maledict.common.entity.raven.RavenFeatherEntity;
+import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity;
+import org.brahypno.maledict.common.entity.vicissitude.VicissitudeLightOrbEntity;
+import org.brahypno.maledict.common.entity.vicissitude.VicissitudeScytheProjectileEntity;
+import org.brahypno.maledict.common.entity.vicissitude.VicissitudeSpiritBoltEntity;
+import org.brahypno.maledict.common.entity.wither.OssuaryFangs;
+import org.brahypno.maledict.common.entity.wither.WeepingWitherEntity;
+import org.brahypno.maledict.common.entity.wither.WeepingWitherSkeletonEntity;
+import org.brahypno.maledict.common.entity.wither.WeepingWitherSkull;
+import org.brahypno.maledict.common.item.curio.hangman.HangmanTrapEntity;
+import org.brahypno.maledict.common.item.curio.priestess.SoulEchoEntity;
+import org.brahypno.maledict.common.item.weapon.remembrance.SpiritArrowEntity;
 
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class MaledictEntities {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, Maledict.MODID);
 
-    public static final RegistryObject<EntityType<org.brahypno.maledict.common.realm.wither.WeepingWitherEntity>> WEEPING_WITHER =
+    public static final RegistryObject<EntityType<WeepingWitherEntity>> WEEPING_WITHER =
             ENTITY_TYPES.register("weeping_wither", () -> EntityType.Builder
-                    .of(org.brahypno.maledict.common.realm.wither.WeepingWitherEntity::new, MobCategory.MONSTER)
+                    .of(WeepingWitherEntity::new, MobCategory.MONSTER)
                     .sized(1.08F, 4.2F).clientTrackingRange(10).fireImmune().build("weeping_wither"));
 
-    public static final RegistryObject<EntityType<org.brahypno.maledict.common.realm.wither.WeepingWitherSkull>> WEEPING_WITHER_SKULL =
+    public static final RegistryObject<EntityType<WeepingWitherSkull>> WEEPING_WITHER_SKULL =
             ENTITY_TYPES.register("weeping_wither_skull", () -> EntityType.Builder
-                    .<org.brahypno.maledict.common.realm.wither.WeepingWitherSkull>of(
-                            org.brahypno.maledict.common.realm.wither.WeepingWitherSkull::new, MobCategory.MISC)
+                    .of(
+                            WeepingWitherSkull::new, MobCategory.MISC)
                     .sized(0.3125F, 0.3125F).clientTrackingRange(4).updateInterval(10).fireImmune()
                     .build("weeping_wither_skull"));
 
     public static final RegistryObject<EntityType<WeepingWitherSkeletonEntity>> WEEPING_WITHER_SKELETON =
             ENTITY_TYPES.register("weeping_wither_skeleton", () -> EntityType.Builder
-                    .<WeepingWitherSkeletonEntity>of(WeepingWitherSkeletonEntity::new, MobCategory.MONSTER)
+                    .of(WeepingWitherSkeletonEntity::new, MobCategory.MONSTER)
                     .sized(0.7F, 2.4F).clientTrackingRange(8).fireImmune().build("weeping_wither_skeleton"));
 
     public static final RegistryObject<EntityType<OssuaryFangs>> OSSUARY_FANGS =
             ENTITY_TYPES.register("ossuary_fangs", () -> EntityType.Builder
-                    .<OssuaryFangs>of(OssuaryFangs::new, MobCategory.MISC)
+                    .of(OssuaryFangs::new, MobCategory.MISC)
                     .sized(0.5F, 0.8F).clientTrackingRange(6).updateInterval(2).build("ossuary_fangs"));
 
     public static final RegistryObject<EntityType<SoulEchoEntity>> SOUL_ECHO =
@@ -60,7 +64,7 @@ public final class MaledictEntities {
 
     public static final RegistryObject<EntityType<HangmanTrapEntity>> HANGMAN_TRAP =
             ENTITY_TYPES.register("hangman_trap", () -> EntityType.Builder
-                    .<HangmanTrapEntity>of(HangmanTrapEntity::new, MobCategory.MISC)
+                    .of(HangmanTrapEntity::new, MobCategory.MISC)
                     .sized(0.1F, 0.1F).clientTrackingRange(4).updateInterval(20)
                     .build("hangman_trap"));
 
@@ -86,17 +90,17 @@ public final class MaledictEntities {
                     .sized(5.1F, 4.2F).clientTrackingRange(12).fireImmune()
                     .build("demiurge_statue"));
 
-    public static final RegistryObject<EntityType<org.brahypno.maledict.common.realm.demiurge.DemiurgeTearEntity>> DEMIURGE_TEAR =
+    public static final RegistryObject<EntityType<DemiurgeTearEntity>> DEMIURGE_TEAR =
             ENTITY_TYPES.register("demiurge_tear", () -> EntityType.Builder
-                    .<org.brahypno.maledict.common.realm.demiurge.DemiurgeTearEntity>of(
-                            org.brahypno.maledict.common.realm.demiurge.DemiurgeTearEntity::new, MobCategory.MISC)
+                    .of(
+                            DemiurgeTearEntity::new, MobCategory.MISC)
                     .sized(.2F, .6F).clientTrackingRange(10).updateInterval(1).noSave().noSummon().fireImmune()
                     .build("demiurge_tear"));
 
-    public static final RegistryObject<EntityType<org.brahypno.maledict.common.realm.demiurge.DemiurgePillarEntity>> DEMIURGE_PILLAR =
+    public static final RegistryObject<EntityType<DemiurgePillarEntity>> DEMIURGE_PILLAR =
             ENTITY_TYPES.register("demiurge_pillar", () -> EntityType.Builder
-                    .<org.brahypno.maledict.common.realm.demiurge.DemiurgePillarEntity>of(
-                            org.brahypno.maledict.common.realm.demiurge.DemiurgePillarEntity::new, MobCategory.MISC)
+                    .of(
+                            DemiurgePillarEntity::new, MobCategory.MISC)
                     .sized(1.25F, 3.5F).clientTrackingRange(8).updateInterval(1).noSave().noSummon().fireImmune()
                     .build("demiurge_pillar"));
 
@@ -128,7 +132,7 @@ public final class MaledictEntities {
     public static final RegistryObject<EntityType<VicissitudeScytheProjectileEntity>> VICISSITUDE_SCYTHE =
             ENTITY_TYPES.register("vicissitude_scythe", () -> EntityType.Builder
                     .<VicissitudeScytheProjectileEntity>of(VicissitudeScytheProjectileEntity::new,
-                            MobCategory.MISC)
+                                                           MobCategory.MISC)
                     .sized(0.8F, 0.8F)
                     .clientTrackingRange(10)
                     .updateInterval(1)
@@ -146,7 +150,7 @@ public final class MaledictEntities {
 
     @SubscribeEvent
     public static void registerAttributes(EntityAttributeCreationEvent event) {
-        event.put(WEEPING_WITHER.get(), org.brahypno.maledict.common.realm.wither.WeepingWitherEntity.createAttributes().build());
+        event.put(WEEPING_WITHER.get(), WeepingWitherEntity.createAttributes().build());
         event.put(WEEPING_WITHER_SKELETON.get(), WeepingWitherSkeletonEntity.createAttributes().build());
         event.put(SOUL_ECHO.get(), SoulEchoEntity.createLivingAttributes().build());
         event.put(FIRST_VICISSITUDE.get(), FirstVicissitudeBossEntity.createAttributes().build());
@@ -157,8 +161,8 @@ public final class MaledictEntities {
     @SubscribeEvent
     public static void registerSpawnPlacements(SpawnPlacementRegisterEvent event) {
         event.register(RAVEN.get(), SpawnPlacements.Type.ON_GROUND,
-                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, RavenEntity::checkRavenSpawnRules,
-                SpawnPlacementRegisterEvent.Operation.REPLACE);
+                       Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, RavenEntity::checkRavenSpawnRules,
+                       SpawnPlacementRegisterEvent.Operation.REPLACE);
     }
 
     private MaledictEntities() {

@@ -12,7 +12,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.rune.RuneOfTheFallenItem;
+import org.brahypno.maledict.common.item.curio.rune.RuneOfTheFallenItem;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.helpers.EntityHelper;
@@ -44,7 +44,9 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class CorruptionRuneEvents {
 
-    /** 一记有效回血折算成多少腐败（点）。先按 1:1 起手，进游戏再调。 */
+    /**
+     * 一记有效回血折算成多少腐败（点）。先按 1:1 起手，进游戏再调。
+     */
     public static final float CORRUPTION_PER_HEAL = 1.0F;
 
     /**
@@ -54,23 +56,33 @@ public final class CorruptionRuneEvents {
      */
     public static final float MAX_COLLAPSE_PER_HIT = 6.0F;
 
-    /** 收给目标留下的最低血量：收永远不致死，真正致命的是紧接着落地的那一记普通攻击。 */
+    /**
+     * 收给目标留下的最低血量：收永远不致死，真正致命的是紧接着落地的那一记普通攻击。
+     */
     public static final float MIN_SURVIVABLE_HEALTH = 1.0F;
 
     // ---- 堕落标记（Fallen）的预设值：效果本身没有逻辑，所以没有自己的类，注册处是匿名子类 ----
 
-    /** 每次命中把窗口刷新多久（tick）。 */
+    /**
+     * 每次命中把窗口刷新多久（tick）。
+     */
     public static final int FALLEN_DURATION_TICKS = 200;
 
-    /** 最多 10 级；游戏里的「等级」= amplifier + 1。 */
+    /**
+     * 最多 10 级；游戏里的「等级」= amplifier + 1。
+     */
     public static final int FALLEN_MAX_LEVEL = 10;
 
     public static final int FALLEN_MAX_AMPLIFIER = FALLEN_MAX_LEVEL - 1;
 
-    /** 每级给目标多少 {@code malum:malignant_conversion}（恶念转化，0.02 = 2%）。 */
+    /**
+     * 每级给目标多少 {@code malum:malignant_conversion}（恶念转化，0.02 = 2%）。
+     */
     public static final double FALLEN_CONVERSION_PER_LEVEL = 0.02D;
 
-    /** 效果图标底色：暗紫。 */
+    /**
+     * 效果图标底色：暗紫。
+     */
     public static final int FALLEN_COLOR = 0x5B2A6E;
 
     /**
@@ -84,22 +96,24 @@ public final class CorruptionRuneEvents {
 
     private static final int COLLAPSE_PARTICLES = 12;
 
-    /** 回血记账：治疗照给，只把「有效的那一份」记成休眠腐败。 */
+    /**
+     * 回血记账：治疗照给，只把「有效的那一份」记成休眠腐败。
+     */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingHeal(LivingHealEvent event) {
         LivingEntity target = event.getEntity();
-        if (target.level().isClientSide() || event.isCanceled()) {
+        if (target.level().isClientSide() || event.isCanceled()){
             return;
         }
-        if (!target.hasEffect(MaledictMobEffects.FALLEN.get())) {
+        if (!target.hasEffect(MaledictMobEffects.FALLEN.get())){
             return;
         }
         float effective = effectiveHeal(event.getAmount(), target.getHealth(), target.getMaxHealth());
-        if (effective <= 0.0F) {
+        if (effective <= 0.0F){
             return;
         }
         CorruptionData data = CorruptionData.get(target);
-        if (data == null) {
+        if (data == null){
             return;
         }
         long now = target.level().getGameTime();
@@ -109,40 +123,42 @@ public final class CorruptionRuneEvents {
         state.clamp(target.getHealth());
     }
 
-    /** 命中：先收、再落标记、最后夹取。顺序见类注释。 */
+    /**
+     * 命中：先收、再落标记、最后夹取。顺序见类注释。
+     */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingDamage(LivingDamageEvent event) {
         LivingEntity victim = event.getEntity();
-        if (victim.level().isClientSide() || event.isCanceled()) {
+        if (victim.level().isClientSide() || event.isCanceled()){
             return;
         }
         CorruptionData data = CorruptionData.get(victim);
-        if (data == null) {
+        if (data == null){
             return;
         }
         LivingEntity attacker = attackerOf(event.getSource());
         boolean withRune = attacker != null && attacker != victim && RuneOfTheFallenItem.isEquipped(attacker);
         CorruptionState state = data.stateIfPresent();
         // 没戴符文的这一记如果打在没账目的目标身上，就与我们完全无关：直接走人。
-        if (!withRune && (state == null || state.isEmpty())) {
+        if (!withRune && (state == null || state.isEmpty())){
             return;
         }
 
         long now = victim.level().getGameTime();
         float health = victim.getHealth();
-        if (state != null) {
+        if (state != null){
             state.purify(now);
         }
 
-        if (withRune) {
-            if (state != null) {
+        if (withRune){
+            if (state != null){
                 health = collapse(victim, state, health);
             }
             mark(victim);
         }
 
         // 这一记接下来真会从血量里扣掉的量：原版在事件之后才写血量。
-        if (state != null) {
+        if (state != null){
             state.clamp(health - event.getAmount());
         }
     }
@@ -158,7 +174,7 @@ public final class CorruptionRuneEvents {
      */
     private static void mark(LivingEntity victim) {
         MobEffectInstance current = victim.getEffect(MaledictMobEffects.FALLEN.get());
-        if (current == null) {
+        if (current == null){
             victim.addEffect(new MobEffectInstance(MaledictMobEffects.FALLEN.get(),
                                                    FALLEN_DURATION_TICKS, 0, false, true));
             return;
@@ -176,21 +192,23 @@ public final class CorruptionRuneEvents {
      * {@code min(amount, maxHealth - health)}。
      */
     private static float effectiveHeal(float amount, float health, float maximum) {
-        if (amount <= 0.0F || health <= 0.0F) {
+        if (amount <= 0.0F || health <= 0.0F){
             return 0.0F;
         }
         return Math.max(0.0F, Math.min(amount, maximum - health));
     }
 
-    /** 收一笔，返回收完之后目标的血量。收不动就原样返回。 */
+    /**
+     * 收一笔，返回收完之后目标的血量。收不动就原样返回。
+     */
     private static float collapse(LivingEntity victim, CorruptionState state, float health) {
         float taken = state.harvest(MAX_COLLAPSE_PER_HIT, health, MIN_SURVIVABLE_HEALTH);
-        if (taken <= 0.0F) {
+        if (taken <= 0.0F){
             return health;
         }
         float left = health - taken;
         victim.setHealth(left);
-        if (victim.level() instanceof ServerLevel level) {
+        if (victim.level() instanceof ServerLevel level){
             level.sendParticles(ParticleTypes.SCULK_SOUL,
                                 victim.getX(), victim.getY() + victim.getBbHeight() * 0.5D, victim.getZ(),
                                 COLLAPSE_PARTICLES, 0.3D, 0.4D, 0.3D, 0.02D);
@@ -198,7 +216,9 @@ public final class CorruptionRuneEvents {
         return left;
     }
 
-    /** 造成这一记的人；箭、火球之类取直接实体，都没有就返回 {@code null}。 */
+    /**
+     * 造成这一记的人；箭、火球之类取直接实体，都没有就返回 {@code null}。
+     */
     @Nullable
     private static LivingEntity attackerOf(DamageSource source) {
         Entity entity = source.getEntity() != null ? source.getEntity() : source.getDirectEntity();

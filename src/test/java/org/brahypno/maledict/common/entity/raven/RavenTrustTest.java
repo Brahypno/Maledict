@@ -1,0 +1,20 @@
+package org.brahypno.maledict.common.entity.raven;
+
+import org.brahypno.maledict.common.entity.raven.RavenTrust;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class RavenTrustTest {
+    private static final UUID A = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID B = UUID.fromString("00000000-0000-0000-0000-000000000002");
+
+    @Test
+    void chickTrustsBothPlayersWhoFedItsParents() {
+        assertEquals(List.of(A, B), RavenTrust.fromBreeding(A, B));
+    }
+
+}

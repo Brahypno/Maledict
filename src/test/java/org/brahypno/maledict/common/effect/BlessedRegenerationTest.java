@@ -4,7 +4,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** 「生灵之祝」的份数表：一份就是原版这一 tick 实际回掉的血量，每级再补一份。 */
+/**
+ * 「生灵之祝」的份数表：一份就是原版这一 tick 实际回掉的血量，每级再补一份。
+ */
 class BlessedRegenerationTest {
 
     private static final float EPSILON = 0.0001F;

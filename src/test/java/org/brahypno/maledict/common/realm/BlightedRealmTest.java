@@ -22,7 +22,7 @@ import net.minecraftforge.event.entity.living.LivingFallEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
-import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.registry.MaledictBlocks;
 import org.brahypno.maledict.registry.MaledictItems;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -44,26 +44,27 @@ public final class BlightedRealmTest {
         BlockPos core = makeSource(helper, player);
         var inventory = CuriosApi.getCuriosInventory(player).orElseThrow(IllegalStateException::new);
         inventory.setCurios(Map.of("delusion", new CurioStacksHandler(inventory, "delusion", 1,
-                true, true, true, ICurio.DropRule.DEFAULT)));
+                                                                      true, true, true, ICurio.DropRule.DEFAULT)));
         inventory.setEquippedCurio("delusion", 0, HangmanFoolItem.create(0));
         var darkness = MalumLivingEntityDataCapability.getCapability(player).touchOfDarknessHandler;
         darkness.progressToRejection = 60;
         TouchOfDarknessHandler.entityTick(new LivingEvent.LivingTickEvent(player));
         check(helper, BlightedRealm.is(player.serverLevel()), "The real 61st-tick rejection call must traverse through the mixin; dimension="
-                + player.level().dimension().location() + ", rejection=" + darkness.rejection + ", contact=" + darkness.progressToRejection
-                + ", eligible=" + WellAdmission.hasVisionEquipment(player));
+                                                              + player.level().dimension().location() + ", rejection=" + darkness.rejection + ", contact=" +
+                                                              darkness.progressToRejection
+                                                              + ", eligible=" + WellAdmission.hasVisionEquipment(player));
         check(helper, player.getInventory().getItem(0).is(MaledictItems.LIGHTFALL_CODEX.get()),
-                "Entering the realm must replace the Encyclopedia Esoterica with the Lightfall Codex in place");
+              "Entering the realm must replace the Encyclopedia Esoterica with the Lightfall Codex in place");
         var links = WeepingWellLinks.get(player.serverLevel());
         var link = links.find(GlobalPos.of(Level.OVERWORLD, core));
         check(helper, link != null && player.serverLevel().getBlockState(link.realm().core().pos()).is(BlockRegistry.VOID_CONDUIT.get()),
-                "Traversal must place the native well template and remember both ends");
+              "Traversal must place the native well template and remember both ends");
         check(helper, darkness.rejection == 39 && darkness.currentAffliction == 100
-                        && !player.hasEffect(MobEffectRegistry.REJECTED.get())
-                        && !MalumPlayerDataCapability.getCapability(player).hasBeenRejected,
-                "Emergence reuses native motion and darkness without rejected potion or revelation");
+                      && !player.hasEffect(MobEffectRegistry.REJECTED.get())
+                      && !MalumPlayerDataCapability.getCapability(player).hasBeenRejected,
+              "Emergence reuses native motion and darkness without rejected potion or revelation");
         check(helper, player.getPersistentData().contains(WeepingWellTravel.EMERGENCE_UNTIL),
-                "The emergence fall has explicit, temporary protection");
+              "The emergence fall has explicit, temporary protection");
         var fall = new LivingFallEvent(player, 16, 1);
         MinecraftForge.EVENT_BUS.post(fall);
         check(helper, fall.isCanceled(), "The emergence fall must not cause damage");
@@ -73,13 +74,13 @@ public final class BlightedRealmTest {
         inventory.setEquippedCurio("delusion", 0, ItemStack.EMPTY);
         player.setPos(Vec3.atBottomCenterOf(link.realm().core().pos()));
         check(helper, WeepingWellTravel.tryTraverse(player) && BlightedRealm.is(player.serverLevel()),
-                "A transit cooldown must prevent immediately returning");
+              "A transit cooldown must prevent immediately returning");
         player.getPersistentData().remove("maledict:well_cooldown");
         WeepingWellTravel.clearContact(player);
         darkness.reject(player);
         check(helper, player.serverLevel() == helper.getLevel(), "The paired return must work after removing the equipment");
         check(helper, player.position().distanceTo(Vec3.atCenterOf(core)) < 12,
-                "Return must emerge at the paired source, rather than the dimension spawn");
+              "Return must emerge at the paired source, rather than the dimension spawn");
         player.discard();
         // Test ordering changes the scene's X/Z. Provide a valid rebuild site even in a mangrove swamp.
         prepareRebuildSite(helper.getLevel(), core.offset(-64, 0, 0));
@@ -90,17 +91,17 @@ public final class BlightedRealmTest {
         MalumLivingEntityDataCapability.getCapability(stranded).touchOfDarknessHandler.reject(stranded);
         var repaired = links.find(link.realm().core());
         check(helper, repaired != null && !repaired.overworld().core().equals(link.overworld().core())
-                        && links.find(link.overworld().core()) == null,
-                "Returning through X must replace destroyed A with a newly paired A' rather than using spawn");
+                      && links.find(link.overworld().core()) == null,
+              "Returning through X must replace destroyed A with a newly paired A' rather than using spawn");
         check(helper, stranded.serverLevel() == helper.getLevel()
-                        && helper.getLevel().getBlockState(repaired.overworld().core().pos()).is(BlockRegistry.VOID_CONDUIT.get())
-                        && stranded.position().distanceTo(Vec3.atCenterOf(repaired.overworld().core().pos())) < 12,
-                "An unequipped returner must emerge from the actual rebuilt overworld well");
+                      && helper.getLevel().getBlockState(repaired.overworld().core().pos()).is(BlockRegistry.VOID_CONDUIT.get())
+                      && stranded.position().distanceTo(Vec3.atCenterOf(repaired.overworld().core().pos())) < 12,
+              "An unequipped returner must emerge from the actual rebuilt overworld well");
         BlockPos repairedCore = repaired.overworld().core().pos();
         double dx = (double) repairedCore.getX() - core.getX();
         double dz = (double) repairedCore.getZ() - core.getZ();
         check(helper, dx * dx + dz * dz < 100 * 100,
-                "The rebuilt source must stay near its former X/Z; Y is selected from safe terrain: " + core + " -> " + repairedCore);
+              "The rebuilt source must stay near its former X/Z; Y is selected from safe terrain: " + core + " -> " + repairedCore);
         stranded.discard();
         helper.succeed();
     }
@@ -125,7 +126,7 @@ public final class BlightedRealmTest {
                 new BlockPos(center.getX() - 8, surface - 15, center.getZ() - 8),
                 new BlockPos(center.getX() + 8, level.getMaxBuildHeight() - 1, center.getZ() + 8))) {
             level.setBlockAndUpdate(pos, pos.getY() <= surface
-                    ? Blocks.DIRT.defaultBlockState() : Blocks.AIR.defaultBlockState());
+                                         ? Blocks.DIRT.defaultBlockState() : Blocks.AIR.defaultBlockState());
         }
     }
 
@@ -144,14 +145,14 @@ public final class BlightedRealmTest {
         var links = WeepingWellLinks.get(level);
         var blocked = WellPlacement.build(level, player, center, links);
         check(helper, (blocked.isEmpty() || blocked.get().core().pos().getX() != center.getX()
-                        || blocked.get().core().pos().getZ() != center.getZ())
-                        && level.getBlockState(lamp).is(MaledictBlocks.WITHERLIGHT_LAMP.get()),
-                "A crafted lamp still prevents a well from overwriting the site");
+                       || blocked.get().core().pos().getZ() != center.getZ())
+                      && level.getBlockState(lamp).is(MaledictBlocks.WITHERLIGHT_LAMP.get()),
+              "A crafted lamp still prevents a well from overwriting the site");
         level.setBlockAndUpdate(lamp, Blocks.AIR.defaultBlockState());
         var built = WellPlacement.build(level, player, center, links);
         check(helper, built.isPresent() && built.get().core().pos().getX() == center.getX()
-                        && built.get().core().pos().getZ() == center.getZ(),
-                "All four naturally generated groundcover blocks allow the first well site");
+                      && built.get().core().pos().getZ() == center.getZ(),
+              "All four naturally generated groundcover blocks allow the first well site");
     }
 
     private static void check(GameTestHelper helper, boolean result, String message) {

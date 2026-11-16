@@ -15,13 +15,19 @@ import java.util.UUID;
  * {@code addAttributeModifiers} 结算时会自乘 {@code (amplifier + 1)}，故 {@code -0.2} 每级即 -20%；{@code MULTIPLY_TOTAL} 是比例削减，属性下限 0 会夹住结果。
  */
 public final class AgeOfDarknessEffect extends MobEffect {
-    /** Malum 邪恶精魂紫 {@code #792CEC}。 */
+    /**
+     * Malum 邪恶精魂紫 {@code #792CEC}。
+     */
     public static final int COLOR = 0x792CEC;
 
-    /** 每级削减的比例，{@code 0.2} 即 20%。 */
+    /**
+     * 每级削减的比例，{@code 0.2} 即 20%。
+     */
     public static final double REDUCTION_PER_LEVEL = 0.2D;
 
-    /** UUID 必须固定：原版添加与移除属性修饰符都是按 UUID 匹配的，否则摘不干净。 */
+    /**
+     * UUID 必须固定：原版添加与移除属性修饰符都是按 UUID 匹配的，否则摘不干净。
+     */
     private static final UUID MAGIC_RESISTANCE_MODIFIER_ID = modifierId("magic_resistance");
     private static final UUID SOUL_WARD_CAP_MODIFIER_ID = modifierId("soul_ward_cap");
     private static final UUID SOUL_WARD_INTEGRITY_MODIFIER_ID = modifierId("soul_ward_integrity");
@@ -35,7 +41,7 @@ public final class AgeOfDarknessEffect extends MobEffect {
 
     private void strip(Attribute attribute, UUID modifierId) {
         addAttributeModifier(attribute, modifierId.toString(), -REDUCTION_PER_LEVEL,
-                AttributeModifier.Operation.MULTIPLY_TOTAL);
+                             AttributeModifier.Operation.MULTIPLY_TOTAL);
     }
 
     private static UUID modifierId(String attribute) {

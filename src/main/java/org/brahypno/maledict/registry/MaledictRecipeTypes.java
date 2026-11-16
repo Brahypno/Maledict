@@ -7,7 +7,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.invocation.InvocationDefinition;
+import org.brahypno.maledict.common.ritual.invocation.InvocationDefinition;
 
 public final class MaledictRecipeTypes {
     public static final DeferredRegister<RecipeSerializer<?>> SERIALIZERS =

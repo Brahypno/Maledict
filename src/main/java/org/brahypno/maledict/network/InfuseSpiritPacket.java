@@ -6,7 +6,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
 import com.sammy.malum.common.item.spirit.SpiritShardItem;
-import org.brahypno.maledict.common.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
 
 import java.util.function.Supplier;
 
@@ -24,7 +24,7 @@ public record InfuseSpiritPacket(int containerId, int inventorySlot, ItemStack s
     static void handle(InfuseSpiritPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         ServerPlayer sender = context.getSender();
-        if (sender != null) {
+        if (sender != null){
             context.enqueueWork(() -> infuseOnServer(sender, packet));
         }
         context.setPacketHandled(true);
@@ -33,39 +33,40 @@ public record InfuseSpiritPacket(int containerId, int inventorySlot, ItemStack s
     private static void infuseOnServer(ServerPlayer player, InfuseSpiritPacket packet) {
         AbstractContainerMenu menu = player.containerMenu;
         if (menu.containerId != packet.containerId
-                || !menu.stillValid(player)
-                || packet.inventorySlot < 0
-                || packet.inventorySlot >= player.getInventory().getContainerSize()) {
+            || !menu.stillValid(player)
+            || packet.inventorySlot < 0
+            || packet.inventorySlot >= player.getInventory().getContainerSize()){
             return;
         }
 
         ItemStack blade = player.getInventory().getItem(packet.inventorySlot);
         ItemStack carried = getValidatedSpiritStack(player, menu, packet.spiritStack);
-        if (!carried.isEmpty() && IncursusBladeItem.absorbSpiritStack(blade, carried)) {
+        if (!carried.isEmpty() && IncursusBladeItem.absorbSpiritStack(blade, carried)){
             player.getInventory().setChanged();
-            if (!player.isCreative()) {
+            if (!player.isCreative()){
                 menu.setCarried(carried);
             }
             menu.broadcastChanges();
         }
     }
 
-    private static ItemStack getValidatedSpiritStack(ServerPlayer player,
-                                                     AbstractContainerMenu menu,
-                                                     ItemStack clientStack) {
+    private static ItemStack getValidatedSpiritStack(
+            ServerPlayer player,
+            AbstractContainerMenu menu,
+            ItemStack clientStack) {
         if (!(clientStack.getItem() instanceof SpiritShardItem)
-                || clientStack.isEmpty()
-                || clientStack.getCount() > clientStack.getMaxStackSize()) {
+            || clientStack.isEmpty()
+            || clientStack.getCount() > clientStack.getMaxStackSize()){
             return ItemStack.EMPTY;
         }
-        if (player.isCreative()) {
+        if (player.isCreative()){
             return clientStack.copy();
         }
 
         ItemStack serverCarried = menu.getCarried();
         if (serverCarried.isEmpty()
-                || !ItemStack.isSameItemSameTags(serverCarried, clientStack)
-                || serverCarried.getCount() != clientStack.getCount()) {
+            || !ItemStack.isSameItemSameTags(serverCarried, clientStack)
+            || serverCarried.getCount() != clientStack.getCount()){
             return ItemStack.EMPTY;
         }
         return serverCarried;

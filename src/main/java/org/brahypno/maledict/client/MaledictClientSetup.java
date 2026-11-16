@@ -15,35 +15,38 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.client.curio.enlightenment.AgeOfEnlightenmentCurioRenderer;
-import org.brahypno.maledict.client.curio.enlightenment.AgeOfEnlightenmentModel;
-import org.brahypno.maledict.client.curio.hangman.HangmanTrapRenderer;
-import org.brahypno.maledict.client.curio.priestess.SoulEchoRenderer;
-import org.brahypno.maledict.client.equipment.lightward.LightwardArmorClientExtensions;
-import org.brahypno.maledict.client.equipment.lightward.LightwardArmorModel;
-import org.brahypno.maledict.client.raven.RavenFeatherRenderer;
-import org.brahypno.maledict.client.raven.RavenModel;
-import org.brahypno.maledict.client.raven.RavenRenderer;
-import org.brahypno.maledict.client.raven.RavenShoulderLayer;
+import org.brahypno.maledict.client.entity.demiurge.DemiurgeTearRenderer;
+import org.brahypno.maledict.client.entity.raven.RavenFeatherRenderer;
+import org.brahypno.maledict.client.entity.raven.RavenModel;
+import org.brahypno.maledict.client.entity.raven.RavenRenderer;
+import org.brahypno.maledict.client.entity.raven.RavenShoulderLayer;
+import org.brahypno.maledict.client.entity.weepingWither.WeepingWitherRenderer;
+import org.brahypno.maledict.client.entity.weepingWither.WeepingWitherSkullRenderer;
+import org.brahypno.maledict.client.item.curio.enlightenment.AgeOfEnlightenmentCurioRenderer;
+import org.brahypno.maledict.client.item.curio.enlightenment.AgeOfEnlightenmentModel;
+import org.brahypno.maledict.client.item.curio.hangman.HangmanTrapRenderer;
+import org.brahypno.maledict.client.item.curio.priestess.SoulEchoRenderer;
+import org.brahypno.maledict.client.item.equipment.lightward.LightwardArmorClientExtensions;
+import org.brahypno.maledict.client.item.equipment.lightward.LightwardArmorModel;
+import org.brahypno.maledict.client.item.weapon.incursus.rift.IncursusRiftReloadListener;
+import org.brahypno.maledict.client.item.weapon.remembrance.SpiritArrowRenderer;
+import org.brahypno.maledict.client.item.weapon.scythe.DiplopiaScytheBoomerangRenderer;
 import org.brahypno.maledict.client.realm.BlightedRealmEffects;
-import org.brahypno.maledict.client.realm.OssuaryFangsRenderer;
-import org.brahypno.maledict.client.realm.WeepingWitherSkeletonRenderer;
-import org.brahypno.maledict.client.realm.demiurge.DemiurgePillarRenderer;
-import org.brahypno.maledict.client.realm.demiurge.DemiurgeStatueRenderer;
-import org.brahypno.maledict.client.realm.demiurge.PurpleSoulFireParticle;
-import org.brahypno.maledict.client.vicissitude.model.FirstVicissitudeBossModel;
-import org.brahypno.maledict.client.vicissitude.render.FirstVicissitudeBossRenderer;
-import org.brahypno.maledict.client.vicissitude.render.VicissitudeLightOrbRenderer;
-import org.brahypno.maledict.client.vicissitude.render.VicissitudeScytheRenderer;
-import org.brahypno.maledict.client.vicissitude.render.VicissitudeSpiritBoltRenderer;
-import org.brahypno.maledict.client.vicissitude.vfx.VicissitudeSummoningPostProcessor;
-import org.brahypno.maledict.client.vitals.DelayedVitalsOverlay;
-import org.brahypno.maledict.client.weapon.incursus.rift.IncursusRiftReloadListener;
-import org.brahypno.maledict.client.weapon.remembrance.SpiritArrowRenderer;
-import org.brahypno.maledict.client.weapon.scythe.DiplopiaScytheBoomerangRenderer;
-import org.brahypno.maledict.common.invocation.InvocationDefinition;
+import org.brahypno.maledict.client.entity.weepingWither.OssuaryFangsRenderer;
+import org.brahypno.maledict.client.entity.weepingWither.WeepingWitherSkeletonRenderer;
+import org.brahypno.maledict.client.entity.demiurge.DemiurgePillarRenderer;
+import org.brahypno.maledict.client.entity.demiurge.DemiurgeStatueRenderer;
+import org.brahypno.maledict.client.entity.demiurge.PurpleSoulFireParticle;
+import org.brahypno.maledict.client.entity.vicissitude.model.FirstVicissitudeBossModel;
+import org.brahypno.maledict.client.entity.vicissitude.render.FirstVicissitudeBossRenderer;
+import org.brahypno.maledict.client.entity.vicissitude.render.VicissitudeLightOrbRenderer;
+import org.brahypno.maledict.client.entity.vicissitude.render.VicissitudeScytheRenderer;
+import org.brahypno.maledict.client.entity.vicissitude.render.VicissitudeSpiritBoltRenderer;
+import org.brahypno.maledict.client.entity.vicissitude.vfx.VicissitudeSummoningPostProcessor;
+import org.brahypno.maledict.client.combat.vitals.DelayedVitalsOverlay;
+import org.brahypno.maledict.common.item.weapon.remembrance.SpiritArrowItem;
 import org.brahypno.maledict.common.realm.BlightedRealm;
-import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowItem;
+import org.brahypno.maledict.common.ritual.invocation.InvocationDefinition;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictParticles;
@@ -80,9 +83,9 @@ public final class MaledictClientSetup {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(MaledictEntities.WEEPING_WITHER.get(),
-                                     org.brahypno.maledict.client.realm.WeepingWitherRenderer::new);
+                                     WeepingWitherRenderer::new);
         event.registerEntityRenderer(MaledictEntities.WEEPING_WITHER_SKULL.get(),
-                                     org.brahypno.maledict.client.realm.WeepingWitherSkullRenderer::new);
+                                     WeepingWitherSkullRenderer::new);
         event.registerEntityRenderer(MaledictEntities.WEEPING_WITHER_SKELETON.get(),
                                      WeepingWitherSkeletonRenderer::new);
         event.registerEntityRenderer(MaledictEntities.OSSUARY_FANGS.get(), OssuaryFangsRenderer::new);
@@ -94,7 +97,7 @@ public final class MaledictClientSetup {
         event.registerEntityRenderer(MaledictEntities.FIRST_VICISSITUDE.get(), FirstVicissitudeBossRenderer::new);
         event.registerEntityRenderer(MaledictEntities.DEMIURGE_STATUE.get(), DemiurgeStatueRenderer::new);
         event.registerEntityRenderer(MaledictEntities.DEMIURGE_TEAR.get(),
-                                     org.brahypno.maledict.client.realm.demiurge.DemiurgeTearRenderer::new);
+                                     DemiurgeTearRenderer::new);
         event.registerEntityRenderer(MaledictEntities.DEMIURGE_PILLAR.get(), DemiurgePillarRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_LIGHT_ORB.get(), VicissitudeLightOrbRenderer::new);
         event.registerEntityRenderer(MaledictEntities.VICISSITUDE_SPIRIT_BOLT.get(), VicissitudeSpiritBoltRenderer::new);

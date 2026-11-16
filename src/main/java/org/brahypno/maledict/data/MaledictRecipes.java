@@ -17,8 +17,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.common.crafting.StrictNBTIngredient;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.curio.hangman.HangmanFoolItem;
-import org.brahypno.maledict.common.weapon.remembrance.SpiritArrowType;
+import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.common.item.weapon.remembrance.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.function.Consumer;
