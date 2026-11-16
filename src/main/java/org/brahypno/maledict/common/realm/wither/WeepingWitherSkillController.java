@@ -56,7 +56,9 @@ public final class WeepingWitherSkillController {
     public static final double PULSE_KNOCKBACK = 1.5D;
     private static final int HALF_HEALTH_SUMMONS = 3;
     private static final int COMBAT_START_TICKS = 8 * 20;
-    /** The ordinary main-head danger roll, used per skull by the pre-half volley. */
+    /**
+     * The ordinary main-head danger roll, used per skull by the pre-half volley.
+     */
     private static final float PRE_HALF_VOLLEY_DANGEROUS_CHANCE = 0.001F;
     private static final DustParticleOptions BONE_DUST =
             new DustParticleOptions(new Vector3f(0.72F, 0.69F, 0.63F), 0.7F);
@@ -73,7 +75,8 @@ public final class WeepingWitherSkillController {
     private int castTicks;
     private int volleyDangerMask;
     private boolean volleyEmpowered;
-    @Nullable private BlockPos ossuaryGround;
+    @Nullable
+    private BlockPos ossuaryGround;
     private boolean ossuaryRing;
     private int ossuaryCooldown;
     private int volleyCooldown;
@@ -92,18 +95,19 @@ public final class WeepingWitherSkillController {
     }
 
     public void tick() {
-        if (wither.level().isClientSide) return;
+        if (wither.level().isClientSide)
+            return;
         tickCooldowns();
         evaluateHalfHealth();
-        if (wither.isReforming() || wither.isDeadOrDying() || wither.getInvulnerableTicks() > 0) {
+        if (wither.isReforming() || wither.isDeadOrDying() || wither.getInvulnerableTicks() > 0){
             cancelCast();
             return;
         }
         updateTargetState();
-        if (cast != Cast.NONE) {
-            if (cast == Cast.OSSUARY || cast == Cast.VOLLEY) {
+        if (cast != Cast.NONE){
+            if (cast == Cast.OSSUARY || cast == Cast.VOLLEY){
                 int windup = cast == Cast.OSSUARY ? OSSUARY_WINDUP : VOLLEY_WINDUP;
-                if (castTicks < windup && canStartPulse()) {
+                if (castTicks < windup && canStartPulse()){
                     // The pulse is the only skill allowed to pre-empt an uncommitted wind-up.
                     cast = Cast.NONE;
                     castTicks = 0;
@@ -116,22 +120,31 @@ public final class WeepingWitherSkillController {
             tickCast();
             return;
         }
-        if (globalCooldown > 0 || !validTarget) return;
-        if (canStartPulse()) startPulse();
-        else if (canStartEcho()) startEcho();
-        else if (canStartOssuary()) startOssuary();
-        else if (canStartVolley()) startVolley();
+        if (globalCooldown > 0 || !validTarget)
+            return;
+        if (canStartPulse())
+            startPulse();
+        else if (canStartEcho())
+            startEcho();
+        else if (canStartOssuary())
+            startOssuary();
+        else if (canStartVolley())
+            startVolley();
     }
 
-    /** Danger-skull clouds are passive and never take part in the A/C/D/E mutual exclusion. */
+    /**
+     * Danger-skull clouds are passive and never take part in the A/C/D/E mutual exclusion.
+     */
     public void onDangerousSkullBlockHit(BlockHitResult hit) {
         if (wither.level().isClientSide || wither.isReforming() || wither.isDeadOrDying()
-                || wither.getInvulnerableTicks() > 0 || blightCloudCooldown > 0) {
+            || wither.getInvulnerableTicks() > 0 || blightCloudCooldown > 0){
             return;
         }
-        if (!halfHealthEmpowered && wither.getRandom().nextFloat() >= 0.25F) return;
+        if (!halfHealthEmpowered && wither.getRandom().nextFloat() >= 0.25F)
+            return;
         Vec3 center = cloudCenter(hit.getBlockPos(), hit.getDirection());
-        if (center == null || hasNearbyCloud(center)) return;
+        if (center == null || hasNearbyCloud(center))
+            return;
         spawnBlightCloud(center);
         blightCloudCooldown = wither.isFinalPhase() ? BLIGHT_CLOUD_COOLDOWN_FINAL : BLIGHT_CLOUD_COOLDOWN;
     }
@@ -158,10 +171,10 @@ public final class WeepingWitherSkillController {
     }
 
     private void evaluateHalfHealth() {
-        if (!halfHealthEmpowered && wither.getHealth() <= wither.getMaxHealth() * 0.5F) {
+        if (!halfHealthEmpowered && wither.getHealth() <= wither.getMaxHealth() * 0.5F){
             halfHealthEmpowered = true;
         }
-        if (!halfHealthEmpowered || halfHealthSummonUsed || wither.isReforming() || wither.isDeadOrDying()) {
+        if (!halfHealthEmpowered || halfHealthSummonUsed || wither.isReforming() || wither.isDeadOrDying()){
             return;
         }
         // The flag records that the one-time wave has been triggered even if no slot was free.
@@ -173,21 +186,21 @@ public final class WeepingWitherSkillController {
     private void updateTargetState() {
         LivingEntity target = wither.getTarget();
         validTarget = target != null && target.isAlive() && target.level() == wither.level()
-                && wither.canAttack(target);
-        if (!validTarget) {
+                      && wither.canAttack(target);
+        if (!validTarget){
             closeTicks = 0;
             return;
         }
         combatTicks++;
-        if (wither.distanceToSqr(target) <= 25.0D) {
+        if (wither.distanceToSqr(target) <= 25.0D){
             closeTicks++;
-        } else {
+        }else {
             closeTicks = 0;
         }
     }
 
     private void cancelCast() {
-        if (cast != Cast.NONE) {
+        if (cast != Cast.NONE){
             cast = Cast.NONE;
             castTicks = 0;
             ossuaryGround = null;
@@ -198,14 +211,14 @@ public final class WeepingWitherSkillController {
     private void tickCast() {
         castTicks++;
         Level level = wither.level();
-        if (cast == Cast.OSSUARY) {
-            if (ossuaryGround == null) {
+        if (cast == Cast.OSSUARY){
+            if (ossuaryGround == null){
                 cast = Cast.NONE;
                 return;
             }
-            if (castTicks < OSSUARY_WINDUP) {
+            if (castTicks < OSSUARY_WINDUP){
                 warnOssuary();
-            } else {
+            }else {
                 spawnOssuaryFangs();
                 cast = Cast.NONE;
                 ossuaryGround = null;
@@ -213,25 +226,26 @@ public final class WeepingWitherSkillController {
             }
             return;
         }
-        if (cast == Cast.VOLLEY) {
+        if (cast == Cast.VOLLEY){
             chargeVolleyEffect();
-            if (castTicks >= VOLLEY_WINDUP && (castTicks - VOLLEY_WINDUP) % VOLLEY_ROUND_GAP == 0) {
+            if (castTicks >= VOLLEY_WINDUP && (castTicks - VOLLEY_WINDUP) % VOLLEY_ROUND_GAP == 0){
                 fireVolleyRound((castTicks - VOLLEY_WINDUP) / VOLLEY_ROUND_GAP);
             }
-            if (castTicks >= VOLLEY_CAST_TICKS) cast = Cast.NONE;
+            if (castTicks >= VOLLEY_CAST_TICKS)
+                cast = Cast.NONE;
             return;
         }
-        if (cast == Cast.PULSE) {
+        if (cast == Cast.PULSE){
             warnPulse(level);
-            if (castTicks >= PULSE_WINDUP) {
+            if (castTicks >= PULSE_WINDUP){
                 releasePulse();
                 cast = Cast.NONE;
             }
             return;
         }
-        if (cast == Cast.ECHO) {
+        if (cast == Cast.ECHO){
             warnEcho(level);
-            if (castTicks >= ECHO_WINDUP) {
+            if (castTicks >= ECHO_WINDUP){
                 spawnSkeletons(2, 4.0D, 7.0D, ECHO_SUMMON_LIFETIME);
                 cast = Cast.NONE;
             }
@@ -239,48 +253,60 @@ public final class WeepingWitherSkillController {
     }
 
     private void warnEcho(Level level) {
-        if (!(level instanceof ServerLevel serverLevel)) return;
+        if (!(level instanceof ServerLevel serverLevel))
+            return;
         double radius = 1.2D + castTicks * 0.16D;
         for (int index = 0; index < 8; index++) {
             double angle = index * Math.PI / 4.0D;
             serverLevel.sendParticles(SEEP_DUST,
-                    wither.getX() + Math.cos(angle) * radius,
-                    wither.getY() + 0.6D,
-                    wither.getZ() + Math.sin(angle) * radius,
-                    1, 0.0D, 0.15D, 0.0D, 0.0D);
+                                      wither.getX() + Math.cos(angle) * radius,
+                                      wither.getY() + 0.6D,
+                                      wither.getZ() + Math.sin(angle) * radius,
+                                      1, 0.0D, 0.15D, 0.0D, 0.0D);
         }
     }
 
     private boolean canStartPulse() {
-        if (pulseCooldown > 0 || closeTicks < 10) return false;
+        if (pulseCooldown > 0 || closeTicks < 10)
+            return false;
         LivingEntity target = wither.getTarget();
         return target != null && target.isAlive() && wither.canAttack(target)
-                && wither.distanceToSqr(target) <= 25.0D;
+               && wither.distanceToSqr(target) <= 25.0D;
     }
 
     private boolean canStartEcho() {
-        if (echoCooldown > 0 || combatTicks < COMBAT_START_TICKS) return false;
+        if (echoCooldown > 0 || combatTicks < COMBAT_START_TICKS)
+            return false;
         LivingEntity target = wither.getTarget();
-        if (target == null || !target.isAlive() || !wither.canAttack(target)) return false;
-        if (wither.distanceToSqr(target) > 400.0D) return false;
-        if (aliveSummons() >= 2) return false;
+        if (target == null || !target.isAlive() || !wither.canAttack(target))
+            return false;
+        if (wither.distanceToSqr(target) > 400.0D)
+            return false;
+        if (aliveSummons() >= 2)
+            return false;
         return findSkeletonSpot(4.0D, 7.0D) != null;
     }
 
     private boolean canStartOssuary() {
-        if (ossuaryCooldown > 0) return false;
+        if (ossuaryCooldown > 0)
+            return false;
         LivingEntity target = wither.getTarget();
-        if (target == null || !target.isAlive() || !wither.canAttack(target)) return false;
+        if (target == null || !target.isAlive() || !wither.canAttack(target))
+            return false;
         double distance = Math.sqrt(wither.distanceToSqr(target));
-        if (distance < 4.0D || distance > 16.0D) return false;
-        if (isSustainedFlyer(target)) return false;
+        if (distance < 4.0D || distance > 16.0D)
+            return false;
+        if (isSustainedFlyer(target))
+            return false;
         return findStandGround(wither.level(), target.position(), 6, 4) != null;
     }
 
     private boolean canStartVolley() {
-        if (volleyCooldown > 0) return false;
+        if (volleyCooldown > 0)
+            return false;
         LivingEntity target = wither.getTarget();
-        if (target == null || !target.isAlive() || !wither.canAttack(target)) return false;
+        if (target == null || !target.isAlive() || !wither.canAttack(target))
+            return false;
         double distance = Math.sqrt(wither.distanceToSqr(target));
         return distance >= 10.0D && distance <= 28.0D && wither.hasLineOfSight(target);
     }
@@ -299,9 +325,11 @@ public final class WeepingWitherSkillController {
 
     private void startOssuary() {
         LivingEntity target = wither.getTarget();
-        if (target == null) return;
+        if (target == null)
+            return;
         BlockPos ground = findStandGround(wither.level(), target.position(), 6, 4);
-        if (ground == null) return;
+        if (ground == null)
+            return;
         ossuaryGround = ground.immutable();
         ossuaryRing = shouldUseOssuaryRing();
         ossuaryCooldown = wither.isFinalPhase() ? OSSUARY_COOLDOWN_FINAL : OSSUARY_COOLDOWN;
@@ -309,20 +337,23 @@ public final class WeepingWitherSkillController {
         playSound(SoundEvents.EVOKER_PREPARE_ATTACK, 1.0F);
     }
 
-    /** The half-health ring is the optional layout, enabled on Hard; the final phase always uses it. */
+    /**
+     * The half-health ring is the optional layout, enabled on Hard; the final phase always uses it.
+     */
     private boolean shouldUseOssuaryRing() {
         return wither.isFinalPhase()
-                || (halfHealthEmpowered && wither.level().getDifficulty() == Difficulty.HARD);
+               || (halfHealthEmpowered && wither.level().getDifficulty() == Difficulty.HARD);
     }
 
     private void startVolley() {
         volleyCooldown = wither.isFinalPhase() ? VOLLEY_COOLDOWN_FINAL : VOLLEY_COOLDOWN;
         volleyEmpowered = halfHealthEmpowered;
         volleyDangerMask = 0;
-        if (volleyEmpowered) {
+        if (volleyEmpowered){
             int first = wither.getRandom().nextInt(9);
             int second = wither.getRandom().nextInt(8);
-            if (second >= first) second++;
+            if (second >= first)
+                second++;
             volleyDangerMask = (1 << first) | (1 << second);
         }
         beginCast(Cast.VOLLEY);
@@ -336,44 +367,50 @@ public final class WeepingWitherSkillController {
     }
 
     private void warnOssuary() {
-        if (ossuaryRing) {
+        if (ossuaryRing){
             warnOssuaryRing();
-        } else {
+        }else {
             warnOssuaryLine();
         }
     }
 
     private void warnOssuaryLine() {
         Level level = wither.level();
-        if (!(level instanceof ServerLevel serverLevel) || ossuaryGround == null) return;
+        if (!(level instanceof ServerLevel serverLevel) || ossuaryGround == null)
+            return;
         BlockPos ground = ossuaryGround;
         Vec3 direction = new Vec3(wither.getX() - (ground.getX() + 0.5D), 0.0D,
-                wither.getZ() - (ground.getZ() + 0.5D));
-        if (direction.lengthSqr() < 1.0E-4D) direction = new Vec3(1.0D, 0.0D, 0.0D);
+                                  wither.getZ() - (ground.getZ() + 0.5D));
+        if (direction.lengthSqr() < 1.0E-4D)
+            direction = new Vec3(1.0D, 0.0D, 0.0D);
         direction = direction.normalize();
         int length = ossuaryLength(ground);
         for (int index = 0; index < length; index++) {
             double x = ground.getX() + 0.5D + direction.x * index;
             double z = ground.getZ() + 0.5D + direction.z * index;
             Vec3 point = fangGround(level, x, z, ground.getY() - 3, ground.getY() + 3);
-            if (point == null) continue;
+            if (point == null)
+                continue;
             serverLevel.sendParticles(BONE_DUST, point.x, point.y + 0.15D, point.z, 1, 0.15D, 0.05D, 0.15D, 0.0D);
         }
     }
 
     private void warnOssuaryRing() {
         Level level = wither.level();
-        if (!(level instanceof ServerLevel serverLevel) || ossuaryGround == null) return;
+        if (!(level instanceof ServerLevel serverLevel) || ossuaryGround == null)
+            return;
         BlockPos ground = ossuaryGround;
         double centerX = ground.getX() + 0.5D;
         double centerZ = ground.getZ() + 0.5D;
         for (int index = 0; index < 12; index++) {
-            if (isOssuaryRingGap(index)) continue;
+            if (isOssuaryRingGap(index))
+                continue;
             double angle = index * (Math.PI * 2.0D / 12.0D);
             double x = centerX + Math.cos(angle) * 3.0D;
             double z = centerZ + Math.sin(angle) * 3.0D;
             Vec3 point = fangGround(level, x, z, ground.getY() - 3, ground.getY() + 3);
-            if (point == null) continue;
+            if (point == null)
+                continue;
             serverLevel.sendParticles(BONE_DUST, point.x, point.y + 0.15D, point.z, 1, 0.15D, 0.05D, 0.15D, 0.0D);
         }
     }
@@ -385,10 +422,11 @@ public final class WeepingWitherSkillController {
 
     private void spawnOssuaryFangs() {
         Level level = wither.level();
-        if (!(level instanceof ServerLevel) || ossuaryGround == null) return;
-        if (ossuaryRing) {
+        if (!(level instanceof ServerLevel) || ossuaryGround == null)
+            return;
+        if (ossuaryRing){
             spawnOssuaryRing(level, ossuaryGround);
-        } else {
+        }else {
             spawnOssuaryLine(level, ossuaryGround);
         }
     }
@@ -402,8 +440,9 @@ public final class WeepingWitherSkillController {
     private void spawnOssuaryLine(Level level, BlockPos ground) {
         int count = ossuaryLength(ground);
         Vec3 direction = new Vec3(wither.getX() - (ground.getX() + 0.5D), 0.0D,
-                wither.getZ() - (ground.getZ() + 0.5D));
-        if (direction.lengthSqr() < 1.0E-4D) direction = new Vec3(1.0D, 0.0D, 0.0D);
+                                  wither.getZ() - (ground.getZ() + 0.5D));
+        if (direction.lengthSqr() < 1.0E-4D)
+            direction = new Vec3(1.0D, 0.0D, 0.0D);
         direction = direction.normalize();
         for (int index = 0; index < count; index++) {
             double x = ground.getX() + 0.5D + direction.x * index;
@@ -416,7 +455,8 @@ public final class WeepingWitherSkillController {
         double centerX = ground.getX() + 0.5D;
         double centerZ = ground.getZ() + 0.5D;
         for (int index = 0; index < 12; index++) {
-            if (isOssuaryRingGap(index)) continue;
+            if (isOssuaryRingGap(index))
+                continue;
             double angle = index * (Math.PI * 2.0D / 12.0D);
             double x = centerX + Math.cos(angle) * 3.0D;
             double z = centerZ + Math.sin(angle) * 3.0D;
@@ -426,22 +466,26 @@ public final class WeepingWitherSkillController {
 
     private void spawnFang(Level level, double x, double z, double referenceY, double lookX, double lookZ) {
         Vec3 point = fangGround(level, x, z, referenceY - 3, referenceY + 3);
-        if (point == null) return;
+        if (point == null)
+            return;
         OssuaryFangs fangs = MaledictEntities.OSSUARY_FANGS.get().create(level);
-        if (fangs == null) return;
+        if (fangs == null)
+            return;
         fangs.setOwner(wither);
         // The 0.8 s cast wind-up is the warning; the fangs erupt on this tick.
         fangs.setWarmup(-7);
         float yaw = (float) (Mth.atan2(lookZ - z, lookX - x) * (180.0D / Math.PI));
         fangs.moveTo(point.x, point.y, point.z, yaw, 0.0F);
-        if (!level.addFreshEntity(fangs)) return;
-        if (level instanceof ServerLevel serverLevel) {
+        if (!level.addFreshEntity(fangs))
+            return;
+        if (level instanceof ServerLevel serverLevel){
             serverLevel.sendParticles(BONE_DUST, point.x, point.y + 0.2D, point.z, 4, 0.25D, 0.15D, 0.25D, 0.0D);
         }
     }
 
     private void chargeVolleyEffect() {
-        if (!(wither.level() instanceof ServerLevel serverLevel)) return;
+        if (!(wither.level() instanceof ServerLevel serverLevel))
+            return;
         for (int head = 0; head < 3; head++) {
             Vec3 muzzle = wither.headPosition(head);
             serverLevel.sendParticles(SEEP_DUST, muzzle.x, muzzle.y, muzzle.z, 2, 0.2D, 0.2D, 0.2D, 0.0D);
@@ -450,7 +494,7 @@ public final class WeepingWitherSkillController {
 
     private void fireVolleyRound(int round) {
         LivingEntity target = wither.getTarget();
-        if (target == null || !target.isAlive()) {
+        if (target == null || !target.isAlive()){
             cast = Cast.NONE;
             return;
         }
@@ -462,47 +506,50 @@ public final class WeepingWitherSkillController {
                     (wither.getRandom().nextDouble() - 0.5D) * 2.0D,
                     (wither.getRandom().nextDouble() - 0.5D) * 3.0D);
             boolean dangerous = volleyEmpowered
-                    ? (volleyDangerMask & (1 << shot)) != 0
-                    : wither.getRandom().nextFloat() < PRE_HALF_VOLLEY_DANGEROUS_CHANCE;
+                                ? (volleyDangerMask & (1 << shot)) != 0
+                                : wither.getRandom().nextFloat() < PRE_HALF_VOLLEY_DANGEROUS_CHANCE;
             wither.shoot(head, aim, dangerous);
         }
     }
 
     private void warnPulse(Level level) {
-        if (!(level instanceof ServerLevel serverLevel)) return;
+        if (!(level instanceof ServerLevel serverLevel))
+            return;
         double radius = 2.0D + (PULSE_WINDUP - castTicks) * 0.4D;
         for (int index = 0; index < 12; index++) {
             double angle = index * Math.PI / 6.0D;
             serverLevel.sendParticles(SEEP_DUST,
-                    wither.getX() + Math.cos(angle) * radius,
-                    wither.getY() + 1.0D,
-                    wither.getZ() + Math.sin(angle) * radius,
-                    1, 0.0D, 0.05D, 0.0D, 0.0D);
+                                      wither.getX() + Math.cos(angle) * radius,
+                                      wither.getY() + 1.0D,
+                                      wither.getZ() + Math.sin(angle) * radius,
+                                      1, 0.0D, 0.05D, 0.0D, 0.0D);
         }
     }
 
     private void releasePulse() {
-        if (!(wither.level() instanceof ServerLevel serverLevel)) return;
+        if (!(wither.level() instanceof ServerLevel serverLevel))
+            return;
         AABB area = wither.getBoundingBox().inflate(PULSE_RADIUS);
         for (LivingEntity victim : serverLevel.getEntitiesOfClass(LivingEntity.class, area,
-                candidate -> candidate != wither && candidate.isAlive() && !wither.isAlliedTo(candidate)
-                        && wither.canAttack(candidate) && !isOwnSummon(candidate))) {
+                                                                  candidate -> candidate != wither && candidate.isAlive() && !wither.isAlliedTo(candidate)
+                                                                               && wither.canAttack(candidate) && !isOwnSummon(candidate))) {
             double dx = victim.getX() - wither.getX();
             double dz = victim.getZ() - wither.getZ();
-            if (dx * dx + dz * dz < 1.0E-4D) {
+            if (dx * dx + dz * dz < 1.0E-4D){
                 dx = wither.getRandom().nextDouble() - 0.5D;
                 dz = wither.getRandom().nextDouble() - 0.5D;
             }
             victim.hurt(wither.damageSources().indirectMagic(wither, wither), PULSE_DAMAGE);
-            if (victim.isAlive()) victim.knockback(PULSE_KNOCKBACK, dx, dz);
+            if (victim.isAlive())
+                victim.knockback(PULSE_KNOCKBACK, dx, dz);
         }
         for (int index = 0; index < 48; index++) {
             double angle = index * Math.PI / 24.0D;
             serverLevel.sendParticles(index % 2 == 0 ? SEEP_DUST : BONE_DUST,
-                    wither.getX() + Math.cos(angle) * PULSE_RADIUS,
-                    wither.getY() + 0.8D,
-                    wither.getZ() + Math.sin(angle) * PULSE_RADIUS,
-                    1, 0.0D, 0.1D, 0.0D, 0.0D);
+                                      wither.getX() + Math.cos(angle) * PULSE_RADIUS,
+                                      wither.getY() + 0.8D,
+                                      wither.getZ() + Math.sin(angle) * PULSE_RADIUS,
+                                      1, 0.0D, 0.1D, 0.0D, 0.0D);
         }
         playSound(SoundEvents.WITHER_SHOOT, 1.0F);
     }
@@ -513,8 +560,8 @@ public final class WeepingWitherSkillController {
 
     private int aliveSummons() {
         return wither.level().getEntitiesOfClass(WeepingWitherSkeletonEntity.class,
-                wither.getBoundingBox().inflate(128.0D),
-                skeleton -> skeleton.isAlive() && skeleton.isOwnedBy(wither)).size();
+                                                 wither.getBoundingBox().inflate(128.0D),
+                                                 skeleton -> skeleton.isAlive() && skeleton.isOwnedBy(wither)).size();
     }
 
     private void discardSummons() {
@@ -526,57 +573,63 @@ public final class WeepingWitherSkillController {
     }
 
     private int spawnSkeletons(int requested, double minRadius, double maxRadius, int lifetimeTicks) {
-        if (requested <= 0 || !(wither.level() instanceof ServerLevel serverLevel)) return 0;
+        if (requested <= 0 || !(wither.level() instanceof ServerLevel serverLevel))
+            return 0;
         int capacity = Math.max(0, MAX_SUMMONS - aliveSummons());
         int limit = Math.min(requested, capacity);
         int spawned = 0;
         for (int attempt = 0; attempt < 24 && spawned < limit; attempt++) {
             WeepingWitherSkeletonEntity skeleton =
                     MaledictEntities.WEEPING_WITHER_SKELETON.get().create(serverLevel);
-            if (skeleton == null) return spawned;
+            if (skeleton == null)
+                return spawned;
             double angle = wither.getRandom().nextDouble() * Math.PI * 2.0D;
             double radius = minRadius + wither.getRandom().nextDouble() * (maxRadius - minRadius);
             double x = wither.getX() + Math.cos(angle) * radius;
             double z = wither.getZ() + Math.sin(angle) * radius;
             BlockPos ground = findStandGround(serverLevel, new Vec3(x, wither.getY() + 2.0D, z), 12, 4, 3);
-            if (ground == null) {
+            if (ground == null){
                 skeleton.discard();
                 continue;
             }
             skeleton.moveTo(ground.getX() + 0.5D, ground.getY(), ground.getZ() + 0.5D,
-                    wither.getRandom().nextFloat() * 360.0F, 0.0F);
-            if (!serverLevel.noCollision(skeleton)) {
+                            wither.getRandom().nextFloat() * 360.0F, 0.0F);
+            if (!serverLevel.noCollision(skeleton)){
                 skeleton.discard();
                 continue;
             }
             skeleton.finalizeSpawn(serverLevel,
-                    serverLevel.getCurrentDifficultyAt(ground), MobSpawnType.MOB_SUMMONED, null, null);
+                                   serverLevel.getCurrentDifficultyAt(ground), MobSpawnType.MOB_SUMMONED, null, null);
             skeleton.summonBy(wither, lifetimeTicks);
-            if (!serverLevel.addFreshEntity(skeleton)) {
+            if (!serverLevel.addFreshEntity(skeleton)){
                 skeleton.discard();
                 continue;
             }
             spawned++;
             serverLevel.sendParticles(SEEP_DUST,
-                    skeleton.getX(), skeleton.getY() + 1.0D, skeleton.getZ(),
-                    12, 0.35D, 0.7D, 0.35D, 0.02D);
+                                      skeleton.getX(), skeleton.getY() + 1.0D, skeleton.getZ(),
+                                      12, 0.35D, 0.7D, 0.35D, 0.02D);
             serverLevel.sendParticles(ParticleTypes.SOUL, skeleton.getX(), skeleton.getY() + 1.0D,
-                    skeleton.getZ(), 6, 0.3D, 0.6D, 0.3D, 0.01D);
+                                      skeleton.getZ(), 6, 0.3D, 0.6D, 0.3D, 0.01D);
+            skeleton.setTarget(wither.getTarget());
         }
-        if (spawned > 0) playSound(SoundEvents.EVOKER_CAST_SPELL, 1.0F);
+        if (spawned > 0)
+            playSound(SoundEvents.EVOKER_CAST_SPELL, 1.0F);
         return spawned;
     }
 
     @Nullable
     private BlockPos findSkeletonSpot(double minRadius, double maxRadius) {
-        if (!(wither.level() instanceof ServerLevel serverLevel)) return null;
+        if (!(wither.level() instanceof ServerLevel serverLevel))
+            return null;
         for (int attempt = 0; attempt < 12; attempt++) {
             double angle = wither.getRandom().nextDouble() * Math.PI * 2.0D;
             double radius = minRadius + wither.getRandom().nextDouble() * (maxRadius - minRadius);
             double x = wither.getX() + Math.cos(angle) * radius;
             double z = wither.getZ() + Math.sin(angle) * radius;
             BlockPos ground = findStandGround(serverLevel, new Vec3(x, wither.getY() + 2.0D, z), 12, 4, 3);
-            if (ground != null) return ground;
+            if (ground != null)
+                return ground;
         }
         return null;
     }
@@ -592,16 +645,18 @@ public final class WeepingWitherSkillController {
         for (int offset = up; offset >= -down; offset--) {
             BlockPos pos = origin.above(offset);
             BlockPos support = pos.below();
-            if (!level.getBlockState(support).isFaceSturdy(level, support, Direction.UP)) continue;
+            if (!level.getBlockState(support).isFaceSturdy(level, support, Direction.UP))
+                continue;
             boolean clear = true;
             for (int height = 0; height < airHeight; height++) {
                 BlockPos air = pos.above(height);
-                if (!level.isEmptyBlock(air) || !level.getFluidState(air).isEmpty()) {
+                if (!level.isEmptyBlock(air) || !level.getFluidState(air).isEmpty()){
                     clear = false;
                     break;
                 }
             }
-            if (clear) return pos;
+            if (clear)
+                return pos;
         }
         return null;
     }
@@ -612,11 +667,12 @@ public final class WeepingWitherSkillController {
         int floor = Mth.floor(minY) - 1;
         while (pos.getY() >= floor) {
             BlockPos support = pos.below();
-            if (level.getBlockState(support).isFaceSturdy(level, support, Direction.UP)) {
+            if (level.getBlockState(support).isFaceSturdy(level, support, Direction.UP)){
                 double extra = 0.0D;
-                if (!level.isEmptyBlock(pos)) {
+                if (!level.isEmptyBlock(pos)){
                     VoxelShape shape = level.getBlockState(pos).getCollisionShape(level, pos);
-                    if (!shape.isEmpty()) extra = shape.max(Direction.Axis.Y);
+                    if (!shape.isEmpty())
+                        extra = shape.max(Direction.Axis.Y);
                 }
                 return new Vec3(x, support.getY() + 1.0D + extra, z);
             }
@@ -626,7 +682,8 @@ public final class WeepingWitherSkillController {
     }
 
     private static boolean isSustainedFlyer(LivingEntity target) {
-        if (target.isFallFlying()) return true;
+        if (target.isFallFlying())
+            return true;
         return target instanceof Player player && player.getAbilities().flying;
     }
 
@@ -635,17 +692,17 @@ public final class WeepingWitherSkillController {
         Level level = wither.level();
         BlockPos pos = hitPos.relative(face);
         for (int attempt = 0; attempt < 4; attempt++) {
-            if (!level.isEmptyBlock(pos)) {
+            if (!level.isEmptyBlock(pos)){
                 pos = pos.above();
                 continue;
             }
-            if (!level.isEmptyBlock(pos.above())) {
+            if (!level.isEmptyBlock(pos.above())){
                 pos = pos.above();
                 continue;
             }
             BlockPos support = findStandGround(level, new Vec3(pos.getX() + 0.5D, pos.getY() + 1.0D,
-                    pos.getZ() + 0.5D), 5, 1);
-            if (support == null) {
+                                                               pos.getZ() + 0.5D), 5, 1);
+            if (support == null){
                 pos = pos.above();
                 continue;
             }
@@ -657,7 +714,7 @@ public final class WeepingWitherSkillController {
     private boolean hasNearbyCloud(Vec3 center) {
         AABB area = new AABB(center, center).inflate(4.0D);
         return !wither.level().getEntitiesOfClass(AreaEffectCloud.class, area,
-                cloud -> cloud.getPersistentData().getBoolean(CLOUD_TAG)).isEmpty();
+                                                  cloud -> cloud.getPersistentData().getBoolean(CLOUD_TAG)).isEmpty();
     }
 
     private void spawnBlightCloud(Vec3 center) {
@@ -672,14 +729,14 @@ public final class WeepingWitherSkillController {
         cloud.setFixedColor(0x3A2344);
         cloud.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 0));
         cloud.getPersistentData().putBoolean(CLOUD_TAG, true);
-        if (level.addFreshEntity(cloud)) {
+        if (level.addFreshEntity(cloud)){
             level.levelEvent(2006, BlockPos.containing(center), 1);
         }
     }
 
     private void playSound(net.minecraft.sounds.SoundEvent sound, float pitch) {
         wither.level().playSound(null, wither.getX(), wither.getY(), wither.getZ(), sound,
-                SoundSource.HOSTILE, 1.0F, pitch);
+                                 SoundSource.HOSTILE, 1.0F, pitch);
     }
 
     public void save(CompoundTag tag) {
@@ -698,7 +755,8 @@ public final class WeepingWitherSkillController {
         tag.putInt("VolleyDangerMask", volleyDangerMask);
         tag.putBoolean("VolleyEmpowered", volleyEmpowered);
         tag.putBoolean("OssuaryRing", ossuaryRing);
-        if (ossuaryGround != null) tag.putLong("OssuaryGround", ossuaryGround.asLong());
+        if (ossuaryGround != null)
+            tag.putLong("OssuaryGround", ossuaryGround.asLong());
     }
 
     public void restore(CompoundTag tag) {
@@ -715,29 +773,31 @@ public final class WeepingWitherSkillController {
         volleyDangerMask = tag.getInt("VolleyDangerMask") & 0x1FF;
         volleyEmpowered = tag.getBoolean("VolleyEmpowered");
         ossuaryRing = tag.getBoolean("OssuaryRing");
-        if (!volleyEmpowered) volleyDangerMask = 0;
+        if (!volleyEmpowered)
+            volleyDangerMask = 0;
         Cast saved = Cast.NONE;
         try {
             saved = Cast.valueOf(tag.getString("ActiveSkill"));
-        } catch (IllegalArgumentException ignored) {
+        }
+        catch (IllegalArgumentException ignored) {
             // Older or damaged saves simply resume without an active cast.
         }
         castTicks = Math.max(0, tag.getInt("ActiveSkillTicks"));
         cast = saved;
         ossuaryGround = tag.contains("OssuaryGround") ? BlockPos.of(tag.getLong("OssuaryGround")) : null;
         if (cast == Cast.OSSUARY && (ossuaryGround == null || castTicks >= OSSUARY_WINDUP)
-                || cast == Cast.VOLLEY && castTicks >= VOLLEY_CAST_TICKS
-                || cast == Cast.PULSE && castTicks >= PULSE_WINDUP
-                || cast == Cast.ECHO && castTicks >= ECHO_WINDUP) {
+            || cast == Cast.VOLLEY && castTicks >= VOLLEY_CAST_TICKS
+            || cast == Cast.PULSE && castTicks >= PULSE_WINDUP
+            || cast == Cast.ECHO && castTicks >= ECHO_WINDUP){
             cast = Cast.NONE;
             castTicks = 0;
             ossuaryGround = null;
         }
-        if (cast != Cast.OSSUARY) {
+        if (cast != Cast.OSSUARY){
             ossuaryGround = null;
             ossuaryRing = false;
         }
-        if (cast != Cast.VOLLEY) {
+        if (cast != Cast.VOLLEY){
             volleyEmpowered = false;
             volleyDangerMask = 0;
         }
