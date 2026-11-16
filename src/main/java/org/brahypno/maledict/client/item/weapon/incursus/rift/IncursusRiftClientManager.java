@@ -1,6 +1,10 @@
 package org.brahypno.maledict.client.item.weapon.incursus.rift;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -20,6 +24,8 @@ import java.util.List;
  * 客户端活跃裂隙花实例：接收挥砍通知、按 tick 推进年龄、负责视距与数量上限。
  *
  * <p>一次挥砍只创建一个实例；实例自己按 {@code age + partialTick} 求值，不生成任何需要独立 tick 的实体。
+ *
+ * <p>花心每帧跟着挥砍者走（{@link #anchorOf}），不钉在通知下发瞬间的世界坐标上。
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class IncursusRiftClientManager {
@@ -39,9 +45,40 @@ public final class IncursusRiftClientManager {
             return;
         }
         ACTIVE.add(IncursusRiftInstance.create(
-                packet.center(), packet.scale(), packet.seed(),
+                packet.ownerId(), packet.center(), packet.scale(), packet.seed(),
                 lifetimeTicks(), petalCount(), configFadeStart()));
         trim();
+    }
+
+    /**
+     * 这一帧花心该待的世界坐标：挥砍者的<b>本地</b>腰部位置，按 partialTick 插值。
+     *
+     * <p>腰环属于挥砍者，不属于下发瞬间的那块空气。玩家在效果持续的十二 tick 里跳起、被击退、
+     * 上台阶或单纯因为延迟与自己的服务端坐标错开，花心都必须跟着走，否则刀光会留在原地看着
+     * 像"跑到远处去了"。实体不在本地世界（区块没加载、刚重生）时退回 {@code instance.center()}。
+     */
+    public static Vec3 anchorOf(IncursusRiftInstance instance, float partialTick) {
+        Entity owner = ownerOf(instance);
+        if (owner == null){
+            return instance.center();
+        }
+        // 与 EntityRenderer 一致的插值：xo/yo/zo 是上一 tick 的位置。
+        return new Vec3(
+                Mth.lerp(partialTick, owner.xo, owner.getX()),
+                Mth.lerp(partialTick, owner.yo, owner.getY()) + owner.getBbHeight() * 0.5,
+                Mth.lerp(partialTick, owner.zo, owner.getZ()));
+    }
+
+    /**
+     * 挥砍者；只认活着的生物，否则返回 null 让调用方退回兜底坐标。
+     */
+    private static Entity ownerOf(IncursusRiftInstance instance) {
+        Level level = Minecraft.getInstance().level;
+        if (level == null){
+            return null;
+        }
+        Entity owner = level.getEntity(instance.ownerId());
+        return owner instanceof LivingEntity living && !living.isRemoved() ? living : null;
     }
 
     public static List<IncursusRiftInstance> activeInstances() {
@@ -121,7 +158,7 @@ public final class IncursusRiftClientManager {
         }
         Vec3 eye = minecraft.player.position();
         double limit = MAX_RENDER_DISTANCE * MAX_RENDER_DISTANCE;
-        ACTIVE.removeIf(instance -> instance.isExpired() || instance.center().distanceToSqr(eye) > limit);
+        ACTIVE.removeIf(instance -> instance.isExpired() || anchorOf(instance, 1.0F).distanceToSqr(eye) > limit);
         for (IncursusRiftInstance instance : ACTIVE) {
             instance.tick();
         }

@@ -70,15 +70,16 @@ vec2 layerCoord(vec3 p, float cells, float depth, float seed) {
     return ray + parallax + vec2(seed * 37.0, seed * 61.0);
 }
 
-// One chunky star per cell: bright core plus a short cross. `size` varies the star by layer
+// One chunky star per cell. `emptyChance` is the share of cells left dark, so the star count is
+// (1 - emptyChance) of all cells; lower it for a denser sky. `size` varies the star by layer
 // instead of the cell count; the cell count has to stay equal across layers, otherwise the
 // finer far layer would shift more per block of camera movement than the near one and the
 // parallax ordering would read backwards.
-float starCell(vec2 coordinate, float occupancy, float size, out vec3 tint) {
+float starCell(vec2 coordinate, float emptyChance, float size, out vec3 tint) {
     vec2 cell = floor(coordinate);
     vec2 local = fract(coordinate) - 0.5;
     tint = STAR_COOL;
-    if (hash21(cell + vec2(0.7, 1.3)) < occupancy) {
+    if (hash21(cell + vec2(0.7, 1.3)) < emptyChance) {
         return 0.0;
     }
     float pick = hash21(cell + 5.3);
@@ -127,13 +128,15 @@ void main() {
 
     // Three backdrops at 3.5, 12 and 40 blocks behind the tear. Same cell count, so the
     // camera shift per block is ordered by depth: near stars stream, far stars hold.
+    // Roughly two stars per cell in five reach the screen; the far layer stays sparser than
+    // the near one so the parallax still reads as distance rather than as one even star sheet.
     const float CELLS = 14.0;
     vec3 nearTint;
     vec3 midTint;
     vec3 farTint;
-    float nearStars = starCell(layerCoord(p, CELLS, 3.5, seed), 0.74, 1.30, nearTint);
-    float midStars = starCell(layerCoord(p, CELLS, 12.0, seed + 17.0), 0.80, 1.00, midTint);
-    float farStars = starCell(layerCoord(p, CELLS, 40.0, seed + 41.0), 0.86, 0.72, farTint);
+    float nearStars = starCell(layerCoord(p, CELLS, 3.5, seed), 0.58, 1.30, nearTint);
+    float midStars = starCell(layerCoord(p, CELLS, 12.0, seed + 17.0), 0.66, 1.00, midTint);
+    float farStars = starCell(layerCoord(p, CELLS, 40.0, seed + 41.0), 0.74, 0.72, farTint);
 
     float haze = band(layerCoord(p, 1.6, 12.0, seed + 5.0), seed);
     vec3 sky = mix(NIGHT_DEEP, NIGHT_MID, 0.30 + 0.45 * haze);

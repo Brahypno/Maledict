@@ -20,8 +20,11 @@ import java.util.UUID;
 public final class MaledictNetwork {
     /**
      * 6 -> 7: IncursusSlashPacket carries the swing seed so every client builds the same eight petals.
+     *
+     * <p>7 -> 8: IncursusSlashPacket carries the swing owner's entity id, so the waist ring follows
+     * the player instead of the position snapshot taken when the swing was sent.
      */
-    private static final String PROTOCOL = "7";
+    private static final String PROTOCOL = "8";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "main"),
             () -> PROTOCOL,
@@ -88,9 +91,14 @@ public final class MaledictNetwork {
         CHANNEL.sendToServer(new RadialAttackPacket());
     }
 
+    /**
+     * 除实体 id 之外还带一份世界坐标：追踪玩家与挥砍者本人都有这个实体，但实体会在被追踪的
+     * 客户端上短暂缺席（区块未加载、刚重生），那一帧就退回服务端下发的腰部坐标。
+     */
     public static void sendIncursusSlash(ServerPlayer player, float scale) {
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
-                     new IncursusSlashPacket(player.position().add(0, player.getBbHeight() * 0.5, 0), scale,
+                     new IncursusSlashPacket(player.getId(),
+                                             player.position().add(0, player.getBbHeight() * 0.5, 0), scale,
                                              player.getRandom().nextLong()));
     }
 

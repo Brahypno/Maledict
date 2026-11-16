@@ -25,6 +25,9 @@ import java.util.List;
  *
  * <p>在 {@code AFTER_PARTICLES} 画一遍：裂口内部的内容。轮廓由刀痕遮罩本身定义，
  * 不再额外描边，否则会多出一圈与"划开帷幕"冲突的颜色。
+ *
+ * <p>花心取 {@link IncursusRiftClientManager#anchorOf} 的实时腰部坐标，不是通知里的世界坐标快照：
+ * 旧粒子天生在世界里不动，而腰环属于挥砍者，钉死在快照上会在跳跃、击退里变成远处一块黑。
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class IncursusRiftRenderer {
@@ -89,10 +92,11 @@ public final class IncursusRiftRenderer {
         float root = (float) (IncursusRiftGeometry.ROOT_RADIUS * instanceScale);
         float baseHalf = IncursusRiftClientManager.petalHalfSize();
         IncursusRiftPetal[] petals = instance.petals();
+        // 花心每帧重取：腰环跟着挥砍者走，不钉在通知下发瞬间的世界坐标上。
+        Vec3 center = IncursusRiftClientManager.anchorOf(instance, partialTick);
 
         poses.pushPose();
-        poses.translate(instance.center().x - camera.x, instance.center().y - camera.y,
-                        instance.center().z - camera.z);
+        poses.translate(center.x - camera.x, center.y - camera.y, center.z - camera.z);
         Matrix4f matrix = poses.last().pose();
         for (IncursusRiftPetal petal : petals) {
             double angle = petal.angle();
