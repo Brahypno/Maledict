@@ -13,13 +13,12 @@
 // That is what reads as "a slit cut into a curtain with space behind it" instead of a star
 // decal pasted on the surface.
 //
-// RiftPass 0 = Core (night sky inside the tear), 1 = Rim (torn curtain edge).
+// One pass only: the silhouette is the blade mask itself, with no separate rim colour.
 // ASCII only: GLSL is specified as ASCII and some drivers reject non-ASCII in comments.
 
 uniform sampler2D Sampler0;
 
 uniform float RiftTime;
-uniform float RiftPass;
 uniform float RiftWiden;
 uniform float RiftStars;
 uniform vec3 RiftCam;
@@ -36,8 +35,6 @@ const vec3 NIGHT_HAZE = vec3(0.065, 0.075, 0.145);
 const vec3 STAR_COOL = vec3(0.78, 0.86, 1.00);
 const vec3 STAR_WARM = vec3(1.00, 0.95, 0.88);
 const vec3 STAR_CYAN = vec3(0.60, 0.93, 0.97);
-const vec3 RIM_SILVER = vec3(0.74, 0.75, 0.92);
-const vec3 RIM_DUSK = vec3(0.18, 0.19, 0.36);
 
 float hash21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
@@ -117,45 +114,40 @@ void main() {
     float stroke = maskAt(uv);
     float body = woundBody(uv, max(RiftWiden, 0.0) * (0.8 + 0.4 * variant));
 
-    if (RiftPass < 0.5) {
-        float bodyMask = smoothstep(0.25, 0.70, body);
-        if (bodyMask <= 0.01) {
-            discard;
-        }
-
-        vec3 p = viewPosition;
-
-        // Three backdrops at 3.5, 12 and 40 blocks behind the tear. Same cell count, so the
-        // camera shift per block is ordered by depth: near stars stream, far stars hold.
-        const float CELLS = 14.0;
-        vec3 nearTint;
-        vec3 midTint;
-        vec3 farTint;
-        float nearStars = starCell(layerCoord(p, CELLS, 3.5, seed), 0.74, 1.30, nearTint);
-        float midStars = starCell(layerCoord(p, CELLS, 12.0, seed + 17.0), 0.80, 1.00, midTint);
-        float farStars = starCell(layerCoord(p, CELLS, 40.0, seed + 41.0), 0.86, 0.72, farTint);
-
-        float haze = band(layerCoord(p, 1.6, 12.0, seed + 5.0), seed);
-        vec3 sky = mix(NIGHT_DEEP, NIGHT_MID, 0.30 + 0.45 * haze);
-        sky += NIGHT_HAZE * haze * 0.35;
-        sky += farStars * farTint * 0.40 * RiftStars;
-        sky += midStars * midTint * 0.65 * RiftStars;
-        sky += nearStars * nearTint * 0.95 * RiftStars;
-
-        // The torn edge of a curtain shades what is right behind it, so the opening does not
-        // look like a decal pasted on the surface.
-        sky *= mix(0.55, 1.0, smoothstep(0.0, 0.45, stroke));
-
-        fragColor = vec4(sky, bodyMask * alpha);
-    } else {
-        // The rim is exactly the halo the dilation added: a thin torn outline, never a
-        // second sheet of colour across the whole petal.
-        float edge = clamp(body - stroke, 0.0, 1.0);
-        if (edge <= 0.02) {
-            discard;
-        }
-        float glint = step(0.93, hash21(floor(uv * 30.0) + seed * 31.0));
-        vec3 color = mix(RIM_DUSK, RIM_SILVER, smoothstep(0.05, 0.95, edge)) + glint * STAR_COOL * 0.4;
-        fragColor = vec4(color, edge * alpha * 0.45);
+    // Hard cut. A wide smoothstep here turns the mark into smoke; the texture is only 64 px
+    // spread over roughly seven blocks, so its own edge is already blurry and needs a
+    // threshold rather than more softening. The two narrow bounds keep one texel of anti
+    // aliasing so the outline does not crawl.
+    float bodyMask = smoothstep(0.42, 0.58, body);
+    if (bodyMask <= 0.01) {
+        discard;
     }
+
+    vec3 p = viewPosition;
+
+    // Three backdrops at 3.5, 12 and 40 blocks behind the tear. Same cell count, so the
+    // camera shift per block is ordered by depth: near stars stream, far stars hold.
+    const float CELLS = 14.0;
+    vec3 nearTint;
+    vec3 midTint;
+    vec3 farTint;
+    float nearStars = starCell(layerCoord(p, CELLS, 3.5, seed), 0.74, 1.30, nearTint);
+    float midStars = starCell(layerCoord(p, CELLS, 12.0, seed + 17.0), 0.80, 1.00, midTint);
+    float farStars = starCell(layerCoord(p, CELLS, 40.0, seed + 41.0), 0.86, 0.72, farTint);
+
+    float haze = band(layerCoord(p, 1.6, 12.0, seed + 5.0), seed);
+    vec3 sky = mix(NIGHT_DEEP, NIGHT_MID, 0.30 + 0.45 * haze);
+    sky += NIGHT_HAZE * haze * 0.35;
+    sky += farStars * farTint * 0.48 * RiftStars;
+    sky += midStars * midTint * 0.78 * RiftStars;
+    sky += nearStars * nearTint * 1.10 * RiftStars;
+
+    // The cut itself: the outer band of the mark is a near black gap, which is what makes
+    // the edge read as a blade slit with a curtain's thickness behind it. The night sky only
+    // shows in the core of the mark, so the taper of the original stroke is preserved.
+    float slit = smoothstep(0.40, 0.80, stroke);
+    vec3 gap = vec3(0.002, 0.003, 0.008);
+    vec3 color = mix(gap, sky, slit);
+
+    fragColor = vec4(color, bodyMask * alpha);
 }

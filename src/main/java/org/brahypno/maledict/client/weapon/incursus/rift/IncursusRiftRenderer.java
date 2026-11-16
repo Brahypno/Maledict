@@ -23,7 +23,8 @@ import java.util.List;
  * 四边形半边长就是旧效果的 {@code quadSize}（3.0–4.5 格），刀痕贴图的可见笔画只占其中一小条。
  * 写成面向相机的公告板会让八片糊到正面，和旧花完全不同。
  *
- * <p>在 {@code AFTER_PARTICLES} 画两遍：先 Core（近不透明裂口，写深度），再 Rim（银紫撕裂边，只写颜色）。
+ * <p>在 {@code AFTER_PARTICLES} 画一遍：裂口内部的内容。轮廓由刀痕遮罩本身定义，
+ * 不再额外描边，否则会多出一圈与"划开帷幕"冲突的颜色。
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class IncursusRiftRenderer {
@@ -50,46 +51,32 @@ public final class IncursusRiftRenderer {
             IncursusRiftShaders.setTime((System.nanoTime() - STARTED_NANOS) / 1.0E9F);
             IncursusRiftShaders.setWiden(IncursusRiftClientManager.widen());
             IncursusRiftShaders.setStars(IncursusRiftClientManager.starStrength());
+            IncursusRiftShaders.setCamera(event.getCamera().getPosition());
         }
 
         PoseStack poses = event.getPoseStack();
         Vec3 camera = event.getCamera().getPosition();
         MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
         boolean depthTest = IncursusRiftClientManager.respectWorldDepth();
-        if (custom) {
-            IncursusRiftShaders.setCamera(camera);
-        }
 
         for (int frame = 0; frame < IncursusRiftRenderTypes.frameCount(); frame++) {
-            drawPass(IncursusRiftRenderTypes.core(frame, custom, depthTest), false, frame, custom,
-                    instances, poses, camera, buffers, partialTick);
-            drawPass(IncursusRiftRenderTypes.rim(frame, custom, depthTest), true, frame, custom,
-                    instances, poses, camera, buffers, partialTick);
-        }
-    }
-
-    private static void drawPass(
-            RenderType type, boolean rim, int frame, boolean custom,
-            List<IncursusRiftInstance> instances, PoseStack poses, Vec3 camera,
-            MultiBufferSource.BufferSource buffers, float partialTick) {
-        if (type == null) {
-            return;
-        }
-        VertexConsumer vertices = buffers.getBuffer(type);
-        if (custom) {
-            IncursusRiftShaders.setPass(rim);
-        }
-        for (IncursusRiftInstance instance : instances) {
-            if (instance.maskFrame(partialTick) != frame) {
+            RenderType type = IncursusRiftRenderTypes.core(frame, custom, depthTest);
+            if (type == null) {
                 continue;
             }
-            float alpha = instance.alpha(partialTick) * IncursusRiftClientManager.intensity();
-            if (alpha <= DISCARD_ALPHA) {
-                continue;
+            VertexConsumer vertices = buffers.getBuffer(type);
+            for (IncursusRiftInstance instance : instances) {
+                if (instance.maskFrame(partialTick) != frame) {
+                    continue;
+                }
+                float alpha = instance.alpha(partialTick) * IncursusRiftClientManager.intensity();
+                if (alpha <= DISCARD_ALPHA) {
+                    continue;
+                }
+                emitInstance(vertices, poses, camera, instance, partialTick, alpha, custom);
             }
-            emitInstance(vertices, poses, camera, instance, partialTick, alpha, custom);
+            buffers.endBatch(type);
         }
-        buffers.endBatch(type);
     }
 
     private static void emitInstance(

@@ -9,13 +9,13 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * 裂隙花的两个绘制通道与它们绑定的刀痕贴图。
+ * 裂隙花唯一的绘制通道与它绑定的刀痕贴图。
  *
  * <p>贴图直接引用 Malum 的 {@code heavy_slash_00..03}（末帧重复），所以 Maledict 的 jar 里
  * 不含任何 Malum 资源文件；文件缺失时这里返回 null，由调用方退回旧的粒子斩击。
  *
- * <p>Core 通道是近不透明的裂口，写入深度；Rim 通道是银紫撕裂边，只写颜色，
- * 两者共用同一个 shader，靠 {@code RiftPass} 区分。
+ * <p>只有一层：裂口内部的内容。早先还有一层边缘高光，会额外给裂口描一圈颜色，
+ * 与"一刀划开、后面就是夜空"的观感冲突，已经去掉。
  */
 public final class IncursusRiftRenderTypes extends RenderStateShard {
     private static final ResourceLocation[] MASK_TEXTURES = {
@@ -33,8 +33,8 @@ public final class IncursusRiftRenderTypes extends RenderStateShard {
             "textures/particle/slash/heavy_slash_03.png"
     };
 
-    private static final RenderType[][] CORE = new RenderType[MASK_TEXTURES.length][4];
-    private static final RenderType[][] RIM = new RenderType[MASK_TEXTURES.length][4];
+    /** 缓存槽位：bit0 = 是否使用自研 shader，bit1 = 是否尊重世界深度。 */
+    private static final RenderType[] CORE = new RenderType[MASK_TEXTURES.length * 4];
     private static final Boolean[] MASK_PRESENT = new Boolean[MASK_TEXTURES.length];
 
     private static ShaderStateShard customShader;
@@ -61,21 +61,11 @@ public final class IncursusRiftRenderTypes extends RenderStateShard {
     }
 
     public static RenderType core(int frame, boolean custom, boolean depthTest) {
-        return get(CORE, frame, custom, depthTest, false);
-    }
-
-    public static RenderType rim(int frame, boolean custom, boolean depthTest) {
-        return get(RIM, frame, custom, depthTest, true);
-    }
-
-    /** 缓存槽位：bit0 = 是否使用自研 shader，bit1 = 是否尊重世界深度。 */
-    private static RenderType get(
-            RenderType[][] cache, int frame, boolean custom, boolean depthTest, boolean rim) {
-        if (frame < 0 || frame >= cache.length) {
+        if (frame < 0 || frame >= MASK_TEXTURES.length) {
             return null;
         }
-        int slot = (custom ? 1 : 0) | (depthTest ? 2 : 0);
-        RenderType cached = cache[frame][slot];
+        int slot = frame * 4 + (custom ? 1 : 0) + (depthTest ? 2 : 0);
+        RenderType cached = CORE[slot];
         if (cached != null) {
             return cached;
         }
@@ -85,14 +75,13 @@ public final class IncursusRiftRenderTypes extends RenderStateShard {
         if (!maskAvailable(frame)) {
             return null;
         }
-        RenderType created = rim
-                ? createRim(frame, custom, depthTest, MASK_TEXTURES[frame])
-                : createCore(frame, custom, depthTest, MASK_TEXTURES[frame]);
-        cache[frame][slot] = created;
+        RenderType created = create(frame, custom, depthTest, MASK_TEXTURES[frame]);
+        CORE[slot] = created;
         return created;
     }
 
-    private static RenderType createCore(int frame, boolean custom, boolean depthTest, ResourceLocation texture) {
+    private static RenderType create(
+            int frame, boolean custom, boolean depthTest, ResourceLocation texture) {
         RenderType.CompositeState state = RenderType.CompositeState.builder()
                 .setShaderState(shaderState(custom))
                 .setTextureState(new TextureStateShard(texture, false, false))
@@ -105,24 +94,7 @@ public final class IncursusRiftRenderTypes extends RenderStateShard {
                 .setLightmapState(NO_LIGHTMAP)
                 .setOverlayState(NO_OVERLAY)
                 .createCompositeState(false);
-        return RenderType.create(name("core", frame, custom, depthTest),
-                DefaultVertexFormat.POSITION_COLOR_TEX, VertexFormat.Mode.QUADS,
-                512, false, true, state);
-    }
-
-    private static RenderType createRim(int frame, boolean custom, boolean depthTest, ResourceLocation texture) {
-        RenderType.CompositeState state = RenderType.CompositeState.builder()
-                .setShaderState(shaderState(custom))
-                .setTextureState(new TextureStateShard(texture, false, false))
-                .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                .setDepthTestState(depthState(depthTest))
-                // 边缘只写颜色，避免与 Core 共面时抢深度。
-                .setWriteMaskState(COLOR_WRITE)
-                .setCullState(NO_CULL)
-                .setLightmapState(NO_LIGHTMAP)
-                .setOverlayState(NO_OVERLAY)
-                .createCompositeState(false);
-        return RenderType.create(name("rim", frame, custom, depthTest),
+        return RenderType.create(name(frame, custom, depthTest),
                 DefaultVertexFormat.POSITION_COLOR_TEX, VertexFormat.Mode.QUADS,
                 512, false, true, state);
     }
@@ -132,8 +104,7 @@ public final class IncursusRiftRenderTypes extends RenderStateShard {
         return depthTest ? LEQUAL_DEPTH_TEST : NO_DEPTH_TEST;
     }
 
-    private static ShaderStateShard shaderState(boolean custom) {
-        if (custom) {
+    private static ShaderStateShard shaderState(boolean custom) {        if (custom) {
             if (customShader == null) {
                 customShader = new ShaderStateShard(IncursusRiftShaders::shader);
             }
@@ -145,8 +116,8 @@ public final class IncursusRiftRenderTypes extends RenderStateShard {
         return vanillaShader;
     }
 
-    private static String name(String pass, int frame, boolean custom, boolean depthTest) {
-        return "maledict_incursus_rift_" + pass + "_" + frame
+    private static String name(int frame, boolean custom, boolean depthTest) {
+        return "maledict_incursus_rift_" + frame
                + (custom ? "_shader" : "_plain") + (depthTest ? "_depth" : "_noclip");
     }
 
@@ -160,11 +131,10 @@ public final class IncursusRiftRenderTypes extends RenderStateShard {
 
     /** 资源重载后 ShaderInstance 与贴图可用性都可能变，缓存的 RenderType 必须重算。 */
     public static void invalidate() {
-        for (int frame = 0; frame < CORE.length; frame++) {
-            for (int slot = 0; slot < CORE[frame].length; slot++) {
-                CORE[frame][slot] = null;
-                RIM[frame][slot] = null;
-            }
+        for (int slot = 0; slot < CORE.length; slot++) {
+            CORE[slot] = null;
+        }
+        for (int frame = 0; frame < MASK_PRESENT.length; frame++) {
             MASK_PRESENT[frame] = null;
         }
         customShader = null;

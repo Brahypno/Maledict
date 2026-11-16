@@ -26,7 +26,6 @@ public final class IncursusRiftShaders {
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "incursus_rift");
 
     private static final String UNIFORM_TIME = "RiftTime";
-    private static final String UNIFORM_PASS = "RiftPass";
     private static final String UNIFORM_WIDEN = "RiftWiden";
     private static final String UNIFORM_STARS = "RiftStars";
     private static final String UNIFORM_CAMERA = "RiftCam";
@@ -82,12 +81,7 @@ public final class IncursusRiftShaders {
         uniform(UNIFORM_TIME).set(seconds);
     }
 
-    /** {@code rim} 为真时切到边缘通道，为假时切到内核通道。 */
-    public static void setPass(boolean rim) {
-        uniform(UNIFORM_PASS).set(rim ? 1.0F : 0.0F);
-    }
-
-    /** 内核加宽量，单位是贴图 UV。 */
+    /** 裂口加宽量，单位是贴图 UV。 */
     public static void setWiden(float width) {
         uniform(UNIFORM_WIDEN).set(width);
     }

@@ -345,13 +345,13 @@ public final class MaledictConfig {
                          "this many; the oldest is dropped first.")
                 .defineInRange("maxInstances", 6, 1, 32);
         INCURSUS_RIFT_WIDEN = clientBuilder
-                .comment("How far the shader widens the thin stroke into a wound body, in texture UV.",
-                         "The hand drawn stroke is only about 0.05 UV wide, and one UV unit spans the",
-                         "whole quad (7.5 blocks at the default size), so this value is much more",
-                         "powerful than it looks: 0.10 turns every stroke into a three quarter block",
-                         "halo and eight of them merge into one slab, while 0.015 adds a thin torn",
-                         "outline. 0 keeps exactly the original stroke width.")
-                .defineInRange("widen", 0.015D, 0.0D, 0.30D);
+                .comment("How far the shader widens the hairline stroke, in texture UV. The quad is",
+                         "roughly 7.5 blocks wide, so one UV unit spans all of it: 0.10 turns every",
+                         "stroke into a three quarter block halo and eight of them merge into one",
+                         "slab, while 0.006 is about half a texture texel. 0 keeps exactly the",
+                         "original knife mark. This no longer adds a coloured outline; it only",
+                         "decides how wide the dark slit around the night sky is.")
+                .defineInRange("widen", 0.006D, 0.0D, 0.30D);
         INCURSUS_RIFT_STARS = clientBuilder
                 .comment("Star field strength inside the void, 1.0 as authored. 0 leaves a pure black",
                          "cut with no stars at all.")
