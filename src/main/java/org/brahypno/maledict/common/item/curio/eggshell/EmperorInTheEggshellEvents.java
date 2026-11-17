@@ -21,8 +21,8 @@ import java.util.WeakHashMap;
  *
  * <p>为什么挂在 {@code LivingHurtEvent}：D0 普通 hurt 和 D1 直接 {@code actuallyHurt} 都会经过这里，
  * 所以它就是 D1 防御；D2+ 的 {@code setHealth} 不经过这个事件，天然穿透。窗口只负责时间衰减，
- * 单次命中的上限由同包的 {@code CombatProtection.Guard}（D4 层，equip 时挂、unequip 时关）管，
- * 两者各管一段，不互相替代。
+ * 单次命中的上限由同包的 {@code CombatProtection.Guard}（D4 层，equip 时挂、unequip 时关，固定 key）
+ * 管，两者各管一段，不互相替代。
  *
  * <p>原版帧不碰：vanilla 的 20 tick 仍然在前，本窗口只处理穿过它、进入 {@code actuallyHurt} 的伤害。
  * 火/摔落等正常走原版受击的伤害会一样处理；带 {@code BYPASSES_INVULNERABILITY} 的来源（/kill、虚空等）
@@ -42,7 +42,7 @@ public final class EmperorInTheEggshellEvents {
         if (victim.level().isClientSide() || event.isCanceled()){
             return;
         }
-        if (!EmperorInTheEggshellItem.isEquipped(victim)){
+        if (!wearing(victim)){
             WINDOWS.remove(victim);
             return;
         }
@@ -83,7 +83,7 @@ public final class EmperorInTheEggshellEvents {
         if (victim.level().isClientSide() || event.isCanceled()){
             return;
         }
-        if (!EmperorInTheEggshellItem.isEquipped(victim)){
+        if (!wearing(victim)){
             WINDOWS.remove(victim);
             return;
         }
@@ -116,7 +116,16 @@ public final class EmperorInTheEggshellEvents {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         WINDOWS.clear();
-        EmperorInTheEggshellItem.clearWards();
+    }
+
+    /**
+     * Worn check with a cheap fast path. While the ward layer exists it answers for the item, and the Curios scan
+     * is only needed when the configured share is 0 or the layer could not be installed, so the window and the
+     * per-hit cap stay independent knobs.
+     */
+    private static boolean wearing(LivingEntity victim) {
+        return EmperorInTheEggshellItem.isWardActive(victim)
+               || EmperorInTheEggshellItem.isEquipped(victim);
     }
 
     private EmperorInTheEggshellEvents() {
