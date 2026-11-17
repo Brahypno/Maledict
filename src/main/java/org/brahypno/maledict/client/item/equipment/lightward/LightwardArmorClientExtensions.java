@@ -18,7 +18,8 @@ public final class LightwardArmorClientExtensions implements IClientItemExtensio
     public static void bake(EntityModelSet models) {
         helmet = new LightwardArmorModel(models.bakeLayer(LightwardArmorModel.HELMET_LAYER));
         soulStained = new LightwardArmorModel(models.bakeLayer(LightwardArmorModel.LOWER_ARMOR_LAYER));
-        chestplate = new LightwardArmorModel(models.bakeLayer(LightwardArmorModel.CHESTPLATE_LAYER));
+        chestplate = new LightwardArmorModel(models.bakeLayer(LightwardArmorModel.CHESTPLATE_LAYER),
+                models.bakeLayer(LightwardArmorModel.CHESTPLATE_DETAILS_LAYER));
     }
 
     @Override

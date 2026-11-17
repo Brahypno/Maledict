@@ -1,0 +1,159 @@
+{
+  "shrine_niche": {
+    "offset": [0, 0.05, 0.075],
+    "rotation": [0.2618, 0, 0],
+    "cubes": [
+      {"pos": [-2, -0.38, -5.31], "size": [4, 3, 1], "uv": [96, 44]}
+    ]
+  },
+  "shrine_bevel_left": {
+    "offset": [1.73, 2.3243, -4.5489],
+    "rotation": [0.2854, -0.4048, -0.1151],
+    "cubes": [
+      {"pos": [-0.5, -1.48, -0.45], "size": [1, 3, 1], "uv": [108, 44], "mirror": true}
+    ]
+  },
+  "shrine_bevel_right": {
+    "offset": [-1.73, 2.3243, -4.5489],
+    "rotation": [0.2854, 0.4048, 0.1151],
+    "cubes": [
+      {"pos": [-0.5, -1.48, -0.45], "size": [1, 3, 1], "uv": [108, 44]}
+    ]
+  },
+  "shrine_sill": {
+    "offset": [0, 3.913, -4.1802],
+    "rotation": [0.6118, 0, 0],
+    "cubes": [
+      {"pos": [-2, -0.5, -0.44], "size": [4, 1, 1], "uv": [114, 44], "inflate": -0.1}
+    ]
+  },
+  "nether_star_core": {
+    "offset": [0, 2.4142, -4.9234],
+    "rotation": [0.1872, -0.1841, 0.7681],
+    "cubes": [
+      {"pos": [-1.5, -1.5, -0.53], "size": [3, 3, 1], "uv": [96, 50], "inflate": -0.42}
+    ]
+  },
+  "wing_mount_left": {
+    "offset": [4.09, 2.47, 3.45],
+    "rotation": [-0.34, 0, 0.65],
+    "cubes": [
+      {"pos": [-1, -2.58, -0.77], "size": [2, 4, 2], "uv": [116, 8], "mirror": true}
+    ]
+  },
+  "wing_mount_right": {
+    "offset": [-4.09, 2.47, 3.45],
+    "rotation": [-0.34, 0, -0.65],
+    "cubes": [
+      {"pos": [-1, -2.58, -0.77], "size": [2, 4, 2], "uv": [116, 8]}
+    ]
+  },
+  "wing_mantle_left": {
+    "offset": [7.78, -2.6, 2.83],
+    "rotation": [-0.22, 0.08, 0.16],
+    "cubes": [
+      {"pos": [-2.5, -0.48, -1.38], "size": [5, 1, 4], "uv": [96, 0], "mirror": true}
+    ]
+  },
+  "wing_mantle_right": {
+    "offset": [-7.78, -2.6, 2.83],
+    "rotation": [-0.22, -0.08, -0.16],
+    "cubes": [
+      {"pos": [-2.5, -0.48, -1.38], "size": [5, 1, 4], "uv": [96, 0]}
+    ]
+  },
+  "wing_coverts_left": {
+    "offset": [8.03, -0.46, 4.51],
+    "rotation": [0.23, 0.08, 0.15],
+    "cubes": [
+      {"pos": [-2.5, -1.92, -0.66], "size": [5, 4, 2], "uv": [96, 8], "mirror": true}
+    ]
+  },
+  "wing_coverts_right": {
+    "offset": [-8.03, -0.46, 4.51],
+    "rotation": [0.23, -0.08, -0.15],
+    "cubes": [
+      {"pos": [-2.5, -1.92, -0.66], "size": [5, 4, 2], "uv": [96, 8]}
+    ]
+  },
+  "wing_secondary_inner_left": {
+    "offset": [6.37, 1.35, 5.86],
+    "rotation": [0.2, -0.22, 0.25],
+    "cubes": [
+      {"pos": [-1, -0.9, -0.38], "size": [2, 5, 1], "uv": [96, 16], "mirror": true},
+      {"pos": [-0.68, 3.89, -0.35], "size": [1, 2, 1], "uv": [112, 16], "mirror": true}
+    ]
+  },
+  "wing_secondary_inner_right": {
+    "offset": [-6.37, 1.35, 5.86],
+    "rotation": [0.2, 0.22, -0.25],
+    "cubes": [
+      {"pos": [-1, -0.9, -0.38], "size": [2, 5, 1], "uv": [96, 16]},
+      {"pos": [-0.32, 3.89, -0.35], "size": [1, 2, 1], "uv": [112, 16]}
+    ]
+  },
+  "wing_secondary_outer_left": {
+    "offset": [9.96, 0.83, 5.52],
+    "rotation": [0.35, 0.14, 0.13],
+    "cubes": [
+      {"pos": [-1, -0.98, -0.37], "size": [2, 6, 1], "uv": [104, 16], "mirror": true},
+      {"pos": [-0.65, 4.81, -0.34], "size": [1, 2, 1], "uv": [112, 16], "mirror": true}
+    ]
+  },
+  "wing_secondary_outer_right": {
+    "offset": [-9.96, 0.83, 5.52],
+    "rotation": [0.35, -0.14, -0.13],
+    "cubes": [
+      {"pos": [-1, -0.98, -0.37], "size": [2, 6, 1], "uv": [104, 16]},
+      {"pos": [-0.35, 4.81, -0.34], "size": [1, 2, 1], "uv": [112, 16]}
+    ]
+  },
+  "wing_primary_inner_left": {
+    "offset": [7.64, 2.53, 5.66],
+    "rotation": [0.28, -0.09, 0.22],
+    "cubes": [
+      {"pos": [-1, -0.35, -0.4], "size": [2, 7, 1], "uv": [96, 24], "mirror": true},
+      {"pos": [-0.64, 6.47, -0.36], "size": [1, 3, 1], "uv": [96, 34], "mirror": true}
+    ]
+  },
+  "wing_primary_inner_right": {
+    "offset": [-7.64, 2.53, 5.66],
+    "rotation": [0.28, 0.09, -0.22],
+    "cubes": [
+      {"pos": [-1, -0.35, -0.4], "size": [2, 7, 1], "uv": [96, 24]},
+      {"pos": [-0.36, 6.47, -0.36], "size": [1, 3, 1], "uv": [96, 34]}
+    ]
+  },
+  "wing_primary_middle_left": {
+    "offset": [8.95, 2.25, 5.57],
+    "rotation": [0.33, 0.11, 0.24],
+    "cubes": [
+      {"pos": [-1, -0.37, -0.3], "size": [2, 6, 1], "uv": [106, 24], "mirror": true},
+      {"pos": [-0.59, 5.44, -0.26], "size": [1, 3, 1], "uv": [102, 34], "mirror": true}
+    ]
+  },
+  "wing_primary_middle_right": {
+    "offset": [-8.95, 2.25, 5.57],
+    "rotation": [0.33, -0.11, -0.24],
+    "cubes": [
+      {"pos": [-1, -0.37, -0.3], "size": [2, 6, 1], "uv": [106, 24]},
+      {"pos": [-0.41, 5.44, -0.26], "size": [1, 3, 1], "uv": [102, 34]}
+    ]
+  },
+  "wing_primary_outer_left": {
+    "offset": [10.16, 1.97, 5.14],
+    "rotation": [0.36, 0.13, 0.27],
+    "cubes": [
+      {"pos": [-1, -0.39, -0.43], "size": [2, 5, 1], "uv": [116, 24], "mirror": true},
+      {"pos": [-0.57, 4.43, -0.39], "size": [1, 3, 1], "uv": [108, 34], "mirror": true}
+    ]
+  },
+  "wing_primary_outer_right": {
+    "offset": [-10.16, 1.97, 5.14],
+    "rotation": [0.36, -0.13, -0.27],
+    "cubes": [
+      {"pos": [-1, -0.39, -0.43], "size": [2, 5, 1], "uv": [116, 24]},
+      {"pos": [-0.43, 4.43, -0.39], "size": [1, 3, 1], "uv": [108, 34]}
+    ]
+  }
+}

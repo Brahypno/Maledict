@@ -14,20 +14,33 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.entity.EquipmentSlot;
 import org.brahypno.maledict.Maledict;
 import team.lodestar.lodestone.systems.model.LodestoneArmorModel;
 
 import java.io.IOException;
+import java.util.List;
 
 public final class LightwardArmorModel extends LodestoneArmorModel {
     public static final ModelLayerLocation HELMET_LAYER = layer("aufheben_lightward_helmet");
     public static final ModelLayerLocation CHESTPLATE_LAYER = layer("aufheben_lightward_chestplate");
+    public static final ModelLayerLocation CHESTPLATE_DETAILS_LAYER = layer("aufheben_lightward_chestplate_details");
     public static final ModelLayerLocation LOWER_ARMOR_LAYER = layer("aufheben_lightward_lower_armor");
     private static final ResourceLocation HELMET_GEOMETRY = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "models/armor/aufheben_lightward_helmet.geometry.json");
+    private static final ResourceLocation CHESTPLATE_GEOMETRY = ResourceLocation.fromNamespaceAndPath(
+            Maledict.MODID, "models/armor/aufheben_lightward_chestplate.geometry.json");
+    private final ModelPart chestOverlay;
+    private final List<ModelPart> chestParts;
 
     public LightwardArmorModel(ModelPart root) {
+        this(root, null);
+    }
+
+    public LightwardArmorModel(ModelPart root, ModelPart chestDetails) {
         super(root);
+        chestOverlay = chestDetails == null ? null : chestDetails.getChild("body");
+        chestParts = chestOverlay == null ? List.of() : List.of(body, leftArm, rightArm, chestOverlay);
     }
 
     private static ModelLayerLocation layer(String name) {
@@ -35,9 +48,17 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
     }
 
     public static LayerDefinition createHelmetLayer(ResourceManager resources) {
+        return createGeometryLayer(resources, HELMET_GEOMETRY, "head");
+    }
+
+    public static LayerDefinition createChestplateDetailsLayer(ResourceManager resources) {
+        return createGeometryLayer(resources, CHESTPLATE_GEOMETRY, "body");
+    }
+
+    private static LayerDefinition createGeometryLayer(ResourceManager resources, ResourceLocation geometry, String bone) {
         var mesh = HumanoidModel.createMesh(CubeDeformation.NONE, 0);
-        PartDefinition head = createHumanoidAlias(mesh).getChild("head");
-        try (var reader = resources.getResourceOrThrow(HELMET_GEOMETRY).openAsReader()) {
+        PartDefinition parent = createHumanoidAlias(mesh).getChild(bone);
+        try (var reader = resources.getResourceOrThrow(geometry).openAsReader()) {
             var parts = JsonParser.parseReader(reader).getAsJsonObject();
             for (var entry : parts.entrySet()) {
                 var part = entry.getValue().getAsJsonObject();
@@ -47,20 +68,22 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
                     var uv = cube.getAsJsonArray("uv");
                     var pos = cube.getAsJsonArray("pos");
                     var size = cube.getAsJsonArray("size");
+                    var deformation = cube.has("inflate")
+                            ? new CubeDeformation(cube.get("inflate").getAsFloat()) : CubeDeformation.NONE;
                     cubes.texOffs(uv.get(0).getAsInt(), uv.get(1).getAsInt())
                          .mirror(cube.has("mirror") && cube.get("mirror").getAsBoolean())
                          .addBox(axis(pos, 0), axis(pos, 1), axis(pos, 2),
-                                 axis(size, 0), axis(size, 1), axis(size, 2));
+                                 axis(size, 0), axis(size, 1), axis(size, 2), deformation);
                 }
                 var offset = part.getAsJsonArray("offset");
                 var rotation = part.getAsJsonArray("rotation");
-                head.addOrReplaceChild(entry.getKey(), cubes, PartPose.offsetAndRotation(
+                parent.addOrReplaceChild(entry.getKey(), cubes, PartPose.offsetAndRotation(
                         axis(offset, 0), axis(offset, 1), axis(offset, 2),
                         axis(rotation, 0), axis(rotation, 1), axis(rotation, 2)));
             }
         }
         catch (IOException exception) {
-            throw new IllegalStateException("Cannot load " + HELMET_GEOMETRY, exception);
+            throw new IllegalStateException("Cannot load " + geometry, exception);
         }
         return LayerDefinition.create(mesh, 128, 128);
     }
@@ -78,10 +101,18 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
     }
 
     @Override
+    protected Iterable<ModelPart> bodyParts() {
+        return slot == EquipmentSlot.CHEST && !chestParts.isEmpty() ? chestParts : super.bodyParts();
+    }
+
+    @Override
     public void copyFromDefault(HumanoidModel original) {
         // Lodestone copies these inherited leg poses into its armor parts at render time.
         leftLeg.copyFrom(original.leftLeg);
         rightLeg.copyFrom(original.rightLeg);
         super.copyFromDefault(original);
+        if (chestOverlay != null) {
+            chestOverlay.copyFrom(body);
+        }
     }
 }

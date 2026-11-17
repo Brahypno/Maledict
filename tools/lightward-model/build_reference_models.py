@@ -1,7 +1,7 @@
 """Export the custom Lightward helmet and retextured Malum armor.
 Run with Blender --background --factory-startup --python this_file.
-The helmet geometry asset is shared with the runtime layer. The Malum
-reference manifest supplies the other pieces and the same-camera comparison.
+The helmet and chest detail assets are shared with the runtime layers.
+The Malum reference manifest supplies the chest base and lower armor.
 """
 import base64
 import json
@@ -25,13 +25,22 @@ BONES = {'head':(0,0,0),'body':(0,0,0),'left_arm':(5,2,0),'right_arm':(-5,2,0),
 JAR = next((Path.home()/'.gradle/caches/modules-2/files-2.1/curse.maven/malum-484064/6646111').rglob('*.jar'))
 
 ORIGINAL_HELMET = REF['helmet']['nodes']
-HELMET = json.loads((ASSETS/'models/armor/aufheben_lightward_helmet.geometry.json').read_text(encoding='utf-8'))
-REF['helmet']['nodes'] = {
-    name: dict(name=name, parent='head', offset=part.get('offset', [0,0,0]),
-               rotation=part.get('rotation', [0,0,0]),
-               cubes=[dict({'inflate':0, 'mirror':False}, **cube) for cube in part['cubes']])
-    for name,part in HELMET.items()
-}
+
+
+def custom_nodes(slot,bone):
+    geometry = ASSETS/f'models/armor/aufheben_lightward_{slot}.geometry.json'
+    parts = json.loads(geometry.read_text(encoding='utf-8'))
+    return {
+        name: dict(name=name, parent=bone, offset=part.get('offset',[0,0,0]),
+                   rotation=part.get('rotation',[0,0,0]),
+                   cubes=[dict({'inflate':0, 'mirror':False}, **cube) for cube in part['cubes']])
+        for name,part in parts.items()
+    }
+
+
+REF['helmet']['nodes'] = custom_nodes('helmet','head')
+CHEST_DETAILS = custom_nodes('chestplate','body')
+REF['chestplate']['nodes'].update(CHEST_DETAILS)
 
 
 def png_read(data):
@@ -104,6 +113,13 @@ HELMET_PALETTE = {
     }.items()
 }
 
+CHEST_DETAIL_PALETTE = HELMET_PALETTE | {
+    'N': (24,25,28,255), 'F': (30,31,36,255), 'O': (16,17,20,255),
+    'Z': (40,32,26,255), 'R': (67,50,33,255), 'I': (107,76,44,255),
+    'H': (141,106,65,255), 'J': (181,141,88,255),
+    'K': (245,225,184,255),
+}
+
 
 def helmet_texture():
     # One set of texels per plate. Paired parts mirror the same UV islands.
@@ -135,8 +151,13 @@ def helmet_texture():
         (66,32): ('ABABAD', {'north': ('V','T','U')}),
     }
     pixels = [[(0,0,0,0) for _ in range(128)] for _ in range(128)]
+    paint_panels(pixels,REF['helmet']['nodes'],panels)
+    return pixels
+
+
+def paint_panels(pixels,nodes,panels,palette=HELMET_PALETTE):
     painted = set()
-    for part in REF['helmet']['nodes'].values():
+    for part in nodes.values():
         for cube in part['cubes']:
             key = tuple(cube['uv'])
             if key in painted:
@@ -151,8 +172,7 @@ def helmet_texture():
                 for y,row in enumerate(rows,v):
                     for x,shade in enumerate(row,u):
                         assert pixels[y][x][3] == 0, (key,face,x,y)
-                        pixels[y][x] = HELMET_PALETTE[shade]
-    return pixels
+                        pixels[y][x] = palette[shade]
 
 
 def retexture(slot,source):
@@ -172,10 +192,6 @@ def retexture(slot,source):
             result.append(color+(a,))
         pixels.append(result)
     if slot == 'chestplate':
-        # The existing inclined upper breastplate, including its thin overlay.
-        for u in (14,56):
-            for row,colors in enumerate((('F0DFB2','DFBC78'),('DFBC78','BF985B'),('BF985B','967341'))):
-                for column,color in enumerate(colors): paint(pixels,u+column,66+row,color)
         for u,color in ((8,'997DBB'),(13,'796191')): paint(pixels,u,76,color)
         for u,color in ((8,'66A7B4'),(13,'508592')): paint(pixels,u,78,color)
         # One-texel gilt edge on the marked shoulder-pad and forearm surfaces.
@@ -184,6 +200,32 @@ def retexture(slot,source):
             gild(pixels,u+5,109,1)
         for u in (6,28):
             for x in range(5): gild(pixels,u+x,119,x/4)
+        paint_panels(pixels,CHEST_DETAILS,{
+            # The exposed bevels use the breastplate's blacks. Warm reflected
+            # light falls off across the inner walls and sill below the star.
+            (96,44): ('NONONO', {'north': ('NZRN','RIIR','NRZN')}),
+            (108,44): ('FNNOOO', {'north': ('F','N','N'), 'east': ('F','N','N'), 'west': ('O','Z','R')}),
+            (114,44): ('NNOONO', {'north': ('NFNN',), 'up': ('ZIRZ',)}),
+            (96,50): ('GJGJHD', {'north': ('GJH','KGH','GJJ'), 'west': ('G','J','H')}),
+            # The mantle and coverts shade the roots of the longer flight feathers.
+            (96,0): ('WSPPMB', {'up': ('PWWPS','WWPWS','PWPPS','SSPPS'),
+                                'south': ('PSPSM',)}),
+            (96,8): ('WSMSPB', {'south': ('SPWPS','PSWSP','SMPSP','MSSSM'),
+                                'west': ('SP','PS','SM','MB')}),
+            (116,8): ('PSBMSB', {'south': ('SP','PS','SM','MB')}),
+            (96,16): ('WMMSSB', {'south': ('WP','PW','PS','CS','SM')}),
+            (104,16): ('WMMSSB', {'south': ('WP','WP','PW','PS','QS','SM')}),
+            (112,16): ('PMMSMB', {'south': ('S','M')}),
+            (96,24): ('PSBSMB', {'south': ('PS','WS','PW','PS','PS','SS','SM'),
+                                 'west': ('P','P','P','S','S','S','M')}),
+            (106,24): ('PSBSMB', {'south': ('PS','WP','PS','PS','CS','SM'),
+                                  'west': ('P','P','S','S','S','M')}),
+            (116,24): ('PSBSMB', {'south': ('SP','PW','PP','PS','SM'),
+                                  'west': ('P','S','S','S','M')}),
+            (96,34): ('SMBSMB', {'south': ('P','S','M')}),
+            (102,34): ('SMBSMB', {'south': ('S','S','M')}),
+            (108,34): ('SMBSMB', {'south': ('S','M','M')}),
+        },CHEST_DETAIL_PALETTE)
     elif slot == 'leggings':
         # A violet-to-cyan fold sits between the graduated gold belt edges.
         for u in (6,34):
@@ -234,20 +276,6 @@ def retexture(slot,source):
     return pixels
 
 
-def paint_icon_metal(source,rows,start_x,start_y):
-    # The existing icon supplies the silhouette and colored inlays. Dots leave
-    # those texels in place while the matrix redraws the neutral metal.
-    metal = {
-        'O':'25232E', 'A':'18191C', 'B':'2D2F35', 'S':'989DB2',
-        'P':'BDC4DE', 'W':'D3DAF7',
-    }
-    for y,row in enumerate(rows,start_y):
-        for x,shade in enumerate(row,start_x):
-            if shade != '.':
-                paint(source,x,y,metal[shade])
-    return source
-
-
 def helmet_icon():
     palette = {'.': (0,0,0,0), **HELMET_PALETTE}
     # The darker side plates sit behind the bright, front-facing mask.
@@ -270,25 +298,6 @@ def helmet_icon():
         '........',
     )
     return [[palette[shade] for shade in row+row[::-1]] for row in left_rows]
-
-
-def chestplate_icon(source):
-    # Mirrored silver shoulders and black insets frame the original gold core.
-    left_rows = ('.OOOO...',
-                 '.OSPBOO.',
-                 'OSWWPSOO',
-                 'OPPWWPPS',
-                 'OBSPWPBA',
-                 'OABBW.A.',
-                 'OAABSPA.',
-                 'OAABA.A.',
-                 '.OOOSBAA',
-                 '...OSBBB',
-                 '...OPWPP',
-                 '...OBAAA',
-                 '....OBBB',
-                 '.....OOO')
-    return paint_icon_metal(source,(row+row[::-1] for row in left_rows),0,1)
 
 
 def armor_icon(source, accents):
@@ -513,6 +522,20 @@ def preview():
     camera.rotation_euler = (Vector((0,0,29.2))-camera.location).to_track_quat('-Z','Y').to_euler()
     scene.render.filepath = str(ART/'preview-helmet-back.png')
     bpy.ops.render.render(write_still=True)
+    for obj in objects['chestplate']: obj.hide_render = False
+    fill.rotation_euler = (Vector((0,0,23))-fill.location).to_track_quat('-Z','Y').to_euler()
+    camera.data.ortho_scale = 28
+    for name,position in (('fold',(21,58,33)),('wing-side',(57,14,29))):
+        camera.location = position
+        camera.rotation_euler = (Vector((0,1,23))-camera.location).to_track_quat('-Z','Y').to_euler()
+        scene.render.filepath = str(ART/f'preview-chestplate-{name}.png')
+        bpy.ops.render.render(write_still=True)
+    fill.hide_render = True
+    camera.data.ortho_scale = 25
+    camera.location = (16,-56,28)
+    camera.rotation_euler = (Vector((0,0,24))-camera.location).to_track_quat('-Z','Y').to_euler()
+    scene.render.filepath = str(ART/'preview-chestplate-shrine.png')
+    bpy.ops.render.render(write_still=True)
 
 
 def write_icon_previews(icons):
@@ -544,14 +567,15 @@ with zipfile.ZipFile(JAR) as jar:
                   (4,9,'C6CFDA'),(3,10,'A5AAB8'),(2,11,'989DB2'))
     boot_accents = boot_bevel + tuple((15-x,y,color) for x,y,color in boot_bevel)
     chest_icon = ASSETS/'textures/item/aufheben_lightward_chestplate.png'
-    icons = dict(helmet=helmet_icon(), chestplate=chestplate_icon(png_read(chest_icon.read_bytes())))
+    icons = dict(helmet=helmet_icon(), chestplate=png_read(chest_icon.read_bytes()))
     for slot,accents in (('leggings',leggings_accents),('boots',boot_accents)):
         source = png_read(jar.read(f'assets/malum/textures/item/soul_stained_steel_{slot}.png'))
         icons[slot] = armor_icon(source,accents)
     for slot,icon in icons.items():
-        png_write(ASSETS/f'textures/item/aufheben_lightward_{slot}.png',icon)
+        if slot != 'chestplate':
+            png_write(ASSETS/f'textures/item/aufheben_lightward_{slot}.png',icon)
     write_icon_previews(icons)
 blockbench()
 (ART/'geometry.json').write_text(json.dumps(REF,indent=2),encoding='utf-8')
 preview()
-print('Exported the custom Lightward helmet and the three Malum-derived armor pieces. Four eye rays clear.')
+print('Exported the custom Lightward helmet, chest shrine and folded wings, and Malum armor bases. Four eye rays clear.')
