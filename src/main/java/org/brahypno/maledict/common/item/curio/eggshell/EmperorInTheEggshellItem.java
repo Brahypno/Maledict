@@ -47,6 +47,11 @@ public final class EmperorInTheEggshellItem extends MalumCurioItem {
      * 这层的固定 key：重复装备会替换旧层而不是叠出第二层，卸下时按它找回同一层。
      */
     static final String WARD_KEY = "maledict:emperor_in_the_eggshell/guard";
+    /**
+     * 这层的自锁令牌，只有本物品持有。带上它才能替换/撤掉这一层；别人拿到 key 也关不掉，
+     * 外部 {@code unprotect} / {@code authorize} 也会被 ChangeLib 拒掉。
+     */
+    private static final Object WARD_OWNER = new Object();
     private static final double REACH_PENALTY = -0.5D;
     private static final UUID BLOCK_REACH_MODIFIER = UUID.nameUUIDFromBytes(
             "maledict:emperor_in_the_eggshell/block_reach".getBytes(StandardCharsets.UTF_8));
@@ -108,7 +113,7 @@ public final class EmperorInTheEggshellItem extends MalumCurioItem {
      */
     static void installWard(LivingEntity wearer) {
         CombatProtection.Guard ward =
-                CombatProtection.guard(wearer, DamageStage.D4_CONSISTENCY_WRITE, WARD_KEY);
+                CombatProtection.guard(wearer, DamageStage.D4_CONSISTENCY_WRITE, WARD_KEY, WARD_OWNER);
         float share = MaledictConfig.EMPEROR_EGGSHELL_GUARD_PERCENTAGE.get().floatValue();
         if (share > 0.0F && Float.isFinite(share)){
             ward.capFraction(share);
@@ -116,12 +121,14 @@ public final class EmperorInTheEggshellItem extends MalumCurioItem {
         // The window is the same layer's time gate: a hit inside it may take elapsed / N of its loss,
         // capped by the share above. Both ceilings are independent.
         ward.ramp(MaledictConfig.EMPEROR_EGGSHELL_WINDOW_TICKS.get());
+        // 自锁：这一层只有本物品能替换或撤掉，别的模组既摘不掉也封不住。
+        CombatProtection.seal(wearer, WARD_OWNER);
     }
 
     static void releaseWard(LivingEntity wearer) {
         CombatProtection.Guard ward = CombatProtection.findGuard(wearer, WARD_KEY);
         if (ward != null){
-            ward.close();
+            ward.close(WARD_OWNER);
         }
     }
 }
