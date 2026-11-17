@@ -14,7 +14,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 第一化身 | `maledict:first_vicissitude` (MaledictEntities.java:79) | 500 / 750 / 1000 / 1500（随 `BossDifficulty`，与世界难度无关）(FirstVicissitudeBossEntity.java:3201-3204) | 15 (FirstVicissitudeBossEntity.java:312) | `ATTACK_DAMAGE` 基础 8.0 + 二阶段武器词条 (FirstVicissitudeBossEntity.java:310) | 属性 0.30；实飞 0.38 / 二阶段 0.52 (FirstVicissitudeBossEntity.java:313,183-184) | `FOLLOW_RANGE` 96 属性 (FirstVicissitudeBossEntity.java:315)；实际交战半径 = config `firstVicissitude.engagementRange = 96.0` (MaledictConfig.java:147) | **D4** `CONSISTENCY_WRITE` (VicissitudeBossEntity.java:159) | `真生命上限 × r × 部位权重`，r = 0.05 / 0.03 / 0.01 / 0.01 (FirstVicissitudeBossEntity.java:2416-2420) |
 | 巨匠造物主 | `maledict:demiurge_statue` (MaledictEntities.java:87) | 400 / 600 / 800（随世界难度 easy / normal / hard）(DemiurgeDifficulty.java:14-20) | 10 (DemiurgeStatueEntity.java:127) | 冲撞 config `demiurge.chargeDamage = 7.0` (MaledictConfig.java:72) | 0.30 (DemiurgeStatueEntity.java:52,128) | `FOLLOW_RANGE` 48 (DemiurgeStatueEntity.java:128)；保持距离 12 (DemiurgeCombatGoal.java:17) | **D5** `RECOVERY_SOURCE` (DemiurgeStatueEntity.java:185) | `真生命上限 × 0.03` (DemiurgeStatueEntity.java:154) |
-| 腐枯凋灵 | `maledict:weeping_wither` (MaledictEntities.java:37) | 400 固定（不随难度）(WeepingWitherEntity.java:106) | 8 (WeepingWitherEntity.java:107) | 凋灵之首直击 12 / 已凋零目标 14 (WeepingWitherCombat.java:13-17) | 原版 0.6 × 1.1 位移加成 = 0.66 (WeepingWitherEntity.java:497) | 原版 `FOLLOW_RANGE` 40；祭坛拴绳 24 / 归位 20 (WeepingWitherEntity.java:209,312-317) | **D3** `STORAGE_WRITE` (WeepingWitherEntity.java:138) | `min(伤害, 最大生命 × 0.05)` = 20 (WeepingWitherEntity.java:513,543) |
+| 腐枯凋灵 | `maledict:weeping_wither` (MaledictEntities.java:37) | 300 / 400 / 500（随世界难度 easy / normal / hard）(WeepingWitherDifficulty.java:11-16) | 8 (WeepingWitherEntity.java:118) | 凋灵之首直击 12；已凋零目标 12 + 目标生命上限 1% (WeepingWitherCombat.java:17-21) | 原版 0.6 × 1.1 位移加成 = 0.66 (WeepingWitherEntity.java:518) | 原版 `FOLLOW_RANGE` 40；祭坛拴绳 24 / 归位 20 (WeepingWitherEntity.java:209,312-317) | **D3** `STORAGE_WRITE` (WeepingWitherEntity.java:149) | `min(伤害, 最大生命 × 0.05)` = 15 / 20 / 25 (WeepingWitherEntity.java:541,571) |
 
 ---
 
@@ -196,43 +196,43 @@
 | 项 | 值 | 来源类型 | 位置 |
 | --- | --- | --- | --- |
 | 实体注册尺寸 | 1.08 × 4.2，渲染缩放 1.2 | 常量 | MaledictEntities.java:40；WeepingWitherEntity.java:50 |
-| 生命池 | 400（**不随难度变化**） | 属性 | WeepingWitherEntity.java:106 |
-| 护甲 | 8（固定属性；原版半血“护甲”是箭矢免疫，不是护甲值） | 属性 | WeepingWitherEntity.java:107 |
-| 移速 | 原版 0.6，`travel` 每 tick ×1.1 → 等效 0.66 | 原版 + 常量 | WeepingWitherEntity.java:497-499 |
+| 生命池 | 300 / 400 / 500（随世界难度；出生时定档并写入存档 `WitherDifficulty`） | 常量表 | WeepingWitherDifficulty.java:11-16；WeepingWitherEntity.java:163-169 |
+| 护甲 | 8（固定属性；原版半血“护甲”是箭矢免疫，不是护甲值） | 属性 | WeepingWitherEntity.java:118 |
+| 移速 | 原版 0.6，`travel` 每 tick ×1.1 → 等效 0.66 | 原版 + 常量 | WeepingWitherEntity.java:518-528 |
 | `FOLLOW_RANGE` | 40（原版） | 原版 | 未覆盖，见「不确定项」 |
 | 侧头视野/索敌 | 半径 20，排除亡灵与不可攻击目标 | 常量 | WeepingWitherEntity.java:74-76 |
-| 祭坛活动范围 | 拴绳 24 格；自身出圈 → 归位；目标出圈 → 放目标；回到 20 格内解除归位 | 常量 | WeepingWitherEntity.java:209,212-218,312-317 |
-| 免伤 / 回血 | 首次致死 → 1 HP + 重聚 60 tick → 80 HP + 强度 7 爆炸 | 常量 | WeepingWitherCombat.java:7；WeepingWitherEntity.java:578-601 |
+| 祭坛活动范围 | 拴绳 24 格；自身出圈 → 归位；目标出圈 → 放目标；回到 20 格内解除归位 | 常量 | WeepingWitherEntity.java:236-237,241-246,340-345 |
+| 免伤 / 回血 | 首次致死 → 1 HP + 重聚 60 tick → 80 HP + 强度 7 爆炸 | 常量 | WeepingWitherCombat.java:7；WeepingWitherEntity.java:606-629 |
 
-**难度表**（不缩放生命与伤害；难度只改凋零时长、侧头行为与齐射危险弹）
+**难度表**（生命池随难度；直击伤害不随难度缩放，只有已凋零追伤按目标生命上限）
 
 | 世界难度 | 生命池 | 直击伤害倍率 | 附加凋零时长 | 其它 | 位置 |
 | --- | ---: | --- | ---: | --- | --- |
-| PEACEFUL / EASY | 400 | ×1 | 0（不施加） | 侧头不空放 | WeepingWitherSkull.java:78-81；WeepingWitherEntity.java:393 |
+| PEACEFUL / EASY | 300 | ×1 | 0（不施加） | 侧头不空放 | WeepingWitherSkull.java:81-84；WeepingWitherEntity.java:426 |
 | NORMAL | 400 | ×1 | 300 tick（15 s） | 侧头空放阈值 15 | 同上 |
-| HARD | 400 | ×1 | 1200 tick（60 s） | 半血 + 困难时骨刺改环形 | WeepingWitherSkillController.java:343-346 |
-| 半血强化 | 不变 | 不变 | 不变 | 主头危险弹 15%、侧头 10%、空闲阈值 8、齐射固定 2 枚危险弹、云雾必试 | WeepingWitherEntity.java:392,435-437；WeepingWitherSkillController.java:350-358 |
+| HARD | 500 | ×1 | 1200 tick（60 s） | 半血 + 困难时骨刺改环形 | WeepingWitherSkillController.java:343-346 |
+| 半血强化 | 不变 | 不变 | 不变 | 主头危险弹 15%、侧头 10%、空闲阈值 8、齐射固定 2 枚危险弹、云雾必试 | WeepingWitherEntity.java:425,437,468-469；WeepingWitherSkillController.java:350-358 |
 
 ### 3.2 防御机制
 
 | 机制 | 数值 / 公式 | 位置 |
 | --- | --- | --- |
-| 单次命中上限 | `min(伤害, 最大生命 × 0.05)` | WeepingWitherEntity.java:513,543 |
-| 绝对值 | **20**（400 × 5%） | 同上 |
-| 二次截断 | `actuallyHurt` 再取一次 `min(finalAmount, max × 0.05)` | WeepingWitherEntity.java:543-544 |
-| 护甲 / 魔法减免路径 | 走原版 `WitherBoss.hurt` → `BossDamage.resolve`（护甲 / 魔法吸收 / Forge 事件） | WeepingWitherEntity.java:539-540；BossDamage.java:33-45 |
-| ChangeLib 前置 | `CombatProtection.incoming` 在 `actuallyHurt` 里先过一遍 | WeepingWitherEntity.java:533 |
-| 无敌阶段 · 重聚 | 60 tick（`reformationTicks`），期间 `hurt` 返回 false、`heal` 直接返回、停止移动与攻击 | WeepingWitherCombat.java:7,30；WeepingWitherEntity.java:504-505,558-561,303-309 |
-| 无敌阶段 · 出生 | 原版 `makeInvulnerable()` = 220 tick，期间每 10 tick 回 10 HP，结束后强度 7 爆炸 | WeepingWitherSummoning.java:40；WeepingWitherEntity.java:344-353 |
+| 单次命中上限 | `min(伤害, 最大生命 × 0.05)` | WeepingWitherEntity.java:531,571 |
+| 绝对值 | **15 / 20 / 25**（300 / 400 / 500 × 5%） | 同上 |
+| 二次截断 | `actuallyHurt` 再取一次 `min(finalAmount, max × 0.05)` | WeepingWitherEntity.java:571-572 |
+| 护甲 / 魔法减免路径 | 走原版 `WitherBoss.hurt` → `BossDamage.resolve`（护甲 / 魔法吸收 / Forge 事件） | WeepingWitherEntity.java:567-568；BossDamage.java:33-45 |
+| ChangeLib 前置 | `CombatProtection.incoming` 在 `actuallyHurt` 里先过一遍 | WeepingWitherEntity.java:561 |
+| 无敌阶段 · 重聚 | 60 tick（`reformationTicks`），期间 `hurt` 返回 false、`heal` 直接返回、停止移动与攻击 | WeepingWitherCombat.java:7,30；WeepingWitherEntity.java:532-533,586-589,331-337 |
+| 无敌阶段 · 出生 | 原版 `makeInvulnerable()` = 220 tick，期间每 10 tick 回 10 HP，结束后强度 7 爆炸 | WeepingWitherSummoning.java:40；WeepingWitherEntity.java:372-381 |
 | 半血箭矢免疫 | 生命 ≤ 50% 后免疫所有 `AbstractArrow` 直击 | 原版 `WitherBoss.isPowered` / `hurt`，见「不确定项」 |
-| 回血 · 脱战 | 无目标、且无活着的 `lastHurtByMob` 时每 tick 回 5% 最大生命 = **20**；重构期间 `heal` 直接返回 | BossRecovery.java:28,43-52；WeepingWitherEntity.java:294,558-561 |
-| 回血 · 战斗记忆（工作区新增） | 最近 100 tick 内有结算伤害 / 复活完成时也不算脱战 | BossRecovery.java:33,58-68；WeepingWitherEntity.java:546,600 |
-| 回血 · 原版自然 | 每 20 tick 回 1 HP；**最终阶段关闭** | WeepingWitherEntity.java:361-362 |
-| 回血 · 增殖 | 命中“已有凋零”的有效目标回 3 HP，整只实体共用 40 tick 冷却 | WeepingWitherCombat.java:8,19-24；WeepingWitherEntity.java:573-575 |
-| 回血 · 击杀 | 凋灵之首直接击杀目标回 5 HP | WeepingWitherSkull.java:75 |
-| 重组 / 复活 | 首次致死 → 1 HP + 60 tick 重聚 → 80 HP + 爆炸；仅一次，最终阶段不再重聚 | WeepingWitherEntity.java:578-601 |
-| 同 tick 多通道合并 | 同 tick 清零 `invulnerableTime`；各通道各自结算后只扣超过本批最大值的差额 | WeepingWitherEntity.java:502-527,544-554 |
-| 死亡拒绝 | `CombatProtection.allowDeath` 不放行时直接吞掉死亡 | WeepingWitherEntity.java:580-581 |
+| 回血 · 脱战 | 无目标、且无活着的 `lastHurtByMob` 时每 tick 回 5% 最大生命 = **15 / 20 / 25**；重构期间 `heal` 直接返回 | BossRecovery.java:28,43-52；WeepingWitherEntity.java:322,586-589 |
+| 回血 · 战斗记忆（工作区新增） | 最近 100 tick 内有结算伤害 / 复活完成时也不算脱战 | BossRecovery.java:33,58-68；WeepingWitherEntity.java:574,628 |
+| 回血 · 原版自然 | 每 20 tick 回 1 HP；**最终阶段关闭** | WeepingWitherEntity.java:389-390 |
+| 回血 · 增殖 | 命中“已有凋零”的有效目标回 3 HP，整只实体共用 40 tick 冷却 | WeepingWitherCombat.java:8,19-24；WeepingWitherEntity.java:601-603 |
+| 回血 · 击杀 | 凋灵之首直接击杀目标回 5 HP | WeepingWitherSkull.java:78 |
+| 重组 / 复活 | 首次致死 → 1 HP + 60 tick 重聚 → 80 HP + 爆炸；仅一次，最终阶段不再重聚 | WeepingWitherEntity.java:606-629 |
+| 同 tick 多通道合并 | 同 tick 清零 `invulnerableTime`；各通道各自结算后只扣超过本批最大值的差额 | WeepingWitherEntity.java:530-555,572-582 |
+| 死亡拒绝 | `CombatProtection.allowDeath` 不放行时直接吞掉死亡 | WeepingWitherEntity.java:608-609 |
 
 ### 3.3 攻击 / 技能表
 
@@ -240,17 +240,17 @@
 
 | 技能 | 名义伤害 | 范围 / 半径 | 前摇 → 命中帧 → 总时长（tick） | 冷却（常规 / 最终） | 触发条件 / 阶段 | 附带效果 | 位置 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 主头普通弹 | 直击 12；目标已有凋零 14 | 弹道直射，600 tick 后无爆炸消失 | — | 常规 40（原版 `RangedAttackGoal`）；最终 32 | 目标存活、有视线、出生无敌结束 | 命中后施加凋零（NORMAL 300 / HARD 1200 tick）；击杀回 5 HP | WeepingWitherCombat.java:13-17；WeepingWitherSkull.java:21,69-82；WeepingWitherEntity.java:365-383 |
-| 侧头普通弹 | 同上 | 索敌 20 格，命中判定 900 格²(30 格) | — | 10–19 tick；瞄准射击 40–59 tick；最终阶段 ×0.8 | 侧头目标有效 | 半血后 10% 概率换成危险弹 | WeepingWitherEntity.java:391-428 |
-| 侧头空放弹 | 同上 | 自身 ±10 / ±5 / ±10 随机方向 | — | 每次检查间隔 10–19 tick | NORMAL/HARD 且空闲计数 > 15（半血 8） | 必为危险弹 | WeepingWitherEntity.java:397-404 |
-| A 骸骨迸裂 | 原版尖牙 **6.0** 魔法伤害 | 直线 5–7 根；环形 12 槽留两处相邻 60° 缺口 = 8 根（半径 3.0） | 16 tick 蓄力 → 释放即生成（`setWarmup(-7)`） | 280 / 200 | 距离 4–16、有站立地面、目标不在持续飞行 | 环形布局：最终阶段恒开，半血+困难也开 | WeepingWitherSkillController.java:34-35,290-302,398-484；EvokerFangs（原版）6.0F |
+| 主头普通弹 | 直击 12；目标已有凋零 12 + 目标生命上限 1%（玩家 12.2；腐枯凋灵 15 / 16 / 17） | 弹道直射，600 tick 后无爆炸消失 | — | 常规 40（原版 `RangedAttackGoal`）；最终 32 | 目标存活、有视线、出生无敌结束 | 命中后施加凋零（NORMAL 300 / HARD 1200 tick）；击杀回 5 HP | WeepingWitherCombat.java:17-21；WeepingWitherSkull.java:62-85；WeepingWitherEntity.java:393-411 |
+| 侧头普通弹 | 同上 | 索敌 20 格，命中判定 900 格²(30 格) | — | 10–19 tick；瞄准射击 40–59 tick；最终阶段 ×0.8 | 侧头目标有效 | 半血后 10% 概率换成危险弹 | WeepingWitherEntity.java:419-456 |
+| 侧头空放弹 | 同上 | 自身 ±10 / ±5 / ±10 随机方向 | — | 每次检查间隔 10–19 tick | NORMAL/HARD 且空闲计数 > 15（半血 8） | 必为危险弹 | WeepingWitherEntity.java:425-432 |
+| A 骸骨迸裂 | 原版尖牙 **6.0** 魔法伤害 | 直线 5–7 根；环形 12 槽留两处相邻 60° 缺口 = 8 根（半径 3.0） | 16 tick 蓄力 → 释放即生成（`setWarmup(-7)`） | 280 / 200 | 距离 4–16、有站立地面、目标不在持续飞行 | 环形布局：最终阶段恒开，半血+困难也开；渲染整体 ×1.5（判定框仍是原版尖牙） | WeepingWitherSkillController.java:34-35,290-302,398-484；OssuaryFangsRenderer.java:25,40；EvokerFangs（原版）6.0F |
 | B 腐血增殖 | 云雾内凋零 I 100 tick（无瞬间伤害） | 半径 2.5，等待 10 tick，总 200 tick；命中点 4 格内已有云雾则跳过 | 危险弹命中方块即触发 | 120 / 80 | 危险弹撞方块；半血前 25% 概率、半血后必试 | 深紫龙息粒子 | WeepingWitherSkillController.java:138-150,714-735 |
 | C 幽骸齐射 | 每枚按上面两种直击伤害 | 9 枚，瞄准点随机 ±1.5 / ±1 / ±1.5，直线不追踪 | 16 蓄力，第 16 / 24 / 32 tick 各一轮（每轮 3 枚） | 400 / 300 | 距离 10–28 且有视线 | 半血后固定抽 2 枚危险弹；期间停射 | WeepingWitherSkillController.java:36-37,46-49,304-312,495-513 |
 | D 腐朽脉冲 | **4.0** 魔法伤害 | 半径 **7**；击退强度 **1.5** | 12 tick 蓄力 → 释放 | 240 / 180 | 目标 5 格内持续 ≥10 tick；最高优先级 | 径向击退；自身召唤物免疫 | WeepingWitherSkillController.java:38-39,54-56,269-275,515-555 |
 | E 残骸回响 | 无（召唤） | 自身 4–7 格地面，2 只 | 10 tick 召唤动作 | 600 / 480 | 战斗开始 8 s 后、目标 ≤20 格、存活召唤物 <2、有地面 | 召唤骷髅，寿命 600 tick | WeepingWitherSkillController.java:40-41,51-53,277-288,320-324 |
 | 半血一次性召唤 | 无 | 4–7 格地面，3 只（受总数上限 5 限制） | 立即 | 仅一次 | 首次 ≤50% 生命 | 寿命 0（永久） | WeepingWitherSkillController.java:57,173-184 |
-| 出生爆炸 | 原版爆炸强度 **7.0** | 以眼睛为中心 | 出生无敌结束时 | 一次 | `makeInvulnerable` | 1023 音效 | WeepingWitherEntity.java:385-389 |
-| 拆方块 | — | 3×4×3 区域 | 受击后 20 tick 延迟 | — | 受击且 mobGriefing | 原版强度 | WeepingWitherEntity.java:475-487,520-524 |
+| 出生爆炸 | 原版爆炸强度 **7.0** | 以眼睛为中心 | 出生无敌结束时 | 一次 | `makeInvulnerable` | 1023 音效 | WeepingWitherEntity.java:413-417 |
+| 拆方块 | — | 3×4×3 区域 | 受击后 20 tick 延迟 | — | 受击且 mobGriefing | 原版强度 | WeepingWitherEntity.java:504-515,548-552 |
 
 **AI 节奏**：主头/侧头沿用原版凋灵时序，最终阶段整体提速（主头 40→32、侧头间隔 ×0.8）；技能冷却与全局间隔并行递减；读档保留剩余冷却与正在进行的施法 (WeepingWitherSkillController.java:742-804)。
 
@@ -394,27 +394,27 @@
 
 | 数值 | 当前值 | 位置 |
 | --- | --- | --- |
-| 生命 / 护甲 | 400 / 8 | WeepingWitherEntity.java:106-107 |
-| 位移加成 | ×1.1 | WeepingWitherEntity.java:497 |
-| 每击上限比例 | 0.05（= 20） | WeepingWitherEntity.java:513,543 |
+| 生命 / 护甲 | 300 / 400 / 500（easy / normal / hard）/ 8 | WeepingWitherDifficulty.java:11-16；WeepingWitherEntity.java:117-118 |
+| 位移加成 | ×1.1 | WeepingWitherEntity.java:518 |
+| 每击上限比例 | 0.05（= 15 / 20 / 25） | WeepingWitherEntity.java:531,571 |
 | 重聚时长 | 60 tick | WeepingWitherCombat.java:7 |
-| 重聚后生命 | 80 | WeepingWitherEntity.java:598 |
-| 增殖冷却 / 回血 | 40 tick / 3 HP | WeepingWitherCombat.java:8；WeepingWitherEntity.java:575 |
-| 直击伤害公式 | `8×1.25 (+min(2, 4)) + 2` = 12 / 14 | WeepingWitherCombat.java:13-17 |
-| 击杀回血 | 5 HP | WeepingWitherSkull.java:75 |
-| 自然回血 | 1 HP / 20 tick（最终阶段关闭） | WeepingWitherEntity.java:361-362 |
-| 出生无敌 / 回血 | 220 tick / 10 HP per 10 tick | WeepingWitherSummoning.java:40；WeepingWitherEntity.java:350-351 |
-| 出生爆炸强度 | 7.0 | WeepingWitherEntity.java:386 |
-| 主头冷却（常规/最终） | 40（原版）/ 32 | WeepingWitherEntity.java:381 |
-| 主头危险弹概率 | 0.001 / 半血 0.15 | WeepingWitherEntity.java:440-442 |
-| 侧头间隔 | 10–19 / 瞄准 40–59；最终 ×0.8 | WeepingWitherEntity.java:396,410,425-428 |
-| 侧头空闲阈值 | 15 / 半血 8 | WeepingWitherEntity.java:397 |
-| 侧头瞄准危险弹概率 | 0.10 | WeepingWitherEntity.java:409 |
-| 侧头索敌半径 | 20 格 | WeepingWitherEntity.java:74,415 |
-| 祭坛拴绳 / 解除 | 24 / 20 格 | WeepingWitherEntity.java:209,314 |
-| 归位寻路间隔 | 10 tick | WeepingWitherEntity.java:698 |
+| 重聚后生命 | 80（绝对值，不随池缩放） | WeepingWitherEntity.java:626 |
+| 增殖冷却 / 回血 | 40 tick / 3 HP | WeepingWitherCombat.java:8；WeepingWitherEntity.java:603 |
+| 直击伤害公式 | 未凋零 `8×1.25 + 2` = 12；已凋零 `8×1.25 + min(2, 4) + 目标生命上限 1%` | WeepingWitherCombat.java:17-21 |
+| 击杀回血 | 5 HP | WeepingWitherSkull.java:78 |
+| 自然回血 | 1 HP / 20 tick（最终阶段关闭） | WeepingWitherEntity.java:389-390 |
+| 出生无敌 / 回血 | 220 tick / 10 HP per 10 tick | WeepingWitherSummoning.java:40；WeepingWitherEntity.java:378-379 |
+| 出生爆炸强度 | 7.0 | WeepingWitherEntity.java:414 |
+| 主头冷却（常规/最终） | 40（原版）/ 32 | WeepingWitherEntity.java:409 |
+| 主头危险弹概率 | 0.001 / 半血 0.15 | WeepingWitherEntity.java:468-470 |
+| 侧头间隔 | 10–19 / 瞄准 40–59；最终 ×0.8 | WeepingWitherEntity.java:424,438,453-456 |
+| 侧头空闲阈值 | 15 / 半血 8 | WeepingWitherEntity.java:425 |
+| 侧头瞄准危险弹概率 | 0.10 | WeepingWitherEntity.java:437 |
+| 侧头索敌半径 | 20 格 | WeepingWitherEntity.java:74,443 |
+| 祭坛拴绳 / 解除 | 24 / 20 格 | WeepingWitherEntity.java:236-237,340-345 |
+| 归位寻路间隔 | 10 tick | WeepingWitherEntity.java:728-730 |
 | 骷髅弹寿命 | 600 tick | WeepingWitherSkull.java:21 |
-| 凋零时长（困难/普通/简单） | 1200 / 300 / 0 tick | WeepingWitherSkull.java:78-79 |
+| 凋零时长（困难/普通/简单） | 1200 / 300 / 0 tick | WeepingWitherSkull.java:81-82 |
 | 全局间隔（常规/最终） | 40 / 30 tick | WeepingWitherSkillController.java:44-45 |
 | 骨刺冷却（常规/最终） | 280 / 200 tick | WeepingWitherSkillController.java:34-35 |
 | 齐射冷却 | 400 / 300 tick | WeepingWitherSkillController.java:36-37 |

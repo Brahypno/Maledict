@@ -89,6 +89,17 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
     private CombatProtection.Controller healthController;
     private float authorityHealth;
     /**
+     * Difficulty id chosen when the pool was first applied; {@code -1} means "not picked yet", so a
+     * reload keeps the ladder it spawned with even if the server difficulty changed since.
+     */
+    private int difficultyId = -1;
+    /**
+     * Set by {@link #readAdditionalSaveData()}: a loaded entity keeps its saved health below the
+     * ceiling, while a freshly created one is still at the attribute supplier's 400 and must be
+     * filled into the ladder.
+     */
+    private boolean loadedFromSave;
+    /**
      * Game time of the last resolved loss, or of the last scripted revival; feeds the out-of-combat
      * memory, where a hit with no causing entity would otherwise leave no trace.
      */
@@ -129,6 +140,7 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
     public void onAddedToWorld() {
         super.onAddedToWorld();
         if (!level().isClientSide){
+            applyDifficultyHealth();
             if (aiController == null)
                 aiController = AiProtection.bind(this);
             if (healthController == null){
@@ -137,7 +149,23 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
                 healthController = CombatProtection.bindOwned(
                         this, DamageStage.D3_STORAGE_WRITE, HEALTH_ACCESS, Float.POSITIVE_INFINITY);
             }
+            // The ledger is the authority, so a legacy save can still hold a pool above the ladder.
+            if (authorityHealth > getMaxHealth())
+                commitHealth(getMaxHealth());
         }
+    }
+
+    /**
+     * Applies the spawn difficulty's pool once. The attribute supplier always creates the entity at
+     * 400, so a fresh entity is filled into the ceiling before the ledger binds; a loaded one keeps
+     * its saved health unless the ceiling now sits below it.
+     */
+    private void applyDifficultyHealth() {
+        if (difficultyId < 0)
+            difficultyId = level().getDifficulty().getId();
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(WeepingWitherDifficulty.maxHealth(Difficulty.byId(difficultyId)));
+        if (!loadedFromSave || super.getHealth() > getMaxHealth())
+            super.setHealth(getMaxHealth());
     }
 
     @Override
@@ -624,6 +652,7 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        tag.putInt("WitherDifficulty", difficultyId);
         tag.putBoolean("ReformationUsed", combat.reformationUsed());
         tag.putInt("ReformationTicks", combat.reformationTicks());
         tag.putInt("ProliferationCooldown", combat.healCooldown());
@@ -636,6 +665,8 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        loadedFromSave = true;
+        difficultyId = tag.contains("WitherDifficulty") ? Mth.clamp(tag.getInt("WitherDifficulty"), 0, 3) : -1;
         combat.restore(tag.getBoolean("ReformationUsed"), tag.getInt("ReformationTicks"), tag.getInt("ProliferationCooldown"));
         entityData.set(REFORMING, combat.isReforming());
         if (combat.isReforming()){

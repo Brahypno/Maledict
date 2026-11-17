@@ -18,6 +18,11 @@ import org.brahypno.maledict.common.entity.wither.OssuaryFangs;
 public final class OssuaryFangsRenderer extends EntityRenderer<OssuaryFangs> {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "textures/entity/ossuary_fangs.png");
+    /**
+     * The splintered spikes read smaller than the vanilla fang model at the same pose scale, so the
+     * whole pose is enlarged; the hit box stays the vanilla fang's.
+     */
+    private static final float SIZE_MULTIPLIER = 1.5F;
     private final OssuaryFangsModel model;
 
     public OssuaryFangsRenderer(EntityRendererProvider.Context context) {
@@ -32,7 +37,7 @@ public final class OssuaryFangsRenderer extends EntityRenderer<OssuaryFangs> {
         float progress = entity.getAnimationProgress(partialTick);
         if (progress == 0.0F)
             return;
-        float scale = 2.0F;
+        float scale = 2.0F * SIZE_MULTIPLIER;
         if (progress > 0.9F)
             scale *= (1.0F - progress) / 0.1F;
         pose.pushPose();

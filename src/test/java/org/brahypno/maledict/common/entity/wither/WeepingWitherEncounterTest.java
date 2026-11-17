@@ -420,14 +420,18 @@ public final class WeepingWitherEncounterTest {
     }
 
     private static void verifyDamageLimit(GameTestHelper helper) {
+        float maxHealth = WeepingWitherDifficulty.maxHealth(helper.getLevel().getDifficulty());
+        float cap = maxHealth * 0.05F;
         for (float[] hits : new float[][]{{80, 60}, {60, 80}, {5, 12, 8}, {12, 5, 8}}) {
             var target = damageTarget(helper);
             try {
+                helper.assertTrue(target.getMaxHealth() == maxHealth && target.getHealth() == maxHealth,
+                                  "A fresh pool follows the difficulty ladder at full health");
                 float expected = 0;
                 for (float hit : hits) {
                     target.hurt(target.damageSources().generic(), hit);
-                    expected = Math.max(expected, Math.min(hit, 20));
-                    helper.assertTrue(target.getHealth() == 400 - expected,
+                    expected = Math.max(expected, Math.min(hit, cap));
+                    helper.assertTrue(target.getHealth() == maxHealth - expected,
                                       "Same-tick hits debit only the largest capped loss in either order");
                 }
             }
@@ -450,7 +454,7 @@ public final class WeepingWitherEncounterTest {
             try {
                 var hit = IncursusBladeItem.dealTieredDamage(bladeAt(level), target,
                                                              target.damageSources().generic(), 80, true);
-                helper.assertTrue(target.getHealth() == (level == 0 ? 380 : 320),
+                helper.assertTrue(target.getHealth() == (level == 0 ? maxHealth - cap : maxHealth - 80.0F),
                                   "Light with compensation stays capped; medium and final may penetrate D3");
                 if (level > 0){
                     helper.assertTrue(hit.effectiveStage() == DamageStage.D4_CONSISTENCY_WRITE,
@@ -479,7 +483,7 @@ public final class WeepingWitherEncounterTest {
         MinecraftForge.EVENT_BUS.addListener(amplify);
         try {
             nested.hurt(nested.damageSources().generic(), 5);
-            helper.assertTrue(nested.getHealth() == 380,
+            helper.assertTrue(nested.getHealth() == maxHealth - cap,
                               "Nested channels and post-mitigation event multipliers share the same final cap");
         }
         finally {
@@ -493,12 +497,12 @@ public final class WeepingWitherEncounterTest {
         cooldown.hurt(cooldown.damageSources().wither(), 80);
         helper.runAfterDelay(1, () -> {
             cooldown.hurt(cooldown.damageSources().generic(), 80);
-            helper.assertTrue(cooldown.getHealth() == 380, "A later tick retains vanilla hurt immunity");
+            helper.assertTrue(cooldown.getHealth() == maxHealth - cap, "A later tick retains vanilla hurt immunity");
         });
         helper.runAfterDelay(21, () -> {
             try {
                 cooldown.hurt(cooldown.damageSources().generic(), 80);
-                helper.assertTrue(cooldown.getHealth() == 360, "The next accepted tick gets a fresh damage budget");
+                helper.assertTrue(cooldown.getHealth() == maxHealth - 2.0F * cap, "The next accepted tick gets a fresh damage budget");
             }
             finally {
                 cooldown.discard();
@@ -526,8 +530,9 @@ public final class WeepingWitherEncounterTest {
             WeepingWitherSkull skull = MaledictEntities.WEEPING_WITHER_SKULL.get().create(level);
             skull.setOwner(owner);
             skull.onHitEntity(new EntityHitResult(target));
-            helper.assertTrue(target.getHealth() == target.getMaxHealth() - (alreadyWithered ? 14 : 12),
-                              "The custom direct-hit path adds exactly one heart after the existing wither bonus");
+            float expected = alreadyWithered ? 12.0F + target.getMaxHealth() * 0.01F : 12.0F;
+            helper.assertTrue(Math.abs(target.getHealth() - (target.getMaxHealth() - expected)) < 1.0E-3F,
+                              "The withered rider is one percent of the victim's own health cap");
             target.discard();
         }
         for (boolean charged : new boolean[]{false, true}) {

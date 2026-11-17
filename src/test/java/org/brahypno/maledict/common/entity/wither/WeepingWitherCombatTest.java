@@ -9,9 +9,10 @@ class WeepingWitherCombatTest {
     @Test
     void confirmedHitOrderGlobalCooldownAndSingleReformationSurviveRestore() {
         var combat = new WeepingWitherCombat();
-        assertEquals(12.0F, WeepingWitherCombat.directDamage(false));
+        assertEquals(12.0F, WeepingWitherCombat.directDamage(false, 20.0F));
+        assertEquals(12.2F, WeepingWitherCombat.directDamage(true, 20.0F), 1.0E-4F);
+        assertEquals(16.0F, WeepingWitherCombat.directDamage(true, 400.0F), 1.0E-4F);
         assertFalse(combat.recordEffectiveHit(false));
-        assertEquals(14.0F, WeepingWitherCombat.directDamage(true));
         assertTrue(combat.recordEffectiveHit(true));
         assertFalse(combat.recordEffectiveHit(true));
         assertFalse(combat.recordEffectiveHit(true));

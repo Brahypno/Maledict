@@ -10,10 +10,15 @@ public final class WeepingWitherCombat {
     private int reformationTicks;
     private int healCooldown;
 
-    public static float directDamage(boolean alreadyWithered) {
+    /**
+     * The withered-target rider is one percent of the victim's own cap instead of a flat heart, so
+     * the same skull keeps its bite against a large pool without overpaying against a small one.
+     */
+    public static float directDamage(boolean alreadyWithered, float targetMaxHealth) {
         float base = 8.0F * 1.25F;
-        float damage = alreadyWithered ? base + Math.min(base * 0.2F, 4.0F) : base;
-        return damage + 2.0F; // One extra heart after the existing wither bonus is calculated.
+        if (alreadyWithered)
+            return base + Math.min(base * 0.2F, 4.0F) + targetMaxHealth * 0.01F;
+        return base + 2.0F;
     }
 
     public boolean recordEffectiveHit(boolean alreadyWithered) {

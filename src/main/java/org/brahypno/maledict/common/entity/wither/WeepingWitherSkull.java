@@ -66,19 +66,22 @@ public final class WeepingWitherSkull extends WitherSkull {
             super.onHitEntity(hit);
             return;
         }
-        boolean alreadyWithered = victim instanceof LivingEntity living && living.hasEffect(MobEffects.WITHER);
-        if (!victim.hurt(damageSources().witherSkull(this, wither), WeepingWitherCombat.directDamage(alreadyWithered)))
+        LivingEntity livingVictim = victim instanceof LivingEntity living ? living : null;
+        boolean alreadyWithered = livingVictim != null && livingVictim.hasEffect(MobEffects.WITHER);
+        float targetMaxHealth = livingVictim == null ? 0.0F : livingVictim.getMaxHealth();
+        if (!victim.hurt(damageSources().witherSkull(this, wither),
+                         WeepingWitherCombat.directDamage(alreadyWithered, targetMaxHealth)))
             return;
         if (victim.isAlive())
             doEnchantDamageEffects(wither, victim);
         else
             wither.heal(5.0F); // The original kill heal is deliberately retained in addition to proliferation.
         wither.onEffectiveSkullHit(alreadyWithered);
-        if (victim instanceof LivingEntity living){
+        if (livingVictim != null){
             int duration = level().getDifficulty() == Difficulty.HARD ? 1200
                                                                       : level().getDifficulty() == Difficulty.NORMAL ? 300 : 0;
             if (duration > 0)
-                living.addEffect(new MobEffectInstance(MobEffects.WITHER, duration, 1), getEffectSource());
+                livingVictim.addEffect(new MobEffectInstance(MobEffects.WITHER, duration, 1), getEffectSource());
         }
     }
 }
