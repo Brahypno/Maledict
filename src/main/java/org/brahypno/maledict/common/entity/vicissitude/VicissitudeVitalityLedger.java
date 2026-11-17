@@ -58,15 +58,14 @@ final class VicissitudeVitalityLedger extends SavedData {
         CompoundTag tag = new CompoundTag();
         tag.putFloat("Current", value.current());
         tag.putFloat("Maximum", value.maximum());
-        tag.putLong("GateOpensAt", value.gateOpensAt());
         tag.putInt("KillAttempts", value.killAttempts());
         tag.putLong("LastKillTick", value.lastKillTick());
         return tag;
     }
 
     static VicissitudeVitality decode(CompoundTag tag) {
+        // Older records also carry "GateOpensAt"; the rhythm is a ChangeLib gate now, so it is ignored.
         return new VicissitudeVitality(tag.getFloat("Current"), tag.getFloat("Maximum"),
-                                       tag.contains("GateOpensAt", Tag.TAG_LONG) ? tag.getLong("GateOpensAt") : Long.MIN_VALUE,
                                        tag.getInt("KillAttempts"),
                                        tag.contains("LastKillTick", Tag.TAG_LONG) ? tag.getLong("LastKillTick") : Long.MIN_VALUE);
     }

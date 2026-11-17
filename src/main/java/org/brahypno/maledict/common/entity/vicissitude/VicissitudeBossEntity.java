@@ -121,6 +121,9 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
             vitality.capability = getCapability(VicissitudeVitalityCapability.CAPABILITY)
                     .orElseThrow(() -> new IllegalStateException("Missing Vicissitude vitality capability"));
             VicissitudeVitality saved = vitality.ledger.find(vitality.identity);
+            // An existing world record means this instance is resuming a boss that was already in the
+            // world; a fresh UUID is a summon or a first spawn. Only the former gets a load grace.
+            vitality.resumed = saved != null;
             if (saved == null){
                 // Captured once per UUID; reloading must not heal wounds or recapture attributes.
                 float maximum = initialVitalityMaximum();
@@ -145,9 +148,19 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
 
     private void bindVitalityProtection() {
         if (vitalityController == null){
-            vitalityController = CombatProtection.bindOwned(
+            CombatProtection.Controller controller = CombatProtection.bindOwned(
                     this, combatProtectionGrade(), VITALITY_ACCESS,
                     getVitalityDamageLimit(MAXIMUM_HIT_WEIGHT));
+            // The hit rhythm is the binding's own time gate: ChangeLib stamps it where this boss
+            // commits a landed loss, so our damage code and a stray write read the same cadence.
+            controller.interval(getVitalityHitInterval());
+            // A boss resuming an existing world record is reachable for the first time; hold the same
+            // gate so the first hit of that moment is refused instead of free, like a player's join
+            // i-frames. A summon is not a resume: its rite already carries its own immunity.
+            if (vitality.resumed){
+                controller.hold(getLoadGraceTicks());
+            }
+            vitalityController = controller;
         }
     }
 
@@ -275,9 +288,18 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
     }
 
     /**
-     * 我们自己那扇门的宽度。它只在原版 invulnerableTime 放行之后才被问到，两扇门是串联的。
+     * 这一击节奏门的宽度，挂在 ChangeLib 的血量绑定上。它只在原版 invulnerableTime 放行之后才被问到，
+     * 两扇门仍然是串联的；门本身不再由本类记账，见 {@link #getSpawnGraceTicks()}。
      */
     protected int getVitalityHitInterval() {
+        return 20;
+    }
+
+    /**
+     * 这个实例从存档里读回来时的一段无敌。节奏是活状态，不写存档：读档后的第一下应该被挡下，
+     * 而不是白挨。召唤不在此列——仪式本身有自己的免疫。
+     */
+    protected int getLoadGraceTicks() {
         return 20;
     }
 
@@ -319,7 +341,8 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
     }
 
     /**
-     * Two serial gates; nested/same-tick channels share the maximum final health loss.
+     * Vanilla's i-frame in series with the binding's ChangeLib time gate; nested/same-tick channels
+     * share the maximum final health loss.
      */
     @Override
     public final boolean hurt(DamageSource source, float amount) {
@@ -345,7 +368,9 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
             recordKillAttempt(source);
             return getHealth() <= 0.0F;
         }
-        if (!sameTickBatch && state.gateClosed(now)){
+        // ChangeLib owns the window: it is stamped where this boss commits a landed loss, so a
+        // hidden write and an ordinary hit answer the same question.
+        if (!sameTickBatch && CombatProtection.rhythmRemaining(this) > 0){
             return false;
         }
         // 过了两道门就算挨到：适应在这里记账，早于上限与批内取最大的判定。
@@ -375,7 +400,8 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
         // Vanilla hurt() can return true even when LivingHurtEvent/LivingDamageEvent was canceled.
         accepted = accepted && frame.finalLoss > 0.0F;
         if (accepted){
-            commitVitality(verifiedVitality().afterAcceptedHit(now, getVitalityHitInterval()));
+            // ChangeLib restarted the gate when this loss was committed; there is no second copy of
+            // the cadence here, so the accepted branch only reports the hit.
             onDamageAccepted(source, frame.finalLoss);
         }
         return accepted;
@@ -740,6 +766,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
         private VicissitudeVitality snapshot;
         private boolean joined;
         private final Deque<DamageFrame> frames = new ArrayDeque<>();
+        private boolean resumed;
         private boolean finishing;
         private boolean deathHandled;
         private boolean lootHandled;

@@ -431,14 +431,16 @@ NBT 写 `DamageAdaptation` 列表（`Message` + `Hits`，顺序即最新在前�
 
 ### 生命账本与击杀计数
 
-- 真生命走账本 + capability：`VicissitudeVitality`（current / maximum / gateOpensAt /
-  killAttempts / lastKillTick），世界级 `VicissitudeVitalityLedger`。
-  死掉的 UUID **故意不清理**，这样旧实体副本无法复活。
+- 真生命走账本 + capability：`VicissitudeVitality`（current / maximum / killAttempts /
+  lastKillTick），世界级 `VicissitudeVitalityLedger`。死掉的 UUID **故意不清理**，这样旧实体副本无法复活。
 - 每击上限 = 难度基准比例 × 最大生命 × 部位权重。
   基准比例：SIMPLE **0.10**、DIFFICULT 0.05、COMPLETE / EXTREME 0.01。
-- 命中门：每次有效命中把 `nextHit` 重算为 `now + 20` tick；窗口内落下的后续伤害
-  × `1 - 剩余/20`，窗口内的命中同样把窗口重新推到 `now + 20`；
-  同一 tick 内的重复命中直接返回 false。这层与适应互不影响。
+- 命中门是 **ChangeLib 绑定上的时序门**（`Controller.interval(20)`），不再写进账本：
+  一次真正扣到血的命中把窗关上 20 tick，窗内的命中一滴血都拿不到；开窗的那一 tick 仍算同一次命中，
+  所以同批多通道照旧按“取最大差额”结算。判定点在结算处（`commitDamage` → `clampTarget`），
+  节点在 `hurt` 里只是提前问一句 `rhythmRemaining`，所以直写血量的路径看到的是同一条节奏。
+- 读档宽限：只有沿用已有世界账本记录的实例才算“读档”，绑定后 `Controller.hold(20)`；
+  召唤由仪式自己的免伤负责。宽限不写存档，重载后的第一下被挡下而不是白挨。
 - 击杀计数：`killAttempts` 最多 3 次、窗口 100 tick、同 tick 重复只算一次；
   第 3 次把生命归零即真死。直接 `setHealth` 不是另一条权威。
 - 掉落与经验只在真死时结算一次；死亡动画、存档重载与 probe 都不重复结算。

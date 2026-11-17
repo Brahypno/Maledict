@@ -64,13 +64,14 @@
 | 翼根（0.75） | 18.75 / 16.875 / 7.5 / 11.25 | VicissitudeRig.java:77,79 |
 | 外翼（0.5） | 12.5 / 11.25 / 5 / 7.5 | VicissitudeRig.java:78,80 |
 | 部位权重基准 | 躯干 1.0 / 头 1.25 / 翼根 0.75 / 外翼 0.5；无法定位时 BODY | VicissitudeRig.java:74-80；回退 FirstVicissitudeBossEntity.java:1965 |
-| 一次请求的允许额度 | `基准上限 × 1.25`（留给头部） | VicissitudeBossEntity.java:45,148-150 |
-| 每击上限结算顺序 | 两道门 → 部位修正（非玩家 ×0.5、适应、距离衰减）→ 单次上限 → `BossDamage.resolve`（护甲/魔法/吸收/事件）→ 最终再取 min(limit) | VicissitudeBossEntity.java:351-360,395-399 |
+| 一次请求的允许额度 | `基准上限 × 1.25`（留给头部） | VicissitudeBossEntity.java:45,152-153 |
+| 每击上限结算顺序 | 两道门 → 部位修正（非玩家 ×0.5、适应、距离衰减）→ 单次上限 → `BossDamage.resolve`（护甲/魔法/吸收/事件）→ 最终再取 min(limit) | VicissitudeBossEntity.java:376-385,420-424 |
 | 非玩家来源 | ×0.5，再进适应与距离衰减 | FirstVicissitudeBossEntity.java:1894,1910-1920 |
 | 无活体攻击者 | 距离衰减跳过（满伤） | FirstVicissitudeBossEntity.java:1972-1976 |
-| 护甲 / 魔法减免 | `getDamageAfterMagicAbsorb(getDamageAfterArmorAbsorb(dmg))`，之后 `onLivingHurt` / `onLivingDamage` 再各过一次 | VicissitudeBossEntity.java:390-391；BossDamage.java:33-45 |
-| 命中门（第二道） | 每次有效命中把门推到 `now + 20` tick，门内后续伤害被拒 | VicissitudeBossEntity.java:280-282,348-350；VicissitudeVitality.java:40-47 |
-| 原版无敌帧门 | `invulnerableTime > 0` 即拒（同 tick 批次除外） | VicissitudeBossEntity.java:336-339 |
+| 护甲 / 魔法减免 | `getDamageAfterMagicAbsorb(getDamageAfterArmorAbsorb(dmg))`，之后 `onLivingHurt` / `onLivingDamage` 再各过一次 | VicissitudeBossEntity.java:415-416；BossDamage.java:33-45 |
+| 命中门（第二道） | ChangeLib 绑定上的时序门：一次真正扣到血的命中把窗关上 `getVitalityHitInterval()`（20）tick，窗内的命中扣不到血；点在结算处（`commitDamage` → `clampTarget`），不在 `hurt` 里 | VicissitudeBossEntity.java:156,294-296,373；ChangeLib CombatProtection（interval / `rhythmRemaining`） |
+| 原版无敌帧门 | `invulnerableTime > 0` 即拒（同 tick 批次除外） | VicissitudeBossEntity.java:359-361 |
+| 读档宽限 | 只有“沿用已有世界账本记录”的实例（`resumed`）在绑定后 `hold(getLoadGraceTicks())`（20）tick；召唤不算读档 | VicissitudeBossEntity.java:161,302-304；ChangeLib `Controller.hold` |
 | 免伤阶段 · DORMANT + PHASE_ONE | 全程免伤（PHASE_ONE 时长 1800/1400/1000/750 tick；DORMANT 不计时，等首击） | FirstVicissitudeBossEntity.java:2444,987-989 |
 | 免伤阶段 · TRANSITION | 60 tick | FirstVicissitudeBossEntity.java:74,2441 |
 | 免伤阶段 · 召唤仪式 | `isRiteSummoning()` 期间 | FirstVicissitudeBossEntity.java:2439-2440 |
@@ -79,7 +80,7 @@
 | 回血 | 无技能回血；只有脱战回血（下行） | VicissitudeBossEntity.java:427-440 |
 | 复活 / 抗死 | 无 reformation；`LivingDeathEvent` 被取消时恢复到 `min(1, 上限)` | VicissitudeVitality.java:27-30；VicissitudeBossEntity.java:466 |
 | 击杀尝试 | 100 tick 窗口内第 3 次强制归零；`kill()` / `remove(KILLED)` 走同一条 | VicissitudeBossEntity.java:287-289,625-636 |
-| 同 tick 多通道合并 | 同 tick 视为一批，跳过两道门；每通道各自结算后**只扣超过本批已有最大扣血量的差额**，不相加 | VicissitudeBossEntity.java:336-339,400-410；BossDamage.java:25-30 |
+| 同 tick 多通道合并 | 同 tick 视为一批，跳过两道门；每通道各自结算后**只扣超过本批已有最大扣血量的差额**，不相加。ChangeLib 的时序门同样把“开窗的那一 tick”当成一次命中，所以同批通道不会被它挡掉 | VicissitudeBossEntity.java:359-361,386,425-435；BossDamage.java:25-30 |
 | 脱战回血 | 无目标、且无活着的 `lastHurtByMob` 时，每 tick 回 5% 最大生命池（`HEAL_FRACTION_PER_TICK = 0.05F`） | BossRecovery.java:28,43-52；VicissitudeBossEntity.java:563-566 |
 | 脱战回血 · 战斗记忆（工作区新增） | 最近 `COMBAT_MEMORY_TICKS = 100` tick 内有过结算伤害时不算脱战，回血推迟到 100 tick 后 | BossRecovery.java:33,58-68；伤害侧打点 VicissitudeBossEntity.java:421 |
 | 脱战回血 · 脚本节拍例外 | TRANSITION 与召唤仪式期间不回血（`recoversOutOfCombat()` 覆盖） | FirstVicissitudeBossEntity.java:2424-2432 |
@@ -332,8 +333,9 @@
 | 非玩家伤害倍率 | 0.5 | FirstVicissitudeBossEntity.java:1894 |
 | 嘲弄阈值（e⁻²） | 0.135335 | FirstVicissitudeBossEntity.java:1900 |
 | 嘲弄冷却 | 200 tick | FirstVicissitudeBossEntity.java:1905 |
-| 命中门间隔 | 20 tick | VicissitudeBossEntity.java:280-282 |
-| 击杀尝试窗口 | 100 tick | VicissitudeBossEntity.java:287-289 |
+| 命中门间隔 | 20 tick（ChangeLib 绑定时序门） | VicissitudeBossEntity.java:156,294-296 |
+| 读档宽限 | 20 tick（仅沿用已有账本记录的实例） | VicissitudeBossEntity.java:161,302-304 |
+| 击杀尝试窗口 | 100 tick | VicissitudeBossEntity.java:309-311 |
 | 难度生命池（SIMPLE/DIFFICULT/COMPLETE/EXTREME） | 500 / 750 / 1000 / 1500 | FirstVicissitudeBossEntity.java:3201-3204 |
 | 阶段一时长（同上顺序） | 1800 / 1400 / 1000 / 750 tick | FirstVicissitudeBossEntity.java:3201-3204 |
 | 每击上限比例（SIMPLE/DIFFICULT/COMPLETE/EXTREME） | 0.05 / 0.03 / 0.01 / 0.01 | FirstVicissitudeBossEntity.java:2416-2420 |

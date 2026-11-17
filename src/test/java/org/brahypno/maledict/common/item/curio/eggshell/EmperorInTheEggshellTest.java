@@ -30,6 +30,8 @@ public final class EmperorInTheEggshellTest {
                 inventory, "charm", 1, true, true, true, ICurio.DropRule.DEFAULT)));
         inventory.setEquippedCurio("charm", 0,
                 new ItemStack(MaledictItems.EMPEROR_IN_THE_EGGSHELL.get()));
+        // A scripted equip skips Curios' own onEquip callback, which is what installs the layer.
+        EmperorInTheEggshellItem.installWard(player);
         helper.getLevel().addNewPlayer(player);
 
         player.receive(helper.getLevel().damageSources().generic(), 10.0F);

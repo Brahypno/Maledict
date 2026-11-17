@@ -203,20 +203,21 @@ public final class MaledictConfig {
         builder.push("emperorInTheEggshell");
         EMPEROR_EGGSHELL_WINDOW_TICKS = builder
                 .comment("How long the Eggshell Emperor's damage window lasts after a hit, in ticks.",
-                         "The opening hit (and every other hit in its tick) is full damage; after",
-                         "that, incoming damage is scaled by elapsed / windowTicks. At 40, a hit",
-                         "20 ticks later takes 50% damage and a hit at 40 ticks is full again.",
-                         "Vanilla's own 20-tick i-frame window stays in front of this one, so",
-                         "values at or below 20 have no visible effect; the minimum is 21.",
-                         "Same-tick hits count once, at the largest raw amount.")
+                         "It is a ChangeLib time gate on the same guard layer as the cap below: after",
+                         "a hit really removes health, a hit inside the window may take only",
+                         "elapsed / windowTicks of the health it would otherwise remove. At 40, a hit",
+                         "20 ticks later takes 50% and a hit at 40 ticks is full again. A hit the",
+                         "window holds cannot restart it. Vanilla's own 20-tick i-frame stays in",
+                         "front of this one, so values at or below 20 have no visible effect; the",
+                         "minimum is 21.")
                 .defineInRange("windowTicks", 40, 21, 200);
         EMPEROR_EGGSHELL_GUARD_PERCENTAGE = builder
                 .comment("The most health one hit may remove from the wearer, as a share of their max",
                          "health: at 0.5 a 20 health wearer can never lose more than 10 health per",
-                         "hit. This is a ChangeLib D4 guard layer, installed on equip and closed on",
-                         "unequip; it caps the hit at actuallyHurt, after vanilla's i-frames and",
-                         "before armour, absorption and the health write. It does not replace the",
-                         "window above, which keeps scaling by elapsed ticks. 0 disables the layer")
+                         "hit. This is the same ChangeLib D4 guard layer as the window above, settled",
+                         "where the health write happens, so a source that skips the damage pipeline",
+                         "still sees it. It does not replace the window, which keeps scaling by",
+                         "elapsed ticks. 0 leaves the layer uncapped and keeps the window")
                 .defineInRange("guardPercentage", 0.50D, 0.0D, 1.0D);
         builder.pop();
         builder.push("lumenfall");

@@ -51,7 +51,7 @@ public final class VicissitudeVitalityTest {
         UUID woundedId = UUID.randomUUID();
         UUID deadId = UUID.randomUUID();
         VicissitudeVitality wounded = VicissitudeVitality.initial(1400.0F)
-                                                         .afterDamage(14.0F).afterAcceptedHit(37, 20).killAttempt(11, 100).killAttempt(12, 100);
+                                                         .afterDamage(14.0F).killAttempt(11, 100).killAttempt(12, 100);
         VicissitudeVitality corpse = VicissitudeVitality.initial(1000.0F)
                                                         .killAttempt(1, 100).killAttempt(2, 100).killAttempt(3, 100);
         VicissitudeVitalityLedger ledger = new VicissitudeVitalityLedger();
@@ -61,7 +61,7 @@ public final class VicissitudeVitalityTest {
         ledger.save(file.toFile());
         VicissitudeVitalityLedger restored =
                 VicissitudeVitalityLedger.load(NbtIo.readCompressed(file.toFile()).getCompound("data"));
-        assertTrue(wounded.equals(restored.find(woundedId)), "Saving must retain the open gate, wounds and timers");
+        assertTrue(wounded.equals(restored.find(woundedId)), "Saving must retain wounds and timers");
         assertTrue(corpse.equals(restored.find(deadId)), "A dead UUID must stay dead on reload");
         assertTrue(restored.find(woundedId).killAttempt(13, 100).current() == 0.0F,
                    "Reload must not reset two accumulated attempts");
