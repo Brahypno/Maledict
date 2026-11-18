@@ -72,6 +72,7 @@
 | 命中门（第二道） | ChangeLib 绑定上的时序门：一次真正扣到血的命中把窗关上 `getVitalityHitInterval()`（20）tick，窗内的命中扣不到血；点在结算处（`commitDamage` → `clampTarget`），不在 `hurt` 里 | VicissitudeBossEntity.java:156,294-296,373；ChangeLib CombatProtection（interval / `rhythmRemaining`） |
 | 原版无敌帧门 | `invulnerableTime > 0` 即拒（同 tick 批次除外） | VicissitudeBossEntity.java:359-361 |
 | 读档宽限 | 只有“沿用已有世界账本记录”的实例（`resumed`）在绑定后 `hold(getLoadGraceTicks())`（20）tick；召唤不算读档 | VicissitudeBossEntity.java:161,302-304；ChangeLib `Controller.hold` |
+| 无敌帧削减 | 攻击侧操作：附魔/技能/重击命中时直接 `CombatProtection.shortenRhythm(target, ticks)` 削掉当前剩余量（连带原版 `invulnerableTime`，否则原版门照样挡；配置的 20 tick 不变，削穿即开口）。Boss 侧另有 `shortenHitWindow` 便于子类调用 | VicissitudeBossEntity.java:314-325；ChangeLib `shortenRhythm` |
 | 免伤阶段 · DORMANT + PHASE_ONE | 全程免伤（PHASE_ONE 时长 1800/1400/1000/750 tick；DORMANT 不计时，等首击） | FirstVicissitudeBossEntity.java:2444,987-989 |
 | 免伤阶段 · TRANSITION | 60 tick | FirstVicissitudeBossEntity.java:74,2441 |
 | 免伤阶段 · 召唤仪式 | `isRiteSummoning()` 期间 | FirstVicissitudeBossEntity.java:2439-2440 |

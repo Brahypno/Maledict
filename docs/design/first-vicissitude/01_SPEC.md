@@ -441,6 +441,10 @@ NBT 写 `DamageAdaptation` 列表（`Message` + `Hits`，顺序即最新在前�
   节点在 `hurt` 里只是提前问一句 `rhythmRemaining`，所以直写血量的路径看到的是同一条节奏。
 - 读档宽限：只有沿用已有世界账本记录的实例才算“读档”，绑定后 `Controller.hold(20)`；
   召唤由仪式自己的免伤负责。宽限不写存档，重载后的第一下被挡下而不是白挨。
+- 削减：这是**攻击侧**操作——附魔、技能、重击命中时直接
+  `CombatProtection.shortenRhythm(target, ticks)` 削目标的**当前**剩余量，不需要防御方点头；
+  它连带削原版 `invulnerableTime`（原版帧在门前，只削门等于没削），配置的 20 tick 不动，
+  削穿即开口，下一次命中仍从完整窗口算起。Boss 侧 `shortenHitWindow` 是同一逻辑的便捷入口。
 - 击杀计数：`killAttempts` 最多 3 次、窗口 100 tick、同 tick 重复只算一次；
   第 3 次把生命归零即真死。直接 `setHealth` 不是另一条权威。
 - 掉落与经验只在真死时结算一次；死亡动画、存档重载与 probe 都不重复结算。

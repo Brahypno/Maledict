@@ -212,6 +212,33 @@ public final class VicissitudeVitalityTest {
         helper.succeed();
     }
 
+    @GameTest(template = "test_empty", timeoutTicks = 40)
+    public static void anAuthoredCutShortensTheWindowWithoutReconfiguringIt(GameTestHelper helper) {
+        TestBoss boss = spawn(helper);
+        float initial = boss.getHealth();
+        boss.hurt(boss.damageSources().mobAttack(boss), 6);
+        equal(helper, initial - 6, boss.getHealth(), "The first hit must land");
+        helper.runAtTickTime(1, () -> {
+            helper.assertTrue(CombatProtection.rhythmRemaining(boss) > 0, "The window must be running");
+            // 附魔/技能走的就是这条路：外部直接削目标的当前无敌帧，不需要经过 Boss 自己。
+            int left = CombatProtection.shortenRhythm(boss, 20);
+            helper.assertTrue(left == 0, "An outside shave must open the window: left=" + left);
+            boss.hurt(boss.damageSources().mobAttack(boss), 6);
+            equal(helper, initial - 12, boss.getHealth(), "The hit after the outside shave must land");
+        });
+        helper.runAtTickTime(2, () -> {
+            helper.assertTrue(CombatProtection.rhythmRemaining(boss) > 15,
+                              "The shave must not change the configured interval: remaining="
+                              + CombatProtection.rhythmRemaining(boss));
+            // Boss 自己的入口走同一条逻辑。
+            boss.cutWindow(20);
+            helper.assertTrue(CombatProtection.rhythmRemaining(boss) == 0, "The own-hook cut must open the window too");
+            boss.hurt(boss.damageSources().mobAttack(boss), 6);
+            equal(helper, initial - 18, boss.getHealth(), "The hit after the own-hook cut must land");
+            helper.succeed();
+        });
+    }
+
     private static TestBoss spawn(GameTestHelper helper) {
         TestBoss boss = new TestBoss(helper.getLevel());
         boss.setPos(helper.absolutePos(new BlockPos(1, 2, 1)).getCenter());
@@ -283,5 +310,7 @@ public final class VicissitudeVitalityTest {
         void useAiTarget(LivingEntity target) {selectAiTarget(target);}
 
         void clearAiTarget() {selectAiTarget(null);}
+
+        void cutWindow(int ticks) {shortenHitWindow(ticks);}
     }
 }

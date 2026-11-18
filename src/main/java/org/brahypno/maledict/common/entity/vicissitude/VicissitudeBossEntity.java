@@ -304,6 +304,20 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
     }
 
     /**
+     * 为“这一击够重、能压过节奏”之类的特定场合，削掉当前无敌帧的一部分剩余量。
+     *
+     * <p>这是**攻击侧**的操作：附魔、技能、重击都可以对目标直接调用
+     * {@link CombatProtection#shortenRhythm(net.minecraft.world.entity.LivingEntity, int)}，不需要经过
+     * 这个 Boss。这里只是给子类留一个不用写类名的入口。削的是正在跑的剩余量，
+     * {@link #getVitalityHitInterval()} 的配置值不动：削完之后下一次命中仍从完整窗口开始，削穿即开口。
+     */
+    protected final void shortenHitWindow(int ticks) {
+        if (ticks > 0 && !level().isClientSide){
+            CombatProtection.shortenRhythm(this, ticks);
+        }
+    }
+
+    /**
      * Maximum gap between consecutive strong-kill attempts; duplicates in one tick count once.
      */
     protected int getKillAttemptWindow() {
