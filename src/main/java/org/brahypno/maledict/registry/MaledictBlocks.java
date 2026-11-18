@@ -56,7 +56,7 @@ public final class MaledictBlocks {
                                                                                                                       .sound(SoundType.FUNGUS)));
     public static final RegistryObject<Block> WITHERLIGHT_LAMP = BLOCKS.register("witherlight_lamp",
                                                                                  () -> new RealmGroundcoverBlock(
-                                                                                         BlockBehaviour.Properties.copy(Blocks.BROWN_MUSHROOM)
+                                                                                         BlockBehaviour.Properties.copy(Blocks.CAMPFIRE)
                                                                                                                   .noCollission().noOcclusion().strength(0.5F)
                                                                                                                   .lightLevel(state -> 14)
                                                                                                                   .sound(SoundType.WOOD), 13));
