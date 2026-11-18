@@ -43,6 +43,15 @@ public final class MaledictItemModels extends ItemModelProvider {
         registerIncursusBladeModels();
         loverAxeModel("lover_axe", "lover_axe");
         loverAxeModel("meltfall_axe", "lover_axe_lavender");
+        withExistingParent("baron_ceremonial_staff", mcLoc("item/handheld"))
+                .texture("layer0", modLoc("item/baron_ceremonial_staff"))
+                .transforms()
+                // Align the neck beneath the silver knob with the grip and let the shaft hang below it.
+                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(90, -45, 45).translation(0, 0, -1.5F).scale(0.85F).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND).rotation(90, -45, -45).translation(0, 0, -1.5F).scale(0.85F).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(10, -25, 35).translation(2, 4.25F, -4).scale(0.68F).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(10, -25, -55).translation(2, 4.25F, -4).scale(0.68F).end()
+                .end();
         registerYearningSwordModel();
         withExistingParent("forsaken_vow", mcLoc("item/handheld"))
                 .texture("layer0", modLoc("item/forsaken_vow"));

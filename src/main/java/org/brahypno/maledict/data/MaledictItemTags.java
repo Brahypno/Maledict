@@ -72,7 +72,8 @@ public final class MaledictItemTags extends ItemTagsProvider {
                 .add(MaledictItems.EARTHEN_SPIRIT_ARROW.get())
                 .add(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
         tag(ItemTags.BOOKSHELF_BOOKS).add(MaledictItems.LIGHTFALL_CODEX.get());
-        tag(ItemTags.SWORDS).add(MaledictItems.YEARNING_SWORD.get(), MaledictItems.FORSAKEN_VOW.get());
+        tag(ItemTags.SWORDS).add(MaledictItems.YEARNING_SWORD.get(), MaledictItems.FORSAKEN_VOW.get(),
+                                 MaledictItems.BARON_CEREMONIAL_STAFF.get());
         tag(FORGE_SCYTHE).add(MaledictItems.INCURSUS_BLADE.get());
         tag(ItemTagRegistry.SCYTHE)
                 .add(MaledictItems.INCURSUS_BLADE.get())

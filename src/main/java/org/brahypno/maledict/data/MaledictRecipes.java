@@ -101,6 +101,15 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(SpiritTypeRegistry.AQUEOUS_SPIRIT, 18)
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/lover_axe"));
 
+        new SpiritInfusionRecipeBuilder(ItemRegistry.TOTEMIC_STAFF.get(), 1,
+                                        MaledictItems.BARON_CEREMONIAL_STAFF.get(), 1)
+                .addExtraItem(ItemRegistry.VOID_SALTS.get(), 4)
+                .addExtraItem(ItemRegistry.TWISTED_ROCK.get(), 4)
+                .addSpirit(SpiritTypeRegistry.AQUEOUS_SPIRIT, 16)
+                .addSpirit(SpiritTypeRegistry.AERIAL_SPIRIT, 16)
+                .build(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "spirit_infusion/baron_ceremonial_staff"));
+
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ItemRegistry.MALIGNANT_LEAD.get())
                               .requires(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 9)
                               .unlockedBy("has_malignant_lead_fragment", has(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()))

@@ -26,6 +26,8 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue ENLIGHTENMENT_MELEE_DAMAGE_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue LIGHTWARD_ABNEGATION_REDUCTION;
     public static final ForgeConfigSpec.IntValue SOULBINDING_SPIRIT_SOUND_COOLDOWN;
+    public static final ForgeConfigSpec.DoubleValue BARON_STAFF_VISIBILITY;
+    public static final ForgeConfigSpec.DoubleValue BARON_STAFF_SPEED;
     public static final ForgeConfigSpec.BooleanValue INFRARED_ENABLED;
     public static final ForgeConfigSpec.DoubleValue INFRARED_INTENSITY;
     public static final ForgeConfigSpec.DoubleValue INFRARED_GRAYSCALE_THRESHOLD;
@@ -199,6 +201,27 @@ public final class MaledictConfig {
                          "arcane bonus), and the cooldown folds them into one sound. It never",
                          "suppresses damage, and 0 plays it for every hurt event.")
                 .defineInRange("spiritSoundCooldown", 10, 0, 200);
+        builder.pop();
+        builder.push("baronCeremonialStaff");
+        BARON_STAFF_VISIBILITY = builder
+                .comment("How visible the holder is while the staff is in either hand: a multiplier",
+                         "on the visibility vanilla already worked out (invisibility and mob-head",
+                         "disguises). Mobs compute their detection radius as",
+                         "max(followRange * visibility, 2 blocks), so 0.6 means they notice the",
+                         "holder only within 60% of their usual range, while the 2 block floor",
+                         "still lets them see anyone standing right next to them. The multiplier",
+                         "stacks with invisibility instead of replacing it. 1.0 turns the",
+                         "concealment off.")
+                .defineInRange("visibilityMultiplier", 0.6D, 0.0D, 1.0D);
+        BARON_STAFF_SPEED = builder
+                .comment("Movement speed bonus while the staff is in either hand, 0.2 being +20%.",
+                         "The attribute modifier is MULTIPLY_TOTAL, so the bonus multiplies with",
+                         "itself when one staff is held in each hand: the default 0.2 reads as +44%",
+                         "rather than +40%. 0.0 turns the bonus off. Attribute modifiers are only",
+                         "re-read when a creature's equipment changes, so a value edited while",
+                         "playing takes effect after the staff is taken out of the hand and held",
+                         "again (or after a rejoin).")
+                .defineInRange("speedBonus", 0.2D, 0.0D, 10.0D);
         builder.pop();
         builder.push("emperorInTheEggshell");
         EMPEROR_EGGSHELL_WINDOW_TICKS = builder

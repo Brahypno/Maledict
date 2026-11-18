@@ -27,6 +27,7 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.INCURSUS_BLADE.get());
                                output.accept(MaledictItems.LOVER_AXE.get());
                                output.accept(MaledictItems.MELTFALL_AXE.get());
+                               output.accept(MaledictItems.BARON_CEREMONIAL_STAFF.get());
                                output.accept(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get());
                                output.accept(MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get());
                                output.accept(MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS.get());

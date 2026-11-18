@@ -25,6 +25,7 @@ import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.common.item.curio.priestess.EidolonOfTheHighPriestessItem;
 import org.brahypno.maledict.common.item.curio.rune.*;
 import org.brahypno.maledict.common.item.equipment.lightward.LightwardArmorItem;
+import org.brahypno.maledict.common.item.weapon.baron.BaronStaffItem;
 import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
 import org.brahypno.maledict.common.item.weapon.incursus.MaledictItemTiers;
 import org.brahypno.maledict.common.item.weapon.lover.LoverAxeItem;
@@ -155,8 +156,9 @@ public final class MaledictItems {
                     new ForgeSpawnEggItem(MaledictEntities.DEMIURGE_STATUE,
                                           0x6A6472, 0xC2BCC8, new Item.Properties()) {
                         @Override
-                        public void appendHoverText(ItemStack stack, @Nullable Level level,
-                                                    List<Component> tooltip, TooltipFlag flag) {
+                        public void appendHoverText(
+                                ItemStack stack, @Nullable Level level,
+                                List<Component> tooltip, TooltipFlag flag) {
                             tooltip.add(Component.translatable(
                                     "tooltip.maledict.demiurge_statue_spawn_egg"));
                         }
@@ -166,7 +168,7 @@ public final class MaledictItems {
                     new StatedSpawnEggItem(MaledictEntities.DEMIURGE_STATUE,
                                            0x9A6BD6, 0xE8C8FF, new Item.Properties(), true,
                                            entity -> {
-                                               if (entity instanceof DemiurgeStatueEntity statue) {
+                                               if (entity instanceof DemiurgeStatueEntity statue){
                                                    statue.activateOnSpawn();
                                                }
                                            }));
@@ -175,6 +177,8 @@ public final class MaledictItems {
             new IncursusBladeItem(MaledictItemTiers.INCURSUS, new Item.Properties().rarity(Rarity.EPIC)));
     public static final RegistryObject<Item> LOVER_AXE = ITEMS.register("lover_axe", LoverAxeItem::new);
     public static final RegistryObject<Item> MELTFALL_AXE = ITEMS.register("meltfall_axe", () -> new LoverAxeItem(false));
+    public static final RegistryObject<Item> BARON_CEREMONIAL_STAFF =
+            ITEMS.register("baron_ceremonial_staff", BaronStaffItem::new);
 
     /**
      * 东方女仆联动：赠礼之剑与其拘魂转化形态。

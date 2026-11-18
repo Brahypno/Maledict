@@ -84,6 +84,7 @@ public final class MaledictLanguage extends LanguageProvider {
         addBleedingEyeTranslations();
         addEnchantmentsTranslations();
         addAxesTranslations();
+        addBaronStaffTranslations();
         addBowsTranslations();
         addSpiritArrowsTranslations();
         addIncursusBladeTranslations();
@@ -511,6 +512,17 @@ public final class MaledictLanguage extends LanguageProvider {
             + "Descent rises");
     }
 
+    /**
+     * 伯爵的礼杖：铁剑档的仪式剑。移速那一条由属性修饰符自己显示，这里只补可见度那一句——
+     * 数字跟着配置走，所以文案里留一个百分比占位符。
+     */
+    private void addBaronStaffTranslations() {
+        addItem(MaledictItems.BARON_CEREMONIAL_STAFF, "男爵的礼杖", "Ceremonial Staff of the Baron");
+        add("tooltip.maledict.baron_ceremonial_staff.concealment",
+            "手持时降低生物 %s%% 仇恨范围。",
+            "In either hand: mobs only notice you within %s%% of their detection range.");
+    }
+
     private void addBowsTranslations() {
         addItem(MaledictItems.REMEMBRANCE_BOW, "思念弓", "Remembrance Bow");
         add("malum.gui.book.entry.maledict.remembrance_bow", "思念弓", "Remembrance Bow");
@@ -782,7 +794,7 @@ public final class MaledictLanguage extends LanguageProvider {
         add("malum.gui.book.entry.page.text." + TOTEMIC_RUNES_CONTINUED_ENTRY + ".2",
             "看来之前得出的只有基本元素 对应的仪式才能起效是不完 全正确的。原因是这些脉动更 加的单纯，"
             + "因而效果与完整的 仪式有些区别。",
-            "My earlier conclusion that only rites of the basic elements would work was not entirely correct. "
+            "My baronier conclusion that only rites of the basic elements would work was not entirely correct. "
             + "These pulses are simpler, so their effects differ somewhat from those of the full rites.");
 
         addItem(MaledictItems.RUNE_OF_SATIATION, "饱食符文", "Rune of Satiation");
@@ -1191,7 +1203,7 @@ public final class MaledictLanguage extends LanguageProvider {
         add("malum.gui.book.entry.page.text." + EUTECTIC_ENTRY + ".2",
             "最终所得并非寻常金属，而是 一种深银色的共晶：其晶面在 暗处近乎铅黑，转动时却显现 青紫交错的折辉。"
             + "光未曾驱逐 恶念，恶念亦未曾吞没光。二 者原本的形态遭到否定，却没 有被彻底抹去。",
-            "What emerges is no ordinary metal, but a dark-silver eutectic crystal: nearly lead-black in "
+            "What emerges is no ordinary metal, but a dark-silver eutectic crystal: nbarony lead-black in "
             + "shadow, yet alive with refracted violet and cyan when turned toward the light. The light has "
             + "not driven out the malice, nor has the malice swallowed the light. "
             + "Their former states are negated, but neither is simply erased.");

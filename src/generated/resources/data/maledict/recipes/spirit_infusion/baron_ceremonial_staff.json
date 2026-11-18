@@ -1,0 +1,30 @@
+{
+  "type": "malum:spirit_infusion",
+  "extra_items": [
+    {
+      "count": 4,
+      "item": "malum:void_salts"
+    },
+    {
+      "count": 4,
+      "item": "malum:twisted_rock"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "malum:totemic_staff"
+  },
+  "output": {
+    "item": "maledict:baron_ceremonial_staff"
+  },
+  "spirits": [
+    {
+      "type": "aqueous",
+      "count": 16
+    },
+    {
+      "type": "aerial",
+      "count": 16
+    }
+  ]
+}
