@@ -46,11 +46,12 @@ public final class MaledictItemModels extends ItemModelProvider {
         withExistingParent("baron_ceremonial_staff", mcLoc("item/handheld"))
                 .texture("layer0", modLoc("item/baron_ceremonial_staff"))
                 .transforms()
-                // Align the neck beneath the silver knob with the grip and let the shaft hang below it.
-                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(90, -45, 45).translation(0, 0, -1.5F).scale(0.85F).end()
-                .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND).rotation(90, -45, -45).translation(0, 0, -1.5F).scale(0.85F).end()
-                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(10, -25, 35).translation(2, 4.25F, -4).scale(0.68F).end()
-                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(10, -25, -55).translation(2, 4.25F, -4).scale(0.68F).end()
+                // Reverse the held sprite so the silver knob sits in the hand and the ferrule points outward.
+                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(0, -90, 235).translation(0, 4, 0.5F).scale(0.85F).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND).rotation(0, 90, -235).translation(0, 4, 0.5F).scale(0.85F).end()
+                // Pixel (10.5, 5.5) is the neck. Cancel its rotated offset to place it at the hand's swing pivot.
+                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(0, -25, 225).translation(0, 2.4F, 0).scale(0.68F).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(0, 25, -225).translation(0, 2.4F, 0).scale(0.68F).end()
                 .end();
         registerYearningSwordModel();
         withExistingParent("forsaken_vow", mcLoc("item/handheld"))
