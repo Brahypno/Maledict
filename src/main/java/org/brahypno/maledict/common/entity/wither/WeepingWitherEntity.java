@@ -16,11 +16,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobType;
-import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -40,6 +36,7 @@ import org.brahypno.changelib.protection.ai.AiProtectionDefinition;
 import org.brahypno.changelib.protection.ai.ProtectedAiEntity;
 import org.brahypno.maledict.common.combat.BossDamage;
 import org.brahypno.maledict.common.combat.BossRecovery;
+import org.brahypno.maledict.common.entity.vicissitude.VicissitudeBossEntity;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.joml.Vector3f;
 
@@ -117,6 +114,7 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
         return WitherBoss.createAttributes().add(Attributes.MAX_HEALTH, 400.0D)
                          .add(Attributes.ARMOR, 8.0D);
     }
+
 
     @Override
     protected void defineSynchedData() {
@@ -729,5 +727,9 @@ public class WeepingWitherEntity extends WitherBoss implements ProtectedAiEntity
             nextPathAttempt = tickCount + 10;
             getNavigation().moveTo(altarHome.getX() + 0.5D, altarHome.getY(), altarHome.getZ() + 0.5D, 1.0D);
         }
+    }
+
+    public MobType getMobType() {
+        return combat.reformationUsed() ? MobType.UNDEAD : VicissitudeBossEntity.VICISSITUDE;
     }
 }
