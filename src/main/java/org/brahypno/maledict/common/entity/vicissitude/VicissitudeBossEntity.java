@@ -236,6 +236,18 @@ public abstract class VicissitudeBossEntity extends PathfinderMob
         return getMaxHealth();
     }
 
+    /**
+     * Pins the first-capture pool to the larger of the difficulty table and the final {@code MAX_HEALTH}
+     * that is already in effect when the instance joins the world. The base class reads it in
+     * {@link #onAddedToWorld()} after each boss has applied its own difficulty attribute, so a spawn
+     * modifier from another mod (L2Hostility and friends) lands first and is absorbed here; a
+     * reduction cannot drag the pool below the difficulty value. Captured exactly once per UUID: an
+     * existing world record is never recaptured, and later attribute changes never resize the pool.
+     */
+    protected final float initialVitalityMaximum(float difficultyMaximum) {
+        return VicissitudeVitality.initialMaximum(difficultyMaximum, getMaxHealth());
+    }
+
     @Override
     public final float getHealth() {
         // LivingEntity's constructor invokes virtual methods before our holder exists.

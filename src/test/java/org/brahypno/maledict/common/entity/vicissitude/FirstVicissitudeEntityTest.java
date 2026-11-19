@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -36,7 +37,9 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayerFactory;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.brahypno.changelib.DamageHelper.DamageStage;
 import org.brahypno.changelib.HealthHelper.CombatProtection;
 import org.brahypno.changelib.protection.ai.AiProtection;
@@ -189,6 +192,27 @@ public final class FirstVicissitudeEntityTest {
                               && existing.getVitalityMaximum() == 1024,
                               "An existing world record must keep 900/1024; the fix must not migrate or heal it");
             existing.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+
+            // A spawn modifier from another mod is applied in EntityJoinLevelEvent (L2Hostility's hook),
+            // which fires before onAddedToWorld: the one-shot capture must already see it. SIMPLE is 500,
+            // so +50% must give 750 and the summit must already be full.
+            FirstVicissitudeBossEntity boosted = MaledictEntities.FIRST_VICISSITUDE.get().create(helper.getLevel());
+            boosted.readAdditionalSaveData(new CompoundTag());
+            boosted.setPos(helper.absolutePos(new BlockPos(2, 2, 2)).getCenter());
+            helper.assertTrue(joinWithSpawnBonus(helper, boosted, 0.5D)
+                              && boosted.getVitalityMaximum() == 750 && boosted.getHealth() == 750,
+                              "A spawn-time MAX_HEALTH gain must lift the captured pool and spawn it full: "
+                              + boosted.getHealth() + "/" + boosted.getVitalityMaximum());
+            boosted.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+
+            FirstVicissitudeBossEntity shrunken = MaledictEntities.FIRST_VICISSITUDE.get().create(helper.getLevel());
+            shrunken.readAdditionalSaveData(new CompoundTag());
+            shrunken.setPos(helper.absolutePos(new BlockPos(3, 2, 3)).getCenter());
+            helper.assertTrue(joinWithSpawnBonus(helper, shrunken, -0.5D)
+                              && shrunken.getVitalityMaximum() == 500 && shrunken.getHealth() == 500,
+                              "A spawn-time reduction must not undercut the difficulty floor: "
+                              + shrunken.getHealth() + "/" + shrunken.getVitalityMaximum());
+            shrunken.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
             attacker.discard();
             helper.succeed();
         });
@@ -346,6 +370,42 @@ public final class FirstVicissitudeEntityTest {
             restore.forEach((position, state) -> helper.getLevel().setBlockAndUpdate(position, state));
         }
         helper.succeed();
+    }
+
+    /**
+     * Joins the boss with an extra {@code MAX_HEALTH} modifier applied from {@link EntityJoinLevelEvent},
+     * the hook an outside spawn-scaling mod uses. The event fires before {@code onAddedToWorld}, so this
+     * also pins the order the first capture relies on.
+     */
+    private static boolean joinWithSpawnBonus(GameTestHelper helper, FirstVicissitudeBossEntity boss, double multiplier) {
+        SpawnHealthBonus bonus = new SpawnHealthBonus(boss, multiplier);
+        MinecraftForge.EVENT_BUS.register(bonus);
+        try {
+            return helper.getLevel().addFreshEntity(boss);
+        }
+        finally {
+            MinecraftForge.EVENT_BUS.unregister(bonus);
+        }
+    }
+
+    private static final class SpawnHealthBonus {
+        private static final UUID ID = UUID.fromString("2f1a2c1e-6f30-4d0d-9c3b-2b7d1b5f9a41");
+        private final FirstVicissitudeBossEntity boss;
+        private final double multiplier;
+
+        private SpawnHealthBonus(FirstVicissitudeBossEntity boss, double multiplier) {
+            this.boss = boss;
+            this.multiplier = multiplier;
+        }
+
+        @SubscribeEvent
+        public void onJoin(EntityJoinLevelEvent event) {
+            if (event.getEntity() == boss){
+                boss.getAttribute(Attributes.MAX_HEALTH).addPermanentModifier(
+                        new AttributeModifier(ID, "test spawn health bonus", multiplier,
+                                              AttributeModifier.Operation.MULTIPLY_TOTAL));
+            }
+        }
     }
 
     private static CompoundTag phaseTwoTag() {

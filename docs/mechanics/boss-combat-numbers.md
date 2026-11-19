@@ -12,8 +12,8 @@
 
 | Boss | 实体 id | 生命池 | 护甲 | 基础攻击 | 移速 | 跟随 / 交战范围 | 伤害等级 combatProtectionGrade | 单次命中上限公式 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 第一化身 | `maledict:first_vicissitude` (MaledictEntities.java:79) | 500 / 750 / 1000 / 1500（随 `BossDifficulty`，与世界难度无关）(FirstVicissitudeBossEntity.java:3201-3204) | 15 (FirstVicissitudeBossEntity.java:312) | `ATTACK_DAMAGE` 基础 8.0 + 二阶段武器词条 (FirstVicissitudeBossEntity.java:310) | 属性 0.30；实飞 0.38 / 二阶段 0.52 (FirstVicissitudeBossEntity.java:313,183-184) | `FOLLOW_RANGE` 96 属性 (FirstVicissitudeBossEntity.java:315)；实际交战半径 = config `firstVicissitude.engagementRange = 96.0` (MaledictConfig.java:147) | **D4** `CONSISTENCY_WRITE` (VicissitudeBossEntity.java:159) | `真生命上限 × r × 部位权重`，r = 0.05 / 0.03 / 0.01 / 0.01 (FirstVicissitudeBossEntity.java:2416-2420) |
-| 巨匠造物主 | `maledict:demiurge_statue` (MaledictEntities.java:87) | 400 / 600 / 800（随世界难度 easy / normal / hard）(DemiurgeDifficulty.java:14-20) | 10 (DemiurgeStatueEntity.java:127) | 冲撞 config `demiurge.chargeDamage = 7.0` (MaledictConfig.java:72) | 0.30 (DemiurgeStatueEntity.java:52,128) | `FOLLOW_RANGE` 48 (DemiurgeStatueEntity.java:128)；保持距离 12 (DemiurgeCombatGoal.java:17) | **D5** `RECOVERY_SOURCE` (DemiurgeStatueEntity.java:185) | `真生命上限 × 0.03` (DemiurgeStatueEntity.java:154) |
+| 第一化身 | `maledict:first_vicissitude` (MaledictEntities.java:79) | 500 / 750 / 1000 / 1500（随 `BossDifficulty`，与世界难度无关；首次生成取与当时 `MAX_HEALTH` 最终值的较大值）(FirstVicissitudeBossEntity.java:3201-3204) | 15 (FirstVicissitudeBossEntity.java:312) | `ATTACK_DAMAGE` 基础 8.0 + 二阶段武器词条 (FirstVicissitudeBossEntity.java:310) | 属性 0.30；实飞 0.38 / 二阶段 0.52 (FirstVicissitudeBossEntity.java:313,183-184) | `FOLLOW_RANGE` 96 属性 (FirstVicissitudeBossEntity.java:315)；实际交战半径 = config `firstVicissitude.engagementRange = 96.0` (MaledictConfig.java:147) | **D4** `CONSISTENCY_WRITE` (VicissitudeBossEntity.java:159) | `真生命上限 × r × 部位权重`，r = 0.05 / 0.03 / 0.01 / 0.01 (FirstVicissitudeBossEntity.java:2416-2420) |
+| 巨匠造物主 | `maledict:demiurge_statue` (MaledictEntities.java:87) | 400 / 600 / 800（随世界难度 easy / normal / hard；首次生成取与当时 `MAX_HEALTH` 最终值的较大值）(DemiurgeDifficulty.java:14-20) | 10 (DemiurgeStatueEntity.java:127) | 冲撞 config `demiurge.chargeDamage = 7.0` (MaledictConfig.java:72) | 0.30 (DemiurgeStatueEntity.java:52,128) | `FOLLOW_RANGE` 48 (DemiurgeStatueEntity.java:128)；保持距离 12 (DemiurgeCombatGoal.java:17) | **D5** `RECOVERY_SOURCE` (DemiurgeStatueEntity.java:185) | `真生命上限 × 0.03` (DemiurgeStatueEntity.java:154) |
 | 腐枯凋灵 | `maledict:weeping_wither` (MaledictEntities.java:37) | 300 / 400 / 500（随世界难度 easy / normal / hard）(WeepingWitherDifficulty.java:11-16) | 8 (WeepingWitherEntity.java:118) | 凋灵之首直击 12；已凋零目标 12 + 目标生命上限 1% (WeepingWitherCombat.java:17-21) | 原版 0.6 × 1.1 位移加成 = 0.66 (WeepingWitherEntity.java:518) | 原版 `FOLLOW_RANGE` 40；祭坛拴绳 24 / 归位 20 (WeepingWitherEntity.java:209,312-317) | **D3** `STORAGE_WRITE` (WeepingWitherEntity.java:149) | `min(伤害, 最大生命 × 0.05)` = 15 / 20 / 25 (WeepingWitherEntity.java:541,571) |
 
 ---
@@ -27,7 +27,7 @@
 | 实体注册尺寸 | 1.6 × 4.375 | 常量 | MaledictEntities.java:82 |
 | `MAX_HEALTH` 基础 | 1000 | 常量 `BASE_MAX_HEALTH` | VicissitudeBossEntity.java:44,89 |
 | 难度生命写入方式 | `MAX_HEALTH` 上一条固定 UUID 的 `ADDITION` 修饰符，delta = 难度生命 − 1000 | 运行时 | FirstVicissitudeBossEntity.java:318-329 |
-| 真生命池 | 取 `bossDifficulty.maxHealth()`，与属性解耦（账本捕获） | 常量 | FirstVicissitudeBossEntity.java:2410-2412 |
+| 真生命池 | 首次生成取 `max(bossDifficulty.maxHealth(), 当时 MAX_HEALTH 最终值)`，之后由账本固定 | 运行时 | FirstVicissitudeBossEntity.java:2411-2413；VicissitudeBossEntity.java:247 |
 | 护甲 | 15.0 | 属性 | FirstVicissitudeBossEntity.java:312 |
 | 击退抗性 | 1.0 | 属性 | FirstVicissitudeBossEntity.java:311 |
 | `ATTACK_DAMAGE` 基础 | 8.0 | 属性 | FirstVicissitudeBossEntity.java:310 |
@@ -127,7 +127,7 @@
 | --- | --- | --- | --- |
 | 实体注册尺寸 | 5.1 × 4.2（高度随觉醒/蛇行变化，最大 6.4） | 常量 | MaledictEntities.java:90；DemiurgeStatueEntity.java:869；DemiurgeSlither.java:10 |
 | 生命池 | 400 / 600 / 800（easy+peaceful / normal / hard） | 常量表 | DemiurgeDifficulty.java:14-20 |
-| 生命写入 | `onAddedToWorld` 先按世界难度设 `MAX_HEALTH` 基准值，再由账本捕获 | 运行时 | DemiurgeStatueEntity.java:132-145 |
+| 生命写入 | `onAddedToWorld` 先按世界难度设 `MAX_HEALTH` 基准值，再由账本按 `max(难度值, MAX_HEALTH 最终值)` 捕获一次 | 运行时 | DemiurgeStatueEntity.java:132-150 |
 | 护甲 | 10（属性默认 600 生命时） | 属性 | DemiurgeStatueEntity.java:127 |
 | 移速 | 0.30 | 常量 + 属性 | DemiurgeStatueEntity.java:52,128 |
 | `FOLLOW_RANGE` | 48 | 属性 | DemiurgeStatueEntity.java:128 |

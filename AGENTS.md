@@ -109,6 +109,12 @@ Page: `docs/mechanics/boss-contact.md`.
   hits; D4 may force all 20 points through D3 to reach 80; compensation alone does not raise the stage or reopen the
   allowance (D3 with compensation against D4 still stops at 92), while an actual escalation to D5 may legally settle
   the remaining 12 damage and reach 80.
+- The pool is sized **once per UUID**, in `onAddedToWorld`, as `max(difficulty table, final MAX_HEALTH)`
+  (`VicissitudeVitality.initialMaximum`). The difficulty value is a floor: a spawn modifier another mod already
+  applied (L2Hostility and friends) lifts it, a reduction never undercuts it. `onAddedToWorld` is the last step of
+  joining the world — `finalizeSpawn` and `EntityJoinLevelEvent` both precede it — so the attribute is final there.
+  After capture the record is frozen: no per-tick recapture, no resize on later attribute changes, no load-time
+  recapture or refill.
 
 Page: `docs/mechanics/boss-vitality.md`.
 

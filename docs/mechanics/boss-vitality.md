@@ -6,6 +6,13 @@
 ## 权威池
 
 - 世界的 `SavedData` 账本（`VicissitudeVitalityLedger`）是**唯一权威**。
+- 第一化身与巨匠的生命池在**首次加入世界**时捕获一次：取「难度表上限」与「当时的 `MAX_HEALTH` 最终值」
+  的**较大值**（`VicissitudeVitality.initialMaximum`，`VicissitudeBossEntity.java:247`）。难度表是地板，
+  生成时已被外部模组（L2Hostility 一类）加上去的 `MAX_HEALTH` 能抬起地板；外部减益不会把池压到难度表
+  以下。比较的就是属性算完之后的最终值，属性本身有没有上限、上限多少都不参与判断。
+  `onAddedToWorld` 是加入世界的最后一步，`finalizeSpawn` 与 `EntityJoinLevelEvent` 都在它之前，
+  所以此刻属性已定型。捕获后 `maximum` 固定：之后再改属性既不加上限、也不补血或掉血；账本已有记录时
+  只沿用旧的 `current` / `maximum`，重载不会重新捕获。第一条记录 `current == maximum`，所以首次生成即满血。
 - 实体的 `MAX_HEALTH` 只是上限来源：腐枯凋灵在出生（首次加入世界）时按世界难度把池定为
   300 / 400 / 500（easy / normal / hard，`WeepingWitherDifficulty`），难度 id 写进存档，重载沿用，
   中途改世界难度不会改已生成的个体。5% 单次上限跟着池变成 15 / 20 / 25。

@@ -2404,11 +2404,12 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     /**
-     * Base cap ratio for a body hit; segment {@code capWeight} scales it (head 1.25x, outer wing 0.5x).
+     * The difficulty table sets the floor of the pool; a spawn modifier that already raised
+     * {@code MAX_HEALTH} lifts it, and the base class has the difficulty modifier in place by now.
      */
     @Override
     protected float initialVitalityMaximum() {
-        return (float) bossDifficulty.maxHealth();
+        return initialVitalityMaximum((float) bossDifficulty.maxHealth());
     }
 
     @Override

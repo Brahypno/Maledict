@@ -139,9 +139,14 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
         super.onAddedToWorld();
     }
 
+    /**
+     * The world difficulty sets the floor of the pool; a spawn modifier that already raised
+     * {@code MAX_HEALTH} lifts it. {@link #onAddedToWorld()} applies the difficulty base value
+     * before calling the base class, so the attribute read here is final for this spawn.
+     */
     @Override
     protected float initialVitalityMaximum() {
-        return DemiurgeDifficulty.maxHealth(Difficulty.byId(combatDifficulty));
+        return initialVitalityMaximum(DemiurgeDifficulty.maxHealth(Difficulty.byId(combatDifficulty)));
     }
 
     /**
@@ -449,12 +454,13 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
 
     /**
      * Health thresholds sever another four sections; the cap keeps at least eight blocks of body on
-     * the floor. The server owns the value and clients only render the synced mirror.
+     * the floor. The server owns the value and clients only render the synced mirror. The ratio is
+     * taken against the authoritative pool, which is not always the vanilla attribute maximum.
      */
     private boolean updateBodyCut() {
         if (level().isClientSide)
             return false;
-        float maximum = getMaxHealth();
+        float maximum = getVitalityMaximum();
         int allowed = DemiurgeRig.INSTANCE.maxBodyCut();
         int target = DemiurgeBodyLength.cutFor(maximum > 0.0F ? getHealth() / maximum : 0.0F, allowed);
         if (target <= bodyCut())
@@ -645,7 +651,7 @@ public final class DemiurgeStatueEntity extends VicissitudeBossEntity {
         previousSlitherClock = slitherClock;
         super.tick();
         if (!level().isClientSide){
-            bossBar.setProgress(Mth.clamp(getHealth() / Math.max(1.0F, getMaxHealth()), 0.0F, 1.0F));
+            bossBar.setProgress(Mth.clamp(getHealth() / Math.max(1.0F, getVitalityMaximum()), 0.0F, 1.0F));
         }
         boolean severed = updateBodyCut();
         double distance = position().subtract(before).horizontalDistance();

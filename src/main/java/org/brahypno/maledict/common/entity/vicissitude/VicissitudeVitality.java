@@ -20,6 +20,24 @@ record VicissitudeVitality(float current, float maximum, int killAttempts, long 
         return new VicissitudeVitality(maximum, maximum, 0, Long.MIN_VALUE);
     }
 
+    /**
+     * First-capture pool size: the difficulty table is a floor, and the final {@code MAX_HEALTH} the
+     * game reports may lift it. A reduction never wins, so the authored difficulty value is never
+     * undercut. Non-finite or non-positive candidates fall back to the other one instead of poisoning
+     * the record.
+     */
+    static float initialMaximum(float difficultyMaximum, float attributeMaximum) {
+        boolean difficultyUsable = Float.isFinite(difficultyMaximum) && difficultyMaximum > 0.0F;
+        boolean attributeUsable = Float.isFinite(attributeMaximum) && attributeMaximum > 0.0F;
+        if (difficultyUsable && attributeUsable) {
+            return Math.max(difficultyMaximum, attributeMaximum);
+        }
+        if (difficultyUsable) {
+            return difficultyMaximum;
+        }
+        return attributeUsable ? attributeMaximum : 0.0F;
+    }
+
     VicissitudeVitality withCurrent(float value) {
         return new VicissitudeVitality(value, maximum, killAttempts, lastKillTick);
     }
