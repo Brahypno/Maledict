@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = Maledict.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class IncursusBladeEffects {
@@ -150,7 +151,8 @@ public final class IncursusBladeEffects {
             int count,
             int duration) {
         changeRandomEffectDurations(
-                player, target, getActiveEffects(target, category), count, duration, true);
+                player, target, getActiveEffects(target, category).stream().filter(effect -> !effect.isInfiniteDuration())
+                                                                  .collect(Collectors.toCollection(ArrayList::new)), count, duration, true);
     }
 
     private static void changeRandomEffectDurations(
