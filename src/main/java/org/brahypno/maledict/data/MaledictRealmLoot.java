@@ -68,7 +68,10 @@ final class MaledictRealmLoot {
                         .add(enchantedArmor(Items.DIAMOND_HELMET))
                         .add(enchantedArmor(Items.DIAMOND_CHESTPLATE))
                         .add(enchantedArmor(Items.DIAMOND_LEGGINGS))
-                        .add(enchantedArmor(Items.DIAMOND_BOOTS))));
+                        .add(enchantedArmor(Items.DIAMOND_BOOTS)))
+                // TODO: Revisit this temporary Soulbinding Scroll source.
+                .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
+                        .add(LootItem.lootTableItem(MaledictItems.SOULBINDING_SCROLL.get()))));
     }
 
     private static LootItem.Builder<?> enchantedArmor(Item item) {
