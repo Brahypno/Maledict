@@ -26,8 +26,9 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.brahypno.maledict.common.combat.DamageAdaptation;
 import org.brahypno.maledict.registry.MaledictEntities;
-import org.brahypno.maledict.rig.VicissitudeRig;
+import org.brahypno.maledict.common.entity.vicissitude.rig.VicissitudeRig;
 
 import java.lang.reflect.Method;
 import com.mojang.authlib.GameProfile;

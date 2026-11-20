@@ -6,7 +6,7 @@ import org.brahypno.maledict.common.item.MaledictItemData;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
-import org.brahypno.maledict.common.rite.WisdomSacrifice;
+import org.brahypno.maledict.common.ritual.wisdom.WisdomSacrifice;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
 

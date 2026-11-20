@@ -10,6 +10,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.corruption.CorruptionRuneEvents;
 import org.brahypno.maledict.common.effect.*;
+import org.brahypno.maledict.common.ritual.wisdom.SacrificeEffect;
 
 public final class MaledictMobEffects {
     public static final DeferredRegister<MobEffect> MOB_EFFECTS =

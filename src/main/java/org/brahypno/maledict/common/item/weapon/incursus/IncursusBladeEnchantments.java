@@ -25,7 +25,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.brahypno.maledict.common.entity.projectile.IncursusScytheBoomerangEntity;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusScytheBoomerangEntity;
 import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;

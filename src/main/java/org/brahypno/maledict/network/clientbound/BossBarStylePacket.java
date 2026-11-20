@@ -6,7 +6,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.client.vicissitude.VicissitudeBossBarOverlay;
+import org.brahypno.maledict.client.entity.vicissitude.VicissitudeBossBarOverlay;
 
 import java.util.UUID;
 

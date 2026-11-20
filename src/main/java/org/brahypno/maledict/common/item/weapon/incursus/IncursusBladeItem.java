@@ -1,7 +1,7 @@
 package org.brahypno.maledict.common.item.weapon.incursus;
 
 import org.brahypno.maledict.common.item.MaledictItemData;
-import org.brahypno.maledict.common.item.rune.RuneOfBlissItem;
+import org.brahypno.maledict.common.item.curio.rune.RuneOfBlissItem;
 import com.sammy.malum.registry.common.MalumAttachmentTypes;
 import com.sammy.malum.common.item.curiosities.weapons.scythe.MagicScytheItem;
 import com.sammy.malum.common.item.spirit.SpiritShardItem;

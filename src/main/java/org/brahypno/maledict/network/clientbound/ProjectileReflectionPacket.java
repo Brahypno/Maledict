@@ -9,7 +9,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.client.item.HangmanReflectionClient;
+import org.brahypno.maledict.client.item.curio.hangman.HangmanReflectionClient;
 
 
 /** One reflection notification updates facing, ownership, and fireball acceleration immediately on the client. */

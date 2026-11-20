@@ -12,7 +12,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.rune.RuneOfTheFallenItem;
+import org.brahypno.maledict.common.item.curio.rune.RuneOfTheFallenItem;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.helpers.EntityHelper;

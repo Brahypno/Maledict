@@ -9,10 +9,10 @@ import net.neoforged.neoforge.client.model.generators.ModelFile;
 import net.neoforged.neoforge.client.model.generators.loaders.SeparateTransformsModelBuilder;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.curio.AgeOfEnlightenmentItem;
-import org.brahypno.maledict.common.item.curio.HangmanFoolItem;
+import org.brahypno.maledict.common.item.curio.enlightenment.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
-import org.brahypno.maledict.common.item.arrow.SpiritArrowType;
+import org.brahypno.maledict.common.item.weapon.remembrance.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
 
 public final class MaledictItemModels extends ItemModelProvider {

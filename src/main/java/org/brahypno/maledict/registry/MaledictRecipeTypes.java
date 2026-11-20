@@ -6,8 +6,8 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.invocation.InvocationDefinition;
-import org.brahypno.maledict.common.invocation.OrdinaryAxolotlBucketIngredient;
+import org.brahypno.maledict.common.ritual.invocation.InvocationDefinition;
+import org.brahypno.maledict.common.ritual.invocation.OrdinaryAxolotlBucketIngredient;
 import net.neoforged.neoforge.common.crafting.IngredientType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 

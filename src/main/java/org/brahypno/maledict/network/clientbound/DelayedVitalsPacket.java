@@ -6,7 +6,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.client.vitals.DelayedVitalsClient;
+import org.brahypno.maledict.client.combat.vitals.DelayedVitalsClient;
 
 
 /**

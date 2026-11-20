@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.brahypno.maledict.common.combat.DamageAdaptation;
 
 /** Saves remembered messages and their counters together, in most-recent-hit order. */
 final class DamageAdaptationStorage {

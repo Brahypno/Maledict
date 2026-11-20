@@ -21,8 +21,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.curio.HangmanFoolItem;
-import org.brahypno.maledict.common.item.arrow.SpiritArrowType;
+import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.common.item.weapon.remembrance.SpiritArrowType;
 import org.brahypno.maledict.registry.MaledictItems;
 
 

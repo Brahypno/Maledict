@@ -24,7 +24,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import org.brahypno.maledict.common.item.curio.HangmanFoolItem;
+import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.data.worldgen.MaledictWorldgen;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.capability.ICurio;

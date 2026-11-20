@@ -15,7 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.util.Mth;
 import org.brahypno.maledict.network.clientbound.LoverAxeHitPacket;
-import org.brahypno.maledict.client.item.LoverAxeHitEffects;
+import org.brahypno.maledict.client.item.weapon.lover.LoverAxeHitEffects;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.brahypno.maledict.Maledict;
 
@@ -24,7 +24,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.handling.IPayloadHandler;
-import org.brahypno.maledict.client.item.IncursusBladeSlashEffects;
+import org.brahypno.maledict.client.item.weapon.incursus.IncursusBladeSlashEffects;
 import java.util.UUID;
 
 public final class MaledictNetwork {

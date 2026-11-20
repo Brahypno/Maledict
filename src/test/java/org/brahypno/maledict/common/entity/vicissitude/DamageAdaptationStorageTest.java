@@ -3,6 +3,7 @@ package org.brahypno.maledict.common.entity.vicissitude;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
+import org.brahypno.maledict.common.combat.DamageAdaptation;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;

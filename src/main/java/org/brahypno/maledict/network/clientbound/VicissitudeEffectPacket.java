@@ -7,7 +7,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.client.vicissitude.vfx.FirstVicissitudeClientEvents;
+import org.brahypno.maledict.client.entity.vicissitude.vfx.FirstVicissitudeClientEvents;
 
 
 /**

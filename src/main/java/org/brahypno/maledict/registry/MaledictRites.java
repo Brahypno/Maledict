@@ -9,9 +9,12 @@ import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import com.sammy.malum.registry.common.magic.rite.MalumSpiritRiteTypes;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
-import org.brahypno.maledict.common.rite.*;
-import org.brahypno.maledict.common.invocation.InvocationLedger;
-import org.brahypno.maledict.common.invocation.InvocationRite;
+import org.brahypno.maledict.common.entity.vicissitude.rite.*;
+import org.brahypno.maledict.common.ritual.OneShotRiteEffect;
+import org.brahypno.maledict.common.ritual.invocation.InvocationLedger;
+import org.brahypno.maledict.common.ritual.invocation.InvocationRite;
+import org.brahypno.maledict.common.ritual.wisdom.SacrificeRite;
+import org.brahypno.maledict.common.ritual.wisdom.SacrificeRiteType;
 
 import java.util.ArrayList;
 import java.util.EnumMap;

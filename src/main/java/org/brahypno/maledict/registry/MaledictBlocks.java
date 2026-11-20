@@ -1,7 +1,7 @@
 package org.brahypno.maledict.registry;
 
-import org.brahypno.maledict.common.block.RealmGroundcoverBlock;
-import org.brahypno.maledict.common.block.WitherlightMushroomBlock;
+import org.brahypno.maledict.common.realm.RealmGroundcoverBlock;
+import org.brahypno.maledict.common.realm.WitherlightMushroomBlock;
 
 import com.sammy.malum.common.block.curiosities.obelisk.ObeliskComponentBlock;
 import net.minecraft.core.registries.BuiltInRegistries;

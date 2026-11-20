@@ -5,9 +5,9 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.corruption.CorruptionData;
-import org.brahypno.maledict.common.curio.enlightenment.SpiritVoidCooldownCapability;
+import org.brahypno.maledict.common.item.curio.enlightenment.SpiritVoidCooldownCapability;
 import org.brahypno.maledict.common.entity.vicissitude.VicissitudeVitalityCapability;
-import org.brahypno.maledict.common.vitals.DelayedVitals;
+import org.brahypno.maledict.common.combat.vitals.DelayedVitals;
 
 import java.util.function.Supplier;
 

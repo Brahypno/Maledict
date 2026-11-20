@@ -17,11 +17,11 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.common.item.curio.AgeOfEnlightenmentItem;
-import org.brahypno.maledict.common.item.curio.HangmanFoolItem;
+import org.brahypno.maledict.common.item.curio.enlightenment.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeBlink;
 import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
-import org.brahypno.maledict.common.item.weapon.bow.RemembranceBowItem;
+import org.brahypno.maledict.common.item.weapon.remembrance.RemembranceBowItem;
 import org.brahypno.maledict.registry.MaledictItems;
 import org.brahypno.maledict.registry.MaledictMobEffects;
 

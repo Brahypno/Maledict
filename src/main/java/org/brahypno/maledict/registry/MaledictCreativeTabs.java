@@ -16,8 +16,8 @@ public final class MaledictCreativeTabs {
                            .title(Component.translatable("itemGroup.maledict"))
                            .icon(() -> MaledictItems.INCURSUS_BLADE.get().getDefaultInstance())
                            .displayItems((parameters, output) -> {
-                               for (String target : org.brahypno.maledict.common.invocation.InvocationSigilItem.TARGETS) {
-                                   output.accept(org.brahypno.maledict.common.invocation.InvocationSigilItem.create(target));
+                               for (String target : org.brahypno.maledict.common.ritual.invocation.InvocationSigilItem.TARGETS) {
+                                   output.accept(org.brahypno.maledict.common.ritual.invocation.InvocationSigilItem.create(target));
                                }
                                output.accept(MaledictItems.INCURSUS_BLADE.get());
                                output.accept(MaledictItems.LOVER_AXE.get());
@@ -46,10 +46,10 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
                                for (int stage = 0; stage <= 3; stage++) {
-                                   output.accept(org.brahypno.maledict.common.item.curio.HangmanFoolItem.create(stage));
+                                   output.accept(org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem.create(stage));
                                }
                                for (int stage = 0; stage <= 3; stage++) {
-                                   output.accept(org.brahypno.maledict.common.item.curio.EidolonOfTheHighPriestessItem.create(stage));
+                                   output.accept(org.brahypno.maledict.common.item.curio.priestess.EidolonOfTheHighPriestessItem.create(stage));
                                }
                                output.accept(MaledictItems.BLEEDING_EYE.get());
                                output.accept(MaledictItems.MALIGNANT_PEWTER_TABLET.get());

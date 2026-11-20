@@ -1,0 +1,133 @@
+package org.brahypno.maledict.common.combat;
+
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 无常的「适应」：记住最近挨过的那几条伤害消息，被记住的才减伤。
+ *
+ * <p>窗口容量就是「适应几」，按「最近挨过」排序、最新在前，装不下时挤掉最久没挨的那条，
+ * 被挤出去的那条次数一并作废。所谓「伤害消息」就是 {@code DamageSource#getMsgId()}。
+ *
+ * <p>一记命中进来时<b>先记录、再判定</b>：只有挨这一下之前就已经在窗口里的消息才吃
+ * {@code e^-(它已经挨过的次数)}，刚被记进来的这条是全额。顺序有意义，同一 tick 里灌进来的
+ * 一串伤害也照样一条一条地过这里；账目没有时限，唯一清账的时机是这场打完。
+ *
+ * <p>但<b>同一刻里的同一条消息只算一记</b>（{@link #adaptInBatch}）：一次挥砍会用同一个伤害源
+ * 落地好几次（伤害补足、追加通道），那是「同一种打法的一下」，不是「又挨了一下」。
+ */
+public final class DamageAdaptation {
+
+    /** 最近挨过的消息，下标 0 是最新的；长度不超过「适应几」。 */
+    private final List<String> window = new ArrayList<>();
+
+    /** 还在窗口里的消息各挨过几次；被挤出去就作废。 */
+    private final Map<String, Integer> hitsByMessage = new LinkedHashMap<>();
+
+    /** 当前这一批的刻；换刻即换批。 */
+    private long batchTick = Long.MIN_VALUE;
+
+    /** 这一批里各消息判定的倍率，批内重复出现时直接沿用。 */
+    private final Map<String, Float> batchMultipliers = new LinkedHashMap<>();
+
+    /**
+     * 为这一记伤害记账并给出倍率。
+     *
+     * @param message 伤害消息（{@code DamageSource#getMsgId()}）；为空时不记账也不减伤
+     * @param level   这个 Boss 是「适应几」，也就是窗口能记住几条消息；小于等于 0 时关闭
+     */
+    public float adapt(@Nullable String message, int level) {
+        if (level <= 0 || message == null || message.isEmpty()) {
+            return 1.0F;
+        }
+        int seen = window.indexOf(message);
+        boolean remembered = seen >= 0;
+        if (remembered) {
+            window.remove(seen);
+        } else if (window.size() >= level) {
+            hitsByMessage.remove(window.remove(window.size() - 1));
+        }
+        window.add(0, message);
+        float multiplier = remembered
+                           ? (float) Math.exp(-hitsByMessage.getOrDefault(message, 0))
+                           : 1.0F;
+        hitsByMessage.merge(message, 1, Integer::sum);
+        return multiplier;
+    }
+
+    /**
+     * 按「批」记账：同一 {@code tick} 里同一条消息只算一记，重复出现时沿用这一批第一次判定的倍率，
+     * 也不再记账。换一刻就是新的一批。
+     *
+     * <p>无常一次挥砍会把同一条消息打好几次（{@code DamageProbe} 补足差额时会拿同一个
+     * {@code DamageSource} 再打一记，追加通道同理），窗口只有「适应几」格，要是逐次记账，
+     * 一记挥砍自己就能把同一条消息顶到 e⁻²——那不是玩家在重复同一种打法。
+     */
+    public float adaptInBatch(@Nullable String message, int level, long tick) {
+        if (level <= 0 || message == null || message.isEmpty()) {
+            return 1.0F;
+        }
+        if (tick != batchTick) {
+            batchTick = tick;
+            batchMultipliers.clear();
+        }
+        Float judged = batchMultipliers.get(message);
+        if (judged != null) {
+            return judged;
+        }
+        float multiplier = adapt(message, level);
+        batchMultipliers.put(message, multiplier);
+        return multiplier;
+    }
+
+    /** 重来一场：清空窗口，也作废当前这一批。 */
+    public void clear() {
+        window.clear();
+        hitsByMessage.clear();
+        batchTick = Long.MIN_VALUE;
+        batchMultipliers.clear();
+    }
+
+    public boolean isEmpty() {
+        return window.isEmpty();
+    }
+
+    /** 窗口快照，最新在前，供存档写出；改动它不会影响内部状态。 */
+    public List<String> snapshot() {
+        return Collections.unmodifiableList(new ArrayList<>(window));
+    }
+
+    /** 还在窗口里的消息各挨过几次，供调试与测试观察。 */
+    public Map<String, Integer> hitCounts() {
+        return Collections.unmodifiableMap(new LinkedHashMap<>(hitsByMessage));
+    }
+
+    /** 从存档恢复窗口；只认非空消息，顺序即「最新在前」，每条都算刚挨过一次。 */
+    public void restore(List<String> saved) {
+        restore(saved, Map.of());
+    }
+
+    /**
+     * 从存档恢复窗口与各消息已经挨过的次数；{@code savedWindow} 的顺序即「最新在前」。
+     *
+     * <p>次数缺失或小于 1 时按 1 算，不在窗口里的次数条目忽略 —— 只存窗口的旧存档照样读得进来，
+     * 代价是每条的次数退回 1。
+     */
+    public void restore(List<String> savedWindow, Map<String, Integer> savedHits) {
+        clear();
+        if (savedWindow == null) {
+            return;
+        }
+        for (String message : savedWindow) {
+            if (message != null && !message.isEmpty() && !hitsByMessage.containsKey(message)) {
+                window.add(message);
+                hitsByMessage.put(message, Math.max(1, savedHits.getOrDefault(message, 1)));
+            }
+        }
+    }
+}

@@ -1,0 +1,61 @@
+package org.brahypno.maledict.client.entity.vicissitude.music;
+
+import org.brahypno.maledict.client.entity.vicissitude.music.VicissitudeTheme.Participant;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+/**
+ * 钉住"该不该放 BGM"和"放哪一首"的规则（{@link VicissitudeTheme#select}）。
+ *
+ * <p>Boss 未开战、没有有效敌人或距离太远时不放；附近的旁观者可以听到。
+ *
+ * <p>这条规则是补出来的，初版只按"离我最近的那只"选，有两个毛病：
+ *
+ * <ol>
+ *   <li><b>沉眠的雕像会把音乐整个压掉。</b> 最近那只如果还在 DORMANT，就返回"不放"，
+ *       哪怕二十格外正有一只在一阶段开打。所以不合格的必须被跳过，不能参与"最近"的比较。</li>
+ *   <li><b>没有距离门。</b> 扫描半径是 96 格，八十格外别人在打你也会听到 BGM。</li>
+ *   <li><b>两只阶段不同时会抖。</b> 玩家在两只之间走动，"最近"来回翻，曲子就来回切；
+ *       每次切换都是一次 2 秒交叉淡化，听感直接糊掉。</li>
+ * </ol>
+ *
+ * <p>改成"推进得最远的那只说了算"之后，结果是**单调**的：阶段只前进不后退，
+ * 所以同一批无常只会因为真正的阶段推进（或有人死掉、退回沉眠）而换曲。
+ *
+ * <h2>⚠️ 边界</h2>
+ *
+ * <p>这里只验**选择规则**。{@code Participant} 是调用方从实体翻译过来的，
+ * 所以"哪只算 engaged""{@code isPhaseTwoVisual()} 在客户端读不读得到同步值"
+ * "距离怎么量"都不在覆盖范围内——那些只能在游戏里看。
+ */
+class VicissitudeThemeTest {
+
+    private static Participant dormant() {
+        return new Participant(false, true, false);
+    }
+
+    /** 合格的一阶段。 */
+    private static Participant phaseOne() {
+        return new Participant(true, true, false);
+    }
+
+    /** 合格的二阶段。 */
+    private static Participant phaseTwo() {
+        return new Participant(true, true, true);
+    }
+
+    /** 一只先进了二阶段：放二阶段曲，且**和列表顺序无关**——这是"不抖"的关键。 */
+    @Test
+    void furthestAlongBossWinsRegardlessOfOrder() {
+        assertEquals(VicissitudeTheme.PHASE_TWO,
+                     VicissitudeTheme.select(List.of(phaseTwo(), phaseOne())));
+        assertEquals(VicissitudeTheme.PHASE_TWO,
+                     VicissitudeTheme.select(List.of(phaseOne(), phaseTwo())));
+        assertEquals(VicissitudeTheme.PHASE_TWO,
+                     VicissitudeTheme.select(List.of(phaseOne(), dormant(), phaseTwo(), phaseOne())));
+    }
+
+}

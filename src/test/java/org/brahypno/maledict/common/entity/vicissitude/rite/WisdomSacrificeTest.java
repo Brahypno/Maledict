@@ -1,0 +1,130 @@
+package org.brahypno.maledict.common.entity.vicissitude.rite;
+
+import com.mojang.authlib.GameProfile;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.brahypno.maledict.common.ritual.wisdom.SacrificeSchedule;
+import org.brahypno.maledict.common.ritual.wisdom.WisdomSacrifice;
+import org.brahypno.maledict.registry.MaledictMobEffects;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.type.capability.ICurio;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
+import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
+import top.theillusivec4.curios.common.inventory.CurioStacksHandler;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+
+@GameTestHolder("maledict")
+@PrefixGameTestTemplate(false)
+public final class WisdomSacrificeTest {
+
+    @GameTest(template = "test_empty")
+    public static void naturalExpiryRemovesSacrificeBeforeAddingSixMinuteSightLoss(GameTestHelper helper) {
+        ServerPlayer player = createResilientPlayer(helper);
+        float before = healthAndAbsorption(player);
+        player.addEffect(new MobEffectInstance(MaledictMobEffects.SACRIFICE, 1));
+        WisdomSacrifice.markOffered(player);
+        player.doTick();
+
+        helper.assertTrue(before - healthAndAbsorption(player) == SacrificeSchedule.TOTAL_DAMAGE,
+                          "Even a one-tick offering must charge all 1080 damage");
+        helper.assertTrue(WisdomSacrifice.hasEarned(player),
+                          "Full damage and natural expiry must award without nine days of server time");
+        helper.assertTrue(!player.hasEffect(MaledictMobEffects.SACRIFICE),
+                          "Expired sacrifice must leave the effect map without interrupting its iterator");
+        helper.assertTrue(!player.hasEffect(MobEffects.BLINDNESS) && !player.hasEffect(MobEffects.DARKNESS),
+                          "New effects must wait until the server tick ends");
+        helper.runAfterDelay(1, () -> {
+            assertSightLoss(helper, player, 7200);
+            for (int tick = 0; tick < 60; tick++) {
+                player.doTick();
+            }
+            assertSightLoss(helper, player, 7140);
+            assertSlots(helper, CuriosApi.getCuriosInventory(player)
+                    .orElseThrow(() -> new IllegalStateException("Missing real Curios capability")), 2, 1);
+            helper.succeed();
+        });
+    }
+
+    /** 已确认：有槽即免疫，不受渲染开关、饰品和夜视影响；旧黑暗也必须清掉。 */
+    @GameTest(template = "test_empty")
+    public static void visionSlotBlocksDarknessWithRenderingOffAndClearsAnExistingEffect(GameTestHelper helper) {
+        ServerPlayer player = createPlayer(helper);
+        helper.assertTrue(player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 1000)),
+                          "Without a vision slot, vanilla darkness must still apply");
+        AdvancementHolder wisdom = player.server.getAdvancements().get(WisdomSacrifice.ID);
+        helper.assertTrue(wisdom != null, "Wisdom's Sacrifice must be loaded");
+        player.getAdvancements().award(wisdom, "impossible");
+        ICuriosItemHandler inventory = CuriosApi.getCuriosInventory(player)
+                .orElseThrow(() -> new IllegalStateException("Missing real Curios capability"));
+        var vision = inventory.getCurios().get(WisdomSacrifice.DELUSION_SLOT);
+        vision.getRenders().set(0, false);
+        player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 1000));
+        helper.assertTrue(!player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 2000)),
+                          "An empty vision slot with rendering off must reject new darkness");
+        player.doTick();
+        helper.assertTrue(!player.hasEffect(MobEffects.DARKNESS), "The player tick must remove existing darkness");
+        helper.assertTrue(player.hasEffect(MobEffects.NIGHT_VISION), "Darkness immunity must preserve night vision");
+        helper.assertTrue(player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 1000)),
+                          "The vision slot must not grant immunity to blindness");
+        helper.succeed();
+    }
+
+    private static ServerPlayer createResilientPlayer(GameTestHelper helper) {
+        ServerPlayer player = createPlayer(helper);
+        player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1024.0D);
+        player.setHealth(player.getMaxHealth());
+        player.getAttribute(Attributes.MAX_ABSORPTION).setBaseValue(1000.0D);
+        player.setAbsorptionAmount(1000.0F);
+        return player;
+    }
+
+    private static float healthAndAbsorption(ServerPlayer player) {
+        return player.getHealth() + player.getAbsorptionAmount();
+    }
+
+    private static ServerPlayer createPlayer(GameTestHelper helper) {
+        GameProfile profile = new GameProfile(UUID.randomUUID(), "WisdomSlotTest");
+        // Forge deliberately refuses to award advancements to FakePlayer.
+        ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), profile, net.minecraft.server.level.ClientInformation.createDefault());
+        player.connection = new FakePlayer(helper.getLevel(), profile).connection;
+        // Malum 1.21 voodoo respects the player's initial 60-tick spawn protection.
+        for (int tick = 0; tick < 60; tick++) {
+            player.tick();
+        }
+        ICuriosItemHandler inventory = CuriosApi.getCuriosInventory(player)
+                .orElseThrow(() -> new IllegalStateException("Missing real Curios capability"));
+        Map<String, ICurioStacksHandler> slots = new LinkedHashMap<>();
+        slots.put(WisdomSacrifice.RUNE_SLOT, new CurioStacksHandler(inventory,
+                WisdomSacrifice.RUNE_SLOT, 1, true, true, true, ICurio.DropRule.DEFAULT));
+        slots.put(WisdomSacrifice.DELUSION_SLOT, new CurioStacksHandler(inventory,
+                WisdomSacrifice.DELUSION_SLOT, 0, true, true, true, ICurio.DropRule.DEFAULT));
+        inventory.setCurios(slots);
+        return player;
+    }
+
+    private static void assertSightLoss(GameTestHelper helper, ServerPlayer player, int duration) {
+        MobEffectInstance blindness = player.getEffect(MobEffects.BLINDNESS);
+        helper.assertTrue(blindness != null && blindness.getDuration() == duration,
+                          "Blindness must last " + duration + " ticks");
+        helper.assertTrue(!player.hasEffect(MobEffects.DARKNESS), "The awarded vision slot must block darkness");
+    }
+
+    private static void assertSlots(GameTestHelper helper, ICuriosItemHandler inventory,
+                                    int runes, int visions) {
+        helper.assertTrue(inventory.getCurios().get(WisdomSacrifice.RUNE_SLOT).getStacks().getSlots() == runes,
+                "Rune slot count must be " + runes);
+        helper.assertTrue(inventory.getCurios().get(WisdomSacrifice.DELUSION_SLOT).getStacks().getSlots() == visions,
+                "Vision slot count must be " + visions);
+    }
+}

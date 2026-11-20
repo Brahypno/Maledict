@@ -6,9 +6,9 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
-import org.brahypno.maledict.common.invocation.InvocationDefinition;
-import org.brahypno.maledict.common.invocation.InvocationSigilItem;
-import org.brahypno.maledict.common.invocation.OrdinaryAxolotlBucketIngredient;
+import org.brahypno.maledict.common.ritual.invocation.InvocationDefinition;
+import org.brahypno.maledict.common.ritual.invocation.InvocationSigilItem;
+import org.brahypno.maledict.common.ritual.invocation.OrdinaryAxolotlBucketIngredient;
 
 
 final class InvocationRecipes {

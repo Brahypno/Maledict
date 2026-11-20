@@ -1,6 +1,6 @@
 package org.brahypno.maledict.common.realm;
 
-import org.brahypno.maledict.common.block.RealmGroundcoverBlock;
+import org.brahypno.maledict.common.realm.RealmGroundcoverBlock;
 
 import com.sammy.malum.registry.common.block.MalumBlocks;
 import net.minecraft.core.BlockPos;
