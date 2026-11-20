@@ -70,12 +70,12 @@
 
 - 头盔采用「未戴冠者」的独立模型。银灰额带承托三道向后、向内收止的冠脊。冠脊与低矮的后托之间是下沉的铅灰顶面，两侧银白折边勾出受冠的空位。
 - 面甲沿中轴隆起，窄眼槽下方由护颊向内收束。额带、护颊与外壳以冷银白为底，暗铅色压在冠位、眼槽和甲片接缝里。额带和太阳穴折边带有折辉铅铋共晶的青金折光，深紫只绘在凹入的眼下泪槽正面。各片随头部转动。
-- 胸甲沿用原扬弃逐光的恶念要塞基底、冷银与近黑配色，以及护臂的暗金纹样。倾斜胸甲中央有一处上缘留开的黑色浅龛。斜边沿用胸甲的黑色，星片的暖金光晕从龛内壁和下沿渐隐。
+- 胸甲保留原肩臂、背部折翼和冷银近黑配色。原实心躯干与横向胸板由开口胸甲替代，银白侧板向中央聚拢，龛口上方留空。黑色龛室宽 5、高 4.5、深 2 个模型单位，星片悬在后壁前，正面菱形轮廓宽约 2.16。下方连续黑色腹部与腋下黑色衬托分开银甲各层，暗金仅用于铆接点。
 - 折翼从背部上缘的托件起，覆羽压住羽根，长短交错的飞羽沿背侧向后下方收至腰线。折翼跟随躯干姿态。物品栏使用「未竟的圣龛」版 16×16 图标。
 - 头盔、护腿和靴子的穿戴贴图与 16×16 图标采用胸甲的冷白银与深黑配色。头盔两侧和大腿甲以成对黑色嵌片分区，靴面用对称黑带连接侧面与后跟。
 - 护腿沿用魂染钢的腰片和倾斜大腿甲。腰片中央为紫青折辉，两侧和大腿甲上角点缀渐变鎏金，银灰折边向下转为深铅灰。穿戴图集保留原 UV 与透明度，甲片跟随腿部姿态。
 - 靴子沿用魂染钢的厚鞋底与斜置外侧甲片。靴口和外侧甲片带一线鎏金，鞋面以紫、蓝、青折辉衔接冷银灰折面，深铅灰鞋底压住重心。
-- 头盔和胸甲附加几何在 `assets/maledict/models/armor/` 下，供游戏烘焙和离线导出共用。胸甲基底、护腿和靴子在运行时委托 Malum 的 `createBodyLayer`，离线导出使用 `tools/lightward-model/reference_geometry.json` 中的 Malum 6646111 几何记录。`import_reference.py` 可从本地反编译源码更新该记录。
+- 头盔和胸甲几何在 `assets/maledict/models/armor/` 下，供游戏烘焙和离线导出共用。胸甲的 Malum `torso` 子树在穿戴模型中隐藏，开口躯干由自定义图层绘制。肩臂、护腿和靴子使用 Malum 的 `createBodyLayer`，离线导出保留 `tools/lightward-model/reference_geometry.json` 中的原始记录。`import_reference.py` 可从本地反编译源码更新该记录。
 - 模型由 `client/item/equipment/lightward/LightwardArmorModel.java` 烘焙，图层由 `MaledictClientSetup` 注册。物品通过 Forge `IClientItemExtensions` 接入，姿态跟随原版护甲渲染器。
 - `art/aufheben-lightward/model/` 包含组合工程与四件护甲各自的 `.bbmodel`，均内嵌贴图，另有 `.blend`、三视角预览及原版同机位对照。纹样修改应同步到像素处理源，重建时会更新这些导出文件。
 - 重建：`& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --factory-startup --python tools/lightward-model/build_reference_models.py`。

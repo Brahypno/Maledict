@@ -25,6 +25,7 @@ BONES = {'head':(0,0,0),'body':(0,0,0),'left_arm':(5,2,0),'right_arm':(-5,2,0),
 JAR = next((Path.home()/'.gradle/caches/modules-2/files-2.1/curse.maven/malum-484064/6646111').rglob('*.jar'))
 
 ORIGINAL_HELMET = REF['helmet']['nodes']
+ORIGINAL_CHEST = REF['chestplate']['nodes']
 
 
 def custom_nodes(slot,bone):
@@ -40,6 +41,9 @@ def custom_nodes(slot,bone):
 
 REF['helmet']['nodes'] = custom_nodes('helmet','head')
 CHEST_DETAILS = custom_nodes('chestplate','body')
+# Match the runtime's hidden Malum torso while retaining the original shoulder and arm geometry.
+REF['chestplate']['nodes'] = {key: part for key,part in ORIGINAL_CHEST.items()
+                             if key not in ('torso','thing')}
 REF['chestplate']['nodes'].update(CHEST_DETAILS)
 
 
@@ -192,6 +196,9 @@ def retexture(slot,source):
             result.append(color+(a,))
         pixels.append(result)
     if slot == 'chestplate':
+        # All retained Malum shoulder/arm islands start at v=89. Reuse the
+        # atlas's upper half for the open torso, cavity and fixed back wings.
+        pixels[:56] = [[(0,0,0,0) for _ in range(128)] for _ in range(56)]
         for u,color in ((8,'997DBB'),(13,'796191')): paint(pixels,u,76,color)
         for u,color in ((8,'66A7B4'),(13,'508592')): paint(pixels,u,78,color)
         # One-texel gilt edge on the marked shoulder-pad and forearm surfaces.
@@ -201,12 +208,27 @@ def retexture(slot,source):
         for u in (6,28):
             for x in range(5): gild(pixels,u+x,119,x/4)
         paint_panels(pixels,CHEST_DETAILS,{
-            # The exposed bevels use the breastplate's blacks. Warm reflected
-            # light falls off across the inner walls and sill below the star.
-            (96,44): ('NONONO', {'north': ('NZRN','RIIR','NRZN')}),
-            (108,44): ('FNNOOO', {'north': ('F','N','N'), 'east': ('F','N','N'), 'west': ('O','Z','R')}),
-            (114,44): ('NNOONO', {'north': ('NFNN',), 'up': ('ZIRZ',)}),
-            (96,50): ('GJGJHD', {'north': ('GJH','KGH','GJJ'), 'west': ('G','J','H')}),
+            # An open U-shaped frame surrounds a 5 x 4.5 cavity. Its wall and
+            # floor extend behind the rim to the recessed star and back wall.
+            (0,0): ('FNFFNO', {'north': ('FN','NF','NN','FN','NF'),
+                               'south': ('FN','NF','NN','FN','NF')}),
+            (34,0): ('FNNNNO', {'south': ('FNNFNF','NFNNFN','NNFNNF','FNNFNN','NNFNNF')}),
+            (58,0): ('FNNNNO', {'north': ('NFNNFNNFN','FNNFNNFNN','NNFNNFNNF','FNNFNNFNN'),
+                                'south': ('NFNNFNNFN','FNNFNNFNN','NNFNNFNNF','FNNFNNFNN')}),
+            (0,14): ('FNFFNO', {'north': ('FNF','NFN','NNF','FNN'),
+                                'west': ('FFNFNNFNF','FNNFNNFNN','NNFNNFNNF','NFNNFNNFN')}),
+            (26,14): ('NOOONO', {'north': ('OOOOO','ONNNO','NNZNN','NZRZN','NNZNN')}),
+            (40,14): ('FNOONO', {'west': ('FN','NN','ON','NZ','NR'),
+                                 'east': ('NF','NN','NO','ZN','RN')}),
+            (48,14): ('NOOONO', {'up': ('NNNNN','NZZZN','NZRZN')}),
+            (66,14): ('WSPMSB', {'north': ('PWP','WWP','WPS','PSM'),
+                                  'up': ('PWP','SPS'), 'west': ('SS','MS','MB','BN'),
+                                  'east': ('PS','SP','SM','MB')}),
+            (78,14): ('PSPMSB', {'north': ('WP','PS'), 'up': ('WP','PS'),
+                                  'west': ('SM','MB'), 'east': ('SP','MS')}),
+            (0,30): ('PSPMSB', {'north': ('SPWPS',), 'up': ('PSPSP',)}),
+            (14,30): ('GJGJHD', {'north': ('GJH','KGH','GJJ'), 'west': ('GJ','JH','HH')}),
+            (24,30): ('HJHJHO', {}),
             # The mantle and coverts shade the roots of the longer flight feathers.
             (96,0): ('WSPPMB', {'up': ('PWWPS','WWPWS','PWPPS','SSPPS'),
                                 'south': ('PSPSM',)}),
@@ -490,13 +512,16 @@ def preview():
         camera.location = position; camera.rotation_euler = (Vector((0,0,18))-camera.location).to_track_quat('-Z','Y').to_euler()
         scene.render.filepath = str(ART/('preview-'+name+'.png')); bpy.ops.render.render(write_still=True)
         if name == 'front':
-            for obj in objects['helmet']: obj.hide_render = True
+            for slot in ('helmet','chestplate'):
+                for obj in objects[slot]: obj.hide_render = True
             comparison_helmet = create_mesh('helmet',original['helmet'],ORIGINAL_HELMET)
-            for slot in SLOTS[1:]:
+            comparison_chest = create_mesh('chestplate',original['chestplate'],ORIGINAL_CHEST)
+            for slot in SLOTS[2:]:
                 for obj in objects[slot]: obj.data.materials[0] = original[slot]
             scene.render.filepath = str(ART/'preview-original-same-camera.png'); bpy.ops.render.render(write_still=True)
-            for obj in comparison_helmet: bpy.data.objects.remove(obj,do_unlink=True)
-            for obj in objects['helmet']: obj.hide_render = False
+            for obj in comparison_helmet + comparison_chest: bpy.data.objects.remove(obj,do_unlink=True)
+            for slot in ('helmet','chestplate'):
+                for obj in objects[slot]: obj.hide_render = False
             for slot in SLOTS[1:]:
                 for obj in objects[slot]: obj.data.materials[0] = mats[slot]
     bpy.ops.wm.save_as_mainfile(filepath=str(ART/'aufheben_lightward.blend'))
@@ -535,6 +560,18 @@ def preview():
     camera.location = (16,-56,28)
     camera.rotation_euler = (Vector((0,0,24))-camera.location).to_track_quat('-Z','Y').to_euler()
     scene.render.filepath = str(ART/'preview-chestplate-shrine.png')
+    bpy.ops.render.render(write_still=True)
+    camera.location = (42,-48,29)
+    camera.rotation_euler = (Vector((0,0,23.5))-camera.location).to_track_quat('-Z','Y').to_euler()
+    scene.render.filepath = str(ART/'preview-chestplate-shrine-depth.png')
+    bpy.ops.render.render(write_still=True)
+    for obj in objects['helmet']: obj.hide_render = True
+    bpy.data.objects['Preview player face (not exported)'].hide_render = True
+    camera.data.ortho_scale = 25
+    scene.render.resolution_x,scene.render.resolution_y = 720,560
+    camera.location = (0,-60,23)
+    camera.rotation_euler = (Vector((0,0,20.5))-camera.location).to_track_quat('-Z','Y').to_euler()
+    scene.render.filepath = str(ART/'preview-chestplate-open-front.png')
     bpy.ops.render.render(write_still=True)
 
 

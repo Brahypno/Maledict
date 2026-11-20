@@ -40,6 +40,10 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
     public LightwardArmorModel(ModelPart root, ModelPart chestDetails) {
         super(root);
         chestOverlay = chestDetails == null ? null : chestDetails.getChild("body");
+        if (chestOverlay != null) {
+            // The replacement torso has an open shrine; the solid Malum breastplate would cover its cavity.
+            body.getChild("torso").visible = false;
+        }
         chestParts = chestOverlay == null ? List.of() : List.of(body, leftArm, rightArm, chestOverlay);
     }
 
