@@ -1,6 +1,6 @@
 package org.brahypno.maledict.client.item.weapon.incursus.rift;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -12,6 +12,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.weapon.incursus.rift.RiftMode;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.List;
@@ -25,7 +26,7 @@ import java.util.List;
  *   <li><b>普通挥砍的八瓣花</b>沿用旧实现的绘制代码（{@link #emitPetalInstance}）：每瓣是
  *       <b>水平 XZ 平面</b>上的四边形（局部顶点 ±1 落在 X/Z 上，Y 恒 0），绕 Y 轴转过
  *       {@code atan2(direction.x, direction.z) - 90°}，贴图帧与透明度按整个实例求值。
- *       这段代码与统一改造前逐行相同，花的形状、相位与节奏都不允许变。</li>
+ *       花的形状、相位与节奏沿用旧版。</li>
  *   <li><b>飞腾旋斩、强化上挑、隐藏锋刃</b>走逐道刀光的通用四边形（{@link #emitStroke}）：
  *       两道基向量决定它所在的平面，每道刀痕有自己的出生时刻、寿命与贴图帧。
  *       这些模式对应的是 Malum 的粒子公式，本来就是几百道错峰的独立刀光。</li>
@@ -71,7 +72,10 @@ public final class IncursusRiftRenderer {
             IncursusRiftShaders.setCamera(event.getCamera().getPosition());
         }
 
-        PoseStack poses = event.getPoseStack();
+        // GameRenderer 在进入世界渲染之前发布相机旋转，包含 Forge 相机事件的 roll。
+        // 腰环使用这一帧的相机旋转，避开粒子阶段监听器共用的 PoseStack。
+        Matrix3f viewRotation = new Matrix3f(RenderSystem.getInverseViewRotationMatrix()).invert();
+        Matrix4f meleeView = new Matrix4f().set(viewRotation);
         Vec3 camera = event.getCamera().getPosition();
         MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
         boolean depthTest = IncursusRiftClientManager.respectWorldDepth();
@@ -94,14 +98,14 @@ public final class IncursusRiftRenderer {
                 if (alpha <= DISCARD_ALPHA){
                     continue;
                 }
-                emitPetalInstance(vertices, poses, camera, instance, partialTick, alpha, custom);
+                emitPetalInstance(vertices, meleeView, camera, instance, partialTick, alpha, custom);
             }
             RenderType skillType = IncursusRiftRenderTypes.core(frame, custom, true);
             if (skillType != meleeType){
                 buffers.endBatch(meleeType);
                 vertices = buffers.getBuffer(skillType);
             }
-            Matrix4f matrix = poses.last().pose();
+            Matrix4f skillView = event.getPoseStack().last().pose();
             for (IncursusRiftInstance instance : instances) {
                 if (instance.mode() == RiftMode.MELEE_RING){
                     continue;
@@ -118,7 +122,7 @@ public final class IncursusRiftRenderer {
                         continue;
                     }
                     Vec3 center = anchor.add(stroke.offset()).add(stroke.travel(age));
-                    emitStroke(vertices, matrix, center, stroke, fraction, alpha, custom);
+                    emitStroke(vertices, skillView, center, stroke, fraction, alpha, custom);
                 }
             }
             buffers.endBatch(skillType);
@@ -129,7 +133,7 @@ public final class IncursusRiftRenderer {
      * 旧八瓣花：每瓣一个四边形，整实例共用帧号与透明度。
      */
     private static void emitPetalInstance(
-            VertexConsumer vertices, PoseStack poses, Vec3 camera,
+            VertexConsumer vertices, Matrix4f view, Vec3 camera,
             IncursusRiftInstance instance, float partialTick, float alpha, boolean custom) {
         float ageFraction = instance.ageFraction(partialTick);
         float instanceScale = instance.scale();
@@ -141,9 +145,8 @@ public final class IncursusRiftRenderer {
         // 花心每帧重取：腰环跟着挥砍者走，不钉在通知下发瞬间的世界坐标上。
         Vec3 center = IncursusRiftClientManager.anchorOf(instance, partialTick);
 
-        poses.pushPose();
-        poses.translate(center.x - camera.x, center.y - camera.y, center.z - camera.z);
-        Matrix4f matrix = poses.last().pose();
+        Matrix4f matrix = new Matrix4f(view).translate(
+                (float) (center.x - camera.x), (float) (center.y - camera.y), (float) (center.z - camera.z));
         for (IncursusRiftPetal petal : petals) {
             double angle = petal.angle();
             double dirX = Math.sin(angle);
@@ -175,7 +178,6 @@ public final class IncursusRiftRenderer {
             emitPetalCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, -1.0F, -1.0F, 0.0F, 1.0F,
                             red, green, blue, alpha);
         }
-        poses.popPose();
     }
 
     /**
