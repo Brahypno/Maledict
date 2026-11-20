@@ -84,7 +84,7 @@ public final class MaledictRecipes extends RecipeProvider {
                 .build(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "spirit_repair/meltfall_axe"));
 
         new SpiritInfusionRecipeBuilder(MaledictItems.MELTFALL_AXE.get(), 1, MaledictItems.LOVER_AXE.get(), 1)
-                .addExtraItem(ItemRegistry.MALIGNANT_PEWTER_INGOT.get(), 4)
+                .addExtraItem(ItemRegistry.MALIGNANT_PEWTER_INGOT.get(), 6)
                 .addExtraItem(ItemRegistry.FUSED_CONSCIOUSNESS.get(), 1)
                 .addExtraItem(ItemRegistry.BLOCK_OF_NULL_SLATE.get(), 3)
                 .addSpirit(SpiritTypeRegistry.ARCANE_SPIRIT, 18)
