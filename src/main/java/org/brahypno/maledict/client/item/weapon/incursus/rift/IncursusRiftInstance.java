@@ -1,48 +1,97 @@
 package org.brahypno.maledict.client.item.weapon.incursus.rift;
 
 import net.minecraft.world.phys.Vec3;
+import org.brahypno.maledict.common.item.weapon.incursus.rift.RiftMode;
+
+import java.util.List;
 
 /**
- * 一次挥砍对应的一朵裂隙花。
+ * 一次裂隙效果。
  *
- * <p>只保存创建时固定的参数与年龄；所有顶点每帧由 {@code age + partialTick} 重新求值，
+ * <p>两种形态，刻意分开保存：
+ * <ul>
+ *   <li><b>普通挥砍</b>走旧的八瓣模型（{@link IncursusRiftPetal}）：花心跟着挥砍者走，
+ *       贴图帧、透明度与半径都按<b>整个实例</b>求值。这段与统一改造前逐字节相同，
+ *       视觉上不允许有任何变化，所以没有并进新的刀痕模型。</li>
+ *   <li><b>飞腾与隐藏锋刃</b>走逐道刀痕（{@link RiftStroke}）：几百道各自错峰出生，
+ *       锚点固定在触发时的世界坐标。</li>
+ * </ul>
+ *
+ * <p>两者都只保存创建时固定的参数；顶点每帧由 {@code age + partialTick} 重新求值，
  * 不做逐帧位移累加，避免帧率不同导致形状漂移。
- *
- * <p>花心跟着 {@code ownerId} 指向的挥砍者走（见
- * {@link IncursusRiftClientManager#anchorOf}）：{@code center} 只是那个实体不在本地世界时的
- * 兜底坐标。挥砍者跳起、被击退或位移时，腰环因此仍然套在他腰上，而不是留在下发瞬间的原地。
  */
 public final class IncursusRiftInstance {
+
+    private static final IncursusRiftPetal[] NO_PETALS = new IncursusRiftPetal[0];
+    private static final RiftStroke[] NO_STROKES = new RiftStroke[0];
+    /**
+     * 报文来自网络，非法值不该让一个实例永远活着；四种布局的实际上限是 24 tick。
+     */
+    private static final float MAX_SKILL_LIFETIME_TICKS = 200.0F;
+
+    private final RiftMode mode;
+    private final RiftAnchorMode anchorMode;
     private final int ownerId;
     private final Vec3 center;
     private final float scale;
     private final long seed;
     private final IncursusRiftPetal[] petals;
+    private final RiftStroke[] strokes;
     private final int lifetimeTicks;
     private final float fadeStart;
     private int age;
 
     private IncursusRiftInstance(
-            int ownerId, Vec3 center, float scale, long seed, IncursusRiftPetal[] petals,
-            int lifetimeTicks, float fadeStart) {
+            RiftMode mode, RiftAnchorMode anchorMode, int ownerId, Vec3 center, float scale, long seed,
+            IncursusRiftPetal[] petals, RiftStroke[] strokes, int lifetimeTicks, float fadeStart) {
+        this.mode = mode;
+        this.anchorMode = anchorMode;
         this.ownerId = ownerId;
         this.center = center;
         this.scale = scale;
         this.seed = seed;
         this.petals = petals;
-        this.lifetimeTicks = Math.max(1, lifetimeTicks);
+        this.strokes = strokes;
+        this.lifetimeTicks = lifetimeTicks;
         this.fadeStart = fadeStart;
     }
 
-    public static IncursusRiftInstance create(
-            int ownerId, Vec3 center, float scale, long seed, int lifetimeTicks, int petalCount,
-            float fadeStart) {
+    /**
+     * 普通挥砍：八瓣水平腰环。参数与旧实现的 {@code create} 一一对应，不做任何重排。
+     */
+    public static IncursusRiftInstance createMelee(
+            int ownerId, Vec3 center, float scale, long seed,
+            int lifetimeTicks, int petalCount, float fadeStart) {
         int count = Math.max(1, petalCount);
         IncursusRiftPetal[] petals = new IncursusRiftPetal[count];
         for (int i = 0; i < count; i++) {
             petals[i] = IncursusRiftPetal.derive(seed, i, count);
         }
-        return new IncursusRiftInstance(ownerId, center, scale, seed, petals, lifetimeTicks, fadeStart);
+        return new IncursusRiftInstance(
+                RiftMode.MELEE_RING, RiftAnchorMode.FOLLOW_OWNER, ownerId, center, scale, seed,
+                petals, NO_STROKES, Math.max(1, lifetimeTicks), fadeStart);
+    }
+
+    /**
+     * 技能模式：一批已经算好的刀痕，锚点固定在触发时的世界坐标。
+     */
+    public static IncursusRiftInstance createSkill(
+            RiftMode mode, int ownerId, Vec3 center, long seed, List<RiftStroke> strokes) {
+        if (mode == RiftMode.MELEE_RING){
+            throw new IllegalArgumentException("Use createMelee for the waist ring");
+        }
+        RiftStroke[] array = strokes.toArray(new RiftStroke[0]);
+        float lastTick = 0.0F;
+        for (RiftStroke stroke : array) {
+            lastTick = Math.max(lastTick, stroke.endTick());
+        }
+        int lifetime = Math.min((int) Math.ceil(Math.max(lastTick, 0.0F)), (int) MAX_SKILL_LIFETIME_TICKS);
+        IncursusRiftInstance instance = new IncursusRiftInstance(
+                mode, RiftAnchorMode.FIXED_WORLD, ownerId, center, 1.0F, seed,
+                NO_PETALS, array, Math.max(1, lifetime + 1), 0.95F);
+        // The particle engine adds a newly spawned particle after ticking the live particles.
+        instance.age = -1;
+        return instance;
     }
 
     /**
@@ -74,10 +123,18 @@ public final class IncursusRiftInstance {
     }
 
     /**
-     * 服务端下发瞬间的腰部世界坐标；只作兜底锚点，不作为跟随目标。
+     * 触发时的世界坐标；跟随模式下只作实体缺席时的兜底锚点。
      */
     public Vec3 center() {
         return center;
+    }
+
+    public RiftMode mode() {
+        return mode;
+    }
+
+    public RiftAnchorMode anchorMode() {
+        return anchorMode;
     }
 
     public float scale() {
@@ -90,6 +147,10 @@ public final class IncursusRiftInstance {
 
     public IncursusRiftPetal[] petals() {
         return petals;
+    }
+
+    public RiftStroke[] strokes() {
+        return strokes;
     }
 
     public int lifetimeTicks() {

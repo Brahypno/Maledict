@@ -11,27 +11,41 @@ import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.item.weapon.incursus.rift.RiftMode;
 import org.joml.Matrix4f;
 
 import java.util.List;
 
 /**
- * 裂隙花的绘制时机与顶点输出。
+ * 裂隙刀痕的绘制时机与顶点输出。
  *
- * <p>几何完全沿用旧效果：每瓣是**水平 XZ 平面**上的四边形（局部顶点 ±1 落在 X/Z 上，Y 恒 0），
- * 绕 Y 轴转过 {@code atan2(direction.x, direction.z) - 90°}，于是贴图的 U 轴指向这瓣的外扩方向；
- * 四边形半边长就是旧效果的 {@code quadSize}（3.0–4.5 格），刀痕贴图的可见笔画只占其中一小条。
- * 写成面向相机的公告板会让八片糊到正面，和旧花完全不同。
+ * <p>两条路径并存，刻意不合并：
  *
- * <p>在 {@code AFTER_PARTICLES} 画一遍：裂口内部的内容。轮廓由刀痕遮罩本身定义，
- * 不再额外描边，否则会多出一圈与"划开帷幕"冲突的颜色。
+ * <ul>
+ *   <li><b>普通挥砍的八瓣花</b>沿用旧实现的绘制代码（{@link #emitPetalInstance}）：每瓣是
+ *       <b>水平 XZ 平面</b>上的四边形（局部顶点 ±1 落在 X/Z 上，Y 恒 0），绕 Y 轴转过
+ *       {@code atan2(direction.x, direction.z) - 90°}，贴图帧与透明度按整个实例求值。
+ *       这段代码与统一改造前逐行相同，花的形状、相位与节奏都不允许变。</li>
+ *   <li><b>飞腾旋斩、强化上挑、隐藏锋刃</b>走逐道刀光的通用四边形（{@link #emitStroke}）：
+ *       两道基向量决定它所在的平面，每道刀痕有自己的出生时刻、寿命与贴图帧。
+ *       这些模式对应的是 Malum 的粒子公式，本来就是几百道错峰的独立刀光。</li>
+ * </ul>
  *
- * <p>花心取 {@link IncursusRiftClientManager#anchorOf} 的实时腰部坐标，不是通知里的世界坐标快照：
- * 旧粒子天生在世界里不动，而腰环属于挥砍者，钉死在快照上会在跳跃、击退里变成远处一块黑。
+ * <p>贴图仍是 Malum 的 {@code heavy_slash_00..03}（末帧重复，共 5 帧），刀痕遮罩 +
+ * 黑暗虚空 + 多层视差星空由 {@link IncursusRiftShaders} 承担，不额外描边。
+ *
+ * <p>在 {@code AFTER_PARTICLES} 按遮罩帧提交顶点。普通挥砍沿用深度配置，
+ * 技能刀光沿用 Malum 粒子的场景遮挡。
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class IncursusRiftRenderer {
     private static final float DISCARD_ALPHA = 0.004F;
+    /**
+     * 没有 shader 时的平色：与改造前 {@code custom = false} 分支逐值相同。
+     */
+    private static final float PLAIN_RED = 0.055F;
+    private static final float PLAIN_GREEN = 0.048F;
+    private static final float PLAIN_BLUE = 0.075F;
 
     private static final long STARTED_NANOS = System.nanoTime();
 
@@ -61,28 +75,60 @@ public final class IncursusRiftRenderer {
         Vec3 camera = event.getCamera().getPosition();
         MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
         boolean depthTest = IncursusRiftClientManager.respectWorldDepth();
+        float intensity = IncursusRiftClientManager.intensity();
 
-        for (int frame = 0; frame < IncursusRiftRenderTypes.frameCount(); frame++) {
-            RenderType type = IncursusRiftRenderTypes.core(frame, custom, depthTest);
-            if (type == null){
+        int frames = IncursusRiftRenderTypes.frameCount();
+        for (int frame = 0; frame < frames; frame++) {
+            RenderType meleeType = IncursusRiftRenderTypes.core(frame, custom, depthTest);
+            if (meleeType == null){
                 continue;
             }
-            VertexConsumer vertices = buffers.getBuffer(type);
+
+            // 未注册固定缓冲的 RenderType 共用一个 BufferBuilder。切换前必须先写完当前批次。
+            VertexConsumer vertices = buffers.getBuffer(meleeType);
             for (IncursusRiftInstance instance : instances) {
-                if (instance.maskFrame(partialTick) != frame){
+                if (instance.mode() != RiftMode.MELEE_RING || instance.maskFrame(partialTick) != frame){
                     continue;
                 }
-                float alpha = instance.alpha(partialTick) * IncursusRiftClientManager.intensity();
+                float alpha = instance.alpha(partialTick) * intensity;
                 if (alpha <= DISCARD_ALPHA){
                     continue;
                 }
-                emitInstance(vertices, poses, camera, instance, partialTick, alpha, custom);
+                emitPetalInstance(vertices, poses, camera, instance, partialTick, alpha, custom);
             }
-            buffers.endBatch(type);
+            RenderType skillType = IncursusRiftRenderTypes.core(frame, custom, true);
+            if (skillType != meleeType){
+                buffers.endBatch(meleeType);
+                vertices = buffers.getBuffer(skillType);
+            }
+            Matrix4f matrix = poses.last().pose();
+            for (IncursusRiftInstance instance : instances) {
+                if (instance.mode() == RiftMode.MELEE_RING){
+                    continue;
+                }
+                Vec3 anchor = instance.center().subtract(camera);
+                for (RiftStroke stroke : instance.strokes()) {
+                    float age = stroke.localAge(instance.age(), partialTick);
+                    if (!stroke.visibleAt(age) || stroke.maskFrame(age, frames) != frame){
+                        continue;
+                    }
+                    float fraction = stroke.fraction(age);
+                    float alpha = IncursusRiftGeometry.alpha(fraction, stroke.fadeStart()) * intensity;
+                    if (alpha <= DISCARD_ALPHA){
+                        continue;
+                    }
+                    Vec3 center = anchor.add(stroke.offset()).add(stroke.travel(age));
+                    emitStroke(vertices, matrix, center, stroke, fraction, alpha, custom);
+                }
+            }
+            buffers.endBatch(skillType);
         }
     }
 
-    private static void emitInstance(
+    /**
+     * 旧八瓣花：每瓣一个四边形，整实例共用帧号与透明度。
+     */
+    private static void emitPetalInstance(
             VertexConsumer vertices, PoseStack poses, Vec3 camera,
             IncursusRiftInstance instance, float partialTick, float alpha, boolean custom) {
         float ageFraction = instance.ageFraction(partialTick);
@@ -116,18 +162,18 @@ public final class IncursusRiftRenderer {
             float sin = (float) Math.sin(yaw);
 
             float variant = petals.length <= 1 ? 0.0F : petal.index() / (float) (petals.length - 1);
-            float red = custom ? petal.shaderSeed() : 0.055F;
-            float green = custom ? ageFraction : 0.048F;
-            float blue = custom ? variant : 0.075F;
+            float red = custom ? petal.shaderSeed() : PLAIN_RED;
+            float green = custom ? ageFraction : PLAIN_GREEN;
+            float blue = custom ? variant : PLAIN_BLUE;
 
-            emitCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, -1.0F, 1.0F, 1.0F, 1.0F,
-                       red, green, blue, alpha);
-            emitCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, 1.0F, 1.0F, 1.0F, 0.0F,
-                       red, green, blue, alpha);
-            emitCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, 1.0F, -1.0F, 0.0F, 0.0F,
-                       red, green, blue, alpha);
-            emitCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, -1.0F, -1.0F, 0.0F, 1.0F,
-                       red, green, blue, alpha);
+            emitPetalCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, -1.0F, 1.0F, 1.0F, 1.0F,
+                            red, green, blue, alpha);
+            emitPetalCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, 1.0F, 1.0F, 1.0F, 0.0F,
+                            red, green, blue, alpha);
+            emitPetalCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, 1.0F, -1.0F, 0.0F, 0.0F,
+                            red, green, blue, alpha);
+            emitPetalCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, -1.0F, -1.0F, 0.0F, 1.0F,
+                            red, green, blue, alpha);
         }
         poses.popPose();
     }
@@ -140,7 +186,7 @@ public final class IncursusRiftRenderer {
      * <p>绕 Y 轴旋转：{@code x' = x·cos + z·sin}、{@code z' = -x·sin + z·cos}；
      * 四边形的 Y 恒为 0，这正是旧效果"水平腰环"的来源。
      */
-    private static void emitCorner(
+    private static void emitPetalCorner(
             VertexConsumer vertices, Matrix4f matrix, float offsetX, float offsetZ,
             float half, float cos, float sin, float localX, float localZ, float u, float v,
             float red, float green, float blue, float alpha) {
@@ -149,6 +195,37 @@ public final class IncursusRiftRenderer {
         float rotatedX = x * cos + z * sin;
         float rotatedZ = -x * sin + z * cos;
         vertices.vertex(matrix, rotatedX + offsetX, 0.0F, rotatedZ + offsetZ)
+                .color(red, green, blue, alpha)
+                .uv(u, v)
+                .endVertex();
+    }
+
+    /**
+     * 技能模式的一道刀光：任意朝向的四边形，两条基向量都在世界空间里。
+     */
+    private static void emitStroke(
+            VertexConsumer vertices, Matrix4f matrix, Vec3 center, RiftStroke stroke,
+            float fraction, float alpha, boolean custom) {
+        Vec3 axisU = stroke.axisU().scale(stroke.halfExtent());
+        Vec3 axisV = stroke.axisV().scale(stroke.halfExtent());
+        // 顶点颜色仍然是旧的三通道约定：r = 星点种子，g = 本道刀痕的进度，b = 批次内的相对序号。
+        float red = custom ? stroke.shaderSeed() : PLAIN_RED;
+        float green = custom ? fraction : PLAIN_GREEN;
+        float blue = custom ? stroke.variant() : PLAIN_BLUE;
+
+        // UV 对应关系与旧 emitPetalCorner 一致：局部 (-1,+1) 取 (1,1)、(1,+1) 取 (1,0)、
+        // (1,-1) 取 (0,0)、(-1,-1) 取 (0,1)。写反了刀痕会沿长轴翻过来。
+        emitStrokeCorner(vertices, matrix, center, axisU, axisV, -1.0F, 1.0F, 1.0F, 1.0F, red, green, blue, alpha);
+        emitStrokeCorner(vertices, matrix, center, axisU, axisV, 1.0F, 1.0F, 1.0F, 0.0F, red, green, blue, alpha);
+        emitStrokeCorner(vertices, matrix, center, axisU, axisV, 1.0F, -1.0F, 0.0F, 0.0F, red, green, blue, alpha);
+        emitStrokeCorner(vertices, matrix, center, axisU, axisV, -1.0F, -1.0F, 0.0F, 1.0F, red, green, blue, alpha);
+    }
+
+    private static void emitStrokeCorner(
+            VertexConsumer vertices, Matrix4f matrix, Vec3 center, Vec3 axisU, Vec3 axisV,
+            float uSign, float vSign, float u, float v, float red, float green, float blue, float alpha) {
+        Vec3 point = center.add(axisU.scale(uSign)).add(axisV.scale(vSign));
+        vertices.vertex(matrix, (float) point.x, (float) point.y, (float) point.z)
                 .color(red, green, blue, alpha)
                 .uv(u, v)
                 .endVertex();

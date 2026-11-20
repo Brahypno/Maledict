@@ -1,13 +1,10 @@
 package org.brahypno.maledict.common.item.weapon.incursus;
 
 import com.sammy.malum.common.enchantment.scythe.AscensionEnchantment;
-import com.sammy.malum.common.item.ISpiritAffiliatedItem;
 import com.sammy.malum.common.item.curiosities.TemporarilyDisabledItem;
 import com.sammy.malum.common.item.curiosities.weapons.scythe.MalumScytheItem;
-import com.sammy.malum.core.helpers.ParticleHelper;
 import com.sammy.malum.registry.common.DamageTypeRegistry;
 import com.sammy.malum.registry.common.MobEffectRegistry;
-import com.sammy.malum.registry.common.ParticleEffectTypeRegistry;
 import com.sammy.malum.registry.common.SoundRegistry;
 import com.sammy.malum.registry.common.item.EnchantmentRegistry;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,6 +20,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.brahypno.maledict.common.enchantment.DiplopiaThrows;
+import org.brahypno.maledict.common.item.weapon.incursus.rift.RiftMode;
+import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.ItemHelper;
@@ -100,18 +99,12 @@ public final class IncursusBladeEnchantments {
                 .scaled(enhanced ? ASCENSION_DAMAGE_MULTIPLIER : 1.0f);
         AABB area = player.getBoundingBox().inflate(4.0, 1.0, 4.0);
         var sound = SoundRegistry.SCYTHE_SWEEP.get();
-        ParticleHelper.SlashParticleEffectBuilder particles = ParticleHelper
-                .createSlashingEffect(ParticleEffectTypeRegistry.SCYTHE_ASCENSION_SPIN)
-                .mirrorRandomly(level.getRandom());
+        // 原版在创建 Malum 粒子构建器时抽一次镜像，强化分支会把这个构建器整个丢掉、改传 setMirrored(true)。
+        // 这里保留同一次抽样，让世界随机流的消耗顺序与改造前一致——视觉改造不该挪动其它逻辑的随机数。
+        boolean randomMirror = level.getRandom().nextBoolean();
         if (enhanced){
             area = area.move(player.getLookAngle().scale(2.0)).inflate(-2.0, 1.0, -2.0);
             sound = SoundRegistry.SCYTHE_CUT.get();
-            particles = ParticleHelper.createSlashingEffect(ParticleEffectTypeRegistry.SCYTHE_ASCENSION_UPPERCUT)
-                                      .setVerticalSlashAngle()
-                                      .setMirrored(true);
-        }
-        if (stack.getItem() instanceof ISpiritAffiliatedItem spiritItem){
-            particles.setSpiritType(spiritItem);
         }
 
         boolean hitAnything = false;
@@ -140,7 +133,13 @@ public final class IncursusBladeEnchantments {
 
         Vec3 particlePosition = player.position().add(0.0, player.getBbHeight() * 0.75, 0.0);
         Vec3 particleDirection = player.getLookAngle().multiply(1.0, 0.0, 1.0);
-        particles.spawnSlashingParticle(level, particlePosition, particleDirection);
+        if (player instanceof ServerPlayer serverPlayer){
+            // 原版这两个量：普通旋斩默认 0，强化分支 setVerticalSlashAngle() = 1.57 且强制镜像。
+            RiftMode mode = enhanced ? RiftMode.ASCENSION_UPPERCUT : RiftMode.ASCENSION_SPIN;
+            float baseAngle = enhanced ? 1.57f : 0.0f;
+            MaledictNetwork.sendIncursusRiftSkill(
+                    serverPlayer, mode, particlePosition, particleDirection, baseAngle, enhanced || randomMirror);
+        }
         for (int i = 0; i < 3; i++) {
             SoundHelper.playSound(
                     player, sound, 1.0f,

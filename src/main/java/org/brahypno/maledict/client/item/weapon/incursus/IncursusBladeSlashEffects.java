@@ -1,15 +1,12 @@
 package org.brahypno.maledict.client.item.weapon.incursus;
 
-import com.mojang.logging.LogUtils;
 import com.sammy.malum.client.PointyDirectionalBehaviorComponent;
 import com.sammy.malum.registry.common.SpiritTypeRegistry;
 import com.sammy.malum.visual_effects.SlashParticleEffects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 import org.brahypno.maledict.client.item.weapon.incursus.rift.IncursusRiftClientManager;
-import org.brahypno.maledict.client.item.weapon.incursus.rift.IncursusRiftRenderTypes;
 import org.brahypno.maledict.network.IncursusSlashPacket;
-import org.slf4j.Logger;
 import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.systems.particle.data.GenericParticleData;
 import team.lodestar.lodestone.systems.particle.data.spin.SpinParticleData;
@@ -21,55 +18,22 @@ import team.lodestar.lodestone.systems.particle.render_types.LodestoneWorldParti
  * <p>发布版走裂隙花（{@link IncursusRiftClientManager}）：八张刀痕贴图不变，材质换成星空虚空。
  * 旧粒子实现保留在 {@link #spawnLegacyParticleRing} 里，只有开发期用系统属性
  * {@code -Dmaledict.incursus.legacySlash=true} 或刀痕资源缺失时才会走到，用来逐帧对比。
+ * 判定本身在 {@link IncursusRiftClientManager#riftReady()}，飞腾与隐藏锋刃共用同一套降级决定。
  */
 public final class IncursusBladeSlashEffects {
     private static final int RING_SEGMENTS = 8;
     private static final double RING_RADIUS = 0.5;
-    /**
-     * 开发期对照开关，只在 -D 里给，不进玩家配置。
-     */
-    private static final String LEGACY_SWITCH = "maledict.incursus.legacySlash";
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private static boolean fallbackLogged;
 
     public static void spawn(IncursusSlashPacket packet) {
         var level = Minecraft.getInstance().level;
         if (level == null){
             return;
         }
-        if (riftActive()){
+        if (IncursusRiftClientManager.riftReady()){
             IncursusRiftClientManager.add(packet);
             return;
         }
         spawnLegacyParticleRing(packet);
-    }
-
-    /**
-     * 裂隙路径是否可用。刀痕贴图缺失（Malum 改名）或配置关闭时退回旧粒子，
-     * 保证"降级而不是整个斩击消失"。
-     */
-    private static boolean riftActive() {
-        if (Boolean.getBoolean(LEGACY_SWITCH)){
-            return false;
-        }
-        try {
-            if (!IncursusRiftClientManager.enabled()){
-                return false;
-            }
-            if (IncursusRiftRenderTypes.maskAvailable(0)){
-                return true;
-            }
-            if (!fallbackLogged){
-                fallbackLogged = true;
-                LOGGER.warn("Incursus rift mask (malum:slash/heavy_slash_00) not found; "
-                            + "falling back to the old slash particles.");
-            }
-            return false;
-        }
-        catch (RuntimeException ignored) {
-            // 配置尚未加载：宁可画旧粒子，也不要因为一条视觉通知崩掉客户端。
-            return false;
-        }
     }
 
     private static void spawnLegacyParticleRing(IncursusSlashPacket packet) {

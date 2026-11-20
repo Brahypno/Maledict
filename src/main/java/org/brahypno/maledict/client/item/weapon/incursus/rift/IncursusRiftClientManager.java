@@ -1,5 +1,6 @@
 package org.brahypno.maledict.client.item.weapon.incursus.rift;
 
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -13,29 +14,48 @@ import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.client.item.weapon.incursus.rift.patterns.AscensionSpinPattern;
+import org.brahypno.maledict.client.item.weapon.incursus.rift.patterns.AscensionUppercutPattern;
+import org.brahypno.maledict.client.item.weapon.incursus.rift.patterns.HiddenBladeFlurryPattern;
+import org.brahypno.maledict.common.item.weapon.incursus.rift.RiftMode;
 import org.brahypno.maledict.config.MaledictConfig;
+import org.brahypno.maledict.network.IncursusRiftSkillPacket;
 import org.brahypno.maledict.network.IncursusSlashPacket;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * 客户端活跃裂隙花实例：接收挥砍通知、按 tick 推进年龄、负责视距与数量上限。
+ * 客户端活跃裂隙实例：接收通知、按模式建刀痕、按 tick 推进年龄、负责视距与数量上限。
  *
- * <p>一次挥砍只创建一个实例；实例自己按 {@code age + partialTick} 求值，不生成任何需要独立 tick 的实体。
+ * <p>四种模式共用一套材质与 RenderType，差别只在 {@link RiftStrokePattern}：
+ * 普通挥砍由旧报文 {@link IncursusSlashPacket} 触发、锚点跟随挥砍者；
+ * 飞腾两种与隐藏锋刃由 {@link IncursusRiftSkillPacket} 触发、锚点固定在触发时的世界坐标。
  *
- * <p>花心每帧跟着挥砍者走（{@link #anchorOf}），不钉在通知下发瞬间的世界坐标上。
+ * <p>刀痕贴图缺失、shader 不可用或玩家关掉配置时，技能模式会退回一次性生成的 Malum 原版刀光
+ * （{@link RiftLegacySlashes}），而不是让整个技能没有视觉。
  */
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class IncursusRiftClientManager {
     /**
-     * 超过这个距离的实例不再绘制，也不会被创建：挥砍只发生在玩家身边，远处实例没有意义。
+     * 超过这个距离的实例不再绘制，也不会被创建。
      */
     private static final double MAX_RENDER_DISTANCE = 96.0;
+    /**
+     * 开发期对照开关，只在 -D 里给，不进玩家配置。
+     */
+    private static final String LEGACY_SWITCH = "maledict.incursus.legacySlash";
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final List<IncursusRiftInstance> ACTIVE = new ArrayList<>();
+    private static boolean fallbackLogged;
 
+    /**
+     * 普通挥砍：八瓣水平腰环，形状与改造前逐顶点一致——它走的是旧的整实例模型，
+     * 不经过 {@link RiftStroke}。
+     */
     public static void add(IncursusSlashPacket packet) {
         if (packet == null){
             return;
@@ -44,20 +64,90 @@ public final class IncursusRiftClientManager {
         if (minecraft.level == null || minecraft.player == null){
             return;
         }
-        ACTIVE.add(IncursusRiftInstance.create(
+        ACTIVE.add(IncursusRiftInstance.createMelee(
                 packet.ownerId(), packet.center(), packet.scale(), packet.seed(),
                 lifetimeTicks(), petalCount(), configFadeStart()));
         trim();
     }
 
     /**
-     * 这一帧花心该待的世界坐标：挥砍者的<b>本地</b>腰部位置，按 partialTick 插值。
+     * 技能模式：飞腾旋斩 48 道、强化上挑 12 道、隐藏锋刃 300 道，全部由报文种子在本地重建。
+     */
+    public static void addSkill(IncursusRiftSkillPacket packet) {
+        if (packet == null || packet.mode() == RiftMode.MELEE_RING){
+            return;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || minecraft.player == null){
+            return;
+        }
+        IncursusRiftInstance instance = IncursusRiftInstance.createSkill(
+                packet.mode(), packet.ownerId(), packet.center(), packet.seed(),
+                patternFor(packet).generate());
+        if (!riftReady()){
+            // 降级：把同一批刀痕交回 Malum 的原版刀光，数量与位置都不变。
+            RiftLegacySlashes.spawn(instance);
+            return;
+        }
+        ACTIVE.add(instance);
+        trim();
+    }
+
+    private static RiftStrokePattern patternFor(IncursusRiftSkillPacket packet) {
+        Vec3 direction = packet.direction();
+        if (packet.mode() == RiftMode.ASCENSION_UPPERCUT){
+            return new AscensionUppercutPattern(
+                    packet.seed(), direction, packet.baseAngle(), packet.mirrored(), configFadeStart());
+        }
+        if (packet.mode() == RiftMode.HIDDEN_BLADE_FLURRY){
+            return new HiddenBladeFlurryPattern(
+                    packet.seed(), direction, packet.baseAngle(), packet.mirrored(), configFadeStart());
+        }
+        return new AscensionSpinPattern(
+                packet.seed(), direction, packet.baseAngle(), packet.mirrored(), configFadeStart());
+    }
+
+    /**
+     * 裂隙渲染这条路是否可用：配置开启、未被开发期开关强制关掉、刀痕贴图在位。
      *
-     * <p>腰环属于挥砍者，不属于下发瞬间的那块空气。玩家在效果持续的十二 tick 里跳起、被击退、
-     * 上台阶或单纯因为延迟与自己的服务端坐标错开，花心都必须跟着走，否则刀光会留在原地看着
-     * 像"跑到远处去了"。实体不在本地世界（区块没加载、刚重生）时退回 {@code instance.center()}。
+     * <p>贴图缺失只警告一次：这是 Malum 改名才会出现的情况，每一次挥砍都刷一条日志没有意义。
+     */
+    public static boolean riftReady() {
+        if (Boolean.getBoolean(LEGACY_SWITCH)){
+            return false;
+        }
+        try {
+            if (!enabled()){
+                return false;
+            }
+            if (IncursusRiftRenderTypes.maskAvailable(0)){
+                return true;
+            }
+            if (!fallbackLogged){
+                fallbackLogged = true;
+                LOGGER.warn("Incursus rift mask (malum:slash/heavy_slash_00) not found; "
+                            + "falling back to the old slash particles.");
+            }
+            return false;
+        }
+        catch (RuntimeException ignored) {
+            // 配置尚未加载：宁可画旧粒子，也不要因为一条视觉通知崩掉客户端。
+            return false;
+        }
+    }
+
+    /**
+     * 这一帧锚点该待的世界坐标。
+     *
+     * <p>跟随模式取挥砍者的<b>本地</b>腰部位置并按 partialTick 插值：腰环属于挥砍者，
+     * 他跳起、被击退、上台阶或单纯因为延迟与自己的服务端坐标错开，花心都必须跟着走。
+     * 固定模式直接用报文里的世界坐标——Malum 那三种效果本来就是一次性生成后独立飞走的粒子群，
+     * 迁移到裂隙渲染不能顺手让它们追着施法者跑。
      */
     public static Vec3 anchorOf(IncursusRiftInstance instance, float partialTick) {
+        if (instance.anchorMode() == RiftAnchorMode.FIXED_WORLD){
+            return instance.center();
+        }
         Entity owner = ownerOf(instance);
         if (owner == null){
             return instance.center();
@@ -128,16 +218,16 @@ public final class IncursusRiftClientManager {
         ACTIVE.clear();
     }
 
+    public static float configFadeStart() {
+        return MaledictConfig.INCURSUS_RIFT_FADE_START.get().floatValue();
+    }
+
     private static int lifetimeTicks() {
         return Math.max(1, MaledictConfig.INCURSUS_RIFT_LIFETIME.get());
     }
 
     private static int petalCount() {
         return Math.max(1, MaledictConfig.INCURSUS_RIFT_PETALS.get());
-    }
-
-    private static float configFadeStart() {
-        return MaledictConfig.INCURSUS_RIFT_FADE_START.get().floatValue();
     }
 
     private static void trim() {
