@@ -1,7 +1,7 @@
 """Export the custom Lightward helmet and retextured Malum armor.
 Run with Blender --background --factory-startup --python this_file.
-The helmet and chest detail assets are shared with the runtime layers.
-The Malum reference manifest supplies the chest base and lower armor.
+The helmet, chest and arm assets are shared with the runtime layers.
+The Malum reference manifest supplies comparisons and lower armor.
 """
 import base64
 import json
@@ -32,7 +32,7 @@ def custom_nodes(slot,bone):
     geometry = ASSETS/f'models/armor/aufheben_lightward_{slot}.geometry.json'
     parts = json.loads(geometry.read_text(encoding='utf-8'))
     return {
-        name: dict(name=name, parent=bone, offset=part.get('offset',[0,0,0]),
+        name: dict(name=name, parent=part.get('parent',bone), offset=part.get('offset',[0,0,0]),
                    rotation=part.get('rotation',[0,0,0]),
                    cubes=[dict({'inflate':0, 'mirror':False}, **cube) for cube in part['cubes']])
         for name,part in parts.items()
@@ -41,10 +41,8 @@ def custom_nodes(slot,bone):
 
 REF['helmet']['nodes'] = custom_nodes('helmet','head')
 CHEST_DETAILS = custom_nodes('chestplate','body')
-# Match the runtime's hidden Malum torso while retaining the original shoulder and arm geometry.
-REF['chestplate']['nodes'] = {key: part for key,part in ORIGINAL_CHEST.items()
-                             if key not in ('torso','thing')}
-REF['chestplate']['nodes'].update(CHEST_DETAILS)
+ARM_DETAILS = custom_nodes('arms','body')
+REF['chestplate']['nodes'] = CHEST_DETAILS | ARM_DETAILS
 
 
 def png_read(data):
@@ -98,15 +96,6 @@ def paint_rows(pixels,u,v,rows):
             paint(pixels,x,y,color)
 
 
-def gild(pixels,x,y,position):
-    old = pixels[y][x]
-    if old[3]:
-        light = (.2126*old[0]+.7152*old[1]+.0722*old[2])/200
-        level = max(.12,min(1,.18+.65*light+.17*(1-position)))
-        shadow,highlight = (100,70,33),(239,211,151)
-        pixels[y][x] = tuple(round(a+(b-a)*level) for a,b in zip(shadow,highlight))+(old[3],)
-
-
 HELMET_PALETTE = {
     shade: tuple(bytes.fromhex(color))+(255,)
     for shade,color in {
@@ -122,6 +111,16 @@ CHEST_DETAIL_PALETTE = HELMET_PALETTE | {
     'Z': (40,32,26,255), 'R': (67,50,33,255), 'I': (107,76,44,255),
     'H': (141,106,65,255), 'J': (181,141,88,255),
     'K': (245,225,184,255),
+}
+
+ARM_PALETTE = {
+    shade: tuple(bytes.fromhex(color))+(255,)
+    for shade,color in {
+        'W':'EDF1FC', 'P':'CDD4EA', 'S':'A5AEC5', 'M':'747E95',
+        'B':'494E61', 'A':'292C38', 'D':'161922', 'N':'1E1F24',
+        'F':'24252C', 'C':'A3D8DE', 'Q':'6EAAB9', 'E':'D8C59C',
+        'G':'C6A469', 'J':'A7834E', 'H':'795D38', 'I':'59452D',
+    }.items()
 }
 
 
@@ -196,17 +195,7 @@ def retexture(slot,source):
             result.append(color+(a,))
         pixels.append(result)
     if slot == 'chestplate':
-        # All retained Malum shoulder/arm islands start at v=89. Reuse the
-        # atlas's upper half for the open torso, cavity and fixed back wings.
-        pixels[:56] = [[(0,0,0,0) for _ in range(128)] for _ in range(56)]
-        for u,color in ((8,'997DBB'),(13,'796191')): paint(pixels,u,76,color)
-        for u,color in ((8,'66A7B4'),(13,'508592')): paint(pixels,u,78,color)
-        # One-texel gilt edge on the marked shoulder-pad and forearm surfaces.
-        for u in (8,36):
-            for x in range(6): gild(pixels,u+x,110,x/5)
-            gild(pixels,u+5,109,1)
-        for u in (6,28):
-            for x in range(5): gild(pixels,u+x,119,x/4)
+        pixels = [[(0,0,0,0) for _ in range(128)] for _ in range(128)]
         paint_panels(pixels,CHEST_DETAILS,{
             # An open U-shaped frame surrounds a 5 x 4.5 cavity. Its wall and
             # floor extend behind the rim to the recessed star and back wall.
@@ -231,23 +220,71 @@ def retexture(slot,source):
             (24,30): ('HJHJHO', {}),
             # The mantle and coverts shade the roots of the longer flight feathers.
             (96,0): ('WSPPMB', {'up': ('PWWPS','WWPWS','PWPPS','SSPPS'),
-                                'south': ('PSPSM',)}),
-            (96,8): ('WSMSPB', {'south': ('SPWPS','PSWSP','SMPSP','MSSSM'),
+                                'south': ('PSPSM',),
+                                'down': ('BMMMB','MSSSM','MSSSM','BMMMB')}),
+            # The inner wing faces retain shade, with longitudinal bevels
+            # continuing onto the narrow feather tips instead of flat black.
+            (96,8): ('WSMSPM', {'south': ('SPWPS','PSWSP','SMPSP','MSSSM'),
+                                'north': ('BMMMB','MSSSM','MSPSM','BMSMB'),
                                 'west': ('SP','PS','SM','MB')}),
-            (116,8): ('PSBMSB', {'south': ('SP','PS','SM','MB')}),
-            (96,16): ('WMMSSB', {'south': ('WP','PW','PS','CS','SM')}),
-            (104,16): ('WMMSSB', {'south': ('WP','WP','PW','PS','QS','SM')}),
-            (112,16): ('PMMSMB', {'south': ('S','M')}),
-            (96,24): ('PSBSMB', {'south': ('PS','WS','PW','PS','PS','SS','SM'),
+            (116,8): ('PSBMSM', {'south': ('SP','PS','SM','MB'),
+                                 'north': ('BM','MS','SM','MB')}),
+            (96,16): ('WMMSSM', {'south': ('WP','PW','PS','CS','SM'),
+                                 'north': ('BM','MS','MS','SQ','SM')}),
+            (104,16): ('WMMSSM', {'south': ('WP','WP','PW','PS','QS','SM'),
+                                  'north': ('BM','MS','MS','SQ','SM','SM')}),
+            (112,16): ('PMMSMM', {'south': ('S','M'), 'north': ('S','M')}),
+            (96,24): ('PSMSMM', {'south': ('PS','WS','PW','PS','PS','SS','SM'),
+                                 'north': ('BM','MM','MS','MS','MS','SM','SM'),
                                  'west': ('P','P','P','S','S','S','M')}),
-            (106,24): ('PSBSMB', {'south': ('PS','WP','PS','PS','CS','SM'),
+            (106,24): ('PSMSMM', {'south': ('PS','WP','PS','PS','CS','SM'),
+                                  'north': ('BM','MS','MS','MS','SM','SM'),
                                   'west': ('P','P','S','S','S','M')}),
-            (116,24): ('PSBSMB', {'south': ('SP','PW','PP','PS','SM'),
+            (116,24): ('PSMSMM', {'south': ('SP','PW','PP','PS','SM'),
+                                  'north': ('BM','MS','MS','SM','SM'),
                                   'west': ('P','S','S','S','M')}),
-            (96,34): ('SMBSMB', {'south': ('P','S','M')}),
-            (102,34): ('SMBSMB', {'south': ('S','S','M')}),
-            (108,34): ('SMBSMB', {'south': ('S','M','M')}),
+            (96,34): ('SMMSMB', {'south': ('P','S','M'), 'north': ('S','M','B')}),
+            (102,34): ('SMMSMB', {'south': ('S','S','M'), 'north': ('S','M','B')}),
+            (108,34): ('SMMSMB', {'south': ('S','M','M'), 'north': ('S','M','B')}),
         },CHEST_DETAIL_PALETTE)
+        paint_panels(pixels,ARM_DETAILS,{
+            # Soft near-black folds leave the elbows and inner arms exposed.
+            (0,56): ('NANFND', {'north': ('FNNF','NFNN','NNFN','FNNF','NFNN','NNFN'),
+                                 'west': ('FNNA','NFNN','NNFN','FNNA','NFNN','NNFN'),
+                                 'east': ('NNFN','NFNN','FNNF','NNFN','NFNN','FNNF')}),
+            (18,56): ('NANFND', {'north': ('FNNF','NFNN','NNFN','FNNF'),
+                                  'west': ('FNNF','NFNN','NNFN','FNNF')}),
+            (36,56): ('NANFND', {'north': ('NFNN','FNNF','NNFN'),
+                                  'west': ('NNFN','NFNN','FNNF')}),
+            # A broad shoulder cap falls into two narrower front lames.
+            # Bismuth catches a few cyan and pale gold texels in the silver.
+            (54,56): ('PSPMSB', {'up': ('SPWP','PCWP','PWES','SPPS','MSSM'),
+                                  'north': ('PWWP',),
+                                  'west': ('PCPSM',), 'east': ('SPQSM',)}),
+            (74,56): ('WPPSMB', {'north': ('PWWP','SPPS'), 'up': ('WWPP',)}),
+            (86,56): ('PSPMSB', {'north': ('PWP','MSS')}),
+            (96,56): ('PSSMBB', {'north': ('PS',)}),
+            (104,56): ('PSMSBB', {'west': ('WP','CP','SS'), 'east': ('PS','QS','MM')}),
+            (112,56): ('MSMSBB', {'west': ('SS',), 'east': ('MM',)}),
+            # The wrist end has two columns; the upper forearm has three.
+            (0,70): ('WSPMSB', {'north': ('PWP','WCP','SPS'), 'west': ('P','S','M')}),
+            (10,70): ('PSPMSB', {'north': ('WP','PE','SM')}),
+            (18,70): ('PSMSSB', {'north': ('P','C','S','M'),
+                                  'west': ('PS','SM','MS','MB'), 'east': ('SP','PS','MS','MB')}),
+            (26,70): ('GHJHID', {'north': ('J','G','J','J','H')}),
+            (54,70): ('PSPMSB', {'north': ('PS',)}),
+            # Closed bindings share edge shades on all four sides; the outer
+            # gold passes over the silver rather than disappearing below it.
+            (64,70): ('JHGHHD', {'north': ('HJGGJH',), 'south': ('HJGGJH',)}),
+            (80,70): ('JHHGHD', {'west': ('HJGJH',), 'east': ('HJGJH',)}),
+            (96,70): ('JHGHHD', {'north': ('HJGJH',), 'south': ('HJGJH',)}),
+            (110,70): ('JHHGHD', {'west': ('HJGJH',), 'east': ('HJGJH',)}),
+            # Short returns join the front shoulder lames to the side plates,
+            # underneath the existing cap rather than enlarging the outline.
+            (0,84): ('PSPMSB', {'west': ('WP','SS'), 'east': ('SP','MS')}),
+            (8,84): ('PSPMSB', {'west': ('PS','SM'), 'east': ('SS','MM')}),
+            (16,84): ('SSSMBB', {'west': ('SS',), 'east': ('MM',)}),
+        },ARM_PALETTE)
     elif slot == 'leggings':
         # A violet-to-cyan fold sits between the graduated gold belt edges.
         for u in (6,34):
@@ -351,6 +388,29 @@ def face_uv(c):
     # first horizontal tile (Direction.DOWN in the cube constructor).
     return dict(up=(u+d,v,w,d),down=(u+d+w,v,w,d),west=(u,v+d,d,h),
                 north=(u+d,v+d,w,h),east=(u+d+w,v+d,d,h),south=(u+2*d+w,v+d,w,h))
+
+
+def arm_uv_occupancy():
+    # Left image shows the active chest and old arms. Right shows the same
+    # chest islands and new arms. Every allocation is checked before painting.
+    chest,old_arm,new_arm = set(),set(),set()
+    for nodes,target in ((CHEST_DETAILS,chest),(ORIGINAL_CHEST,old_arm),(ARM_DETAILS,new_arm)):
+        for part in nodes.values():
+            if target is old_arm and part['name'] in ('torso','thing'):
+                continue
+            for cube in part['cubes']:
+                for u,v,w,h in face_uv(cube).values():
+                    u,v,w,h = map(int,(u,v,w,h))
+                    target.update((x,y) for y in range(v,v+h) for x in range(u,u+w))
+    assert not chest & new_arm, 'New arm UV overlaps the chest or wings'
+    assert all(0 <= x < 128 and 0 <= y < 128 for x,y in new_arm)
+    background = (24,25,28,255)
+    kept,removed,added = (96,154,139,255),(119,112,126,255),(192,156,91,255)
+    pixels = [[kept if (x%128,y) in chest else
+               (removed if x < 128 else added) if (x%128,y) in (old_arm if x < 128 else new_arm)
+               else background for x in range(256)] for y in range(128)]
+    png_write(ART/'preview-arm-uv-occupancy.png',[[p for p in row for _ in range(3)]
+                                               for row in pixels for _ in range(3)])
 
 
 def blockbench():
@@ -512,6 +572,15 @@ def preview():
         camera.location = position; camera.rotation_euler = (Vector((0,0,18))-camera.location).to_track_quat('-Z','Y').to_euler()
         scene.render.filepath = str(ART/('preview-'+name+'.png')); bpy.ops.render.render(write_still=True)
         if name == 'front':
+            baseline = ROOT/'build/lightward-model-check/chest-before-arms.png'
+            if baseline.exists():
+                for obj in objects['chestplate']: obj.hide_render = True
+                old_arms = {k:n for k,n in ORIGINAL_CHEST.items() if k not in ('torso','thing')}
+                before = create_mesh('chestplate',material(baseline,'Previous Lightward arms'),CHEST_DETAILS | old_arms)
+                scene.render.filepath = str(ART/'preview-arms-before.png')
+                bpy.ops.render.render(write_still=True)
+                for obj in before: bpy.data.objects.remove(obj,do_unlink=True)
+                for obj in objects['chestplate']: obj.hide_render = False
             for slot in ('helmet','chestplate'):
                 for obj in objects[slot]: obj.hide_render = True
             comparison_helmet = create_mesh('helmet',original['helmet'],ORIGINAL_HELMET)
@@ -550,7 +619,8 @@ def preview():
     for obj in objects['chestplate']: obj.hide_render = False
     fill.rotation_euler = (Vector((0,0,23))-fill.location).to_track_quat('-Z','Y').to_euler()
     camera.data.ortho_scale = 28
-    for name,position in (('fold',(21,58,33)),('wing-side',(57,14,29))):
+    for name,position in (('fold',(21,58,33)),('wing-side',(57,14,29)),
+                          ('wing-underside',(44,-24,31))):
         camera.location = position
         camera.rotation_euler = (Vector((0,1,23))-camera.location).to_track_quat('-Z','Y').to_euler()
         scene.render.filepath = str(ART/f'preview-chestplate-{name}.png')
@@ -573,6 +643,49 @@ def preview():
     camera.rotation_euler = (Vector((0,0,20.5))-camera.location).to_track_quat('-Z','Y').to_euler()
     scene.render.filepath = str(ART/'preview-chestplate-open-front.png')
     bpy.ops.render.render(write_still=True)
+    for slot in SLOTS[2:]:
+        for obj in objects[slot]: obj.hide_render = True
+    for obj in bpy.context.scene.objects:
+        if obj.name.startswith('Preview player'): obj.hide_render = True
+    camera.data.ortho_scale = 26
+    for name,position in (('front',(0,-60,22)),('side',(55,-12,26)),('back',(20,55,25))):
+        camera.location = position
+        camera.rotation_euler = (Vector((0,0,19.5))-camera.location).to_track_quat('-Z','Y').to_euler()
+        fill.hide_render = name != 'back'
+        scene.render.filepath = str(ART/f'preview-arms-{name}.png')
+        bpy.ops.render.render(write_still=True)
+    fill.hide_render = True
+    for obj in objects['chestplate']:
+        key = obj.name.split('/')[1]
+        obj.hide_render = key not in ARM_DETAILS or ARM_DETAILS[key]['parent'] != 'left_arm'
+    camera.data.ortho_scale = 20
+    scene.render.resolution_x = scene.render.resolution_y = 720
+    camera.location = (22,-50,27)
+    camera.rotation_euler = (Vector((6,0,20))-camera.location).to_track_quat('-Z','Y').to_euler()
+    scene.render.filepath = str(ART/'preview-arm-detail.png')
+    bpy.ops.render.render(write_still=True)
+    camera.location = (32,40,27)
+    camera.rotation_euler = (Vector((6,0,20))-camera.location).to_track_quat('-Z','Y').to_euler()
+    fill.hide_render = False
+    scene.render.filepath = str(ART/'preview-arm-back-detail.png')
+    bpy.ops.render.render(write_still=True)
+    fill.hide_render = True
+
+    # Rigid arm rotations use the same arm pivots as the runtime overlay.
+    java_space = Matrix(((1,0,0,0),(0,0,1,0),(0,-1,0,24),(0,0,0,1)))
+    for obj in objects['chestplate']:
+        obj.hide_render = False
+        key = obj.name.split('/')[1]
+        if key in ARM_DETAILS:
+            bone = ARM_DETAILS[key]['parent']
+            angle = .65 if bone == 'left_arm' else -.65
+            pivot = Matrix.Translation(Vector(BONES[bone]))
+            obj.matrix_world = java_space @ pivot @ Euler((angle,0,0),'XYZ').to_matrix().to_4x4() @ pivot.inverted() @ java_space.inverted()
+    camera.data.ortho_scale = 28
+    camera.location = (25,-60,29)
+    camera.rotation_euler = (Vector((0,0,20))-camera.location).to_track_quat('-Z','Y').to_euler()
+    scene.render.filepath = str(ART/'preview-arms-walk.png')
+    bpy.ops.render.render(write_still=True)
 
 
 def write_icon_previews(icons):
@@ -587,6 +700,7 @@ def write_icon_previews(icons):
 
 ART.mkdir(parents=True,exist_ok=True)
 eye_clearance()
+arm_uv_occupancy()
 with zipfile.ZipFile(JAR) as jar:
     for slot in SLOTS:
         raw = jar.read('assets/malum/textures/armor/'+REF[slot]['texture']+'.png')
@@ -615,4 +729,4 @@ with zipfile.ZipFile(JAR) as jar:
 blockbench()
 (ART/'geometry.json').write_text(json.dumps(REF,indent=2),encoding='utf-8')
 preview()
-print('Exported the custom Lightward helmet, chest shrine and folded wings, and Malum armor bases. Four eye rays clear.')
+print('Exported the Lightward helmet, chest, fixed wings and articulated arms. Four eye rays clear.')

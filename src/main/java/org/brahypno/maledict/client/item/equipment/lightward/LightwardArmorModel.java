@@ -30,7 +30,11 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
             Maledict.MODID, "models/armor/aufheben_lightward_helmet.geometry.json");
     private static final ResourceLocation CHESTPLATE_GEOMETRY = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "models/armor/aufheben_lightward_chestplate.geometry.json");
+    private static final ResourceLocation ARMS_GEOMETRY = ResourceLocation.fromNamespaceAndPath(
+            Maledict.MODID, "models/armor/aufheben_lightward_arms.geometry.json");
     private final ModelPart chestOverlay;
+    private final ModelPart leftArmOverlay;
+    private final ModelPart rightArmOverlay;
     private final List<ModelPart> chestParts;
 
     public LightwardArmorModel(ModelPart root) {
@@ -40,11 +44,16 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
     public LightwardArmorModel(ModelPart root, ModelPart chestDetails) {
         super(root);
         chestOverlay = chestDetails == null ? null : chestDetails.getChild("body");
+        leftArmOverlay = chestDetails == null ? null : chestDetails.getChild("left_arm");
+        rightArmOverlay = chestDetails == null ? null : chestDetails.getChild("right_arm");
         if (chestOverlay != null) {
             // The replacement torso has an open shrine; the solid Malum breastplate would cover its cavity.
             body.getChild("torso").visible = false;
+            leftArm.getChild("left_shoulder").visible = false;
+            rightArm.getChild("right_shoulder").visible = false;
         }
-        chestParts = chestOverlay == null ? List.of() : List.of(body, leftArm, rightArm, chestOverlay);
+        chestParts = chestOverlay == null ? List.of()
+                : List.of(body, leftArm, rightArm, chestOverlay, leftArmOverlay, rightArmOverlay);
     }
 
     private static ModelLayerLocation layer(String name) {
@@ -56,12 +65,21 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
     }
 
     public static LayerDefinition createChestplateDetailsLayer(ResourceManager resources) {
-        return createGeometryLayer(resources, CHESTPLATE_GEOMETRY, "body");
+        var mesh = HumanoidModel.createMesh(CubeDeformation.NONE, 0);
+        PartDefinition root = createHumanoidAlias(mesh);
+        addGeometry(root, resources, CHESTPLATE_GEOMETRY, "body");
+        addGeometry(root, resources, ARMS_GEOMETRY, "body");
+        return LayerDefinition.create(mesh, 128, 128);
     }
 
     private static LayerDefinition createGeometryLayer(ResourceManager resources, ResourceLocation geometry, String bone) {
         var mesh = HumanoidModel.createMesh(CubeDeformation.NONE, 0);
-        PartDefinition parent = createHumanoidAlias(mesh).getChild(bone);
+        addGeometry(createHumanoidAlias(mesh), resources, geometry, bone);
+        return LayerDefinition.create(mesh, 128, 128);
+    }
+
+    private static void addGeometry(PartDefinition root, ResourceManager resources,
+                                    ResourceLocation geometry, String bone) {
         try (var reader = resources.getResourceOrThrow(geometry).openAsReader()) {
             var parts = JsonParser.parseReader(reader).getAsJsonObject();
             for (var entry : parts.entrySet()) {
@@ -81,6 +99,7 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
                 }
                 var offset = part.getAsJsonArray("offset");
                 var rotation = part.getAsJsonArray("rotation");
+                PartDefinition parent = root.getChild(part.has("parent") ? part.get("parent").getAsString() : bone);
                 parent.addOrReplaceChild(entry.getKey(), cubes, PartPose.offsetAndRotation(
                         axis(offset, 0), axis(offset, 1), axis(offset, 2),
                         axis(rotation, 0), axis(rotation, 1), axis(rotation, 2)));
@@ -89,7 +108,6 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
         catch (IOException exception) {
             throw new IllegalStateException("Cannot load " + geometry, exception);
         }
-        return LayerDefinition.create(mesh, 128, 128);
     }
 
     private static float axis(JsonArray vector, int index) {
@@ -117,6 +135,8 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
         super.copyFromDefault(original);
         if (chestOverlay != null) {
             chestOverlay.copyFrom(body);
+            leftArmOverlay.copyFrom(leftArm);
+            rightArmOverlay.copyFrom(rightArm);
         }
     }
 }
