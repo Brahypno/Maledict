@@ -1,0 +1,31 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 4,
+      "item": "malum:hex_ash"
+    },
+    {
+      "count": 4,
+      "item": "malum:void_salts"
+    }
+  ],
+  "input": {
+    "count": 1,
+    "item": "malum:refined_soulstone"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:soulbinding_seal"
+  },
+  "spirits": [
+    {
+      "type": "malum:eldritch",
+      "count": 16
+    },
+    {
+      "type": "malum:wicked",
+      "count": 16
+    }
+  ]
+}
