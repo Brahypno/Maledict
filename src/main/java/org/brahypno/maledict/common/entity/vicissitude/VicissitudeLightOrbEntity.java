@@ -89,6 +89,26 @@ public final class VicissitudeLightOrbEntity extends FloatingEntity {
                && boss.isValidCombatParticipant(owner);
     }
 
+    /**
+     * 1.20.1 的 {@code FloatingEntity} 把「朝目标速度插值的比例」做成抽象方法
+     * {@code getMotionCoefficient()}，本光球返回 {@code 0.04F}；1.8.2 改成
+     * {@code getMovementEasing(windUp, distance)}（默认 {@code windUp*0.01 + 0.025/max(distance,1)}）。
+     * 两版都反编译核对过：这是同一个插值系数，所以这里直接给回 0.04。
+     */
+    @Override
+    public float getMovementEasing(float windUp, float distance) {
+        return 0.04F;
+    }
+
+    /**
+     * 1.20.1 的目标速度是 {@code clamp(windUp-0.25, 0, 0.75) * 5.0}（硬编码 5.0），1.8.2 改成
+     * {@code getMovementSpeed(windUp, distance)}（默认 3.0）。给回 5.0 才是同一条加速曲线。
+     */
+    @Override
+    public float getMovementSpeed(float windUp, float distance) {
+        return 5.0F;
+    }
+
     @Override
     public float getFriction() {
         return 0.9F;

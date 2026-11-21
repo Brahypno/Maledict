@@ -20,6 +20,11 @@ import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.event.EventHooks;
 import org.brahypno.changelib.DamageHelper.DamageStage;
 import org.brahypno.changelib.HealthHelper.CombatProtection;
+import org.brahypno.changelib.protection.ai.AiProtection;
+import org.brahypno.changelib.protection.ai.AiProtectionDefinition;
+import org.brahypno.changelib.protection.ai.ProtectedAiEntity;
+import org.brahypno.maledict.common.combat.BossRecovery;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -31,7 +36,8 @@ import java.util.Deque;
  *
  * Do not call ChangeLib's DamageProbe from hurt(): its basic handler calls hurt again.
  */
-public abstract class VicissitudeBossEntity extends PathfinderMob implements CombatProtection.OwnedHealthEntity {
+public abstract class VicissitudeBossEntity extends PathfinderMob
+        implements ProtectedAiEntity, CombatProtection.OwnedHealthEntity {
     /** Default MAX_HEALTH; difficulty tables express their pool as a delta against this. */
     public static final double BASE_MAX_HEALTH = 1000.0D;
     /** Headroom over the body limit that the probe allowance carries for a heavier hit location. */
@@ -62,9 +68,14 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
      * Sole permission to commit the ledger; binds once, when the instance first joins.
      */
     private CombatProtection.Controller vitalityController;
+    /**
+     * Sole permission to write this boss's own AI target; binds once, when the instance first joins.
+     */
+    private AiProtection.Controller aiController;
     // Each channel resolves completely; only the increase in the final maximum is debited.
     private float tickLargestLoss;
     private long tickHitAt = Long.MIN_VALUE;
+    private long lastCombatTick = BossRecovery.NO_COMBAT_TICK;
 
     // Mob's setter only writes persistenceRequired; this direct super call cannot publish this.
     @SuppressWarnings("this-escape")
@@ -94,6 +105,9 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
             vitality.ledger = VicissitudeVitalityLedger.get(serverLevel);
             vitality.capability = getData(org.brahypno.maledict.registry.MaledictAttachments.VICISSITUDE_VITALITY);
             VicissitudeVitality saved = vitality.ledger.find(vitality.identity);
+            // An existing world record means this instance is resuming a boss that was already in
+            // the world; a fresh UUID is a summon or a first spawn. Only the former gets a load grace.
+            vitality.resumed = saved != null;
             if (saved == null) {
                 // Captured once per UUID; reloading must not heal wounds or recapture attributes.
                 float maximum = initialVitalityMaximum();
@@ -103,12 +117,23 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
             vitality.joined = true;
             commitVitality(saved);
             bindVitalityProtection();
+            bindAiProtection();
         }
     }
 
     /** Initial authoritative pool; vanilla's ranged attribute may cap a larger authored pool. */
     protected float initialVitalityMaximum() {
         return getMaxHealth();
+    }
+
+    /**
+     * 把首次捕获的池子钉在「难度表」与「入场时已经生效的最终 {@code MAX_HEALTH}」两者较大值上。
+     * 基类在 {@link #onAddedToLevel} 里读它，此时每个 boss 都已经按自己的难度写好属性，
+     * 所以别的 mod（L2Hostility 之类）的生成加成先落地、再被这里吸收；削减则拉不低难度值。
+     * 每个 UUID 只捕获一次：世界记录里已有的不会被重捕，之后的属性变化也不会改池子大小。
+     */
+    protected final float initialVitalityMaximum(float difficultyMaximum) {
+        return VicissitudeVitality.initialMaximum(difficultyMaximum, getMaxHealth());
     }
 
     /**
@@ -128,6 +153,12 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
             // The hit rhythm is the binding's own time gate: ChangeLib stamps it where this boss
             // commits a landed loss, so our damage code and a stray write read the same cadence.
             controller.interval(getVitalityHitInterval());
+            // A boss resuming an existing world record is reachable for the first time; hold the same
+            // gate so the first hit of that moment is refused instead of free, like a player's join
+            // i-frames. A summon is not a resume: its rite already carries its own immunity.
+            if (vitality.resumed) {
+                controller.hold(getLoadGraceTicks());
+            }
             vitalityController = controller;
         }
     }
@@ -138,6 +169,47 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
      */
     protected DamageStage combatProtectionGrade() {
         return DamageStage.D4_CONSISTENCY_WRITE;
+    }
+
+    /**
+     * One definition for every Vicissitude boss; only the target rule is entity-specific.
+     */
+    @Override
+    public final AiProtectionDefinition aiProtectionDefinition() {
+        return new AiProtectionDefinition(true, true, true,
+                                          (self, candidate) -> canHoldAiTarget(candidate));
+    }
+
+    /**
+     * Overridable part of the AI target rule; a candidate must pass this to become the mob target.
+     */
+    protected boolean canHoldAiTarget(LivingEntity candidate) {
+        return candidate != this && !candidate.isRemoved() && candidate.isAlive()
+               && candidate.level() == level();
+    }
+
+    private void bindAiProtection() {
+        if (level().isClientSide || aiController != null) {
+            return;
+        }
+        aiController = AiProtection.bind(this);
+    }
+
+    /**
+     * The only path by which a boss may change its own target once AI protection is bound. External
+     * {@code setTarget} calls are refused by ChangeLib; this keeps NeoForge from seeing a redundant
+     * target event when the value did not change.
+     */
+    protected final void selectAiTarget(@Nullable LivingEntity target) {
+        if (getTarget() == target) {
+            return;
+        }
+        AiProtection.Controller controller = aiController;
+        if (controller == null) {
+            super.setTarget(target);
+        } else {
+            controller.selectTarget(target);
+        }
     }
 
     private float authorityHealth() {
@@ -206,6 +278,14 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
         return 20;
     }
 
+    /**
+     * 这个实例从存档里读回来时的一段无敌。节奏是活状态，不写存档：读档后的第一下应该被挡下，
+     * 而不是白挨。召唤不在此列——仪式本身有自己的免疫。
+     */
+    protected int getLoadGraceTicks() {
+        return 20;
+    }
+
     /** Maximum gap between consecutive strong-kill attempts; duplicates in one tick count once. */
     protected int getKillAttemptWindow() {
         return 100;
@@ -258,7 +338,8 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
             recordKillAttempt(source);
             return getHealth() <= 0.0F;
         }
-        if (!sameTickBatch && state.gateClosed(now)) {
+        // ChangeLib 拥有这扇门：它在我们提交扣血的地方盖章，所以一笔野生写血与寻常一击答的是同一个问题。
+        if (!sameTickBatch && CombatProtection.rhythmRemaining(this) > 0) {
             return false;
         }
         // 过了两道门就算挨到：适应在这里记账，早于上限与批内取最大的判定。
@@ -290,7 +371,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
         // Vanilla hurt() can return true even when LivingHurtEvent/LivingDamageEvent was canceled.
         accepted = accepted && frame.finalLoss > 0.0F;
         if (accepted) {
-            commitVitality(verifiedVitality().afterAcceptedHit(now, getVitalityHitInterval()));
+            // ChangeLib 在扣血提交的地方重启了这扇门；这里没有节奏的第二份拷贝，只上报这一击。
             onDamageAccepted(source, frame.finalLoss);
         }
         return accepted;
@@ -326,8 +407,11 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
         if (additionalLoss > 0.0F) {
             float loss = Math.min(getHealth(), additionalLoss);
             if (loss > 0.0F) {
+                // The recovery memory is stamped here, not in hurt(): only a resolved loss is combat,
+                // and a canceled or fully absorbed hit must not postpone the refill.
+                lastCombatTick = level().getGameTime();
                 getCombatTracker().recordDamage(source, loss);
-                commitVitality(verifiedVitality().afterDamage(loss));
+                applyAuthorityDamage(loss);
                 gameEvent(GameEvent.ENTITY_DAMAGE);
                 onDamageTaken(container);
             }
@@ -437,6 +521,14 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
         super.remove(reason);
     }
 
+    /**
+     * Whether this boss refills while nothing is fighting it. A scripted beat that clears the target
+     * (a transition, a summoning rite) is still a fight, so subclasses switch the refill off there.
+     */
+    protected boolean recoversOutOfCombat() {
+        return true;
+    }
+
     @Override
     public void tick() {
         if (isPassenger()) {
@@ -453,6 +545,10 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
                 die(lastKillSource());
             }
             publishVitality();
+            if (recoversOutOfCombat()) {
+                // Out of combat: no target, no remembered attacker, no recent damage, so 5% per tick.
+                BossRecovery.tick(this, getVitalityMaximum(), lastCombatTick);
+            }
         }
         super.tick();
     }
@@ -496,6 +592,26 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
         vitality.ledger.commit(vitality.identity, state);
         vitality.snapshot = state;
         vitality.capability.synchronize(state);
+    }
+
+    /**
+     * 一次已结算的扣血走 {@code commitDamage}：ChangeLib 在提交处给绑定盖下节奏章，于是我们自己的伤害代码
+     * 与任何一笔野生写血读到的是同一个节奏。绑定还没接上时（入场前）直接写账本，没有门可关。
+     */
+    private void applyAuthorityDamage(float loss) {
+        VicissitudeVitality current = verifiedVitality();
+        float target = Math.max(0.0F, current.current() - loss);
+        if (target >= current.current()) {
+            return;
+        }
+        VicissitudeVitality next = current.withCurrent(target);
+        CombatProtection.Controller controller = vitalityController;
+        if (controller == null) {
+            writeAuthority(next);
+        } else {
+            controller.commitDamage(() -> writeAuthority(next));
+        }
+        publishVitality();
     }
 
     private DamageSource lastKillSource() {
@@ -565,6 +681,7 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
         return false;
     }
 
+    // Deprecated in favour of canAddPassenger, but Entity#startRiding still calls it; both answer false.
     @SuppressWarnings("deprecation")
     @Override
     protected final boolean couldAcceptPassenger() {
@@ -616,6 +733,8 @@ public abstract class VicissitudeBossEntity extends PathfinderMob implements Com
         private VicissitudeVitalityCapability capability;
         private VicissitudeVitality snapshot;
         private boolean joined;
+        /** 这个实例是从世界账本里读回来的（而非新召唤）：只有它拿一段装载宽限。 */
+        private boolean resumed;
         private final Deque<DamageFrame> frames = new ArrayDeque<>();
         private boolean finishing;
         private boolean deathHandled;

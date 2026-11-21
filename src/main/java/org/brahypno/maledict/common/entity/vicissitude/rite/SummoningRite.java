@@ -14,10 +14,12 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.registries.BuiltInRegistries;
+import org.brahypno.maledict.common.MaledictChunks;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.config.MaledictConfig;
@@ -38,7 +40,9 @@ public final class SummoningRite {
 
     /** Creates the configured entity; Vicissitude enters through a suspended rift. */
     public static void summon(TotemBaseBlockEntity totem, ServerLevel level, BossDifficulty difficulty) {
-        if (!MaledictConfig.SUMMONING_RITE.get()) {
+        // Peaceful never spawns the encounter, so the rite must not consume the totem there either; the
+        // click handler refuses the same way. VicissitudeSpawnEvents would drop the boss after assembly.
+        if (!MaledictConfig.SUMMONING_RITE.get() || level.getDifficulty() == Difficulty.PEACEFUL) {
             return;
         }
         EntityType<?> type = resolveType();
@@ -99,7 +103,7 @@ public final class SummoningRite {
             AABB space = clearance(landing, type);
             if (space.minY < level.getMinBuildHeight() || space.maxY > level.getMaxBuildHeight()
                     || !level.getWorldBorder().isWithinBounds(space)) continue;
-            if (!level.hasChunksAt(BlockPos.containing(space.minX, space.minY, space.minZ),
+            if (!MaledictChunks.loaded(level, BlockPos.containing(space.minX, space.minY, space.minZ),
                     BlockPos.containing(space.maxX, space.maxY, space.maxZ))) continue;
             boolean clear = true;
             var volume = Shapes.create(space);

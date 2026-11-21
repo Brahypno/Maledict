@@ -58,15 +58,17 @@ final class VicissitudeVitalityLedger extends SavedData {
         CompoundTag tag = new CompoundTag();
         tag.putFloat("Current", value.current());
         tag.putFloat("Maximum", value.maximum());
-        tag.putLong("GateOpensAt", value.gateOpensAt());
         tag.putInt("KillAttempts", value.killAttempts());
         tag.putLong("LastKillTick", value.lastKillTick());
         return tag;
     }
 
+    /**
+     * 命中节奏不在这里：旧存档里的 {@code GateOpensAt} 直接忽略，读档后的第一下由绑定的装载宽限挡下，
+     * 不恢复一个谁都没观察到的节奏。
+     */
     static VicissitudeVitality decode(CompoundTag tag) {
         return new VicissitudeVitality(tag.getFloat("Current"), tag.getFloat("Maximum"),
-                tag.contains("GateOpensAt", Tag.TAG_LONG) ? tag.getLong("GateOpensAt") : Long.MIN_VALUE,
                 tag.getInt("KillAttempts"),
                 tag.contains("LastKillTick", Tag.TAG_LONG) ? tag.getLong("LastKillTick") : Long.MIN_VALUE);
     }

@@ -11,8 +11,17 @@ import java.util.ArrayDeque;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 两条渲染优化各自与「不优化」的参照实现逐位比对：自发光遮罩的剔除，以及姿态矩阵缓存对祖先链的替换。
+ * 两者同属一个主题（优化不改变画出来的结果），所以并成一条用例——仓库上限是 50 条 JUnit。
+ */
 class VicissitudeRenderOptimizationTest {
-    @Test void darkFacesAreSkippedButFilteringAndWrappedEdgesAreKept() {
+    @Test void optimizationsPreserveTheReferenceRenderResult() {
+        darkFacesAreSkippedButFilteringAndWrappedEdgesAreKept();
+        cachedTransformsMatchAncestorWalkAcrossActions();
+    }
+
+    private static void darkFacesAreSkippedButFilteringAndWrappedEdgesAreKept() {
         int[] pixels = new int[20 * 20];
         java.util.Arrays.fill(pixels, 0xff000000);
         var dark = new VicissitudeEmissiveMask(20, 20, pixels);
@@ -27,7 +36,7 @@ class VicissitudeRenderOptimizationTest {
         assertFalse(new VicissitudeEmissiveMask(40, 40, new int[1600]).touches(.3F, .3F, .6F, .6F));
     }
 
-    @Test void cachedTransformsMatchAncestorWalkAcrossActions() {
+    private static void cachedTransformsMatchAncestorWalkAcrossActions() {
         var cache = new VicissitudePoseMatrices();
         var pose = VicissitudeRig.newPose();
         var incoming = new Matrix4f().translation(3, -2, 7).rotateY(.71F).scale(-1, -1, 1);

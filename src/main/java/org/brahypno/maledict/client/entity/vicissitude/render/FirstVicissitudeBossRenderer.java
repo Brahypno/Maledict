@@ -140,9 +140,17 @@ public final class FirstVicissitudeBossRenderer
             poseStack.popPose();
         }
 
+        /**
+         * 三把 boss 武器（`maledict:incursus_blade`、`malum:soul_stained_steel_scythe`、
+         * `malum:edge_of_deliverance`）都是 {@code malum:item/handheld_large} 的大图标，而判定刀身对所有
+         * 难度都是 {@code BLADE_LENGTH_MODEL_UNITS}（44 单位）：1.6 是按图标量出来的那一档
+         * （见 03 第 5 节第 12 条：贴图跨度 ×1.45 显示 ×1.6 ≈ 44 单位）。别给其中某一把单独缩小——
+         * 那一档的刀就会明显短于判定，`malum:edge_of_deliverance` 掉进 1.15 时短了约 0.8 格。
+         */
         private static float weaponScale(ItemStack stack) {
             if (stack.is(MaledictItems.INCURSUS_BLADE.get())
-                || stack.is(MalumItems.SOUL_STAINED_STEEL_SCYTHE.get())){
+                || stack.is(MalumItems.SOUL_STAINED_STEEL_SCYTHE.get())
+                || stack.is(MalumItems.EDGE_OF_DELIVERANCE.get())){
                 return 1.6F;
             }
             return 1.15F;

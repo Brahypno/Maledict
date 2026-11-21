@@ -861,7 +861,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     private void clearTargetIf(UUID identity) {
         LivingEntity target = getTarget();
         if (target != null && identity.equals(target.getUUID())){
-            setTarget(null);
+            selectAiTarget(null);
         }
     }
 
@@ -1014,7 +1014,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         phaseTwoPlayerDeaths.clear();
         damageAdaptation.clear();
         adaptationSpokenAt.clear();
-        setTarget(null);
+        selectAiTarget(null);
         clearGroundMarker();
         return true;
     }
@@ -1068,7 +1068,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         action = VicissitudeRig.Action.NONE;
         endAction();
         cancelFlyingScythe();
-        setTarget(null);
+        selectAiTarget(null);
         clearGroundMarker();
         clearPhaseOneProjectiles();
     }
@@ -2381,11 +2381,11 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     }
 
     /**
-     * Base cap ratio for a body hit; segment {@code capWeight} scales it (head 1.25x, outer wing 0.5x).
+     * 难度表是地板，入场时已经生效的最终 {@code MAX_HEALTH} 可以把它抬高（见基类的两参 helper）。
      */
     @Override
     protected float initialVitalityMaximum() {
-        return (float) bossDifficulty.maxHealth();
+        return initialVitalityMaximum((float) bossDifficulty.maxHealth());
     }
 
     @Override
@@ -2396,6 +2396,16 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             case COMPLETE, EXTREME -> 0.01F;
         };
         return getVitalityMaximum() * ratio;
+    }
+
+    /**
+     * The phase-one to phase-two transition clears the target for all 60 of its ticks while the boss
+     * is immune, and the summoning rite is scripted as well; neither beat is a disengagement, so the
+     * out-of-combat refill stays off there.
+     */
+    @Override
+    protected boolean recoversOutOfCombat() {
+        return stage != VicissitudeBossStage.TRANSITION && !isRiteSummoning();
     }
 
     @Override
@@ -2453,7 +2463,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             }
         }
         if (!isValidPhaseOneTarget(getTarget())){
-            setTarget(preferredTarget(attacker, owner));
+            selectAiTarget(preferredTarget(attacker, owner));
         }
     }
 
@@ -2502,7 +2512,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         LivingEntity target = getTarget();
         if (target == null || !target.isAlive() || target.level() != level()
             || isIgnoredPlayer(target)){
-            setTarget(participant);
+            selectAiTarget(participant);
         }
     }
 
@@ -2568,7 +2578,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
     @Nullable
     private LivingEntity selectNextPhaseOneTarget(boolean advance) {
         if (!(level() instanceof ServerLevel serverLevel) || phaseOneTargets.isEmpty()){
-            setTarget(null);
+            selectAiTarget(null);
             return null;
         }
         List<UUID> targets = orderedPhaseOneTargets(serverLevel);
@@ -2581,7 +2591,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             Entity candidate = resolveParticipant(serverLevel, identity);
             if (candidate instanceof LivingEntity living && isValidPhaseOneTarget(living)){
                 targetCursor = advance ? index + 1 : index;
-                setTarget(living);
+                selectAiTarget(living);
                 removeInvalidTargets(invalid);
                 return living;
             }
@@ -2590,7 +2600,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
             }
         }
         removeInvalidTargets(invalid);
-        setTarget(null);
+        selectAiTarget(null);
         return null;
     }
 
@@ -2618,7 +2628,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         if (selected == null){
             selected = healthiestPhaseTwoTarget(serverLevel, false);
         }
-        setTarget(selected);
+        selectAiTarget(selected);
         return selected;
     }
 
@@ -2654,6 +2664,20 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
      */
     private static boolean isIgnoredPlayer(@Nullable LivingEntity target) {
         return target instanceof Player player && (player.isCreative() || player.isSpectator());
+    }
+
+    /**
+     * AI protection's target rule. Phase one only ever holds a registered roster member; phase two
+     * only holds a participant. Distance is deliberately not part of the rule: a ranged hit can add
+     * a distant attacker to the roster, and the boss's own movement decides whether to chase.
+     */
+    @Override
+    protected boolean canHoldAiTarget(LivingEntity candidate) {
+        if (!super.canHoldAiTarget(candidate) || isIgnoredPlayer(candidate)){
+            return false;
+        }
+        return isPhaseTwo() ? phaseTwoParticipants.contains(candidate.getUUID())
+                            : phaseOneTargets.contains(candidate.getUUID());
     }
 
     private boolean shouldRemovePhaseOneTarget(UUID identity, Entity candidate) {

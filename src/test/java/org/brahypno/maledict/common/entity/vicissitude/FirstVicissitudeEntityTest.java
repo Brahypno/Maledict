@@ -26,6 +26,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.brahypno.changelib.protection.ai.AiProtection;
 import org.brahypno.maledict.common.combat.DamageAdaptation;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.common.entity.vicissitude.rig.VicissitudeRig;
@@ -66,6 +67,24 @@ public final class FirstVicissitudeEntityTest {
                 boss.hurt(boss.damageSources().playerAttack(player), 1);
                 helper.assertTrue(boss.isValidCombatParticipant(player),
                         "An actual attack must register the player, including an immune phase-one hit");
+                // AI protection binds on join: only the boss's own controller may write its target,
+                // and the definition guards setNoAi too. The reject counter is the live guard's own
+                // record, so this cannot pass vacuously through the boss's setNoAi/isNoAi overrides.
+                AiProtection.State guard = AiProtection.state(boss);
+                helper.assertTrue(guard != null, "AI protection must bind when the boss joins the level");
+                boss.selectAiTarget(player);
+                helper.assertTrue(boss.getTarget() == player,
+                        "The controller must commit a registered combatant");
+                long rejected = guard.rejectedWrites();
+                boss.setTarget(null);
+                helper.assertTrue(boss.getTarget() == player && guard.rejectedWrites() > rejected,
+                        "An external setTarget write must be refused while a target is pinned");
+                long noAiRejected = guard.rejectedWrites();
+                boss.setNoAi(true);
+                helper.assertTrue(guard.rejectedWrites() > noAiRejected,
+                        "An external setNoAi write must be refused");
+                boss.selectAiTarget(null);
+                helper.assertTrue(boss.getTarget() == null, "The controller must be able to clear its own target");
                 invoke(boss, "syncCombatState", new Class<?>[0], new Object[0]);
                 helper.assertTrue(boss.hasCombatOpponent(),
                         "A nearby enemy must activate music for all nearby listeners, including bystanders");

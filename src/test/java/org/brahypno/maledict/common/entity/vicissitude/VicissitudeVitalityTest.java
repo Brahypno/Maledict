@@ -16,6 +16,7 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.brahypno.changelib.HealthHelper.CombatProtection;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -41,7 +43,7 @@ public final class VicissitudeVitalityTest {
         UUID woundedId = UUID.randomUUID();
         UUID deadId = UUID.randomUUID();
         VicissitudeVitality wounded = VicissitudeVitality.initial(1400.0F)
-                .afterDamage(14.0F).afterAcceptedHit(37, 20).killAttempt(11, 100).killAttempt(12, 100);
+                .afterDamage(14.0F).killAttempt(11, 100).killAttempt(12, 100);
         VicissitudeVitality corpse = VicissitudeVitality.initial(1000.0F)
                 .killAttempt(1, 100).killAttempt(2, 100).killAttempt(3, 100);
         VicissitudeVitalityLedger ledger = new VicissitudeVitalityLedger();
@@ -52,7 +54,7 @@ public final class VicissitudeVitalityTest {
         net.neoforged.neoforge.common.IOUtilities.waitUntilIOWorkerComplete();
         VicissitudeVitalityLedger restored =
                 VicissitudeVitalityLedger.load(NbtIo.readCompressed(file, net.minecraft.nbt.NbtAccounter.unlimitedHeap()).getCompound("data"), org.brahypno.maledict.TestSupport.registries());
-        assertTrue(wounded.equals(restored.find(woundedId)), "Saving must retain the open gate, wounds and timers");
+        assertTrue(wounded.equals(restored.find(woundedId)), "Saving must retain wounds and timers");
         assertTrue(corpse.equals(restored.find(deadId)), "A dead UUID must stay dead on reload");
         assertTrue(restored.find(woundedId).killAttempt(13, 100).current() == 0.0F,
                 "Reload must not reset two accumulated attempts");
@@ -91,9 +93,12 @@ public final class VicissitudeVitalityTest {
 
     @GameTest(template = "test_empty", timeoutTicks = 30)
     public static void canceledDeathRevivesAndNeverFinalizes(GameTestHelper helper) {
-        TestBoss boss = spawn(helper);
-        VicissitudeVitalityLedger.get(helper.getLevel()).commit(boss.getUUID(),
-                VicissitudeVitality.initial(boss.getMaxHealth()).withCurrent(5));
+        // 记录在 join 之前写好，等于走"读档回来"那条路：绑定会关一段装载宽限。这一击必须紧跟着发生
+        // （脱战恢复是每秒 5% 池子，等几 tick 残血就被治回去了），所以直接把门撬开——这条测的是
+        // "取消死亡"这条路，不是装载宽限本身。
+        TestBoss boss = spawn(helper, owner ->
+                VicissitudeVitality.initial(owner.getMaxHealth()).withCurrent(5));
+        CombatProtection.shortenRhythm(boss, Integer.MAX_VALUE);
         Events listener = new Events(boss);
         listener.death = event -> event.setCanceled(true);
         withListener(listener, () -> boss.hurt(boss.damageSources().generic(), 10));
@@ -143,9 +148,21 @@ public final class VicissitudeVitalityTest {
     }
 
     private static TestBoss spawn(GameTestHelper helper) {
+        return spawn(helper, boss -> (VicissitudeVitality) null);
+    }
+
+    /**
+     * Commits the pool into the ledger <b>before</b> the entity joins the level, so
+     * {@code onAddedToLevel} adopts it - the same path a reloaded boss takes. Writing the ledger
+     * after the join does not work: ChangeLib's owned binding witnesses the pool it read and writes
+     * that value back over any out-of-band ledger write on the next read.
+     */
+    private static TestBoss spawn(GameTestHelper helper, Function<TestBoss, VicissitudeVitality> saved) {
         TestBoss boss = new TestBoss(helper.getLevel());
         boss.setPos(helper.absolutePos(new BlockPos(1, 2, 1)).getCenter());
         boss.setNoGravity(true);
+        VicissitudeVitality prepared = saved.apply(boss);
+        if (prepared != null) VicissitudeVitalityLedger.get(helper.getLevel()).commit(boss.getUUID(), prepared);
         helper.assertTrue(helper.getLevel().addFreshEntity(boss), "Test boss must join the real level");
         return boss;
     }
