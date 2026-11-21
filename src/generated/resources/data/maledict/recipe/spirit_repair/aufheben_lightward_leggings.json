@@ -1,0 +1,25 @@
+{
+  "type": "malum:spirit_repair",
+  "durabilityPercentage": 1.0,
+  "repairMaterial": {
+    "count": 1,
+    "item": "maledict:refracted_lead_bismuth_eutectic"
+  },
+  "spirits": [
+    {
+      "type": "malum:arcane",
+      "count": 32
+    },
+    {
+      "type": "malum:eldritch",
+      "count": 16
+    },
+    {
+      "type": "malum:infernal",
+      "count": 16
+    }
+  ],
+  "validItems": [
+    "maledict:aufheben_lightward_leggings"
+  ]
+}
