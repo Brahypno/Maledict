@@ -1,0 +1,10 @@
+{
+  "primary_type": "malum:umbral",
+  "registry_name": "maledict:weeping_wither",
+  "spirits": [
+    {
+      "count": 2,
+      "spirit": "malum:umbral"
+    }
+  ]
+}

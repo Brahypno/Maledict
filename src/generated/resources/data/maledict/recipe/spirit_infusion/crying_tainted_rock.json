@@ -1,0 +1,27 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 4,
+      "item": "minecraft:crying_obsidian"
+    }
+  ],
+  "input": {
+    "count": 4,
+    "item": "malum:tainted_rock"
+  },
+  "result": {
+    "count": 4,
+    "id": "maledict:crying_tainted_rock"
+  },
+  "spirits": [
+    {
+      "type": "malum:sacred",
+      "count": 6
+    },
+    {
+      "type": "malum:arcane",
+      "count": 4
+    }
+  ]
+}

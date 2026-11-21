@@ -1,0 +1,27 @@
+{
+  "type": "malum:spirit_infusion",
+  "extraInputs": [
+    {
+      "count": 4,
+      "item": "minecraft:crying_obsidian"
+    }
+  ],
+  "input": {
+    "count": 4,
+    "item": "malum:twisted_rock"
+  },
+  "result": {
+    "count": 4,
+    "id": "maledict:crying_twisted_rock"
+  },
+  "spirits": [
+    {
+      "type": "malum:wicked",
+      "count": 6
+    },
+    {
+      "type": "malum:arcane",
+      "count": 4
+    }
+  ]
+}
