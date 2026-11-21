@@ -1,0 +1,22 @@
+{
+  "primary_type": "malum:eldritch",
+  "registry_name": "maledict:demiurge_statue",
+  "spirits": [
+    {
+      "count": 6,
+      "spirit": "malum:sacred"
+    },
+    {
+      "count": 7,
+      "spirit": "malum:wicked"
+    },
+    {
+      "count": 8,
+      "spirit": "malum:eldritch"
+    },
+    {
+      "count": 3,
+      "spirit": "malum:umbral"
+    }
+  ]
+}
