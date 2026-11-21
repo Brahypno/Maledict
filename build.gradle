@@ -132,6 +132,13 @@ dependencies {
     runtimeOnly "curse.maven:mmmmmmmmmmmm-225738:8903254"
 
     runtimeOnly "curse.maven:just-enough-characters-250702:9163765"
+
+    // 车万女仆（Touhou Little Maid）软依赖：只用于编译，运行期靠 ModList 闸门决定是否加载。
+    // 1.20.1 那边用的是 maven.modrinth:touhou-little-maid:<version-id>；Modrinth 的 /maven
+    // 路由在本仓开工时（2026-11）已经整体 404（连 maven-metadata.xml 都没有），所以改走
+    // curse.maven，坐标里的 file id 是 CurseForge 项目 355044 的
+    // touhoulittlemaid-1.5.3-neoforge+mc1.21.1.jar。
+    compileOnly "curse.maven:touhou-little-maid-355044:8061852"
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"

@@ -77,3 +77,14 @@ Recipe ID 与配方 advancement 使用新版 builder 原生规则，不加旧 ID
 中英法典排版检查通过。客户端成功完成资源图集、Boss 网格和着色器加载后正常关闭，
 未将启动检查等同于全部游戏内视觉、音频和联机操作验收。
 成品为 `build/libs/maledict-0.30-SNAPSHOT.jar`，已内嵌 ChangeLib；检查确认不含测试资源。
+
+## 包结构与待移植清单
+
+源码包已按同级 1.20.1 分支（`../Maledict`）的功能域收拢，同一功能在两条分支上落到相同的相对包位置，
+后续对照与 cherry-pick 可以直接按路径找文件。纯包重构，未改任何行为：改动只有 `package` 声明、
+`import` 与少量行内全限定引用，`compileTestJava` 与 `test` 均通过。
+刻意保留的差异（基础设施包保留 1.21 细分等）记在同文件末尾。
+
+两个分支之间仍然缺失的功能组（Demiurge、Weeping Wither、Soulbinding、Refulgence、Lumenfall、
+Lightward、Incursus Rift、Diplopia、Baron、Inverted Reliquary、Lightfall 法典、Maid / Tetra 兼容）
+逐组列在 `docs/PORT_TODO_1.21.1.md`，含建议移植顺序与每组注意事项。

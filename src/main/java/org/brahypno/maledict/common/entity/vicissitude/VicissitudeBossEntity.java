@@ -10,6 +10,7 @@ import net.minecraft.stats.Stats;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -17,8 +18,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.event.EventHooks;
-import org.brahypno.changelib.HealthHelper.HealthProtectionLevel;
-import org.brahypno.changelib.HealthHelper.SetHealthProtection;
+import org.brahypno.changelib.DamageHelper.DamageStage;
+import org.brahypno.changelib.HealthHelper.CombatProtection;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -30,12 +31,37 @@ import java.util.Deque;
  *
  * Do not call ChangeLib's DamageProbe from hurt(): its basic handler calls hurt again.
  */
-public abstract class VicissitudeBossEntity extends PathfinderMob {
+public abstract class VicissitudeBossEntity extends PathfinderMob implements CombatProtection.OwnedHealthEntity {
     /** Default MAX_HEALTH; difficulty tables express their pool as a delta against this. */
     public static final double BASE_MAX_HEALTH = 1000.0D;
+    /** Headroom over the body limit that the probe allowance carries for a heavier hit location. */
+    private static final float MAXIMUM_HIT_WEIGHT = 1.25F;
     private static final EntityDataAccessor<Float> DISPLAY_VITALITY =
             SynchedEntityData.defineId(VicissitudeBossEntity.class, EntityDataSerializers.FLOAT);
+    /**
+     * Bridges ChangeLib's defense to the authoritative vitality ledger; never calls getHealth.
+     */
+    private static final CombatProtection.HealthAccess VITALITY_ACCESS = new CombatProtection.HealthAccess() {
+        @Override
+        public float read(LivingEntity entity) {
+            return ((VicissitudeBossEntity) entity).authorityHealth();
+        }
+
+        @Override
+        public void write(LivingEntity entity, float health) {
+            ((VicissitudeBossEntity) entity).writeAuthorityHealth(health);
+        }
+
+        @Override
+        public boolean hurt(LivingEntity entity, DamageSource source, float amount) {
+            return entity.hurt(source, amount);
+        }
+    };
     private final VitalityState vitality = new VitalityState();
+    /**
+     * Sole permission to commit the ledger; binds once, when the instance first joins.
+     */
+    private CombatProtection.Controller vitalityController;
     // Each channel resolves completely; only the increase in the final maximum is debited.
     private float tickLargestLoss;
     private long tickHitAt = Long.MIN_VALUE;
@@ -76,13 +102,58 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
             }
             vitality.joined = true;
             commitVitality(saved);
-            SetHealthProtection.protect(this, HealthProtectionLevel.DEFENSE_STATE);
+            bindVitalityProtection();
         }
     }
 
     /** Initial authoritative pool; vanilla's ranged attribute may cap a larger authored pool. */
     protected float initialVitalityMaximum() {
         return getMaxHealth();
+    }
+
+    /**
+     * The owned binding checks the adapter by identity, so no external caller can bind a different
+     * pool before us. This is the only place the defense is attached.
+     */
+    @Override
+    public final boolean ownsHealthAccess(CombatProtection.HealthAccess candidate) {
+        return candidate == VITALITY_ACCESS;
+    }
+
+    private void bindVitalityProtection() {
+        if (vitalityController == null) {
+            CombatProtection.Controller controller = CombatProtection.bindOwned(
+                    this, combatProtectionGrade(), VITALITY_ACCESS,
+                    getVitalityDamageLimit(MAXIMUM_HIT_WEIGHT));
+            // The hit rhythm is the binding's own time gate: ChangeLib stamps it where this boss
+            // commits a landed loss, so our damage code and a stray write read the same cadence.
+            controller.interval(getVitalityHitInterval());
+            vitalityController = controller;
+        }
+    }
+
+    /**
+     * Health defense grade for this boss. Read once when the instance binds; a subclass may override
+     * it so different bosses carry different protection levels.
+     */
+    protected DamageStage combatProtectionGrade() {
+        return DamageStage.D4_CONSISTENCY_WRITE;
+    }
+
+    private float authorityHealth() {
+        return verifiedVitality().current();
+    }
+
+    private void writeAuthorityHealth(float health) {
+        if (!Float.isFinite(health)) {
+            return;
+        }
+        VicissitudeVitality current = verifiedVitality();
+        float clamped = Math.max(0.0F, Math.min(current.maximum(), health));
+        if (clamped == current.current()) {
+            return;
+        }
+        writeAuthority(current.withCurrent(clamped));
     }
 
     @Override
@@ -92,16 +163,26 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
             return super.getHealth();
         }
         if (level().isClientSide) {
-            return entityData.get(DISPLAY_VITALITY);
+            return CombatProtection.healthView(this, entityData.get(DISPLAY_VITALITY));
         }
-        return vitality.joined ? verifiedVitality().current() : super.getHealth();
+        if (!vitality.joined) {
+            return super.getHealth();
+        }
+        // healthView also reconciles: an unowned raw change is repaired back to the committed value,
+        // so reads cannot hand out a tampered pool.
+        return CombatProtection.healthView(this, verifiedVitality().current());
     }
 
-    /** Direct setters are never an alternate damage/healing authority. */
+    /**
+     * Setters submit a damage request to ChangeLib. Below-grade requests reenter hurt(), and only
+     * the resolved loss is committed; construction keeps LivingEntity's normal initialization.
+     */
     @Override
     public final void setHealth(float value) {
         if (vitality == null) {
             super.setHealth(value);
+        } else if (!level().isClientSide && vitality.joined) {
+            CombatProtection.healthWrite(this, value, () -> {});
         }
     }
 
@@ -377,10 +458,10 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
     }
 
     private void publishVitality() {
-        float current = verifiedVitality().current();
-        entityData.set(DISPLAY_VITALITY, current);
-        // Vanilla health is only a display mirror, never read back into authority.
-        super.setHealth(current);
+        // SynchedEntityData compares the actual slot, including any change since the last publish.
+        // Vanilla health is not written here: the owned binding settles every setHealth, so a raw
+        // mirror write would be routed back in as a damage request.
+        entityData.set(DISPLAY_VITALITY, verifiedVitality().current());
     }
 
     /** The independent world record wins; entity NBT and ForgeCaps are not independent votes. */
@@ -396,11 +477,25 @@ public abstract class VicissitudeBossEntity extends PathfinderMob {
         return vitality.snapshot;
     }
 
+    /**
+     * Commits one complete record. The controller callback must stay a raw ledger update: events,
+     * rewards and display publishing belong outside it.
+     */
     private void commitVitality(VicissitudeVitality state) {
+        CombatProtection.Controller controller = vitalityController;
+        if (controller == null) {
+            writeAuthority(state); // Initial commit before the instance joins and binds.
+        } else {
+            controller.commit(() -> writeAuthority(state));
+        }
+        publishVitality();
+    }
+
+    /** Raw ledger/capability update; no publishing, guards or controller calls. */
+    private void writeAuthority(VicissitudeVitality state) {
         vitality.ledger.commit(vitality.identity, state);
         vitality.snapshot = state;
         vitality.capability.synchronize(state);
-        publishVitality();
     }
 
     private DamageSource lastKillSource() {

@@ -295,7 +295,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
             return switch (this) {
                 case FINAL -> DamageProbe.finalDamageMethod(target, source, damage);
                 case MEDIUM -> DamageProbe.mediumDamageMethod(target, source, damage);
-                case LIGHT -> DamageProbe.lighterDamageMethod(target, source, damage);
+                case LIGHT -> DamageProbe.lighterDamageMethod(target, source, damage, false);
             };
         }
     }

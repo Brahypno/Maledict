@@ -77,7 +77,7 @@ public final class BlissRuneEvents {
         }
         forcing = true;
         try {
-            DamageProbe.lighterDamageMethod(victim, source, amount);
+            DamageProbe.lighterDamageMethod(victim, source, amount, false);
         } finally {
             forcing = false;
         }

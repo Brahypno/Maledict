@@ -1628,7 +1628,7 @@ public final class FirstVicissitudeBossEntity extends VicissitudeBossEntity {
         DamagePress press = isPhaseOne() ? DamagePress.LIGHT : bossDifficulty.damagePress();
         return press == DamagePress.MEDIUM
                ? DamageProbe.mediumDamageMethod(victim, source, damage).success()
-               : DamageProbe.lighterDamageMethod(victim, source, damage).success();
+               : DamageProbe.lighterDamageMethod(victim, source, damage, false).success();
     }
 
     private void spawnSlashEffect(boolean vertical) {
