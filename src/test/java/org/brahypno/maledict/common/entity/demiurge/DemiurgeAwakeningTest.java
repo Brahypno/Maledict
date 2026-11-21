@@ -23,6 +23,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -877,9 +878,15 @@ public final class DemiurgeAwakeningTest {
         var level = helper.getLevel();
         // 这块场地在测试结构之外，紧挨着别的测试结构。两条冷世界陷阱都在这里：
         // 一是那片区块可能根本没加载过，addFreshEntity 只会排队，实体压根不在世界里，挥砍自然找不到目标；
-        // 二是原始地形可能把石像埋进石头，视线判定同样会失败。所以先把区块同步加载出来，
-        // 再把整组装置搬到结构上方的空气里，不去改任何地形（改地形会铲到邻居结构）。
-        Vec3 arena = position.add(0, 96, 0);
+        // 二是原始地形可能把石像埋进石头，视线判定同样会失败。所以先把区块同步加载出来，再按这一列（含攻击者
+        // 那一格）的地表高度把整组装置放到空气里 —— 不写死高度：用例排布一变，固定偏移就会落进山里。
+        BlockPos column = BlockPos.containing(position);
+        int surface = 0;
+        for (int dz = -5; dz <= 0; dz++) {
+            surface = Math.max(surface, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                                                         column.getX(), column.getZ() + dz));
+        }
+        Vec3 arena = new Vec3(position.x, surface + 2, position.z);
         BlockPos arenaPos = BlockPos.containing(arena);
         level.getChunk(arenaPos.getX() >> 4, arenaPos.getZ() >> 4);
         for (boolean throwing : new boolean[]{false, true}) {

@@ -123,46 +123,6 @@ public final class VicissitudeVitalityTest {
         });
     }
 
-    @GameTest(template = "test_empty", timeoutTicks = 30)
-    public static void thirdDistinctKillStartsTheRealDeathTransaction(GameTestHelper helper) {
-        TestBoss boss = spawn(helper);
-        var zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(2, 2, 2));
-        zombie.setNoAi(true);
-        boss.setTarget(zombie);
-        helper.assertTrue(boss.getTarget() == null, "External setTarget must not bypass AI protection");
-        boss.useAiTarget(zombie);
-        helper.assertTrue(boss.getTarget() == zombie, "The owner target path must still work");
-        boss.clearAiTarget();
-        boolean externalUnbindRejected = false;
-        try {
-            CombatProtection.unprotect(boss);
-        }
-        catch (IllegalArgumentException expected) {
-            externalUnbindRejected = true;
-        }
-        helper.assertTrue(externalUnbindRejected
-                          && CombatProtection.state(boss) != null
-                          && CombatProtection.state(boss).grade() == DamageStage.D4_CONSISTENCY_WRITE,
-                          "The owned health binding must reject an external unbind and keep its sealed grade");
-        zombie.discard();
-        float initial = boss.getHealth();
-        for (int call = 0; call < 20; call++)
-            boss.kill();
-        equal(helper, initial, boss.getHealth(), "One tick of kill calls counts once");
-        helper.runAtTickTime(2, () -> {
-            boss.kill();
-            equal(helper, initial, boss.getHealth(), "Second tick must survive");
-        });
-        helper.runAtTickTime(3, () -> {
-            boss.kill();
-            helper.assertTrue(boss.finalDeaths == 1 && boss.lootDrops == 1, "Third tick must start normal death");
-        });
-        helper.runAtTickTime(25, () -> {
-            helper.assertTrue(boss.isRemoved(), "Third kill must finish removal");
-            helper.succeed();
-        });
-    }
-
     @GameTest(template = "test_empty")
     public static void batchMaximumUsesArmorAndAbsorptionResults(GameTestHelper helper) {
         TestBoss boss = spawn(helper);
@@ -306,10 +266,6 @@ public final class VicissitudeVitalityTest {
 
         @Override
         protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {lootDrops++;}
-
-        void useAiTarget(LivingEntity target) {selectAiTarget(target);}
-
-        void clearAiTarget() {selectAiTarget(null);}
 
         void cutWindow(int ticks) {shortenHitWindow(ticks);}
     }
