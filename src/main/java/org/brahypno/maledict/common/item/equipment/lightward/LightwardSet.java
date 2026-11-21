@@ -221,6 +221,10 @@ public final class LightwardSet {
         return null;
     }
 
+    /**
+     * 5 级：主手这把套装武器解锁「武器攻击更加真实」。这是整次挥砍唯一的门禁读数 —— 轻档探针补满
+     * （{@code compensateDamage}）与认主生物的连带一刀（{@code IncursusBladeAttack#ownerOf}）共用它。
+     */
     public static boolean unlocksWeaponTopUp(LivingEntity owner, ItemStack stack) {
         if (owner == null || !isWeapon(stack) || owner.getMainHandItem() != stack){
             return false;

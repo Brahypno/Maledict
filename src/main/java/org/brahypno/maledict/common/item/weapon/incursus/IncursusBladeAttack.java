@@ -1,12 +1,14 @@
 package org.brahypno.maledict.common.item.weapon.incursus;
 
 import com.sammy.malum.registry.common.DamageTypeRegistry;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobType;
+import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -21,6 +23,7 @@ import org.brahypno.changelib.DamageHelper.LivingTargetHelper;
 import org.brahypno.maledict.common.item.equipment.lightward.LightwardSet;
 import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictSounds;
+import org.jetbrains.annotations.Nullable;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
 import team.lodestar.lodestone.helpers.SoundHelper;
@@ -31,6 +34,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * 神侵恶刃的伤害计算与近战挥砍。
@@ -72,15 +76,24 @@ public final class IncursusBladeAttack {
         playSlashEffect(player, attackStrength);
 
         DamageChannels channels = damageChannels(player);
-        // 5 级：主手这把刀把轻档探针改成补满。
-        boolean compensateDamage = LightwardSet.unlocksWeaponTopUp(player, weapon);
+        // 5 级「武器攻击更加真实」：同一个门禁同时管两个读数 —— 轻档探针改成补满，以及这一刀顺着
+        // 从属的契约落到主人身上。整次挥砍只算一次。
+        boolean weaponTruth = LightwardSet.unlocksWeaponTopUp(player, weapon);
         boolean attacked = false;
         boolean critical = false;
         for (Entity target : targets) {
             Swing swing = calculateDamage(player, weapon, target, channels.attack(), attackStrength, sweepingLevel);
             float damage = swing.damage();
             if (damage > 0.0f){
-                applyScytheMeleeDamage(player, weapon, target, damage, compensateDamage);
+                applyScytheMeleeDamage(player, weapon, target, damage, weaponTruth);
+                if (weaponTruth){
+                    // 认主的生物连主人一起挨这一刀：同一把刀、同一个补满开关、同一个伤害方法，
+                    // 不需要另起伤害类型或另一条派发路径。
+                    LivingEntity owner = ownerOf(target);
+                    if (owner != null){
+                        applyScytheMeleeDamage(player, weapon, owner, damage, weaponTruth);
+                    }
+                }
                 if (target instanceof LivingEntity livingTarget){
                     weapon.hurtEnemy(livingTarget, player);
                     IncursusBladeEffects.applySacredEffect(player, livingTarget, weapon);
@@ -153,6 +166,28 @@ public final class IncursusBladeAttack {
                 DamageTypeHelper.create(player.level(), DamageTypeRegistry.SCYTHE_MELEE, player),
                 damage,
                 compensateDamage);
+    }
+
+    /**
+     * 被打者的主人：只认 {@link OwnableEntity#getOwnerUUID()}，并且只在被打者所在的维度里按 UUID 现查。
+     * 原版驯服的宠物与其他模组认主的随从一视同仁；跨维度不追，主人已死或已经离场就算没有。
+     */
+    @Nullable
+    private static LivingEntity ownerOf(Entity target) {
+        if (!(target instanceof OwnableEntity ownable) || !(target.level() instanceof ServerLevel level)){
+            return null;
+        }
+        UUID identity = ownable.getOwnerUUID();
+        if (identity == null){
+            return null;
+        }
+        if (level.getEntity(identity) instanceof LivingEntity owner
+            && owner != target
+            && owner.isAlive()
+            && !owner.isRemoved()){
+            return owner;
+        }
+        return null;
     }
 
     private static Swing calculateDamage(

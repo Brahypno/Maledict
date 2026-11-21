@@ -10,6 +10,7 @@
 | [boss-contact.md](boss-contact.md) | Boss 的身体接触：为什么推不动、玩家会被推成什么样 |
 | [first-vicissitude-adaptation.md](first-vicissitude-adaptation.md) | 第一化身的「适应 N」：窗口与判序，为什么轮换着打不减伤 |
 | [incursus-blade-channels.md](incursus-blade-channels.md) | 猎首之刃的奥术/霜冻通道：额外两跳从哪来、伤害怎么算 |
+| [lightward-transfer.md](lightward-transfer.md) | 扬弃逐光 5 级：恶刃打中认主的生物时，主人也吃同额的一刀 |
 | [age-of-enlightenment.md](age-of-enlightenment.md) | 启蒙时代：近战倍率，不是强制暴击 |
 
 约定：本目录的数字与代码不一致时**以代码为准并改本页**；改机制时同一次提交内更新对应页面。

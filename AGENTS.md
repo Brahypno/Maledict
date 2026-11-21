@@ -126,6 +126,25 @@ suppressed the scythe's sweep were given up deliberately. Config key `ageOfEnlig
 
 Page: `docs/mechanics/age-of-enlightenment.md`.
 
+### Lightward transfer (`IncursusBladeAttack#ownerOf`)
+
+The 5-level reading of the Aufheben Lightward set: a melee swing with the Incursus Blade in the main hand that hits an
+`OwnableEntity` also hits its owner. Invariants that must survive refactors:
+
+- **One gate.** `LightwardSet#unlocksWeaponTopUp` is computed once per swing in `IncursusBladeAttack#perform` and feeds
+  both readings — the probe top-up (`compensateDamage`) and the owner hit. Never introduce a second test for "is the set
+  active here"; the tooltip shows one line for both.
+- **The same blade, the same call.** The owner receives another `applyScytheMeleeDamage(..., damage, weaponTruth)`:
+  same `SCYTHE_MELEE` source built the same way, same `DamageTier`/probe, same value, same top-up flag. Do not give the
+  copy its own damage type, its own `damage_type` data, its own death message, or a separate dispatcher such as
+  `MaledictProbeDamage` — that was built once and rejected.
+- **Equal means the hit value, not the pet's health delta.** Never read the pet's health loss back to size the copy.
+- **Melee swing only.** The thrown scythe and the Ascension rift do not transfer.
+- **No self exemption and no recursion.** Hitting your own pet hurts you; the owner's hit never re-enters `perform`, so
+  an ownership chain cannot cascade. Ownership is `getOwnerUUID()` resolved in the target's own dimension only.
+
+Page: `docs/mechanics/lightward-transfer.md`.
+
 ### Cancelled events never reach `@SubscribeEvent` handlers unless the annotation opts in
 
 `ASMEventHandler#invoke` checks `if (!event.isCanceled() || subInfo.receiveCanceled())` before calling the method, and
