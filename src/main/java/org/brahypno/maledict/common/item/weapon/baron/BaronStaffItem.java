@@ -10,12 +10,17 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import org.brahypno.maledict.client.item.weapon.baron.BaronStaffClientExtensions;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * 伯爵的礼杖：铁剑档的仪式用剑。主手或副手持有都给移速加成，并把持有者的可见度乘
@@ -47,6 +52,12 @@ public final class BaronStaffItem extends SwordItem {
     public BaronStaffItem() {
         // 原版铁剑：3 + 铁档 2，面板上就是 6 点攻击力、1.6 攻击速度；耐久 250 也来自铁档。
         super(Tiers.IRON, 3, -2.4F, new Item.Properties());
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        consumer.accept(new BaronStaffClientExtensions());
     }
 
     /**

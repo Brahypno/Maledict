@@ -46,12 +46,12 @@ public final class MaledictItemModels extends ItemModelProvider {
         withExistingParent("baron_ceremonial_staff", mcLoc("item/handheld"))
                 .texture("layer0", modLoc("item/baron_ceremonial_staff"))
                 .transforms()
-                // Reverse the held sprite so the silver knob sits in the hand and the ferrule points outward.
-                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(0, -90, 235).translation(0, 4, 0.5F).scale(0.85F).end()
-                .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND).rotation(0, 90, -235).translation(0, 4, 0.5F).scale(0.85F).end()
-                // Pixel (10.5, 5.5) is the neck. Cancel its rotated offset to place it at the hand's swing pivot.
-                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(0, -25, 225).translation(0, 2.4F, 0).scale(0.68F).end()
-                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(0, 25, -225).translation(0, 2.4F, 0).scale(0.68F).end()
+                // Match the raised arm pose and align the grip just above the sprite's midpoint with the fist.
+                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(15, -75, 45).translation(0, -4, 0).scale(1.4F).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND).rotation(15, -75, -45).translation(0, -4, 0).scale(1.4F).end()
+                // The sprite runs at 45 degrees. Tilt the raised head outward from the crosshair in either hand.
+                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(-10, -30, 35).translation(-1.5F, 0, -1.75F).scale(0.9F).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(-10, -30, -55).translation(-1.5F, 0, -1.75F).scale(0.9F).end()
                 .end();
         registerYearningSwordModel();
         withExistingParent("forsaken_vow", mcLoc("item/handheld"))
