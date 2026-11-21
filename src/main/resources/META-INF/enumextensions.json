@@ -1,0 +1,13 @@
+{
+  "entries": [
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "maledict_baron_staff",
+      "constructor": "(ZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "org/brahypno/maledict/client/item/weapon/baron/BaronStaffArmPose",
+        "field": "PROXY"
+      }
+    }
+  ]
+}
