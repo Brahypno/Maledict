@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 2.0,
+  "ingredient": {
+    "item": "maledict:lumenfall_bismuth_ore"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:lumenfall_bismuth_ingot"
+  }
+}

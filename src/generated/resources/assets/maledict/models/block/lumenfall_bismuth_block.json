@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "maledict:block/lumenfall_bismuth_block"
+  }
+}
