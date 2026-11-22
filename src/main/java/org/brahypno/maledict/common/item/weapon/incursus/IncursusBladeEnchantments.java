@@ -15,7 +15,6 @@ import com.sammy.malum.registry.common.enchantment.EnchantmentKeys;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -26,6 +25,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.brahypno.maledict.common.item.weapon.incursus.IncursusScytheBoomerangEntity;
+import org.brahypno.maledict.common.enchantment.DiplopiaThrows;
+import org.brahypno.maledict.common.item.weapon.incursus.rift.RiftMode;
+import org.brahypno.maledict.mixin.WeaponParticleEffectBuilderAccess;
+import org.brahypno.maledict.network.MaledictNetwork;
 import org.brahypno.maledict.registry.MaledictSounds;
 import team.lodestar.lodestone.helpers.DamageTypeHelper;
 import team.lodestar.lodestone.helpers.RandomHelper;
@@ -57,7 +60,7 @@ public final class IncursusBladeEnchantments {
         }
 
         IncursusScytheBoomerangEntity scythe = new IncursusScytheBoomerangEntity(
-                level, position.x, position.y, position.z, channels.frozen());
+                level, position.x, position.y, position.z);
         scythe.setData(player, channels.attack(), channels.magic(), slot, 8);
         scythe.setItem(stack);
         scythe.setNarrow(enhanced);
@@ -69,6 +72,12 @@ public final class IncursusBladeEnchantments {
                 1.2f,
                 RandomHelper.randomBetween(level.getRandom(), 0.95f, 1.05f));
         TemporarilyDisabledItem.disable(serverPlayer, slot, com.sammy.malum.registry.common.item.MalumItems.SOUL_OF_A_SCYTHE);
+        // 复视：与原投掷同点出发，两条常规通道已按强化倍率放大，幻影各自再砍半；
+        // 碧水是属性，幻影命中时同样由 flush 按刀上的修饰符派发。
+        DiplopiaThrows.spawnEchoes(
+                level, serverPlayer, hand, stack,
+                channels.attack(), channels.magic(),
+                enhanced, position, velocity);
         player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
         player.swing(hand, true);
     }
@@ -112,13 +121,15 @@ public final class IncursusBladeEnchantments {
         }
 
         boolean hitAnything = false;
-        for (Entity target : level.getEntities(player, area, entity -> canHitEntity(player, entity))) {
-            // 飞升横扫写死 medium（不随精魂成长），无忧符文同样按「这把刀的伤害」抬一档。
-            boolean hit = IncursusBladeItem.raisedByBliss(IncursusBladeItem.DamageTier.MEDIUM, player)
-                                           .deal(target,
-                                                 DamageTypeHelper.create(level, MalumDamageTypes.SCYTHE_SWEEP, player),
-                                                 channels.attack())
-                                           .success();
+        for (Entity target : IncursusBladeAttack.uniqueLivingTargets(
+                level.getEntities(player, area, entity -> canHitEntity(player, entity)))) {
+            // 飞升横扫按刀自己的精魂档结算；无忧符文的抬档由 dealSkillDamage 内部统一处理。
+            // 命中判定与 1.20.1 一致用 instantEffective：只要这一记真的产生了效果（掉血、吸收、状态变化）
+            // 就算命中；success() 还要求「打满预期数值」，被护甲或抗性吃掉一部分时会把命中后附魔整段跳过。
+            boolean hit = IncursusBladeItem.dealSkillDamage(stack, target,
+                                                           DamageTypeHelper.create(level, MalumDamageTypes.SCYTHE_SWEEP, player),
+                                                           channels.attack())
+                                           .instantEffective();
             if (hit){
                 EnchantmentHelper.doPostAttackEffectsWithItemSource((ServerLevel) level, target,
                         DamageTypeHelper.create(level, MalumDamageTypes.SCYTHE_SWEEP, player), stack);
@@ -126,16 +137,8 @@ public final class IncursusBladeEnchantments {
                 if (fireAspect > 0 && target instanceof LivingEntity livingTarget){
                     livingTarget.igniteForSeconds(fireAspect * 4);
                 }
-                IncursusBladeItem.applyTieredDamage(
-                        stack,
-                        target,
-                        DamageTypeHelper.create(level, MalumDamageTypes.VOODOO, player),
-                        channels.magic());
-                IncursusBladeItem.applyTieredDamage(
-                        stack,
-                        target,
-                        DamageTypeHelper.create(level, DamageTypes.FREEZE, player),
-                        channels.frozen());
+                // 奥术与碧水两条属性通道由这一记 sweep probe 的 flush 自己派发（MaledictAttributes），
+                // 与 1.20.1 一样这里不再补发：补一发会多一笔魔法，还顺带多派一轮碧水。
                 SoundHelper.playSound(
                         player, sound, 2.0f,
                         RandomHelper.randomBetween(level.getRandom(), 0.75f, 1.25f));
@@ -148,7 +151,16 @@ public final class IncursusBladeEnchantments {
 
         Vec3 particlePosition = player.position().add(0.0, player.getBbHeight() * 0.75, 0.0);
         Vec3 particleDirection = player.getLookAngle().multiply(1.0, 0.0, 1.0);
-        particles.at(particlePosition).aimedAt(particleDirection).spawn((ServerLevel) level);
+        if (player instanceof ServerPlayer serverPlayer) {
+            // 构建器仍然照建：mirroredRandomly 这一次抽样是上游的顺序，视觉改造不该挪动随机流。
+            // 原版这两个量：普通旋斩默认 0，强化分支 verticalSlashRotation() = 1.57 且强制镜像。
+            RiftMode mode = enhanced ? RiftMode.ASCENSION_UPPERCUT : RiftMode.ASCENSION_SPIN;
+            float baseAngle = enhanced ? 1.57f : 0.0f;
+            boolean mirrored = enhanced
+                    || ((WeaponParticleEffectBuilderAccess) particles).maledict$isMirrored();
+            MaledictNetwork.sendIncursusRiftSkill(
+                    serverPlayer, mode, particlePosition, particleDirection, baseAngle, mirrored);
+        }
         for (int i = 0; i < 3; i++) {
             SoundHelper.playSound(
                     player, sound, 1.0f,

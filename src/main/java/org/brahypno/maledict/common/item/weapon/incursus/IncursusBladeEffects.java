@@ -1,20 +1,23 @@
 package org.brahypno.maledict.common.item.weapon.incursus;
 
 import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.event.enchanting.GetEnchantmentLevelEvent;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.event.enchanting.GetEnchantmentLevelEvent;
+import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
+import org.brahypno.changelib.DamageHelper.DamageRequestEvent;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.config.MaledictConfig;
+import org.brahypno.maledict.registry.MaledictAttributes;
 import team.lodestar.lodestone.helpers.EntityHelper;
 
 import java.util.ArrayList;
@@ -36,13 +39,42 @@ public final class IncursusBladeEffects {
 
     @SubscribeEvent
     public static void applyInfernalLooting(GetEnchantmentLevelEvent event) {
-        if (!event.isTargetting(Enchantments.LOOTING)) return;
+        if (!event.isTargetting(Enchantments.LOOTING))
+            return;
         ItemStack weapon = event.getStack();
-        if (!(weapon.getItem() instanceof IncursusBladeItem)) return;
+        if (!(weapon.getItem() instanceof IncursusBladeItem))
+            return;
         int bonus = Math.max(0, (int) Math.floor(IncursusBladeItem.getStat(
                 weapon, IncursusBladeItem.INFERNAL_POWER)));
         event.getHolder(Enchantments.LOOTING).ifPresent(looting ->
-                event.getEnchantments().set(looting, event.getEnchantments().getLevel(looting) + bonus));
+                                                                event.getEnchantments().set(looting, event.getEnchantments().getLevel(looting) + bonus));
+    }
+
+    /**
+     * 碧水属性请求的基准档由刀自己的精魂档决定；无忧符文随后在
+     * {@link org.brahypno.maledict.common.item.curio.rune.BlissRuneEvents#onDamageRequest}
+     * （{@code EventPriority.LOW}，排在所有同事件的普通监听者之后）里把它再抬一级。
+     *
+     * <p>只认主手是神侵恶刃的攻击者。飞镰 / 幻影返程在结算前会临时把刀放回主手，所以这里也能读到
+     * 正确的成长值；无常 Boss 的主手是空的，保持 ChangeLib 默认的 D0。
+     */
+    @SubscribeEvent
+    public static void applyFreezeAttributePolicy(DamageRequestEvent event) {
+        Holder<Attribute> attribute = event.attribute();
+        if (attribute == null || attribute.value() != MaledictAttributes.POWDER_SNOW_DAMAGE.get()){
+            return;
+        }
+        LivingEntity attacker = event.attacker();
+        if (attacker == null){
+            return;
+        }
+        ItemStack weapon = attacker.getMainHandItem();
+        if (!(weapon.getItem() instanceof IncursusBladeItem)){
+            return;
+        }
+        IncursusBladeItem.DamageTier tier = IncursusBladeItem.damageTier(weapon);
+        event.setPriority(tier.probeStage());
+        event.setStrength(tier.probeStrength());
     }
 
     public static void applyAerialEffect(ServerPlayer player, ItemStack weapon) {
@@ -74,7 +106,8 @@ public final class IncursusBladeEffects {
                     player, target, scaling.effectCount, duration, scaling.amplifier);
         }else {
             changeRandomEffectDurations(
-                    player, target, harmfulEffects, scaling.effectCount, duration, false);
+                    player, target, harmfulEffects.stream().filter(mobEffectInstance -> !mobEffectInstance.isInfiniteDuration()).toList(), scaling.effectCount,
+                    duration, false);
         }
     }
 
@@ -96,10 +129,10 @@ public final class IncursusBladeEffects {
 
     private static void removeRandomNegativeEffects(ServerPlayer player, int count) {
         List<Holder<MobEffect>> negativeEffects = player.getActiveEffects().stream()
-                                                .map(MobEffectInstance::getEffect)
-                                                .filter(effect -> effect.value().getCategory() == MobEffectCategory.HARMFUL)
-                                                .distinct()
-                                                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+                                                        .map(MobEffectInstance::getEffect)
+                                                        .filter(effect -> effect.value().getCategory() == MobEffectCategory.HARMFUL)
+                                                        .distinct()
+                                                        .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         for (int i = 0; i < count && !negativeEffects.isEmpty(); i++) {
             Holder<MobEffect> effect = negativeEffects.remove(player.getRandom().nextInt(negativeEffects.size()));
             player.removeEffect(effect);
@@ -125,7 +158,8 @@ public final class IncursusBladeEffects {
             int count,
             int duration) {
         changeRandomEffectDurations(
-                player, target, getActiveEffects(target, category), count, duration, true);
+                player, target, getActiveEffects(target, category).stream().filter(mobEffectInstance -> !mobEffectInstance.isInfiniteDuration()).toList(),
+                count, duration, true);
     }
 
     private static void changeRandomEffectDurations(
@@ -161,10 +195,10 @@ public final class IncursusBladeEffects {
             int amplifier) {
         List<Holder<MobEffect>> candidates = new ArrayList<>();
         BuiltInRegistries.POTION.forEach(potion -> potion.getEffects().stream()
-                                                                    .map(MobEffectInstance::getEffect)
-                                                                    .filter(effect -> effect.value().getCategory() == MobEffectCategory.HARMFUL)
-                                                                    .filter(effect -> !candidates.contains(effect))
-                                                                    .forEach(candidates::add));
+                                                         .map(MobEffectInstance::getEffect)
+                                                         .filter(effect -> effect.value().getCategory() == MobEffectCategory.HARMFUL)
+                                                         .filter(effect -> !candidates.contains(effect))
+                                                         .forEach(candidates::add));
         for (int i = 0; i < count && !candidates.isEmpty(); i++) {
             Holder<MobEffect> effect = candidates.remove(player.getRandom().nextInt(candidates.size()));
             target.addEffect(new MobEffectInstance(effect, duration, amplifier), player);
@@ -175,13 +209,13 @@ public final class IncursusBladeEffects {
         Set<Holder<MobEffect>> effects = new LinkedHashSet<>();
         if (MaledictConfig.AERIAL_POTION_EFFECTS_ONLY.get()){
             BuiltInRegistries.POTION.forEach(potion -> potion.getEffects().stream()
-                                                                        .map(MobEffectInstance::getEffect)
-                                                                        .filter(effect -> effect.value().getCategory() == MobEffectCategory.BENEFICIAL)
-                                                                        .forEach(effects::add));
+                                                             .map(MobEffectInstance::getEffect)
+                                                             .filter(effect -> effect.value().getCategory() == MobEffectCategory.BENEFICIAL)
+                                                             .forEach(effects::add));
         }else {
             BuiltInRegistries.MOB_EFFECT.holders()
-                                       .filter(effect -> effect.value().getCategory() == MobEffectCategory.BENEFICIAL)
-                                       .forEach(effects::add);
+                                        .filter(effect -> effect.value().getCategory() == MobEffectCategory.BENEFICIAL)
+                                        .forEach(effects::add);
         }
         return effects;
     }

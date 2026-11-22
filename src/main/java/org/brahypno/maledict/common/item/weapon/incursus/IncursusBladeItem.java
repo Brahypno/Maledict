@@ -1,7 +1,6 @@
 package org.brahypno.maledict.common.item.weapon.incursus;
 
 import org.brahypno.maledict.common.item.MaledictItemData;
-import org.brahypno.maledict.common.item.curio.rune.RuneOfBlissItem;
 import com.sammy.malum.registry.common.MalumAttachmentTypes;
 import com.sammy.malum.common.item.curiosities.weapons.scythe.MagicScytheItem;
 import com.sammy.malum.common.item.spirit.SpiritShardItem;
@@ -12,6 +11,7 @@ import com.sammy.malum.registry.common.magic.MalumSpiritTypes;
 import com.sammy.malum.registry.common.enchantment.EnchantmentKeys;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -31,12 +31,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import org.brahypno.changelib.DamageHelper.DamagePolicy;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import org.brahypno.changelib.DamageHelper.DamageProbeResult;
+import org.brahypno.changelib.DamageHelper.DamageStage;
+import org.brahypno.changelib.HealthHelper.CombatProtection;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.MaledictNetwork;
-import org.jetbrains.annotations.Nullable;
+import org.brahypno.maledict.registry.MaledictAttributes;
 import team.lodestar.lodestone.registry.common.LodestoneAttributes;
 import team.lodestar.lodestone.registry.common.tag.LodestoneDamageTypeTags;
 
@@ -46,8 +50,10 @@ import java.util.function.Consumer;
  * A Malum magic scythe whose per-stack combat values are stored in NBT.
  */
 public final class IncursusBladeItem extends MagicScytheItem {
-    public static final double MEDIUM_DAMAGE_LEVEL = 7.0;
-    public static final double FINAL_DAMAGE_LEVEL = 11.0;
+    /**
+     * 神侵恶刃只有两档：八项精魂全部涨到这个数就进 final 档，否则留在 light 档。
+     */
+    public static final double FINAL_DAMAGE_LEVEL = 7.0;
     public static final String STATS_TAG = "IncursusBladeStats";
     public static final String UPGRADE_PROGRESS_TAG = "IncursusBladeUpgradeProgress";
     public static final String ATTACK_DAMAGE = "attack_damage";
@@ -60,6 +66,10 @@ public final class IncursusBladeItem extends MagicScytheItem {
     public static final String WICKED_CRITICAL_DAMAGE = "wicked_critical_damage";
     public static final ResourceLocation ABSORPTION_CAPACITY_MODIFIER_ID =
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "incursus_blade/absorption_capacity");
+
+    /** 主手碧水修饰符的稳定 id；刀上的成长值只是这个修饰符的来源（1.20.1 用的是 UUID）。 */
+    public static final ResourceLocation POWDER_SNOW_DAMAGE_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "incursus_blade/powder_snow_damage");
 
     /** 物品栏里眨眼用的模型覆盖谓词：{@code 1.0} 表示这一帧闭眼。 */
     public static final ResourceLocation BLINK_PROPERTY =
@@ -99,6 +109,10 @@ public final class IncursusBladeItem extends MagicScytheItem {
                         -3.3D, AttributeModifier.Operation.ADD_VALUE), slot)
                 .add(LodestoneAttributes.MAGIC_DAMAGE, new AttributeModifier(LodestoneAttributes.BASE_MAGIC_DAMAGE,
                         getStat(stack, MAGIC_DAMAGE), AttributeModifier.Operation.ADD_VALUE), slot)
+                // 碧水通道是属性：这一条修饰符就是飞镰 / 横扫 / 认主连带的冻结伤害唯一来源，
+                // 由 ChangeLib 的属性派发器在每次探针命中后按它派发（见 MaledictAttributes）。
+                .add(MaledictAttributes.POWDER_SNOW_DAMAGE, new AttributeModifier(POWDER_SNOW_DAMAGE_MODIFIER_ID,
+                        getStat(stack, POWDER_SNOW_DAMAGE), AttributeModifier.Operation.ADD_VALUE), slot)
                 .add(Attributes.MAX_ABSORPTION, new AttributeModifier(
                         ABSORPTION_CAPACITY_MODIFIER_ID,
                         1000.0D, AttributeModifier.Operation.ADD_VALUE), slot)
@@ -159,8 +173,16 @@ public final class IncursusBladeItem extends MagicScytheItem {
         return true;
     }
 
+    /**
+     * 1.20.1 的 {@code hurtEvent(LivingHurtEvent)} 在 Lodestone 1.8.2 里对应 **incoming** 重载：
+     * {@code ItemEventHandler} 对两个重载各分发一次，incoming 拿到的还是护甲之前的量。镰刀熟练度、
+     * 魔法熟练度/抗性这两个倍率都按那一份算，才是 1.20.1 的口径（Pre 那一份已经是护甲后）。
+     *
+     * <p>{@code LivingIncomingDamageEvent} 在举盾与无敌帧判定之前发出，所以这里<b>只改数值</b>：
+     * 被挡下或被无敌帧吃掉的命中即使被乘过也没有后果。
+     */
     @Override
-    public void outgoingDamageEvent(LivingDamageEvent.Pre event, LivingEntity attacker, LivingEntity target, ItemStack stack) {
+    public void outgoingDamageEvent(LivingIncomingDamageEvent event, LivingEntity attacker, LivingEntity target, ItemStack stack) {
         if (attacker.level().isClientSide() || attacker.getMainHandItem() != stack){
             return;
         }
@@ -176,27 +198,47 @@ public final class IncursusBladeItem extends MagicScytheItem {
         // 所以这里取 getAttribute() 判空：null 才表示「这个实体没有这条属性」，缺了就跳过该倍率。
 
         if (magicDamage){
-            event.setNewDamage(event.getNewDamage() * (float) scytheProficiencyOrNeutral(
+            event.setAmount(event.getAmount() * (float) scytheProficiencyOrNeutral(
                     attacker.getAttributeValue(MalumAttributes.SCYTHE_PROFICIENCY)));
         }
 
         if (scytheDamage){
             AttributeInstance proficiency = attacker.getAttribute(LodestoneAttributes.MAGIC_PROFICIENCY);
             if (proficiency != null){
-                event.setNewDamage(event.getNewDamage() * (float) proficiency.getValue());
+                event.setAmount(event.getAmount() * (float) proficiency.getValue());
             }
             AttributeInstance resistance = target.getAttribute(LodestoneAttributes.MAGIC_RESISTANCE);
             if (resistance != null){
-                event.setNewDamage(event.getNewDamage() / (float) Math.max(0.01, resistance.getValue()));
+                event.setAmount(event.getAmount() / (float) Math.max(0.01, resistance.getValue()));
             }
+        }
+    }
+
+    /**
+     * Pre 这一半只做两件事：标记「这次近战命中确实走到了 {@code LivingDamageEvent.Pre}」
+     * （{@link IncursusBladeAttack} 靠它决定补不补奥术伤害），以及按伤害结算 eldritch 吸收。
+     *
+     * <p>吸收用的是护甲后的 {@code newDamage}，比 1.20.1 的护甲前数值略低（镰刀伤害通常已
+     * 走魔法/穿透通道，差距很小）。不把它挪到 incoming：那个事件在举盾与无敌帧之前，副作用会在
+     * 被挡下、被无敌帧吃掉的命中上照发一份，比数值口径的偏差更糟。
+     */
+    @Override
+    public void outgoingDamageEvent(LivingDamageEvent.Pre event, LivingEntity attacker, LivingEntity target, ItemStack stack) {
+        if (attacker.level().isClientSide() || attacker.getMainHandItem() != stack){
+            return;
         }
 
         if (event.getSource().is(MalumDamageTypes.SCYTHE_MELEE)){
-            // 这次近战命中确实触发了 LivingDamageEvent.Pre；IncursusBladeAttack 靠它判断要不要补魔法伤害。
+            // 这次近战命中确实触发了 LivingDamageEvent.Pre；IncursusBladeAttack 靠它判断要不要补奥术伤害。
             IncursusBladeAttack.markMeleeHurtEvent(target, event.getSource());
         }
 
-        addAbsorptionFromDamage(attacker, stack, event.getNewDamage());
+        boolean magicDamage = event.getSource().is(LodestoneDamageTypeTags.IS_MAGIC);
+        boolean scytheDamage = event.getSource().is(MalumTags.DamageTypeTags.IS_SCYTHE);
+        boolean powderSnowDamage = event.getSource().is(DamageTypes.FREEZE);
+        if (magicDamage || scytheDamage || powderSnowDamage){
+            addAbsorptionFromDamage(attacker, stack, event.getNewDamage());
+        }
     }
 
     /** 镰刀熟练度缺省时当中性 1：它走 {@code getAttributeValue}，取不到给的是 0，而它当乘数用。 */
@@ -271,67 +313,147 @@ public final class IncursusBladeItem extends MagicScytheItem {
     }
 
     /**
-     * 神侵恶刃的三档伤害：轻 → 中 → 终。随喂进去的精魂成长，见 {@link #MEDIUM_DAMAGE_LEVEL}
-     * 与 {@link #FINAL_DAMAGE_LEVEL}（提示语就是「精魂之力到达神圣之数会解锁更本征的力量」）。
+     * 神侵恶刃的两档伤害：轻 → 终。随喂进去的精魂成长，八项全部涨到
+     * {@link #FINAL_DAMAGE_LEVEL} 就进终档（提示语就是「精魂之力到达神圣之数会解锁更本征的力量」）。
      */
     public enum DamageTier {
-        /** 未满 {@link #MEDIUM_DAMAGE_LEVEL}：探针只试必要的那几步，拿到真实掉血就收手。 */
+        /**
+         * 未满 {@link #FINAL_DAMAGE_LEVEL}：探针只试必要的那几步，拿到真实掉血就收手。
+         */
         LIGHT,
-        /** 满 {@link #MEDIUM_DAMAGE_LEVEL}：会为凑够数值继续往下找路。 */
-        MEDIUM,
-        /** 满 {@link #FINAL_DAMAGE_LEVEL}：终结档。 */
+        /**
+         * 满 {@link #FINAL_DAMAGE_LEVEL}：终结档。
+         */
         FINAL;
 
         /** 抬一档；已经在顶就还是顶。无忧符文抬的就是这一档。 */
         public DamageTier raised() {
             return switch (this) {
-                case LIGHT -> MEDIUM;
-                case MEDIUM, FINAL -> FINAL;
+                case LIGHT -> FINAL;
+                case FINAL -> FINAL;
             };
+        }
+
+        /**
+         * 本档在普通目标上的 ChangeLib 探针上限与穿透。
+         *
+         * <p>LIGHT 走 medium 梯级但拿到真实掉血就收手（D3、尊重防御），FINAL 才是 final 梯级
+         * （D4、忽略声明）。自有血池另看 {@link #internalAttackGrade}。碧水属性请求也按这张表
+         * 起步，再由 {@code IncursusBladeEffects#applyFreezeAttributePolicy} 抬到本档。
+         */
+        public DamageStage probeStage() {
+            return this == FINAL ? DamageStage.D4_CONSISTENCY_WRITE : DamageStage.D3_STORAGE_WRITE;
+        }
+
+        public DamageProbeResult.Penetration probeStrength() {
+            return this == FINAL ? DamageProbeResult.Penetration.IGNORE_DECLARATION
+                                 : DamageProbeResult.Penetration.RESPECT;
         }
 
         /** 按本档打一记。 */
         public DamageProbeResult deal(Entity target, DamageSource source, float damage) {
+            return deal(target, source, damage, false);
+        }
+
+        /**
+         * 按本档打一记。{@code compensateDamage} 是「武器攻击更加真实」：轻档拿到真实掉血就收手，
+         * 打开之后会为凑够数值继续往下找路；终档同样按这个开关决定要不要补。
+         */
+        public DamageProbeResult deal(
+                Entity target, DamageSource source, float damage, boolean compensateDamage) {
             return switch (this) {
-                case FINAL -> DamageProbe.finalDamageMethod(target, source, damage);
-                case MEDIUM -> DamageProbe.mediumDamageMethod(target, source, damage);
-                case LIGHT -> DamageProbe.lighterDamageMethod(target, source, damage, false);
+                case FINAL -> DamageProbe.finalDamageMethod(target, source, damage, compensateDamage);
+                case LIGHT -> DamageProbe.lighterDamageMethod(target, source, damage, compensateDamage);
             };
+        }
+
+        /**
+         * 带上本档的内部等级发一次伤害请求。
+         *
+         * <p>这里只做一件事：把「这一档允许的最高 ChangeLib 等级」放进请求里
+         * （{@code DamagePolicy.through(...)}，LIGHT = D3、FINAL = D5，见 {@link #internalAttackGrade}）。
+         * **升级、写血、怎么结算全是 ChangeLib 的事**——本模组不在这里判断目标该不该挨打，
+         * 也不在这里替它做免疫/防御的前置筛选，那会把「武器的伤害请求」变成「武器的伤害结算」。
+         *
+         * <p>只对 Maledict 命名空间的自有血池带上这个等级；普通目标、别人家的自有血池照常用本档的
+         * 常规探针。等级只有真的穿透目标当前的 {@code CombatProtection.defenseGrade} 时才有意义，
+         * 否则请求按本档常规走。
+         */
+        public DamageProbeResult deal(
+                Entity target, DamageSource source, float damage, boolean compensateDamage,
+                DamageStage internalGrade) {
+            if (target instanceof LivingEntity living && living instanceof CombatProtection.OwnedHealthEntity
+                && isMaledictEntity(target)){
+                DamageStage defense = CombatProtection.defenseGrade(living);
+                if (defense != null && internalGrade.penetrates(defense)){
+                    return DamageProbe.damage(target, source, damage, DamagePolicy.through(internalGrade));
+                }
+            }
+            return deal(target, source, damage, compensateDamage);
         }
     }
 
-    /**
-     * 这一记实际走的档：先看刀自己的精魂档，攻击者戴着无忧符文再抬一档。
-     *
-     * <p>符文认的是**攻击者**：一把没喂饱的刀戴上符文就能立刻用中档，已经到终档的不会再高。
-     */
-    public static DamageTier damageTier(ItemStack stack, DamageSource source) {
-        DamageTier tier = hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL) ? DamageTier.FINAL
-                        : hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL) ? DamageTier.MEDIUM
-                        : DamageTier.LIGHT;
-        return raisedByBliss(tier, source.getEntity());
+    /** 只接管本模组自己的自有血池；别人家的自有血池仍走常规探针。 */
+    private static boolean isMaledictEntity(Entity entity) {
+        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        return id != null && id.getNamespace().equals(Maledict.MODID);
+    }
+
+    /** 神侵恶刃各成长档的内部等级配置。 */
+    private static DamageStage internalAttackGrade(DamageTier tier) {
+        return switch (tier) {
+            case LIGHT -> DamageStage.D3_STORAGE_WRITE;
+            case FINAL -> DamageStage.D5_RECOVERY_SOURCE;
+        };
     }
 
     /**
-     * 无忧符文的抬升：佩戴者以神侵恶刃名义打出的每一记都抬一档。
+     * 这一记的刀档：只看刀自己喂了多少精魂。
      *
-     * <p>固定档位的那几记（投掷返程撞人、飞升横扫，都写死 medium）也走这里，所以「这把刀的伤害」
-     * 只有一个口径。
+     * <p>无忧符文的抬档<b>不在这里</b>：它统一挂在
+     * {@link org.brahypno.maledict.common.item.curio.rune.BlissRuneEvents#onDamageRequest} 上，
+     * 对佩戴者的每一记探针与冻结属性请求一起生效 —— 与 1.20.1 同一条规则，不按武器各写一遍。
      */
-    public static DamageTier raisedByBliss(DamageTier tier, @Nullable Entity attacker) {
-        return RuneOfBlissItem.isEquipped(attacker) ? tier.raised() : tier;
+    public static DamageTier damageTier(ItemStack stack) {
+        return hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL) ? DamageTier.FINAL : DamageTier.LIGHT;
     }
 
     /** 按当前档位打一记，需要知道走了哪一档的调用方用这个。 */
     public static DamageProbeResult dealTieredDamage(ItemStack stack, Entity target, DamageSource source, float damage) {
-        return damageTier(stack, source).deal(target, source, damage);
+        return dealTieredDamage(stack, target, source, damage, false);
+    }
+
+    /**
+     * 按当前档位打一记，{@code compensateDamage} 见 {@link DamageTier#deal(Entity, DamageSource, float, boolean)}。
+     */
+    public static DamageProbeResult dealTieredDamage(
+            ItemStack stack, Entity target, DamageSource source, float damage, boolean compensateDamage) {
+        DamageTier tier = damageTier(stack);
+        return tier.deal(target, source, damage, compensateDamage, internalAttackGrade(tier));
+    }
+
+    /**
+     * 投掷返程（回旋）与飞升横扫也按刀自己的精魂档结算：喂满精魂的刀，技能一起进终档。
+     * 无忧符文的抬档仍由 {@code BlissRuneEvents#onDamageRequest} 统一处理。
+     */
+    static DamageProbeResult dealSkillDamage(
+            ItemStack stack, Entity target, DamageSource source, float damage) {
+        return dealTieredDamage(stack, target, source, damage);
     }
 
     /** 镰刀伤害的唯一出口：按档位结算，探针进来先清无敌帧，否则同一次挥砍的后几条通道会被吃掉。 */
     public static void applyTieredDamage(ItemStack stack, Entity target, DamageSource source, float damage) {
+        applyTieredDamage(stack, target, source, damage, false);
+    }
+
+    /**
+     * 镰刀伤害的唯一出口，并带上「武器攻击更加真实」的补满开关。
+     */
+    public static void applyTieredDamage(
+            ItemStack stack, Entity target, DamageSource source, float damage, boolean compensateDamage) {
         if (damage <= 0.0f || !canTakeDamage(target))
             return;
-        dealTieredDamage(stack, target, source, damage);
+        dealTieredDamage(stack, target, source, damage, compensateDamage);
     }
 
     private static boolean canTakeDamage(Entity target) {

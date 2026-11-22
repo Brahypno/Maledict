@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.GatherSkippedAttributeTooltipsEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -22,6 +23,11 @@ import java.util.List;
 /** 神侵恶刃的客户端交互与物品提示。 */
 @EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT)
 public final class IncursusBladeClientEvents {
+
+    /**
+     * 按下锁：一次按下只放一刀。清空时机是攻击键抬起，见 {@link #onClientTick}。
+     */
+    private static boolean attackLatched;
 
     @SubscribeEvent
     public static void hideAbsorptionCapacityTooltip(GatherSkippedAttributeTooltipsEvent event) {
@@ -40,10 +46,26 @@ public final class IncursusBladeClientEvents {
             return;
         }
 
+        // 按住左键对着方块时，原版会在 Minecraft#continueAttack 里每 tick 触发一次这个点击事件，
+        // 所以按住期间重复来的那一份只压掉原版出手：不再发包、不摆手、也不清蓄力。
+        // 一次按下仍然是一刀，轻点照原版规则出弱刀——出伤层不加频率闸。
         event.setCanceled(true);
+        if (attackLatched){
+            // 摆手开关默认是 true，而且取消与否都生效；不显式关掉的话，按住时手臂仍会每 tick 摆一次。
+            event.setSwingHand(false);
+            return;
+        }
+        attackLatched = true;
         event.setSwingHand(true);
         MaledictNetwork.sendRadialAttack();
         minecraft.player.resetAttackStrengthTicker();
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(ClientTickEvent.Post event) {
+        if (!Minecraft.getInstance().options.keyAttack.isDown()) {
+            attackLatched = false;
+        }
     }
 
     @SubscribeEvent
@@ -80,8 +102,8 @@ public final class IncursusBladeClientEvents {
         tooltip.add(index++, Component.translatable("tooltip.maledict.incursus_blade.description")
                 .withStyle(ChatFormatting.GRAY));
         if (!IncursusBladeItem.hasAllStatsAtLeast(
-                event.getItemStack(), IncursusBladeItem.MEDIUM_DAMAGE_LEVEL)) {
-            tooltip.add(index++, Component.translatable("tooltip.maledict.incursus_blade.medium_unlock_hint")
+                event.getItemStack(), IncursusBladeItem.FINAL_DAMAGE_LEVEL)) {
+            tooltip.add(index++, Component.translatable("tooltip.maledict.incursus_blade.unlock_hint")
                     .withStyle(ChatFormatting.DARK_PURPLE));
         }
         if (!Screen.hasShiftDown()) {
