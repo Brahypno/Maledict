@@ -359,10 +359,15 @@ public final class MaledictConfig {
                 .defineInRange("intensity", 1.0D, 0.0D, 2.0D);
         INCURSUS_RIFT_PETAL_SIZE = clientBuilder
                 .comment("Half extent of one blade stroke's quad, in blocks, before the swing's own",
-                         "scale multiplier. The old particles used 3.0 to 4.5 blocks here, because the",
-                         "hand drawn stroke only covers a small part of its 64x64 texture; shrinking",
-                         "this number shrinks the drawn stroke with it. 3.75 is the old midpoint.")
-                .defineInRange("petalSize", 3.75D, 0.5D, 12.0D);
+                         "radius multiplier. This is the thickness knob for the waist ring: the drawn",
+                         "stroke covers about five percent of its 64x64 texture and its fat middle is",
+                         "roughly a quarter of the quad, so a 3.5 block ring drawn with 3.75 leaves a",
+                         "band nearly two fifths as thick as the ring itself - eight of those on one",
+                         "circle read as a solid donut. 2.5 thins the band to about one block; push it",
+                         "much lower and the strokes stop overlapping each other around the circle.",
+                         "The old particles used 3.0 to 4.5 here, tuned while the petals were still",
+                         "scattered across thirteen percent of the radius.")
+                .defineInRange("petalSize", 2.5D, 0.5D, 12.0D);
         INCURSUS_RIFT_RADIAL_SPEED = clientBuilder
                 .comment("Outward travel of each petal in blocks per tick, before the swing's scale",
                          "multiplier. The old particles drifted 0.3 to 0.4 blocks per tick for their",

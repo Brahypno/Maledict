@@ -51,6 +51,7 @@ public final class IncursusBladeSlashEffects {
             return;
         }
         float scale = (float) (radius / IncursusRiftGeometry.AUTHORED_RING_RADIUS);
+        float charge = IncursusRiftGeometry.normalizeCharge(packet.charge());
         for (int i = 0; i < RING_SEGMENTS; i++) {
             double yaw = i * Math.PI * 2.0 / RING_SEGMENTS;
             Vec3 direction = new Vec3(Math.sin(yaw), 0, Math.cos(yaw));
@@ -60,10 +61,12 @@ public final class IncursusBladeSlashEffects {
                                                                  SpiritTypeRegistry.UMBRAL_SPIRIT.createColorData().build());
             effect.getBuilder()
                   .setRenderType(LodestoneWorldParticleRenderType.TRANSPARENT)
-                  // 保留幽影构建器原有的寿命、透明度与尺寸曲线调整。
-                  .multiplyLifetime(2.5f)
+                  // 保留幽影构建器原有的寿命、透明度与尺寸曲线调整，再叠一层蓄力：轻点更薄更短，
+                  // 与裂隙花那条 A+B 曲线保持一致。
+                  .multiplyLifetime(2.5f * IncursusRiftGeometry.lifetimeFactorForCharge(charge))
                   .modifyData(builder -> builder.getParticleOptions().transparencyData,
-                              data -> data.multiplyValue(4.0f).multiplyCoefficient(1.5f))
+                              data -> data.multiplyValue(4.0f * IncursusRiftGeometry.opacityForCharge(charge))
+                                          .multiplyCoefficient(1.5f))
                   .setScaleData(GenericParticleData.create(
                                                            RandomHelper.randomBetween(level.random, 2.0f, 3.0f) * scale)
                                                    .build().multiplyCoefficient(1.5f))

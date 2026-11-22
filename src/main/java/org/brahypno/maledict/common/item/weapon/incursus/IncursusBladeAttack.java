@@ -71,7 +71,7 @@ public final class IncursusBladeAttack {
 
         float attackStrength = player.getAttackStrengthScale(0.5f);
         player.swing(InteractionHand.MAIN_HAND, true);
-        playSlashEffect(player, reach);
+        playSlashEffect(player, reach, attackStrength);
 
         DamageChannels channels = damageChannels(player);
         // 5 级「武器攻击更加真实」：同一个门禁同时管两个读数 —— 轻档探针改成补满，以及这一刀顺着
@@ -218,16 +218,16 @@ public final class IncursusBladeAttack {
     }
 
     /**
-     * 腰环半径就是这一次挥砍的伤害半径。蓄力只改伤害数值，不再改范围——轻点与满蓄力的环一样大、
+     * 腰环半径就是这一次挥砍的伤害半径。蓄力只改薄厚与收尾，不改范围——轻点与满蓄力的环一样大、
      * 一样远，玩家看到的圈就是真正能打到的圈。
      */
-    private static void playSlashEffect(ServerPlayer player, double reach) {
+    private static void playSlashEffect(ServerPlayer player, double reach, float charge) {
         SoundHelper.playSound(
                 player,
                 MaledictSounds.INCURSUS_BLADE_SLASH.get(),
                 1.0f,
                 RandomHelper.randomBetween(player.getRandom(), 0.9f, 1.1f));
-        MaledictNetwork.sendIncursusSlash(player, reach);
+        MaledictNetwork.sendIncursusSlash(player, reach, charge);
     }
 
     /**

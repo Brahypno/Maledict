@@ -56,7 +56,7 @@ public final class IncursusRiftClientManager {
     /**
      * 普通挥砍：八瓣水平腰环，形状与改造前逐顶点一致——它走的是旧的整实例模型，
      * 不经过 {@link RiftStroke}。半径取服务端这一次挥砍的伤害半径，并再过一次闸：
-     * 报文里的坏值不能变成铺满屏幕的四边形。
+     * 报文里的坏值不能变成铺满屏幕的四边形。蓄力只压薄厚与收尾。
      */
     public static void add(IncursusSlashPacket packet) {
         if (packet == null){
@@ -68,7 +68,7 @@ public final class IncursusRiftClientManager {
         }
         ACTIVE.add(IncursusRiftInstance.createMelee(
                 packet.ownerId(), packet.center(), IncursusSwingReach.clampRadius(packet.radius()),
-                packet.seed(), lifetimeTicks(), petalCount(), configFadeStart()));
+                packet.charge(), packet.seed(), lifetimeTicks(), petalCount(), configFadeStart()));
         trim();
     }
 

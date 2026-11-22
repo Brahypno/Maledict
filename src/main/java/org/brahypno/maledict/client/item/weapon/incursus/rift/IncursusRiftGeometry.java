@@ -12,6 +12,10 @@ package org.brahypno.maledict.client.item.weapon.incursus.rift;
  *
  * <p>但整朵花按这一次挥砍的<b>伤害半径</b>归一化（{@link #petalDistance}）：花心到末帧花瓣中心
  * 的那圈正好落在服务端真正能打到的球半径上，开合的节奏不变，大小不再由蓄力决定。
+ *
+ * <p>蓄力改的是<b>薄厚与收尾</b>（{@link #opacityForCharge}、{@link #lifetimeForCharge}）：
+ * 轻点又薄又短，满蓄力满不透明、完整绽开。这两条都不碰半径——口径一旦被蓄力接管，玩家就会
+ * 重新看到「画得比打得到处大」。
  */
 public final class IncursusRiftGeometry {
     /**
@@ -32,13 +36,60 @@ public final class IncursusRiftGeometry {
     public static final float PARTICLE_FRICTION = 0.98F;
     /**
      * 刀痕尺寸的基准半径：默认配置（12 tick 寿命、0.35 格/tick 漂移）下满生命周期的花瓣中心圆。
-     * 这套贴图的四边形半边当初就是照这个环定的 3.75 格，所以刀痕尺寸按「本次半径 / 它」等比缩放。
+     * 它只负责把刀痕按「本次半径 / 它」等比缩放，本身不决定粗细——粗细由客户端配置
+     * {@code incursusRift.petalSize} 决定（默认 2.5 格半边）。
      */
     public static final double AUTHORED_RING_RADIUS = ROOT_RADIUS + radialDistance(1.0F, 12, 0.35F);
+    /**
+     * 轻点的不透明度：0.30 是改造前 {@code 0.3 + 0.7 × 蓄力} 那条尺寸曲线的最低点，沿用它的手感。
+     * 八片花瓣同平面重叠，实际观感比这个数更实（{@code 1-(1-a)^n}），所以不必压得更低。
+     */
+    public static final float MIN_OPACITY = 0.30F;
+    /**
+     * 轻点的寿命倍率：默认 12 tick 会缩到 7 tick，读作「一闪即收」，同时半径仍然开到最大。
+     */
+    public static final float MIN_LIFETIME_FACTOR = 0.55F;
+    /**
+     * 寿命下限，与客户端配置 {@code lifetimeTicks} 的最小值一致：再短就只剩一两帧贴图。
+     */
+    public static final int MIN_LIFETIME_TICKS = 4;
 
     private static final double DEGENERATE_RING = 1.0E-6;
 
     private static final long GOLDEN = 0x9E3779B97F4A7C15L;
+
+    /**
+     * 报文里的蓄力归一化：非有限值按满蓄力处理——坏包不该让效果凭空变淡，画不画已经由半径那道闸决定。
+     */
+    public static float normalizeCharge(float raw) {
+        return Float.isFinite(raw) ? clamp01(raw) : 1.0F;
+    }
+
+    /**
+     * 蓄力 → 不透明度倍率：轻点 {@link #MIN_OPACITY}，满蓄力 1。
+     */
+    public static float opacityForCharge(float charge) {
+        float normalized = normalizeCharge(charge);
+        return MIN_OPACITY + (1.0F - MIN_OPACITY) * normalized;
+    }
+
+    /**
+     * 蓄力 → 寿命倍率：轻点 {@link #MIN_LIFETIME_FACTOR}，满蓄力 1。开合本身按寿命归一化，
+     * 所以缩短寿命只让花收得更快，末帧仍落在伤害半径上。
+     */
+    public static float lifetimeFactorForCharge(float charge) {
+        float normalized = normalizeCharge(charge);
+        return MIN_LIFETIME_FACTOR + (1.0F - MIN_LIFETIME_FACTOR) * normalized;
+    }
+
+    /**
+     * 这一次挥砍实际活几 tick：配置寿命乘蓄力倍率，不低于 {@link #MIN_LIFETIME_TICKS}。
+     */
+    public static int lifetimeForCharge(int baseLifetimeTicks, float charge) {
+        int base = Math.max(1, baseLifetimeTicks);
+        int scaled = Math.round(base * lifetimeFactorForCharge(charge));
+        return Math.max(Math.min(MIN_LIFETIME_TICKS, base), scaled);
+    }
 
     /**
      * 单瓣种子只由挥砍种子与序号决定，保证同一挥砍在所有客户端形状一致。

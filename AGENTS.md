@@ -85,9 +85,12 @@ Page: `docs/mechanics/incursus-blade-channels.md`.
   wire value. Never let a second formula answer "how far does this swing reach".
 - **The drawn ring is the damage sphere's equator.** Centre is the attacker's waist (`centerOf`, the same
   algorithm as the client's `anchorOf`), the target is hit when the closest point of its bounding box is within
-  the radius, and the melee petal centres land on the radius at the end of the bloom. Charge changes damage
-  numbers only, never size or reach.
+  the radius, and the melee petal centres land on the radius at the end of the bloom.
 - Do not go back to the feet point plus half the width: it missed elevated targets and oversized hitboxes.
+- **Charge never touches the radius.** The packet carries the attack strength the swing was settled at, and
+  `IncursusRiftGeometry` turns it into opacity (0.30–1.0) and lifetime (0.55–1.0×) only. Future charge feedback
+  belongs on opacity, lifetime, slit width or stroke count — never on the ring's size, or the mismatch this
+  entry exists to prevent comes straight back. A non-finite charge reads as full charge, not as a blank effect.
 
 Page: `docs/mechanics/incursus-swing-range.md`.
 

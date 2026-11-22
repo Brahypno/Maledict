@@ -34,8 +34,11 @@ public final class MaledictNetwork {
      *
      * <p>9 -> 10: IncursusSlashPacket carries the swing's damage radius instead of a charge scale,
      * so the waist ring drawn by the client covers exactly the sphere the server hits.
+     *
+     * <p>10 -> 11: IncursusSlashPacket carries the charge the swing was settled at, so a light tap can
+     * draw a thinner, shorter bloom without touching the radius.
      */
-    private static final String PROTOCOL = "10";
+    private static final String PROTOCOL = "11";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "main"),
             () -> PROTOCOL,
@@ -116,12 +119,17 @@ public final class MaledictNetwork {
      * 客户端上短暂缺席（区块未加载、刚重生），那一帧就退回服务端下发的腰部坐标。
      *
      * <p>{@code radius} 是这一次挥砍的伤害半径，客户端照它画腰环：范围同步的唯一来源。
+     * {@code charge} 只影响薄厚与收尾，客户端不能自己读（{@code attackStrengthTicker} 不同步，
+     * 而且服务端结算完就把它清零了），所以必须跟着报文走。
      */
-    public static void sendIncursusSlash(ServerPlayer player, double radius) {
+    public static void sendIncursusSlash(ServerPlayer player, double radius, float charge) {
+        // 报文里的蓄力必须是有限且在 [0,1]：坏值不进网络，客户端那道闸只防别人改包。
+        float settledCharge = Float.isFinite(charge) ? Mth.clamp(charge, 0.0f, 1.0f) : 1.0f;
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
                      new IncursusSlashPacket(player.getId(),
                                              IncursusSwingReach.centerOf(player),
                                              (float) IncursusSwingReach.clampRadius(radius),
+                                             settledCharge,
                                              player.getRandom().nextLong()));
     }
 

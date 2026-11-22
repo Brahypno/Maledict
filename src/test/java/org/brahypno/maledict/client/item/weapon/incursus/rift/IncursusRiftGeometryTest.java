@@ -119,6 +119,28 @@ class IncursusRiftGeometryTest {
     }
 
     @Test
+    void chargeThinsTheBloomWithoutMovingItsEdge() {
+        // A 透明度：轻点 MIN_OPACITY，满蓄力满不透明。
+        assertEquals(IncursusRiftGeometry.MIN_OPACITY, IncursusRiftGeometry.opacityForCharge(0.0F), 1.0E-6);
+        assertEquals(1.0F, IncursusRiftGeometry.opacityForCharge(1.0F), 1.0E-6);
+        assertTrue(IncursusRiftGeometry.opacityForCharge(0.4F) < IncursusRiftGeometry.opacityForCharge(0.7F),
+                   "opacity must grow with the charge");
+        // 坏包按满蓄力画：画不画已经由半径那道闸决定，不该在这里凭空变淡。
+        assertEquals(1.0F, IncursusRiftGeometry.normalizeCharge(Float.NaN), 0.0F);
+        assertEquals(1.0F, IncursusRiftGeometry.opacityForCharge(Float.POSITIVE_INFINITY), 1.0E-6);
+        // B 收尾：轻点寿命缩到 0.55 倍（默认 12 tick → 7 tick），且不低于贴图还能看的 4 tick。
+        assertEquals(IncursusRiftGeometry.MIN_LIFETIME_FACTOR,
+                     IncursusRiftGeometry.lifetimeFactorForCharge(0.0F), 1.0E-6);
+        assertEquals(7, IncursusRiftGeometry.lifetimeForCharge(12, 0.0F));
+        assertEquals(12, IncursusRiftGeometry.lifetimeForCharge(12, 1.0F));
+        assertEquals(IncursusRiftGeometry.MIN_LIFETIME_TICKS, IncursusRiftGeometry.lifetimeForCharge(4, 0.0F));
+        // 关键不变量：寿命被缩短后，末帧花瓣中心仍然落在伤害半径上。
+        int shortLife = IncursusRiftGeometry.lifetimeForCharge(12, 0.0F);
+        assertEquals(3.5, IncursusRiftGeometry.petalDistance(1.0F, shortLife, 0.35F, 1.0F, 3.5), 1.0E-4,
+                     "a light tap must still end on the damage radius");
+    }
+
+    @Test
     void strokeSizeScalesWithTheSwingRadius() {
         float baseHalf = 3.75F;
         // 默认半径下退回这套贴图当初定尺寸时的大小。
