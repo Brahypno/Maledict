@@ -18,6 +18,7 @@ import com.sammy.malum.client.screen.codex.pages.text.TextPage;
 import com.sammy.malum.client.screen.codex.screens.progression.ArcanaProgressionScreen;
 import com.sammy.malum.client.screen.codex.screens.progression.VoidProgressionScreen;
 import com.sammy.malum.core.systems.events.SetupMalumCodexEntriesEvent;
+import com.sammy.malum.registry.common.item.MalumItems;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -204,15 +205,14 @@ public final class MaledictCodexEntries {
 
         PlacedBookEntryBuilder builder = BookEntry.create(VOID_RUNEWORKING_ENTRY, VOID_RUNEWORKING_X, VOID_RUNEWORKING_Y);
         builder.configureWidget(widget -> widget
-                .setIcon(MaledictItems.MALIGNANT_PEWTER_TABLET)
+                .setIcon(MalumItems.MALIGNANT_PEWTER_INGOT)
                 .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER)));
         builder.addPage(new HeadlineTextItemPage(
                 VOID_RUNEWORKING_ENTRY,
                 VOID_RUNEWORKING_ENTRY + ".1",
-                MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
+                MalumItems.MALIGNANT_PEWTER_INGOT.get()));
         // 续页：英文十六行，首页放不下，故与中文同一处分段。
         builder.addPage(new TextPage(VOID_RUNEWORKING_ENTRY + ".2"));
-        builder.addPage(SpiritInfusionPage.fromOutput(MaledictItems.MALIGNANT_PEWTER_TABLET.get()));
         List.of(stagnantEvolution, rottenBone, fallen).forEach(builder::addReference);
         builder.afterUmbralCrystal();
 
@@ -349,8 +349,12 @@ public final class MaledictCodexEntries {
         builder.configureWidget(widget -> widget
                 .setIcon(MaledictItems.RUNE_OF_SATIATION)
                 .setDesign(WidgetDesignType.DEFAULT.createDesign(WidgetDesignType.FrameType.SOULWOOD, WidgetDesignType.FillingType.PAPER)));
-        builder.addPage(new ReadableTextPage(TOTEMIC_RUNES_CONTINUED_ENTRY,
-                                             List.of(TOTEMIC_RUNES_CONTINUED_ENTRY + ".1", TOTEMIC_RUNES_CONTINUED_ENTRY + ".2"), List.of()));
+        builder.addPage(new HeadlineTextItemPage(
+                TOTEMIC_RUNES_CONTINUED_ENTRY,
+                TOTEMIC_RUNES_CONTINUED_ENTRY + ".1",
+                MaledictItems.RUNE_OF_SATIATION.get()));
+        // 续页：英文正文的行数差不多是中文的两倍，首页的九行只够放下第一句。
+        builder.addPage(new TextPage(TOTEMIC_RUNES_CONTINUED_ENTRY + ".2"));
         builder.addPage(new EntryIndexPage("maledict.codex.rune_index", runes));
 
         entries.add(builder.build());
