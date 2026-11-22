@@ -475,6 +475,15 @@ def armor_icon(source, accents):
     pixels = [[colors[p[:3]]+(p[3],) if p[3] else p for p in row] for row in source]
     for x,y,color in accents:
         paint(pixels,x,y,color)
+    # Inventory icons share the helmet's cold silver/black ramp, including
+    # neutral accent texels. Keep the original silhouette and colored details.
+    metal_tones={tuple(bytes.fromhex(color)):CHEST_DETAIL_PALETTE[shade][:3]
+                 for color,shade in {'181821':'D','25232E':'A','2D2F35':'A','494956':'B',
+                                     '737786':'M','989DB2':'S','A5AAB8':'S','BDC4DE':'P',
+                                     'D3DAF7':'W','111214':'O','18191C':'N','1E1F24':'F'}.items()}
+    metal_tones[tuple(bytes.fromhex('C6CFDA'))]=(221,226,243)
+    pixels=[[metal_tones.get(pixel[:3],pixel[:3])+(pixel[3],) if pixel[3] else pixel
+             for pixel in row] for row in pixels]
     # Match the paired silhouette while shading the right-hand metal planes.
     for row in pixels:
         for x in range(9,16):
