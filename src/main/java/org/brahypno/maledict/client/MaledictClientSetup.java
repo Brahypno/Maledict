@@ -133,6 +133,8 @@ public final class MaledictClientSetup {
         event.registerLayerDefinition(LightwardArmorModel.CHESTPLATE_DETAILS_LAYER,
                                       () -> LightwardArmorModel.createChestplateDetailsLayer(Minecraft.getInstance().getResourceManager()));
         event.registerLayerDefinition(LightwardArmorModel.LOWER_ARMOR_LAYER, LightwardArmorModel::createLowerArmorLayer);
+        event.registerLayerDefinition(LightwardArmorModel.BOOTS_LAYER,
+                                      () -> LightwardArmorModel.createBootsLayer(Minecraft.getInstance().getResourceManager()));
     }
 
     @SubscribeEvent

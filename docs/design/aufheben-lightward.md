@@ -82,12 +82,12 @@
 - 折翼从背部上缘的托件起，覆羽压住羽根，长短交错的飞羽沿背侧向后下方收至腰线。羽翼内侧保留阴影，以沿羽片延伸的暗银折面承接侧边与窄羽尖，底面不再整片平涂深色。折翼跟随躯干姿态。物品栏使用「未竟的圣龛」版 16×16 图标。
 - 头盔、护腿和靴子的穿戴贴图与 16×16 图标采用胸甲的冷白银与深黑配色。头盔两侧和大腿甲以成对黑色嵌片分区。
 - 护腿沿用魂染钢的腰片和倾斜大腿甲。腰片中央为紫青折辉，两侧和大腿甲上角点缀渐变鎏金，银灰折边向下转为深铅灰。穿戴图集保留原 UV 与透明度，甲片跟随腿部姿态。
-- 靴子采用「攀附晶根」：保留原有两层方柱靴身，去掉斜置 `boot_wing`。原贴图的银白甲带、黑色间隔、金边与虹彩按最近邻搬入同一张 128×128 图集，靴身 UV 密度为原来的四倍，原图的纹样比例与透明度不变。76 条不等距根路在前、外、后、内四面形成更密的根网，直接绘入靴身材质；主根纹宽约 0.26、支根约 0.16、细根约 0.11 单位，根脉只改变窄线范围内的颜色。仅主根保留 47 小段近乎齐平的晶面，宽约 0.17，前表面高出所在甲层约 0.006 单位；遇到原甲片的透明间隔便下沉到可见的内层，均与本体挂在同级。细网随原甲片起伏，不再组成独立外罩。
+- 靴子采用「内生晶根」：保留原有双层靴身体量和银白甲带、黑色间隔、金边与虹彩，去掉斜置 `boot_wing`。双层靴身改为连续封闭网格，76 条根路直接驱动甲面的隆起；八处交汇区从内向外撑高，向分支和边缘逐渐沉回原表面，最大隆起约 0.70 单位。根与甲面共用顶点，转角连续，不附加独立根条、网罩或夹片。贴图沿相同根路做明确黑白反差：银白甲片上的根脉主面为近黑，黑色底面上的根脉主面为银白，根脉中心不透明；边缘按左上受光、右下背光布置高光与接触暗影。全部使用既有色板，金色和青紫虹彩区域保持原色。原图按最近邻搬入 128×128 图集，靴身 UV 密度为原来的四倍，原有纹样比例与透明度不变。
 - 头盔、胸甲、双臂与靴子几何在 `assets/maledict/models/armor/` 下，供游戏烘焙和离线导出共用。胸甲基础层的 Malum `torso`、`left_arm/left_shoulder`、`right_arm/right_shoulder` 子树分别隐藏。新胸甲与双臂在同一附加图层下，分别绑定 `body`、`left_arm`、`right_arm`，渲染时同步对应姿态。护腿继续使用 Malum 的 `createBodyLayer`；靴子使用独立 `BOOTS_LAYER`，根系与本体分别挂在 `left_foot`、`right_foot`，随对应腿部同步。
 - 模型由 `client/item/equipment/lightward/LightwardArmorModel.java` 烘焙，图层由 `MaledictClientSetup` 注册。物品通过 Forge `IClientItemExtensions` 接入，姿态跟随原版护甲渲染器。
 - `art/aufheben-lightward/model/` 包含组合工程与四件护甲各自的 `.bbmodel`，均内嵌贴图，另有 `.blend`、三视角预览及原版同机位对照。纹样修改应同步到像素处理源，重建时会更新这些导出文件。
 - 重建：`& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --factory-startup --python tools/lightward-model/build_reference_models.py`。
-- 晶根路由源为 `tools/lightward-model/build_crystal_root_boots.py`，几何与材质共用根路；修改后先用 Blender 的 `--python` 执行该脚本，再执行上述贴图／工程导出。模型部件允许三轴 `inflate` 数组和 `uv_scale`，控制根宽、端点长度、贴面厚度与 UV 密度；既有标量 `inflate` 和默认 UV 密度保持原行为。`preview-boots-gray-four-views.png` 检查靴身与齐平主根几何，`preview-boots-color-four-views.png` 展示材质内的完整细网。
+- 晶根路由源为 `tools/lightward-model/build_crystal_root_boots.py`，几何与材质共用根路；修改后先用 Blender 的 `--python` 执行该脚本，再执行上述贴图／工程导出。靴子资源保留原本体立方体参数作为烘焙模板，并提供连续 `meshes`；`LightwardArmorModel.createBootsModel` 用共享表面替换脚部模板，`LightwardMeshCube` 经原版 `ModelPart` 姿态与护甲材质绘制，其他装备仍走既有立方体路径。靴子与整套 `.bbmodel` 导出为可编辑网格的 `free` 格式。`preview-boots-gray-four-views.png` 可独立检查一体隆起，`preview-boots-color-four-views.png` 展示材质效果。
 - 双臂 UV 占用图为 `preview-arm-uv-occupancy.png`，左图显示原臂甲灰色区域，右图显示新臂甲金色区域，两图绿色均为现有胸甲与折翼。新臂甲复用 128×128 图集的下部空余区域。
 - 离线验证覆盖九组手臂与躯干姿态的烘焙、姿态同步和顶点绘制，另有摆臂预览。游戏内持武器、举盾和极端姿态的碰撞观感仍需试穿确认。
 - 原版第一人称通过 `PlayerRenderer#renderHand` 绘制皮肤手臂与袖层，此路径不绘制当前装备的胸甲模型。当前臂甲无需单独添加第一人称遮挡处理。

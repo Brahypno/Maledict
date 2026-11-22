@@ -1,7 +1,7 @@
-"""Export the custom Lightward helmet and retextured Malum armor.
+"""Export the custom Lightward armor and retextured Malum leggings.
 Run with Blender --background --factory-startup --python this_file.
-The helmet, chest and arm assets are shared with the runtime layers.
-The Malum reference manifest supplies comparisons and lower armor.
+The helmet, chest, arm and boot assets are shared with the runtime layers.
+The Malum reference manifest supplies comparisons and the leggings.
 """
 import base64
 import json
@@ -11,8 +11,13 @@ import struct
 import uuid
 import zipfile
 import zlib
+import sys
 import bpy
 from mathutils import Euler, Matrix, Vector
+
+sys.dont_write_bytecode = True
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from build_crystal_root_boots import PATHS as BOOT_ROOT_PATHS, ROOT_WIDTH, split_corners, GROWTH_SITES as BOOT_GROWTH_SITES, SURFACE
 
 ROOT = Path(__file__).resolve().parents[2]
 ART = ROOT/'art/aufheben-lightward/model'
@@ -26,6 +31,7 @@ JAR = next((Path.home()/'.gradle/caches/modules-2/files-2.1/curse.maven/malum-48
 
 ORIGINAL_HELMET = REF['helmet']['nodes']
 ORIGINAL_CHEST = REF['chestplate']['nodes']
+ORIGINAL_BOOTS = REF['boots']['nodes']
 
 
 def custom_nodes(slot,bone):
@@ -34,7 +40,8 @@ def custom_nodes(slot,bone):
     return {
         name: dict(name=name, parent=part.get('parent',bone), offset=part.get('offset',[0,0,0]),
                    rotation=part.get('rotation',[0,0,0]),
-                   cubes=[dict({'inflate':0, 'mirror':False}, **cube) for cube in part['cubes']])
+                   cubes=[dict({'inflate':0, 'mirror':False}, **cube) for cube in part['cubes']],
+                   meshes=part.get('meshes',[]))
         for name,part in parts.items()
     }
 
@@ -43,6 +50,8 @@ REF['helmet']['nodes'] = custom_nodes('helmet','head')
 CHEST_DETAILS = custom_nodes('chestplate','body')
 ARM_DETAILS = custom_nodes('arms','body')
 REF['chestplate']['nodes'] = CHEST_DETAILS | ARM_DETAILS
+BOOT_DETAILS = custom_nodes('boots','left_foot')
+REF['boots']['nodes'] = BOOT_DETAILS
 
 
 def png_read(data):
@@ -178,7 +187,126 @@ def paint_panels(pixels,nodes,panels,palette=HELMET_PALETTE):
                         pixels[y][x] = palette[shade]
 
 
+def boot_body_texture(source):
+    # Preserve the established Lightward boot art, including the silver bands,
+    # dark gaps, gilt mouth and bismuth colors. New roots use separate UV space.
+    metal_ramp = [(limit,tuple(bytes.fromhex(color))) for limit,color in
+                  ((37,'111214'),(59,'1E1F24'),(82,'2D2F35'),(108,'737786'),
+                   (144,'989DB2'),(180,'BDC4DE'),(255,'D3DAF7'))]
+    pixels = [[next(color for limit,color in metal_ramp if .2126*r+.7152*g+.0722*b <= limit)+(a,)
+               for r,g,b,a in row] for row in source]
+    for u in (42,66):
+        paint_rows(pixels,u,121,(('989DB2','A88652','D9B579','BE975F','8C6C45','989DB2'),
+                               ('BDC4DE','D3DAF7','B98CE3','947DE1','D3DAF7','BDC4DE'),
+                               ('989DB2','BDC4DE','758BE4','5C9AD8','BDC4DE','989DB2'),
+                               ('2D2F35','1E1F24','18191C','55BCCE','18191C','2D2F35'),
+                               ('1E1F24','18191C','111214','111214','18191C','1E1F24'),
+                               ('737786','989DB2','BDC4DE','BDC4DE','989DB2','737786'),
+                               ('2D2F35','1E1F24','18191C','18191C','1E1F24','2D2F35')))
+    for u in (36,48,54,60,72,78):
+        paint_rows(pixels,u,124,(('2D2F35','1E1F24','18191C','18191C','1E1F24','2D2F35'),
+                               ('1E1F24','18191C','111214','111214','18191C','1E1F24')))
+    wing_rows = (('989DB2','BDC4DE','B18A54','D9B477','BE985F','BDC4DE','989DB2'),
+                 ('BDC4DE','2D2F35','1E1F24','9F81D5','1E1F24','2D2F35','BDC4DE'),
+                 ('989DB2','1E1F24','18191C','5FAABB','18191C','1E1F24','989DB2'),
+                 ('737786','989DB2','BDC4DE','BDC4DE','BDC4DE','989DB2','737786'))
+    for u,mirrored in ((84,False),(92,True),(100,False),(108,True)):
+        for y,row in enumerate(wing_rows,124):
+            for x,color in enumerate(row[::-1] if mirrored else row):
+                paint(pixels,u+x,y,color)
+    return pixels
+
+
+def paint_boot_inlay(pixels,cube):
+    routes={face:[] for face in ('north','east','south','west')}
+    for index,(_,tier,points) in enumerate(BOOT_ROOT_PATHS):
+        for a,b in zip(points,points[1:]):
+            for start,end in split_corners(a,b):
+                face_index=math.floor((start[0]+end[0])/12)
+                routes[('north','east','south','west')[face_index%4]].append(
+                    ((start[0]-face_index*6,start[1]),(end[0]-face_index*6,end[1]),tier,index))
+    q=cube['inflate']
+    for face,segments in routes.items():
+        u,v,w,h=face_uv(cube)[face]
+        face_index=('north','east','south','west').index(face)
+        for yy in range(h):
+            y=6-q+(yy+.5)/h*(7+2*q)
+            for xx in range(w):
+                original=pixels[v+yy][u+xx]
+                if not original[3] or max(original[:3])-min(original[:3])>60:
+                    continue
+                x=(xx+.5)/w*6
+                tone=.2126*original[0]+.7152*original[1]+.0722*original[2]
+                pressure=0
+                for _,su,sy,heading in BOOT_GROWTH_SITES:
+                    du=(face_index*6+x-su+12)%24-12
+                    dx,dy=du*SURFACE/3,y-sy
+                    across=dx*math.cos(heading)+dy*math.sin(heading)
+                    along=-dx*math.sin(heading)+dy*math.cos(heading)
+                    pressure=max(pressure,math.exp(-(across/.95)**2-(along/1.25)**2))
+                best,target,shadow=0,None,0
+                for a,b,tier,index in segments:
+                    dx,dy=b[0]-a[0],b[1]-a[1]
+                    squared=dx*dx+dy*dy
+                    length=math.sqrt(squared)
+                    t=max(0,min(1,((x-a[0])*dx+(y-a[1])*dy)/squared))
+                    distance=math.hypot(x-a[0]-t*dx,y-a[1]-t*dy)
+                    half=ROOT_WIDTH[tier]/2
+                    # Opaque root cores carry the black/white inversion;
+                    # antialias only their outermost edge.
+                    coverage=max(0,min(1,(half+.17-distance)/.12))
+                    # Shadow is offset below/right, consistently with the
+                    # upper-left highlight, rather than tied to path direction.
+                    sx,sy=x-.16,y-.22
+                    st=max(0,min(1,((sx-a[0])*dx+(sy-a[1])*dy)/squared))
+                    sd=math.hypot(sx-a[0]-st*dx,sy-a[1]-st*dy)
+                    shadow=max(shadow,max(0,min(1,(half+.17-sd)/.15))
+                               *{'trunk':.64,'branch':.52,'tip':.32}[tier])
+                    if coverage<=best:
+                        continue
+                    signed=(dx*(y-a[1])-dy*(x-a[0]))/length
+                    toward_light=signed*((-.60*-dy-.80*dx)/length)
+                    # White substrate -> near-black root. Black substrate ->
+                    # silver-white root. Keep the core color unequivocal.
+                    dark_root=tone>=110
+                    if distance<=half+.05:
+                        shade='N' if dark_root else 'W'
+                    elif toward_light>=0:
+                        shade='S' if dark_root and pressure>.65 else 'M' if dark_root else 'P'
+                    else:
+                        shade='O' if dark_root else 'M'
+                    best,target=coverage,CHEST_DETAIL_PALETTE[shade]
+                base=original
+                if shadow:
+                    shade=CHEST_DETAIL_PALETTE['B' if tone>110 else 'O']
+                    base=tuple(round(a*(1-shadow)+b*shadow) for a,b in zip(original[:3],shade[:3]))+(original[3],)
+                if best:
+                    base=tuple(round(a*(1-best)+b*best) for a,b in zip(base[:3],target[:3]))+(original[3],)
+                pixels[v+yy][u+xx]=base
+
+
+def boots_texture(source=None,gray=False):
+    if source is None:
+        with zipfile.ZipFile(JAR) as jar:
+            source=png_read(jar.read('assets/malum/textures/armor/'+REF['boots']['texture']+'.png'))
+    base=boot_body_texture(source)
+    pixels=[[(0,0,0,0) for _ in range(128)] for _ in range(128)]
+    for cube,old in zip(BOOT_DETAILS['boot_core_left']['cubes'],ORIGINAL_BOOTS['left_boot']['cubes']):
+        old=dict(old,size=[int(value) for value in old['size']])
+        for face,(u,v,w,h) in face_uv(cube).items():
+            ou,ov,ow,oh=face_uv(old)[face]
+            for y in range(h):
+                for x in range(w):
+                    color=base[ov+y*oh//h][ou+x*ow//w]
+                    pixels[v+y][u+x]=HELMET_PALETTE['P'][:3]+(color[3],) if gray else color
+        if not gray:
+            paint_boot_inlay(pixels,cube)
+    return pixels
+
+
 def retexture(slot,source):
+    if slot == 'boots':
+        return boots_texture(source)
     # Sampled from the chestplate's black panels, silver planes and bevels.
     metal_ramp = [(limit,tuple(bytes.fromhex(color))) for limit,color in
                   ((37,'111214'),(59,'1E1F24'),(82,'2D2F35'),(108,'737786'),
@@ -309,29 +437,6 @@ def retexture(slot,source):
                        ('464852','2D2F35','1E1F24','1E1F24','2D2F35','464852'))
         for u in (0,9,18,27):
             paint_rows(pixels,u,123,thigh_panel)
-    elif slot == 'boots':
-        # A thin gilt cuff frames the short iridescent run down the instep.
-        for u in (42,66):
-            paint_rows(pixels,u,121,(('989DB2','A88652','D9B579','BE975F','8C6C45','989DB2'),
-                                      ('BDC4DE','D3DAF7','B98CE3','947DE1','D3DAF7','BDC4DE'),
-                                      ('989DB2','BDC4DE','758BE4','5C9AD8','BDC4DE','989DB2'),
-                                      ('2D2F35','1E1F24','18191C','55BCCE','18191C','2D2F35'),
-                                      ('1E1F24','18191C','111214','111214','18191C','1E1F24'),
-                                      ('737786','989DB2','BDC4DE','BDC4DE','989DB2','737786'),
-                                      ('2D2F35','1E1F24','18191C','18191C','1E1F24','2D2F35')))
-        # The dark instep band continues around the sides and heel.
-        for u in (36,48,54,60,72,78):
-            paint_rows(pixels,u,124,(('2D2F35','1E1F24','18191C','18191C','1E1F24','2D2F35'),
-                                      ('1E1F24','18191C','111214','111214','18191C','1E1F24')))
-        # Continue the gilt bevel and color change on the visible outer plates.
-        wing_rows = (('989DB2','BDC4DE','B18A54','D9B477','BE985F','BDC4DE','989DB2'),
-                     ('BDC4DE','2D2F35','1E1F24','9F81D5','1E1F24','2D2F35','BDC4DE'),
-                     ('989DB2','1E1F24','18191C','5FAABB','18191C','1E1F24','989DB2'),
-                     ('737786','989DB2','BDC4DE','BDC4DE','BDC4DE','989DB2','737786'))
-        for u,mirrored in ((84,False),(92,True),(100,False),(108,True)):
-            for y,row in enumerate(wing_rows,124):
-                for x,color in enumerate(row[::-1] if mirrored else row):
-                    paint(pixels,u+x,y,color)
     return pixels
 
 
@@ -386,8 +491,15 @@ def face_uv(c):
     u,v = c['uv']; w,h,d = c['size']
     # ModelPart uses negative Y above the head. The physical top uses the
     # first horizontal tile (Direction.DOWN in the cube constructor).
-    return dict(up=(u+d,v,w,d),down=(u+d+w,v,w,d),west=(u,v+d,d,h),
+    faces = dict(up=(u+d,v,w,d),down=(u+d+w,v,w,d),west=(u,v+d,d,h),
                 north=(u+d,v+d,w,h),east=(u+d+w,v+d,d,h),south=(u+2*d+w,v+d,w,h))
+    scale = c.get('uv_scale',1)
+    return {face:tuple(int(value*scale) for value in values) for face,values in faces.items()}
+
+
+def cube_deformation(cube):
+    value = cube['inflate']
+    return value if isinstance(value,list) else (value,value,value)
 
 
 def arm_uv_occupancy():
@@ -426,14 +538,36 @@ def blockbench():
             def group(key,pivot):
                 node = nodes[key]; absolute = [a+b for a,b in zip(pivot,node['offset'])]
                 children = []
-                for index,cube in enumerate(node['cubes']):
+                for index,cube in enumerate([] if node.get('meshes') else node['cubes']):
                     x,y,z = [a+b for a,b in zip(absolute,cube['pos'])]; w,h,d = cube['size']
+                    stretch = isinstance(cube['inflate'],list)
+                    explicit_uv = stretch or cube.get('uv_scale',1) != 1
+                    if stretch:
+                        qx,qy,qz = cube_deformation(cube)
+                        x,y,z,w,h,d = x-qx,y-qy,z-qz,w+2*qx,h+2*qy,d+2*qz
                     uid = ident(slot+'/'+key+'/'+str(index))
                     faces = {face:dict(uv=[u,v,u+fw,v+fh],texture=tid) for face,(u,v,fw,fh) in face_uv(cube).items()}
-                    elements.append(dict(name=node['name']+'_'+str(index),uuid=uid,type='cube',box_uv=True,
-                                         uv_offset=cube['uv'],mirror_uv=cube['mirror'],inflate=cube['inflate'],
+                    if explicit_uv and cube['mirror']:
+                        # Explicit face UVs carry the right boot's mirror;
+                        # mirror_uv alone applies to box-UV elements.
+                        faces['east'],faces['west'] = faces['west'],faces['east']
+                        for face in faces.values():
+                            u,v,uu,vv = face['uv']
+                            face['uv'] = [uu,v,u,vv]
+                    elements.append(dict(name=node['name']+'_'+str(index),uuid=uid,type='cube',box_uv=not explicit_uv,
+                                         uv_offset=cube['uv'],mirror_uv=cube['mirror'] and not explicit_uv,inflate=0 if stretch else cube['inflate'],
                                          **{'from':[x,24-y-h,z],'to':[x+w,24-y,z+d]},
                                          origin=[absolute[0],24-absolute[1],absolute[2]],faces=faces))
+                    children.append(uid)
+                for index,mesh in enumerate(node.get('meshes',[])):
+                    uid=ident(slot+'/'+key+'/mesh/'+str(index))
+                    vertices={str(i):[point[0]+absolute[0],24-point[1]-absolute[1],point[2]+absolute[2]]
+                              for i,point in enumerate(mesh['vertices'])}
+                    faces={str(i):dict(vertices=[str(j) for j in face['vertices'][::-1]],
+                                      uv={str(j):uv for j,uv in zip(face['vertices'],face['uv'])},texture=tid)
+                           for i,face in enumerate(mesh['faces'])}
+                    elements.append(dict(name=key+'_surface_'+str(index),uuid=uid,type='mesh',
+                                         origin=[absolute[0],24-absolute[1],absolute[2]],vertices=vertices,faces=faces))
                     children.append(uid)
                 for child,definition in nodes.items():
                     if definition['parent'] == key: children.append(group(child,absolute))
@@ -443,7 +577,7 @@ def blockbench():
             for bone,pivot in BONES.items():
                 children = [group(key,pivot) for key,node in nodes.items() if node['parent'] == bone]
                 if children: groups.append(dict(name=bone,uuid=ident(slot+'/'+bone),origin=[pivot[0],24-pivot[1],pivot[2]],children=children,rotation=[0,0,0]))
-        data=dict(meta=dict(format_version='4.10',model_format='modded_entity',box_uv=True),name='Aufheben Lightward'+suffix,
+        data=dict(meta=dict(format_version='4.10',model_format='free' if 'boots' in slots else 'modded_entity',box_uv=True),name='Aufheben Lightward'+suffix,
                   resolution=dict(width=128,height=128),elements=elements,outliner=groups,textures=textures)
         (ART/('aufheben_lightward'+suffix+'.bbmodel')).write_text(json.dumps(data,indent=2),encoding='utf-8')
 
@@ -480,9 +614,22 @@ def create_mesh(slot,mat,nodes=None):
         nodes = REF[slot]['nodes']
     for key,node in nodes.items():
         transform = node_matrix(nodes,key)
-        for index,c in enumerate(node['cubes']):
-            x,y,z = c['pos']; w,h,d = c['size']; q = c['inflate']
-            x,y,z,w,h,d = x-q,y-q,z-q,w+2*q,h+2*q,d+2*q
+        for index,data in enumerate(node.get('meshes',[])):
+            vertices=[]
+            for point in data['vertices']:
+                x,y,z=transform@Vector(point)
+                vertices.append((x,z,24-y))
+            mesh=bpy.data.meshes.new(key+'_surface_'+str(index))
+            mesh.from_pydata(vertices,[],[face['vertices'] for face in data['faces']]); mesh.update()
+            obj=bpy.data.objects.new(slot+'/'+key+'/'+str(index),mesh); bpy.context.collection.objects.link(obj)
+            obj.data.materials.append(mat); layer=mesh.uv_layers.new()
+            for polygon,face in zip(mesh.polygons,data['faces']):
+                for loop,(u,v) in zip(polygon.loop_indices,face['uv']):
+                    layer.data[loop].uv=(u/128,1-v/128)
+            objects.append(obj)
+        for index,c in enumerate([] if node.get('meshes') else node['cubes']):
+            x,y,z = c['pos']; w,h,d = c['size']; qx,qy,qz = cube_deformation(c)
+            x,y,z,w,h,d = x-qx,y-qy,z-qz,w+2*qx,h+2*qy,d+2*qz
             points = [(x,y,z),(x+w,y,z),(x+w,y+h,z),(x,y+h,z),
                       (x,y,z+d),(x+w,y,z+d),(x+w,y+h,z+d),(x,y+h,z+d)]
             vertices = []
@@ -581,15 +728,15 @@ def preview():
                 bpy.ops.render.render(write_still=True)
                 for obj in before: bpy.data.objects.remove(obj,do_unlink=True)
                 for obj in objects['chestplate']: obj.hide_render = False
-            for slot in ('helmet','chestplate'):
+            for slot in ('helmet','chestplate','boots'):
                 for obj in objects[slot]: obj.hide_render = True
             comparison_helmet = create_mesh('helmet',original['helmet'],ORIGINAL_HELMET)
             comparison_chest = create_mesh('chestplate',original['chestplate'],ORIGINAL_CHEST)
-            for slot in SLOTS[2:]:
-                for obj in objects[slot]: obj.data.materials[0] = original[slot]
+            comparison_boots = create_mesh('boots',original['boots'],ORIGINAL_BOOTS)
+            for obj in objects['leggings']: obj.data.materials[0] = original['leggings']
             scene.render.filepath = str(ART/'preview-original-same-camera.png'); bpy.ops.render.render(write_still=True)
-            for obj in comparison_helmet + comparison_chest: bpy.data.objects.remove(obj,do_unlink=True)
-            for slot in ('helmet','chestplate'):
+            for obj in comparison_helmet + comparison_chest + comparison_boots: bpy.data.objects.remove(obj,do_unlink=True)
+            for slot in ('helmet','chestplate','boots'):
                 for obj in objects[slot]: obj.hide_render = False
             for slot in SLOTS[1:]:
                 for obj in objects[slot]: obj.data.materials[0] = mats[slot]
@@ -688,6 +835,52 @@ def preview():
     bpy.ops.render.render(write_still=True)
 
 
+def boot_previews(gray_only=False):
+    """Inspect the same runtime geometry on all four sides, without paint camouflage."""
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    scene = bpy.context.scene
+    scene.render.engine = 'BLENDER_EEVEE'
+    scene.render.resolution_x = scene.render.resolution_y = 560
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = 'PNG'
+    scene.view_settings.view_transform,scene.view_settings.look = 'Standard','None'
+    scene.world.color = (.13,.13,.13)
+    gray_path = ART/'boots-gray-atlas.png'
+    png_write(gray_path,boots_texture(gray=True))
+    gray = material(gray_path,'Crystal-root grey model')
+    left = {k:p for k,p in BOOT_DETAILS.items() if p['parent'] == 'left_foot'}
+    objects = create_mesh('boots',gray,left)
+    java_space = Matrix(((1,0,0,0),(0,0,1,0),(0,-1,0,24),(0,0,0,1)))
+    for obj in objects:
+        obj.matrix_world = java_space @ preview_root('left_foot').inverted() @ java_space.inverted()
+    for position,power in (((-16,-22,36),4000),((17,20,30),3500),((-15,12,19),1800)):
+        bpy.ops.object.light_add(type='AREA',location=position)
+        lamp = bpy.context.object
+        lamp.data.energy,lamp.data.size = power,10
+        lamp.rotation_euler = (Vector((0,0,14.5))-lamp.location).to_track_quat('-Z','Y').to_euler()
+    bpy.ops.object.camera_add()
+    camera = bpy.context.object
+    camera.data.type,camera.data.ortho_scale = 'ORTHO',11.8
+    scene.camera = camera
+    for kind in (('gray',) if gray_only else ('gray','color')):
+        if kind == 'color':
+            colored = material(ASSETS/'textures/models/armor/aufheben_lightward_boots.png','Crystal-root matched silver')
+            for obj in objects:
+                obj.data.materials[0] = colored
+        frames = []
+        for view,position in (('front',(16,-38,22)),('outer',(38,10,21)),
+                              ('back',(-16,38,21)),('inner',(-38,-10,21))):
+            camera.location = position
+            camera.rotation_euler = (Vector((0,0,14.5))-camera.location).to_track_quat('-Z','Y').to_euler()
+            path = ART/f'preview-boots-{kind}-{view}.png'
+            scene.render.filepath = str(path)
+            bpy.ops.render.render(write_still=True)
+            frames.append(png_read(path.read_bytes()))
+        png_write(ART/f'preview-boots-{kind}-four-views.png',
+                  [a+b for a,b in zip(frames[0],frames[1])]+[a+b for a,b in zip(frames[2],frames[3])])
+
+
 def write_icon_previews(icons):
     for slot,icon in icons.items():
         png_write(ART/f'preview-{slot}-icon.png',[[pixel for pixel in row for _ in range(16)]
@@ -729,4 +922,5 @@ with zipfile.ZipFile(JAR) as jar:
 blockbench()
 (ART/'geometry.json').write_text(json.dumps(REF,indent=2),encoding='utf-8')
 preview()
-print('Exported the Lightward helmet, chest, fixed wings and articulated arms. Four eye rays clear.')
+boot_previews()
+print('Exported Lightward armor, fixed wings, articulated arms and crystal-root boots. Four eye rays clear.')

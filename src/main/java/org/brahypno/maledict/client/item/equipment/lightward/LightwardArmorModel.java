@@ -20,18 +20,23 @@ import team.lodestar.lodestone.systems.model.LodestoneArmorModel;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public final class LightwardArmorModel extends LodestoneArmorModel {
     public static final ModelLayerLocation HELMET_LAYER = layer("aufheben_lightward_helmet");
     public static final ModelLayerLocation CHESTPLATE_LAYER = layer("aufheben_lightward_chestplate");
     public static final ModelLayerLocation CHESTPLATE_DETAILS_LAYER = layer("aufheben_lightward_chestplate_details");
     public static final ModelLayerLocation LOWER_ARMOR_LAYER = layer("aufheben_lightward_lower_armor");
+    public static final ModelLayerLocation BOOTS_LAYER = layer("aufheben_lightward_boots");
     private static final ResourceLocation HELMET_GEOMETRY = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "models/armor/aufheben_lightward_helmet.geometry.json");
     private static final ResourceLocation CHESTPLATE_GEOMETRY = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "models/armor/aufheben_lightward_chestplate.geometry.json");
     private static final ResourceLocation ARMS_GEOMETRY = ResourceLocation.fromNamespaceAndPath(
             Maledict.MODID, "models/armor/aufheben_lightward_arms.geometry.json");
+    private static final ResourceLocation BOOTS_GEOMETRY = ResourceLocation.fromNamespaceAndPath(
+            Maledict.MODID, "models/armor/aufheben_lightward_boots.geometry.json");
     private final ModelPart chestOverlay;
     private final ModelPart leftArmOverlay;
     private final ModelPart rightArmOverlay;
@@ -90,12 +95,17 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
                     var uv = cube.getAsJsonArray("uv");
                     var pos = cube.getAsJsonArray("pos");
                     var size = cube.getAsJsonArray("size");
-                    var deformation = cube.has("inflate")
-                            ? new CubeDeformation(cube.get("inflate").getAsFloat()) : CubeDeformation.NONE;
+                    var inflate = cube.get("inflate");
+                    var deformation = inflate == null ? CubeDeformation.NONE
+                            : inflate.isJsonArray() ? new CubeDeformation(
+                                    axis(inflate.getAsJsonArray(), 0), axis(inflate.getAsJsonArray(), 1),
+                                    axis(inflate.getAsJsonArray(), 2))
+                            : new CubeDeformation(inflate.getAsFloat());
+                    float uvScale = cube.has("uv_scale") ? cube.get("uv_scale").getAsFloat() : 1;
                     cubes.texOffs(uv.get(0).getAsInt(), uv.get(1).getAsInt())
                          .mirror(cube.has("mirror") && cube.get("mirror").getAsBoolean())
                          .addBox(axis(pos, 0), axis(pos, 1), axis(pos, 2),
-                                 axis(size, 0), axis(size, 1), axis(size, 2), deformation);
+                                 axis(size, 0), axis(size, 1), axis(size, 2), deformation, 1 / uvScale, 1 / uvScale);
                 }
                 var offset = part.getAsJsonArray("offset");
                 var rotation = part.getAsJsonArray("rotation");
@@ -116,6 +126,29 @@ public final class LightwardArmorModel extends LodestoneArmorModel {
 
     public static LayerDefinition createLowerArmorLayer() {
         return SoulStainedSteelArmorModel.createBodyLayer();
+    }
+
+    public static LayerDefinition createBootsLayer(ResourceManager resources) {
+        return createGeometryLayer(resources, BOOTS_GEOMETRY, "left_foot");
+    }
+
+    public static LightwardArmorModel createBootsModel(ModelPart baked, ResourceManager resources) {
+        var children = new HashMap<String, ModelPart>();
+        for (String name : List.of("head", "hat", "body", "left_arm", "right_arm", "left_leg", "right_leg",
+                "leggings", "left_legging", "right_legging")) children.put(name, baked.getChild(name));
+        try (var reader = resources.getResourceOrThrow(BOOTS_GEOMETRY).openAsReader()) {
+            var parts = JsonParser.parseReader(reader).getAsJsonObject();
+            for (String side : List.of("left", "right")) {
+                var meshes = parts.getAsJsonObject("boot_core_" + side).getAsJsonArray("meshes");
+                var cubes = new ArrayList<ModelPart.Cube>();
+                for (var mesh : meshes) cubes.add(new LightwardMeshCube(mesh.getAsJsonObject()));
+                var core = new ModelPart(cubes, java.util.Map.of());
+                children.put(side + "_foot", new ModelPart(List.of(), java.util.Map.of("boot_core_" + side, core)));
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException("Cannot load " + BOOTS_GEOMETRY, exception);
+        }
+        return new LightwardArmorModel(new ModelPart(List.of(), children));
     }
 
     public static LayerDefinition createChestplateLayer() {

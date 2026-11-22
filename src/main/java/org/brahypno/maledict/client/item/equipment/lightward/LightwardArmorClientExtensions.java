@@ -1,5 +1,6 @@
 package org.brahypno.maledict.client.item.equipment.lightward;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -14,10 +15,13 @@ public final class LightwardArmorClientExtensions implements IClientItemExtensio
     private static LightwardArmorModel soulStained;
     private static LightwardArmorModel helmet;
     private static LightwardArmorModel chestplate;
+    private static LightwardArmorModel boots;
 
     public static void bake(EntityModelSet models) {
         helmet = new LightwardArmorModel(models.bakeLayer(LightwardArmorModel.HELMET_LAYER));
         soulStained = new LightwardArmorModel(models.bakeLayer(LightwardArmorModel.LOWER_ARMOR_LAYER));
+        boots = LightwardArmorModel.createBootsModel(models.bakeLayer(LightwardArmorModel.BOOTS_LAYER),
+                Minecraft.getInstance().getResourceManager());
         chestplate = new LightwardArmorModel(models.bakeLayer(LightwardArmorModel.CHESTPLATE_LAYER),
                 models.bakeLayer(LightwardArmorModel.CHESTPLATE_DETAILS_LAYER));
     }
@@ -28,7 +32,8 @@ public final class LightwardArmorClientExtensions implements IClientItemExtensio
             EquipmentSlot slot, HumanoidModel<?> original) {
         LightwardArmorModel model = switch (slot) {
             case HEAD -> helmet;
-            case LEGS, FEET -> soulStained;
+            case LEGS -> soulStained;
+            case FEET -> boots;
             case CHEST -> chestplate;
             default -> null;
         };
