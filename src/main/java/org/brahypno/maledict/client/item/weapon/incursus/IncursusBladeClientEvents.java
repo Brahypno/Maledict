@@ -80,8 +80,8 @@ public final class IncursusBladeClientEvents {
         tooltip.add(index++, Component.translatable("tooltip.maledict.incursus_blade.description")
                                       .withStyle(ChatFormatting.GRAY));
         if (!IncursusBladeItem.hasAllStatsAtLeast(
-                event.getItemStack(), IncursusBladeItem.MEDIUM_DAMAGE_LEVEL)){
-            tooltip.add(index++, Component.translatable("tooltip.maledict.incursus_blade.medium_unlock_hint")
+                event.getItemStack(), IncursusBladeItem.FINAL_DAMAGE_LEVEL)){
+            tooltip.add(index++, Component.translatable("tooltip.maledict.incursus_blade.unlock_hint")
                                           .withStyle(ChatFormatting.DARK_PURPLE));
         }
         if (!Screen.hasShiftDown()){

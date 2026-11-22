@@ -114,8 +114,8 @@ public final class IncursusScytheBoomerangEntity extends ScytheBoomerangEntity
             ItemStack scythe = getItem();
             owner.setItemInHand(InteractionHand.MAIN_HAND, scythe);
 
-            // 这一记写死 medium（不随精魂成长）；无忧符文的抬档由 DamageRequestEvent 统一处理。
-            boolean hit = IncursusBladeItem.dealSkillDamage(target,
+            // 回旋按刀自己的精魂档结算；无忧符文的抬档由 DamageRequestEvent 统一处理。
+            boolean hit = IncursusBladeItem.dealSkillDamage(scythe, target,
                                                             DamageTypeHelper.create(level(), DamageTypeRegistry.SCYTHE_SWEEP, this, owner), damage)
                                            .instantEffective();
             if (hit){

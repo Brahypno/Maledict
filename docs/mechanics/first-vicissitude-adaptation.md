@@ -45,7 +45,7 @@ C: 记 [C, B]   判 C 原本不在 → 满伤   （A 被淘汰，计数丢弃）
 
 ## 和武器通道的关系
 
-猎首之刃一次挥砍在扫击路径上会落下三条消息：`scythe_sweep`、`magic`（奥术通道）、`freeze`（霜冻通道），
+神侵恶刃一次挥砍在扫击路径上会落下三条消息：`scythe_sweep`、`magic`（奥术通道）、`freeze`（霜冻通道），
 所以默认 2 的窗口下它的伤害**永远不会被适应**——三条消息轮换，谁也不够久地留在窗口里。
 
 奥术与霜冻这两跳的来源与顺序见 [incursus-blade-channels.md](incursus-blade-channels.md)。

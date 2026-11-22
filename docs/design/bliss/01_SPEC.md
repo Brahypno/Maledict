@@ -105,9 +105,9 @@ DamageProbe.lighterDamageMethod(victim, source, 补打的量);
 - 上限：`DamageStage` 到 D5、`Penetration` 到 `BYPASS_GUARD` 为止；已经在顶就不动。
 - 覆盖范围从「神侵恶刃的伤害」扩大为「佩戴者打出的 ChangeLib 探针 / 属性请求」：
   神侵恶刃（近战、魔法、投掷/飞升）、恋人之斧、精魂箭矢、飞镰返程、冻结属性都走同一条规则。
-- 代价（用户确认接受）：LIGHT/MEDIUM 刀从 D3/RESPECT 直接抬到 D4/IGNORE_DECLARATION，
-  比旧的 LIGHT→MEDIUM 更强；FINAL 刀从 D4/IGNORE 抬到 D5/BYPASS_GUARD，
-  不再遵守旧的「到 FINAL 就停」。这是「只抬一档」规则在事件轴上的直接结果。
+- 代价（用户确认接受）：light 刀从 D3/RESPECT 直接抬到 D4/IGNORE_DECLARATION，
+  比旧的 LIGHT→MEDIUM 更强；final 刀从 D4/IGNORE 抬到 D5/BYPASS_GUARD，
+  不再遵守旧的「到 final 就停」。这是「只抬一档」规则在事件轴上的直接结果。
 
 ### 冻结属性
 
@@ -118,7 +118,7 @@ DamageProbe.lighterDamageMethod(victim, source, 补打的量);
   `ADDITION` 修饰符，老物品不需要迁移。
 - `AttributeDamageRegistry` 在 `FMLCommonSetupEvent` 注册；原始命中完成后由 ChangeLib 自动派发。
 - 刀的基准档由 `IncursusBladeEffects#applyFreezeAttributePolicy` 在 `DamageRequestEvent`（NORMAL）
-  设置：LIGHT/MEDIUM → D3/RESPECT，FINAL → D4/IGNORE；无忧符文在 LOW 上再抬一级。
+  设置：light → D3/RESPECT，final → D4/IGNORE；无忧符文在 LOW 上再抬一级。
 - 无常 Boss 的 `applyWeaponAttributes` 也会烘焙这个属性，所以 Boss 的命中同样附带冻结伤害。
 - 三处显式冻结探针（`IncursusBladeAttack`、`IncursusBladeEnchantments`、`IncursusScytheBoomerangEntity`）
   以及 `DamageChannels.frozen` / 飞镰的 `frozenDamage` 参数都已删除。
@@ -204,7 +204,7 @@ tooltip 两行（`positiveEffect`，键前缀 `malum.gui.curio.effect.`）：
 3. **两边都戴**：确认倍率只乘一次（不是平方）。
 4. **通用抬档**：神侵恶刃（近战、魔法、投掷、飞升）与恋人之斧各打一记，确认符文让探针的
    `priority`/`strength` 各抬一级；冻结属性也要抬，且无常 Boss 的命中同样附带冻结伤害。
-   注意 LIGHT/MEDIUM 刀会直接到 D4/IGNORE、FINAL 刀会到 D5/BYPASS，这是新规则。
+   注意 light 刀会直接到 D4/IGNORE、final 刀会到 D5/BYPASS，这是新规则。
 5. **冻结属性**：主手刀时的 tooltip 应只出现一行冻结伤害（原版属性行），不再有客户端手写的重复行；
    喂碧水精魂后数值应即时跟着更新。
 6. 书页两行 13 字断句在游戏里排得好不好看（「谁就应该与他所爱的人 / 分担命运」这一处是硬断的）。

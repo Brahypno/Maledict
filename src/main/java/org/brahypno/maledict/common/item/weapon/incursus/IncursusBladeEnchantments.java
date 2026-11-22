@@ -110,8 +110,8 @@ public final class IncursusBladeEnchantments {
         boolean hitAnything = false;
         for (Entity target : IncursusBladeAttack.uniqueLivingTargets(
                 level.getEntities(player, area, entity -> canHitEntity(player, entity)))) {
-            // 飞升横扫写死 medium（不随精魂成长）；无忧符文的抬档由 DamageRequestEvent 统一处理。
-            boolean hit = IncursusBladeItem.dealSkillDamage(target,
+            // 飞升横扫按刀自己的精魂档结算；无忧符文的抬档由 DamageRequestEvent 统一处理。
+            boolean hit = IncursusBladeItem.dealSkillDamage(stack, target,
                                                             DamageTypeHelper.create(level, DamageTypeRegistry.SCYTHE_SWEEP, player), channels.attack())
                                            .instantEffective();
             if (hit){

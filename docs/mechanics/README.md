@@ -9,7 +9,7 @@
 | [boss-vitality.md](boss-vitality.md) | Boss 血量模型：权威池、单次命中上限、分阶穿透、各种回血、死亡与击杀 |
 | [boss-contact.md](boss-contact.md) | Boss 的身体接触：为什么推不动、玩家会被推成什么样 |
 | [first-vicissitude-adaptation.md](first-vicissitude-adaptation.md) | 第一化身的「适应 N」：窗口与判序，为什么轮换着打不减伤 |
-| [incursus-blade-channels.md](incursus-blade-channels.md) | 猎首之刃的奥术/霜冻通道：额外两跳从哪来、伤害怎么算 |
+| [incursus-blade-channels.md](incursus-blade-channels.md) | 神侵恶刃的奥术/霜冻通道：额外两跳从哪来、伤害怎么算 |
 | [incursus-swing-range.md](incursus-swing-range.md) | 神侵恶刃的近战范围：一个半径管命中与腰环，极端数值怎么收 |
 | [incursus-swing-rate.md](incursus-swing-rate.md) | 神侵恶刃的出手频率：一次按下=一刀，出伤层为什么不设频率闸 |
 | [lightward-transfer.md](lightward-transfer.md) | 扬弃逐光 5 级：恶刃打中认主的生物时，主人也吃同额的一刀 |

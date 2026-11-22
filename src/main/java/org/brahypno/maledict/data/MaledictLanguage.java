@@ -661,7 +661,7 @@ public final class MaledictLanguage extends LanguageProvider {
         add("tooltip.maledict.incursus_blade.description",
             "吞噬精魂成长，向周身挥出锋刃的凶邪镰刀。",
             "A sinister scythe that grows by devouring spirits and sweeps its blade around the wielder.");
-        add("tooltip.maledict.incursus_blade.medium_unlock_hint",
+        add("tooltip.maledict.incursus_blade.unlock_hint",
             "精魂之力均到达神圣之数会解锁更本征的力量",
             "When all spirit power reaches the sacred number, a more intrinsic power is unlocked.");
         add("tooltip.maledict.incursus_blade.hold_shift", "按住 Shift 查看精魂详情", "Hold Shift for spirit details");

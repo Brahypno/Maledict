@@ -59,8 +59,10 @@ import java.util.function.Consumer;
  * A Malum magic scythe whose per-stack combat values are stored in NBT.
  */
 public final class IncursusBladeItem extends MagicScytheItem {
-    public static final double MEDIUM_DAMAGE_LEVEL = 7.0;
-    public static final double FINAL_DAMAGE_LEVEL = 11.0;
+    /**
+     * 神侵恶刃只有两档：八项精魂全部涨到这个数就进 final 档，否则留在 light 档。
+     */
+    public static final double FINAL_DAMAGE_LEVEL = 7.0;
     public static final String STATS_TAG = "IncursusBladeStats";
     public static final String UPGRADE_PROGRESS_TAG = "IncursusBladeUpgradeProgress";
     public static final String ATTACK_DAMAGE = "attack_damage";
@@ -317,18 +319,14 @@ public final class IncursusBladeItem extends MagicScytheItem {
     }
 
     /**
-     * 神侵恶刃的三档伤害：轻 → 中 → 终。随喂进去的精魂成长，见 {@link #MEDIUM_DAMAGE_LEVEL}
-     * 与 {@link #FINAL_DAMAGE_LEVEL}（提示语就是「精魂之力到达神圣之数会解锁更本征的力量」）。
+     * 神侵恶刃的两档伤害：轻 → 终。随喂进去的精魂成长，八项全部涨到
+     * {@link #FINAL_DAMAGE_LEVEL} 就进终档（提示语就是「精魂之力到达神圣之数会解锁更本征的力量」）。
      */
     public enum DamageTier {
         /**
-         * 未满 {@link #MEDIUM_DAMAGE_LEVEL}：探针只试必要的那几步，拿到真实掉血就收手。
+         * 未满 {@link #FINAL_DAMAGE_LEVEL}：探针只试必要的那几步，拿到真实掉血就收手。
          */
         LIGHT,
-        /**
-         * 满 {@link #MEDIUM_DAMAGE_LEVEL}：会为凑够数值继续往下找路。
-         */
-        MEDIUM,
         /**
          * 满 {@link #FINAL_DAMAGE_LEVEL}：终结档。
          */
@@ -337,9 +335,9 @@ public final class IncursusBladeItem extends MagicScytheItem {
         /**
          * 本档在普通目标上的 ChangeLib 探针上限与穿透。
          *
-         * <p>LIGHT 与 MEDIUM 在探针层是同一档（medium 梯级、D3、尊重防御）；两者的差别只在
-         * 自有血池的 {@link #internalAttackGrade}。FINAL 才是 final 梯级（D4、忽略声明）。
-         * 冻结属性请求也按这张表起步，再由无忧符文的事件监听抬一级。
+         * <p>LIGHT 走 medium 梯级但拿到真实掉血就收手（D3、尊重防御），FINAL 才是 final 梯级
+         * （D4、忽略声明）。自有血池另看 {@link #internalAttackGrade}。冻结属性请求也按这张表
+         * 起步，再由无忧符文的事件监听抬一级。
          */
         public DamageStage probeStage() {
             return this == FINAL ? DamageStage.D4_CONSISTENCY_WRITE : DamageStage.D3_STORAGE_WRITE;
@@ -363,7 +361,6 @@ public final class IncursusBladeItem extends MagicScytheItem {
         public DamageProbeResult deal(Entity target, DamageSource source, float damage, boolean compensateDamage) {
             return switch (this) {
                 case FINAL -> DamageProbe.finalDamageMethod(target, source, damage, compensateDamage);
-                case MEDIUM -> DamageProbe.mediumDamageMethod(target, source, damage, compensateDamage);
                 case LIGHT -> DamageProbe.lighterDamageMethod(target, source, damage, compensateDamage);
             };
         }
@@ -391,7 +388,6 @@ public final class IncursusBladeItem extends MagicScytheItem {
     private static DamageStage internalAttackGrade(DamageTier tier) {
         return switch (tier) {
             case LIGHT -> DamageStage.D3_STORAGE_WRITE;
-            case MEDIUM -> DamageStage.D4_CONSISTENCY_WRITE;
             case FINAL -> DamageStage.D5_RECOVERY_SOURCE;
         };
     }
@@ -401,9 +397,7 @@ public final class IncursusBladeItem extends MagicScytheItem {
      * {@code DamageRequestEvent} 上，所以这把刀不需要认识符文。
      */
     public static DamageTier damageTier(ItemStack stack) {
-        return hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL) ? DamageTier.FINAL
-                                                             : hasAllStatsAtLeast(stack, MEDIUM_DAMAGE_LEVEL) ? DamageTier.MEDIUM
-                                                                                                              : DamageTier.LIGHT;
+        return hasAllStatsAtLeast(stack, FINAL_DAMAGE_LEVEL) ? DamageTier.FINAL : DamageTier.LIGHT;
     }
 
     /**
@@ -421,11 +415,12 @@ public final class IncursusBladeItem extends MagicScytheItem {
     }
 
     /**
-     * 投掷返程 / 飞升横扫写死 medium；无忧符文的抬档由探针事件统一处理。
+     * 投掷返程（回旋）与飞升横扫也按刀自己的精魂档结算：喂满精魂的刀，技能一起进终档。
+     * 无忧符文的抬档仍由探针事件统一处理。
      */
-    static DamageProbeResult dealSkillDamage(Entity target, DamageSource source, float damage) {
-        return DamageTier.MEDIUM.deal(target, source, damage, false,
-                                      internalAttackGrade(DamageTier.MEDIUM));
+    static DamageProbeResult dealSkillDamage(
+            ItemStack stack, Entity target, DamageSource source, float damage) {
+        return dealTieredDamage(stack, target, source, damage);
     }
 
     /**

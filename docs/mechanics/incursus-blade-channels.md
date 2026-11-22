@@ -1,6 +1,6 @@
-# 猎首之刃的奥术与霜冻通道
+# 神侵恶刃的奥术与霜冻通道
 
-猎首之刃在物理挥砍之外有两条**独立结算**的加伤通道。它们各自有来源、各自吃减免，也都**不受攻击强度缩放**。
+神侵恶刃在物理挥砍之外有两条**独立结算**的加伤通道。它们各自有来源、各自吃减免，也都**不受攻击强度缩放**。
 
 ## 奥术通道（`can_trigger_magic_damage`）
 
@@ -33,6 +33,16 @@ Forge 的多部位 Boss 会把本体和每个动画部件暴露成独立实体�
 
 ## 阶（`DamageTier`）
 
-`DamageTier` 在 `IncursusBladeEffects` 的 `DamageRequestEvent` 上设置请求的基础 `priority`/`strength`
-（NORMAL），`BlissRuneEvents` 再提升一级（LOW）。统一的 `DamageRequestEvent` 也覆盖探测请求，
-`attribute() != null` 用来区分「属性请求」和普通攻击请求。
+`DamageTier` 只有两档：**light** 与 **final**。八项精魂全部涨到 7（`FINAL_DAMAGE_LEVEL`）就进 final 档，
+否则留在 light 档；没有中间档。
+
+| 档 | 普通目标探针 | 自有血池内部等级 |
+| --- | --- | --- |
+| light | medium 梯级但拿到真实掉血就收手（`lighterDamageMethod`）、D3、尊重防御 | D3 |
+| final | final 梯级（`finalDamageMethod`）、D4、忽略声明 | D5 |
+
+- 近战主伤害、冻结属性请求、**投掷返程（回旋）**与**飞升横扫**都按刀的当前档结算：喂满精魂的刀，
+  两个技能一起进 final。技能命中不做补满（`compensateDamage = false`）。
+- `DamageTier` 在 `IncursusBladeEffects` 的 `DamageRequestEvent` 上设置请求的基础 `priority`/`strength`
+  （NORMAL），`BlissRuneEvents` 再提升一级（LOW）。统一的 `DamageRequestEvent` 也覆盖探测请求，
+  `attribute() != null` 用来区分「属性请求」和普通攻击请求。
