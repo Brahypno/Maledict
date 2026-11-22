@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -25,6 +26,11 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = Maledict.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class IncursusBladeClientEvents {
 
+    /**
+     * 按下锁：一次按下只放一刀。清空时机是攻击键抬起，见 {@link #onClientTick}。
+     */
+    private static boolean attackLatched;
+
     @SubscribeEvent
     public static void onInteractionKey(InputEvent.InteractionKeyMappingTriggered event) {
         Minecraft minecraft = Minecraft.getInstance();
@@ -35,10 +41,26 @@ public final class IncursusBladeClientEvents {
             return;
         }
 
+        // 按住左键对着方块时，Forge 会在 Minecraft#continueAttack 里每 tick 触发一次这个点击事件，
+        // 所以按住期间重复来的那一份只压掉原版出手：不再发包、不摆手、也不清蓄力。
+        // 一次按下仍然是一刀，轻点照原版规则出弱刀——出伤层不加频率闸。
         event.setCanceled(true);
+        if (attackLatched){
+            // 摆手开关默认是 true，而且取消与否都生效；不显式关掉的话，按住时手臂仍会每 tick 摆一次。
+            event.setSwingHand(false);
+            return;
+        }
+        attackLatched = true;
         event.setSwingHand(true);
         MaledictNetwork.sendRadialAttack();
         minecraft.player.resetAttackStrengthTicker();
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && !Minecraft.getInstance().options.keyAttack.isDown()){
+            attackLatched = false;
+        }
     }
 
     @SubscribeEvent

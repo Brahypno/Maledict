@@ -94,6 +94,21 @@ Page: `docs/mechanics/incursus-blade-channels.md`.
 
 Page: `docs/mechanics/incursus-swing-range.md`.
 
+### Incursus swing input (`IncursusBladeClientEvents`)
+
+- **One press is one swing.** Forge fires `InputEvent.InteractionKeyMappingTriggered` from two places:
+  `Minecraft#startAttack` for a click, and `Minecraft#continueAttack` **once per tick** while the attack key is held
+  on a non-air block. The latch in `onInteractionKey` must refuse the repeated ticks — no `RadialAttackPacket`, no
+  `resetAttackStrengthTicker`, and an explicit `setSwingHand(false)`: Forge's swing flag defaults to `true` and applies
+  whether or not the event is cancelled, so a bare cancel still swings the arm every tick. Release the latch only when
+  the key comes up. Otherwise holding a block turns one press into twenty swings a second.
+- **The damage layer has no frequency gate, on purpose.** Ignoring i-frames (the arcane hop clears
+  `invulnerableTime`) and unscaled arcane/freeze channels are privileges. Never answer a swing-rate problem with a
+  minimum-interval gate in `IncursusBladeAttack#perform`: that deletes the privilege rather than fixing the input.
+  A real click rate above the weapon's 0.7/s is legal; its DPS consequence is recorded, not compensated.
+
+Page: `docs/mechanics/incursus-swing-rate.md`.
+
 ### Boss contact (`VicissitudeBossEntity`)
 
 `isPushable() == false` **and** the three-argument `push` no-op are both required. `LivingEntity#aiStep` ends with
