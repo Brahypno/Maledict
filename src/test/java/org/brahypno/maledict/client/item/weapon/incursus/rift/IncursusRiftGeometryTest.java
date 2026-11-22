@@ -2,6 +2,7 @@ package org.brahypno.maledict.client.item.weapon.incursus.rift;
 
 import org.brahypno.maledict.client.item.weapon.incursus.rift.IncursusRiftGeometry;
 import org.brahypno.maledict.client.item.weapon.incursus.rift.IncursusRiftPetal;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusSwingReach;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
@@ -87,11 +88,53 @@ class IncursusRiftGeometryTest {
     }
 
     @Test
-    void openEnvelopeAndHalfExtentStayConstant() {
-        assertEquals(1.0F, IncursusRiftGeometry.openEnvelope(0.0F), 1.0E-6);
-        assertEquals(1.0F, IncursusRiftGeometry.openEnvelope(1.0F), 1.0E-6);
-        assertEquals(3.75F, IncursusRiftGeometry.halfExtent(0.6F, 3.75F), 1.0E-6,
-                     "the old quadSize never grew or shrank over the lifetime");
+    void petalCentresEndOnTheSwingRadius() {
+        float radius = 3.5F;
+        float speed = 0.35F;
+        // 末帧的花瓣中心圆就是伤害球的赤道：开局贴着花心，收尾落在半径上。
+        assertEquals(radius, IncursusRiftGeometry.petalDistance(1.0F, 12, speed, 1.0F, radius), 1.0E-4,
+                     "the last frame must put the petal centre on the damage radius");
+        double opening = IncursusRiftGeometry.petalDistance(0.0F, 12, speed, 1.0F, radius);
+        assertTrue(opening > 0.0 && opening < radius * 0.2,
+                   "the bloom must start near the centre, got " + opening);
+        assertTrue(IncursusRiftGeometry.petalDistance(0.5F, 12, speed, 1.0F, radius)
+                   < IncursusRiftGeometry.petalDistance(0.9F, 12, speed, 1.0F, radius),
+                   "the ring must keep opening outward");
+        // 每瓣自己的漂移倍率只影响中途，终点一律严格落在伤害半径上。
+        for (float speedScale : new float[]{0.857F, 1.0F, 1.143F}) {
+            assertEquals(radius, IncursusRiftGeometry.petalDistance(1.0F, 12, speed, speedScale, radius),
+                         1.0E-4, "every petal centre must end exactly on the damage radius");
+        }
+    }
+
+    @Test
+    void degenerateRingInputsCollapseInsteadOfExploding() {
+        // 漂移被调成 0 时环不会缩进花心，而是从头到尾贴在伤害边界上。
+        assertEquals(3.5, IncursusRiftGeometry.petalDistance(0.5F, 12, 0.0F, 1.0F, 3.5), 1.0E-4,
+                     "a still ring must sit on the radius");
+        // 半径 0 / 非有限（reach 被写坏）：整朵花不画，也不产出 NaN 顶点。
+        assertEquals(0.0, IncursusRiftGeometry.petalDistance(1.0F, 12, 0.35F, 1.0F, 0.0), 0.0);
+        assertEquals(0.0, IncursusRiftGeometry.petalDistance(1.0F, 12, 0.35F, 1.0F, Double.NaN), 0.0);
+        assertEquals(0.0, IncursusRiftGeometry.petalDistance(1.0F, 12, 0.35F, 1.0F, Double.POSITIVE_INFINITY), 0.0);
+    }
+
+    @Test
+    void strokeSizeScalesWithTheSwingRadius() {
+        float baseHalf = 3.75F;
+        // 默认半径下退回这套贴图当初定尺寸时的大小。
+        assertEquals(baseHalf,
+                     IncursusRiftGeometry.halfExtentForRadius(IncursusRiftGeometry.AUTHORED_RING_RADIUS, baseHalf),
+                     1.0E-4, "the authored radius must reproduce the authored stroke size");
+        assertEquals(baseHalf * 2.0F, IncursusRiftGeometry.halfExtentForRadius(
+                IncursusRiftGeometry.AUTHORED_RING_RADIUS * 2.0, baseHalf), 1.0E-3,
+                     "a wider ring must widen the strokes with it");
+        assertEquals(0.0F, IncursusRiftGeometry.halfExtentForRadius(0.0, baseHalf), 0.0F,
+                     "no radius means no stroke");
+        // 6 格上限下的环仍然足够密：八道刀痕之间的弧长小于四边形宽度。
+        double capped = IncursusSwingReach.MAX_RADIUS;
+        double arc = Math.PI * 2.0 * capped / IncursusRiftGeometry.DEFAULT_PETAL_COUNT;
+        assertTrue(arc < IncursusRiftGeometry.halfExtentForRadius(capped, baseHalf) * 2.0,
+                   "eight strokes must still overlap at the reach cap, arc=" + arc);
     }
 
     @Test

@@ -22,6 +22,7 @@ import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.changelib.DamageHelper.DamageRequestEvent;
 import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeAttack;
 import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusSwingReach;
 import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.ArrayList;
@@ -202,13 +203,13 @@ public final class LightwardTransferTest {
                                new ItemStack(MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get()));
         }
         // 场地或区块出问题时先在这里炸，省得后面把「没打中」误读成「连带没生效」。
-        double reach = player.getAttributeValue(ForgeMod.ENTITY_REACH.get()) + 0.5;
-        double distanceSqr = player.position().add(player.getLookAngle().scale(0.4))
-                                   .distanceToSqr(pet.position());
-        helper.assertTrue(player.hasLineOfSight(pet) && !pet.skipAttackInteraction(player)
-                          && distanceSqr <= Math.pow(reach + pet.getBbWidth() * 0.5, 2),
+        // 判法必须与挥砍本身同一个函数，否则夹具会在检查一件已经不成立的事。
+        double reach = IncursusSwingReach.radiusOf(player.getAttributeValue(ForgeMod.ENTITY_REACH.get()), 0);
+        Vec3 swingCenter = IncursusSwingReach.centerOf(player);
+        double distance = Math.sqrt(IncursusSwingReach.distanceSqrToBox(pet.getBoundingBox(), swingCenter));
+        helper.assertTrue(player.hasLineOfSight(pet) && !pet.skipAttackInteraction(player) && distance <= reach,
                           "The fixture must start from a hittable pet: sight=" + player.hasLineOfSight(pet)
-                          + ", skip=" + pet.skipAttackInteraction(player) + ", distanceSqr=" + distanceSqr
+                          + ", skip=" + pet.skipAttackInteraction(player) + ", distance=" + distance
                           + ", reach=" + reach + ", pet=" + pet.position() + ", player=" + player.position());
         return new Fixture(player, pet, master);
     }

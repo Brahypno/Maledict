@@ -17,6 +17,7 @@ import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.client.item.weapon.incursus.rift.patterns.AscensionSpinPattern;
 import org.brahypno.maledict.client.item.weapon.incursus.rift.patterns.AscensionUppercutPattern;
 import org.brahypno.maledict.client.item.weapon.incursus.rift.patterns.HiddenBladeFlurryPattern;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusSwingReach;
 import org.brahypno.maledict.common.item.weapon.incursus.rift.RiftMode;
 import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.network.IncursusRiftSkillPacket;
@@ -54,7 +55,8 @@ public final class IncursusRiftClientManager {
 
     /**
      * 普通挥砍：八瓣水平腰环，形状与改造前逐顶点一致——它走的是旧的整实例模型，
-     * 不经过 {@link RiftStroke}。
+     * 不经过 {@link RiftStroke}。半径取服务端这一次挥砍的伤害半径，并再过一次闸：
+     * 报文里的坏值不能变成铺满屏幕的四边形。
      */
     public static void add(IncursusSlashPacket packet) {
         if (packet == null){
@@ -65,8 +67,8 @@ public final class IncursusRiftClientManager {
             return;
         }
         ACTIVE.add(IncursusRiftInstance.createMelee(
-                packet.ownerId(), packet.center(), packet.scale(), packet.seed(),
-                lifetimeTicks(), petalCount(), configFadeStart()));
+                packet.ownerId(), packet.center(), IncursusSwingReach.clampRadius(packet.radius()),
+                packet.seed(), lifetimeTicks(), petalCount(), configFadeStart()));
         trim();
     }
 

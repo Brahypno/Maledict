@@ -131,16 +131,22 @@ public final class IncursusRiftRenderer {
 
     /**
      * 旧八瓣花：每瓣一个四边形，整实例共用帧号与透明度。
+     *
+     * <p>位置与尺寸都由实例的伤害半径推出：花瓣中心末帧圆落在半径上，刀痕半边按半径等比缩放。
+     * 半径 0（reach 被写成非有限值或负数）时整朵花不画。
      */
     private static void emitPetalInstance(
             VertexConsumer vertices, Matrix4f view, Vec3 camera,
             IncursusRiftInstance instance, float partialTick, float alpha, boolean custom) {
+        double radius = instance.radius();
+        if (!(radius > 0.0)){
+            return;
+        }
         float ageFraction = instance.ageFraction(partialTick);
-        float instanceScale = instance.scale();
-        float travel = IncursusRiftGeometry.radialDistance(
-                ageFraction, instance.lifetimeTicks(), IncursusRiftClientManager.radialSpeed());
-        float root = (float) (IncursusRiftGeometry.ROOT_RADIUS * instanceScale);
-        float baseHalf = IncursusRiftClientManager.petalHalfSize();
+        int lifetimeTicks = instance.lifetimeTicks();
+        float speedPerTick = IncursusRiftClientManager.radialSpeed();
+        float half = IncursusRiftGeometry.halfExtentForRadius(
+                radius, IncursusRiftClientManager.petalHalfSize());
         IncursusRiftPetal[] petals = instance.petals();
         // 花心每帧重取：腰环跟着挥砍者走，不钉在通知下发瞬间的世界坐标上。
         Vec3 center = IncursusRiftClientManager.anchorOf(instance, partialTick);
@@ -151,12 +157,13 @@ public final class IncursusRiftRenderer {
             double angle = petal.angle();
             double dirX = Math.sin(angle);
             double dirZ = Math.cos(angle);
-            float distance = root + travel * instanceScale * petal.speedScale();
+            double distance = IncursusRiftGeometry.petalDistance(
+                    ageFraction, lifetimeTicks, speedPerTick, petal.speedScale(), radius);
             float offsetX = (float) (dirX * distance);
             float offsetZ = (float) (dirZ * distance);
 
-            float half = baseHalf * petal.sizeScale() * instanceScale;
-            if (half <= 1.0E-4F){
+            float petalHalf = half * petal.sizeScale();
+            if (petalHalf <= 1.0E-4F){
                 continue;
             }
             // 与 Malum PointyDirectionalParticleBehavior 相同的朝向：水平面内朝外。
@@ -169,13 +176,13 @@ public final class IncursusRiftRenderer {
             float green = custom ? ageFraction : PLAIN_GREEN;
             float blue = custom ? variant : PLAIN_BLUE;
 
-            emitPetalCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, -1.0F, 1.0F, 1.0F, 1.0F,
+            emitPetalCorner(vertices, matrix, offsetX, offsetZ, petalHalf, cos, sin, -1.0F, 1.0F, 1.0F, 1.0F,
                             red, green, blue, alpha);
-            emitPetalCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, 1.0F, 1.0F, 1.0F, 0.0F,
+            emitPetalCorner(vertices, matrix, offsetX, offsetZ, petalHalf, cos, sin, 1.0F, 1.0F, 1.0F, 0.0F,
                             red, green, blue, alpha);
-            emitPetalCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, 1.0F, -1.0F, 0.0F, 0.0F,
+            emitPetalCorner(vertices, matrix, offsetX, offsetZ, petalHalf, cos, sin, 1.0F, -1.0F, 0.0F, 0.0F,
                             red, green, blue, alpha);
-            emitPetalCorner(vertices, matrix, offsetX, offsetZ, half, cos, sin, -1.0F, -1.0F, 0.0F, 1.0F,
+            emitPetalCorner(vertices, matrix, offsetX, offsetZ, petalHalf, cos, sin, -1.0F, -1.0F, 0.0F, 1.0F,
                             red, green, blue, alpha);
         }
     }

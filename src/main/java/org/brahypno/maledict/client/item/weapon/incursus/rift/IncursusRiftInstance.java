@@ -11,8 +11,8 @@ import java.util.List;
  * <p>两种形态，刻意分开保存：
  * <ul>
  *   <li><b>普通挥砍</b>走旧的八瓣模型（{@link IncursusRiftPetal}）：花心跟着挥砍者走，
- *       贴图帧、透明度与半径都按<b>整个实例</b>求值。这段与统一改造前逐字节相同，
- *       视觉上不允许有任何变化，所以没有并进新的刀痕模型。</li>
+ *       贴图帧、透明度与开合都按<b>整个实例</b>求值。{@code radius} 是服务端这一次挥砍的伤害半径，
+ *       花瓣中心末帧圆落在它上面，所以画的圈就是真正能打到的圈。</li>
  *   <li><b>飞腾与隐藏锋刃</b>走逐道刀痕（{@link RiftStroke}）：几百道各自错峰出生，
  *       锚点固定在触发时的世界坐标。</li>
  * </ul>
@@ -33,7 +33,7 @@ public final class IncursusRiftInstance {
     private final RiftAnchorMode anchorMode;
     private final int ownerId;
     private final Vec3 center;
-    private final float scale;
+    private final double radius;
     private final long seed;
     private final IncursusRiftPetal[] petals;
     private final RiftStroke[] strokes;
@@ -42,13 +42,16 @@ public final class IncursusRiftInstance {
     private int age;
 
     private IncursusRiftInstance(
-            RiftMode mode, RiftAnchorMode anchorMode, int ownerId, Vec3 center, float scale, long seed,
+            RiftMode mode, RiftAnchorMode anchorMode, int ownerId, Vec3 center, double radius, long seed,
             IncursusRiftPetal[] petals, RiftStroke[] strokes, int lifetimeTicks, float fadeStart) {
+        if (!Double.isFinite(radius) || radius < 0.0){
+            throw new IllegalArgumentException("Invalid swing radius: " + radius);
+        }
         this.mode = mode;
         this.anchorMode = anchorMode;
         this.ownerId = ownerId;
         this.center = center;
-        this.scale = scale;
+        this.radius = radius;
         this.seed = seed;
         this.petals = petals;
         this.strokes = strokes;
@@ -57,10 +60,11 @@ public final class IncursusRiftInstance {
     }
 
     /**
-     * 普通挥砍：八瓣水平腰环。参数与旧实现的 {@code create} 一一对应，不做任何重排。
+     * 普通挥砍：八瓣水平腰环。花瓣参数与旧实现的 {@code create} 一一对应，只把蓄力倍率换成
+     * 服务端算出的伤害半径。
      */
     public static IncursusRiftInstance createMelee(
-            int ownerId, Vec3 center, float scale, long seed,
+            int ownerId, Vec3 center, double radius, long seed,
             int lifetimeTicks, int petalCount, float fadeStart) {
         int count = Math.max(1, petalCount);
         IncursusRiftPetal[] petals = new IncursusRiftPetal[count];
@@ -68,12 +72,14 @@ public final class IncursusRiftInstance {
             petals[i] = IncursusRiftPetal.derive(seed, i, count);
         }
         return new IncursusRiftInstance(
-                RiftMode.MELEE_RING, RiftAnchorMode.FOLLOW_OWNER, ownerId, center, scale, seed,
+                RiftMode.MELEE_RING, RiftAnchorMode.FOLLOW_OWNER, ownerId, center, radius, seed,
                 petals, NO_STROKES, Math.max(1, lifetimeTicks), fadeStart);
     }
 
     /**
      * 技能模式：一批已经算好的刀痕，锚点固定在触发时的世界坐标。
+     *
+     * <p>它们按刀痕画，不读半径，所以 {@code radius} 记 0 表示"这次效果没有腰环"。
      */
     public static IncursusRiftInstance createSkill(
             RiftMode mode, int ownerId, Vec3 center, long seed, List<RiftStroke> strokes) {
@@ -87,7 +93,7 @@ public final class IncursusRiftInstance {
         }
         int lifetime = Math.min((int) Math.ceil(Math.max(lastTick, 0.0F)), (int) MAX_SKILL_LIFETIME_TICKS);
         IncursusRiftInstance instance = new IncursusRiftInstance(
-                mode, RiftAnchorMode.FIXED_WORLD, ownerId, center, 1.0F, seed,
+                mode, RiftAnchorMode.FIXED_WORLD, ownerId, center, 0.0, seed,
                 NO_PETALS, array, Math.max(1, lifetime + 1), 0.95F);
         // The particle engine adds a newly spawned particle after ticking the live particles.
         instance.age = -1;
@@ -137,8 +143,11 @@ public final class IncursusRiftInstance {
         return anchorMode;
     }
 
-    public float scale() {
-        return scale;
+    /**
+     * 这一次挥砍的伤害半径（普通挥砍专用；技能模式为 0，它们按刀痕画）。
+     */
+    public double radius() {
+        return radius;
     }
 
     public long seed() {

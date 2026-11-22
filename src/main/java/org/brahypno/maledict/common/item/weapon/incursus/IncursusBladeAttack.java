@@ -14,7 +14,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.ForgeMod;
@@ -56,15 +55,14 @@ public final class IncursusBladeAttack {
         player.getPersistentData().putLong(LAST_ATTACK_TICK, gameTime);
 
         int sweepingLevel = weapon.getEnchantmentLevel(Enchantments.SWEEPING_EDGE);
-        double reach = player.getAttributeValue(ForgeMod.ENTITY_REACH.get()) + 0.5
-                       + sweepingLevel * 0.25;
-        Vec3 attackOffset = player.getLookAngle().scale(0.4);
-        Vec3 attackOrigin = player.position().add(attackOffset);
-        AABB searchArea = player.getBoundingBox().move(attackOffset).inflate(reach);
+        // 这一次挥砍唯一的范围。命中判定与发给客户端的腰环半径都读它，两边不会再飘。
+        double reach = IncursusSwingReach.radiusOf(
+                player.getAttributeValue(ForgeMod.ENTITY_REACH.get()), sweepingLevel);
+        Vec3 swingCenter = IncursusSwingReach.centerOf(player);
         List<Entity> targets = player.level().getEntities(
                 player,
-                searchArea,
-                target -> isValidTarget(player, target, attackOrigin, reach));
+                IncursusSwingReach.searchBox(swingCenter, reach),
+                target -> isValidTarget(player, target, swingCenter, reach));
         targets.sort(Comparator.comparingDouble(player::distanceToSqr));
         // Multipart bosses expose the body plus every animated part as separate entities. One
         // swing must still be one main damage per living root, otherwise each part opens its own
@@ -73,7 +71,7 @@ public final class IncursusBladeAttack {
 
         float attackStrength = player.getAttackStrengthScale(0.5f);
         player.swing(InteractionHand.MAIN_HAND, true);
-        playSlashEffect(player, attackStrength);
+        playSlashEffect(player, reach);
 
         DamageChannels channels = damageChannels(player);
         // 5 级「武器攻击更加真实」：同一个门禁同时管两个读数 —— 轻档探针改成补满，以及这一刀顺着
@@ -220,19 +218,16 @@ public final class IncursusBladeAttack {
     }
 
     /**
-     * 蓄力 0% → 30%、50% → 65%、100% → 100%；只影响视觉，不使用伤害的平方曲线。
+     * 腰环半径就是这一次挥砍的伤害半径。蓄力只改伤害数值，不再改范围——轻点与满蓄力的环一样大、
+     * 一样远，玩家看到的圈就是真正能打到的圈。
      */
-    static float slashScale(float attackStrength) {
-        return 0.3f + 0.7f * attackStrength;
-    }
-
-    private static void playSlashEffect(ServerPlayer player, float attackStrength) {
+    private static void playSlashEffect(ServerPlayer player, double reach) {
         SoundHelper.playSound(
                 player,
                 MaledictSounds.INCURSUS_BLADE_SLASH.get(),
                 1.0f,
                 RandomHelper.randomBetween(player.getRandom(), 0.9f, 1.1f));
-        MaledictNetwork.sendIncursusSlash(player, slashScale(attackStrength));
+        MaledictNetwork.sendIncursusSlash(player, reach);
     }
 
     /**
@@ -246,16 +241,19 @@ public final class IncursusBladeAttack {
                 RandomHelper.randomBetween(player.getRandom(), 0.95f, 1.05f));
     }
 
+    /**
+     * 目标过滤：原版的那些闸照旧，范围提问交给 {@link IncursusSwingReach#touches}——
+     * 与碰撞箱最近点比距离，而不是拿脚底点凑数。
+     */
     private static boolean isValidTarget(
-            ServerPlayer player, Entity target, Vec3 attackOrigin, double reach) {
+            ServerPlayer player, Entity target, Vec3 swingCenter, double reach) {
         if (target == player || !target.isAlive() || !target.isAttackable() || target.skipAttackInteraction(player) || !player.hasLineOfSight(target)){
             return false;
         }
         if (target instanceof Player otherPlayer && !player.canHarmPlayer(otherPlayer)){
             return false;
         }
-        double inclusiveReach = reach + target.getBbWidth() * 0.5;
-        return attackOrigin.distanceToSqr(target.position()) <= inclusiveReach * inclusiveReach;
+        return IncursusSwingReach.touches(target.getBoundingBox(), swingCenter, reach);
     }
 
     private IncursusBladeAttack() {

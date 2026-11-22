@@ -37,6 +37,7 @@ import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeAttack;
 import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeEnchantments;
 import org.brahypno.maledict.common.item.weapon.incursus.IncursusBladeItem;
 import org.brahypno.maledict.common.item.weapon.incursus.IncursusScytheBoomerangEntity;
+import org.brahypno.maledict.common.item.weapon.incursus.IncursusSwingReach;
 import org.brahypno.maledict.registry.MaledictAttributes;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
@@ -914,13 +915,14 @@ public final class DemiurgeAwakeningTest {
             boolean live = level.getEntity(victim.getId()) == victim;
             boolean sight = attacker.hasLineOfSight(victim);
             boolean skip = victim.skipAttackInteraction(attacker);
-            double reach = attacker.getAttributeValue(net.minecraftforge.common.ForgeMod.ENTITY_REACH.get()) + 0.5;
-            double distanceSqr = attacker.position().add(attacker.getLookAngle().scale(0.4))
-                                         .distanceToSqr(victim.position());
-            helper.assertTrue(live && sight && !skip && distanceSqr <= Math.pow(reach + victim.getBbWidth() * 0.5, 2),
+            double reach = IncursusSwingReach.radiusOf(
+                    attacker.getAttributeValue(net.minecraftforge.common.ForgeMod.ENTITY_REACH.get()), 0);
+            Vec3 swingCenter = IncursusSwingReach.centerOf(attacker);
+            double distance = Math.sqrt(IncursusSwingReach.distanceSqrToBox(victim.getBoundingBox(), swingCenter));
+            helper.assertTrue(live && sight && !skip && distance <= reach,
                               "The Incursus fixture must start from a hittable victim: live=" + live
                               + ", lineOfSight=" + sight + ", skipInteraction=" + skip
-                              + ", distanceSqr=" + distanceSqr + ", reach=" + reach
+                              + ", distance=" + distance + ", reach=" + reach
                               + ", victimPos=" + victim.position() + ", attackerPos=" + attacker.position());
             float before = victim.getHealth();
             List<DamageRequestEvent> requests = new ArrayList<>();

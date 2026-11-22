@@ -77,6 +77,20 @@ Page: `docs/mechanics/first-vicissitude-adaptation.md`.
 
 Page: `docs/mechanics/incursus-blade-channels.md`.
 
+### Incursus swing range (`IncursusSwingReach`)
+
+- **One radius per swing.** `entity_reach + 0.5 + sweeping × 0.25`, clamped to `MAX_RADIUS` (6.0), with
+  non-finite or non-positive input collapsing to 0. `IncursusBladeAttack#perform` computes it once; the hit test
+  and the `IncursusSlashPacket` payload both read that number, and the client re-applies `clampRadius` on the
+  wire value. Never let a second formula answer "how far does this swing reach".
+- **The drawn ring is the damage sphere's equator.** Centre is the attacker's waist (`centerOf`, the same
+  algorithm as the client's `anchorOf`), the target is hit when the closest point of its bounding box is within
+  the radius, and the melee petal centres land on the radius at the end of the bloom. Charge changes damage
+  numbers only, never size or reach.
+- Do not go back to the feet point plus half the width: it missed elevated targets and oversized hitboxes.
+
+Page: `docs/mechanics/incursus-swing-range.md`.
+
 ### Boss contact (`VicissitudeBossEntity`)
 
 `isPushable() == false` **and** the three-argument `push` no-op are both required. `LivingEntity#aiStep` ends with

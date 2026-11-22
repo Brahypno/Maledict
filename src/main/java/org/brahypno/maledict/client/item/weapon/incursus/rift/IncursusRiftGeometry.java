@@ -9,6 +9,9 @@ package org.brahypno.maledict.client.item.weapon.incursus.rift;
  *
  * <p>所有公式都对齐旧效果实测值，不是新设计：寿命 5 tick × 2.5 = 12 tick，
  * 位移走原版 {@code Particle.tick()} 的 0.98 摩擦积分，透明度整段为 1。
+ *
+ * <p>但整朵花按这一次挥砍的<b>伤害半径</b>归一化（{@link #petalDistance}）：花心到末帧花瓣中心
+ * 的那圈正好落在服务端真正能打到的球半径上，开合的节奏不变，大小不再由蓄力决定。
  */
 public final class IncursusRiftGeometry {
     /**
@@ -27,6 +30,13 @@ public final class IncursusRiftGeometry {
      * 原版 {@code Particle.friction}：每 tick 位移后速度乘以它。
      */
     public static final float PARTICLE_FRICTION = 0.98F;
+    /**
+     * 刀痕尺寸的基准半径：默认配置（12 tick 寿命、0.35 格/tick 漂移）下满生命周期的花瓣中心圆。
+     * 这套贴图的四边形半边当初就是照这个环定的 3.75 格，所以刀痕尺寸按「本次半径 / 它」等比缩放。
+     */
+    public static final double AUTHORED_RING_RADIUS = ROOT_RADIUS + radialDistance(1.0F, 12, 0.35F);
+
+    private static final double DEGENERATE_RING = 1.0E-6;
 
     private static final long GOLDEN = 0x9E3779B97F4A7C15L;
 
@@ -88,10 +98,35 @@ public final class IncursusRiftGeometry {
     }
 
     /**
-     * 开合包络：旧效果的 quadSize 全程恒定，所以这里恒为 1；保留接口给后续调参。
+     * 单瓣中心到花心的距离（格）。
+     *
+     * <p>末帧正好落在 {@code radius} 上，那颗球就是服务端的伤害球，所以画出来的腰环就是它的赤道。
+     * 每瓣自己的漂移倍率只影响中途的快慢，不再改变终点：八瓣的末帧中心严格同在一个圆上，
+     * 花瓣的松散感留给各自的尺寸倍率（0.8–1.2）。漂移速度被配置成 0 时环也不会缩到花心，
+     * 而是从头到尾贴在伤害边界上。
      */
-    public static float openEnvelope(float ageFraction) {
-        return 1.0F;
+    public static double petalDistance(
+            float ageFraction, int lifetimeTicks, float speedPerTick, float speedScale, double radius) {
+        if (!(radius > 0.0) || !Double.isFinite(radius)){
+            return 0.0;
+        }
+        double full = ROOT_RADIUS + radialDistance(1.0F, lifetimeTicks, speedPerTick) * speedScale;
+        if (full <= DEGENERATE_RING){
+            return radius;
+        }
+        double drifted = ROOT_RADIUS + radialDistance(clamp01(ageFraction), lifetimeTicks, speedPerTick) * speedScale;
+        return radius * drifted / full;
+    }
+
+    /**
+     * 四边形半边：按半径等比缩放，比 {@link #AUTHORED_RING_RADIUS} 大就跟着放大，
+     * 于是六格的环不会碎成八道孤立的小刀光，也不会在默认半径下露出多余的空白。
+     */
+    public static float halfExtentForRadius(double radius, float baseHalfExtent) {
+        if (!(radius > 0.0)){
+            return 0.0F;
+        }
+        return (float) (baseHalfExtent * (radius / AUTHORED_RING_RADIUS));
     }
 
     /**
@@ -116,13 +151,6 @@ public final class IncursusRiftGeometry {
         int frames = Math.max(1, frameCount);
         int frame = (int) (clamp01(ageFraction) * frames);
         return Math.min(frame, frames - 1);
-    }
-
-    /**
-     * 单瓣半径：旧效果全程恒定，末端不放大也不缩小。
-     */
-    public static float halfExtent(float ageFraction, float baseHalfExtent) {
-        return baseHalfExtent * openEnvelope(ageFraction);
     }
 
     private IncursusRiftGeometry() {

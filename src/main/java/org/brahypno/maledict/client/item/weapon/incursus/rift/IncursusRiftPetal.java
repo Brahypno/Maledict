@@ -6,6 +6,9 @@ package org.brahypno.maledict.client.item.weapon.incursus.rift;
  * <p>取值范围照抄旧效果的两次 {@code RandomHelper.randomBetween}：
  * 尺寸 2.0–3.0 × 1.5 = 3.0–4.5 格（基准 3.75 × 0.8–1.2），速度 0.3–0.4 格/tick（基准 0.35 × 0.857–1.143）。
  *
+ * <p>{@code speedScale} 现在只决定中途绽开的快慢：整朵花按伤害半径归一化，八瓣的末帧中心严格
+ * 落在同一个圆上（{@link IncursusRiftGeometry#petalDistance}）。
+ *
  * @param angle      这一瓣在世界 XZ 平面上的外扩方向
  * @param sizeScale  相对旧效果 quadSize 中值的倍率
  * @param speedScale 相对旧效果每 tick 位移中值的倍率
