@@ -8,7 +8,11 @@
     "PlayerRavenShoulderMixin",
     "ProjectileAccess",
     "WeepingWellRejectionHandlerMixin",
-    "MalignantInfluenceDataAccessor"
+    "MalignantInfluenceDataAccessor",
+    "HiddenBladeNecklaceRiftMixin",
+    "ReboundHandlerMixin",
+    "LodestoneAttributeEventHandlerMixin",
+    "WeaponParticleEffectBuilderAccess"
   ],
   "client": [
     "GameRendererMixin",
