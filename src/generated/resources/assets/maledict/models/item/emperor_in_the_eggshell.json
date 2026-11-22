@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "maledict:item/emperor_in_the_eggshell"
+  }
+}
