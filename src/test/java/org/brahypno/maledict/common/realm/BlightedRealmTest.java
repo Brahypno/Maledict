@@ -7,6 +7,7 @@ import com.sammy.malum.registry.common.MalumMobEffects;
 import com.sammy.malum.registry.common.block.MalumBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -16,6 +17,8 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.phys.Vec3;
@@ -25,6 +28,8 @@ import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
+import org.brahypno.maledict.common.realm.reliquary.InvertedReliquaryPiece;
+import org.brahypno.maledict.common.realm.reliquary.InvertedReliquaryStructure;
 import org.brahypno.maledict.data.worldgen.MaledictWorldgen;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.capability.ICurio;
@@ -37,6 +42,20 @@ import java.util.UUID;
 @PrefixGameTestTemplate(false)
 public final class BlightedRealmTest {
 
+    /**
+     * 地表断言写的是「表面规则跑过」，不是「每一列都恰好是腐枯材料」。
+     *
+     * <p>装饰步骤把矿脉放在表面规则之后（本维度里矿脉寄生在污秽石/扭曲石上，落下来的是原版矿石方块），
+     * 所以露头矿脉能在地表掏出一块 {@code minecraft:iron_ore}，单列断言就红在这块矿石上——原版主世界
+     * 同样如此，这不是表面规则的失败。改成两半：任何原版地表材料出现在采样列即失败（表面规则整体没跑时
+     * 必红），腐枯材料必须占九列里的多数（表面规则大面积失效时必红），单列被矿脉或地衣穿透时不红。
+     *
+     * <p>地宫另有一条：模板必须真的被 {@code StructureTemplateManager} 读出来。1.21 把数据包里的模板目录
+     * 从 {@code structures/} 改成了 {@code structure/}，读不到时管理器不抛异常，只给一份空模板——piece
+     * 照样成立、{@code /locate} 照样能定位，可放置阶段（{@code placeInWorld} 见 {@code palettes} 为空即返回）
+     * 一块方块都不放，正是「能定位却不生成」。GameTest 服务端本身不生成结构（{@code generateStructures=false}），
+     * 所以这里查模板与 piece 的包围盒，而不是等自然生成。
+     */
     @GameTest(template = "test_empty", batch = "blighted_realm", timeoutTicks = 300)
     public static void dimensionAndNativeWorldgenLoad(GameTestHelper helper) {
         var realm = helper.getLevel().getServer().getLevel(BlightedRealm.LEVEL);
@@ -48,7 +67,6 @@ public final class BlightedRealmTest {
                 "Terrain uses the overworld-style noise generator");
         BlockPos sample = new BlockPos(512, 64, 512);
         realm.getChunk(sample);
-        int surface = realm.getHeight(Heightmap.Types.OCEAN_FLOOR, sample.getX(), sample.getZ());
         var biome = realm.getBiome(sample);
         check(helper, biome.is(BiomeTags.IS_OVERWORLD) && biome.is(BlightedRealm.WASTES),
                 "The initial biome exposes the overworld generation tag");
@@ -56,14 +74,62 @@ public final class BlightedRealmTest {
                 "Strongholds inherit overworld membership through the vanilla nested tag");
         check(helper, !biome.value().hasPrecipitation() && biome.value().getWaterColor() == 0x30243E,
                 "The biome has still weather and purple water");
-        var ground = realm.getBlockState(new BlockPos(sample.getX(), surface - 1, sample.getZ()));
-        check(helper, ground.is(MalumBlocks.BLIGHTED_EARTH.get())
-                        || ground.is(MalumBlocks.TAINTED_ROCK.get()) || ground.is(MalumBlocks.BLIGHTED_SOULWOOD.get())
-                        || ground.is(MalumBlocks.SOULWOOD_LOG.get()) || ground.is(BlockTags.LEAVES),
-                "Surface generation must use blighted ground or soulwood; got " + ground + " at y=" + surface);
+        // 九列都留在 sample 自己那个区块里（区块占 512..527）；跨区块取样本会连带生成邻区块。
+        int blighted = 0;
+        String offender = "";
+        String other = "";
+        for (int dx : new int[]{2, 8, 13}) {
+            for (int dz : new int[]{2, 8, 13}) {
+                int x = sample.getX() + dx;
+                int z = sample.getZ() + dz;
+                int height = realm.getHeight(Heightmap.Types.OCEAN_FLOOR, x, z);
+                var ground = realm.getBlockState(new BlockPos(x, height - 1, z));
+                if (blightedGround(ground)) {
+                    blighted++;
+                } else if (vanillaSurface(ground)) {
+                    offender = ground + " at " + x + "," + (height - 1) + "," + z;
+                } else {
+                    other = ground + " at " + x + "," + (height - 1) + "," + z;
+                }
+            }
+        }
+        check(helper, offender.isEmpty(), "Surface generation must not leave vanilla surface materials; got " + offender);
+        check(helper, blighted * 2 > 9,
+                "Blighted ground must still dominate the sampled surface; only " + blighted + "/9 columns, last outlier " + other);
         check(helper, realm.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).containsKey(MaledictWorldgen.TREES.location()),
                 "The native soulwood configured feature must load");
+
+        var templates = helper.getLevel().getServer().getStructureManager();
+        Vec3i size = new Vec3i(InvertedReliquaryStructure.SIZE, InvertedReliquaryStructure.HEIGHT, InvertedReliquaryStructure.SIZE);
+        for (String variant : new String[]{"intact", "fractured", "sunken"}) {
+            var template = templates.get(InvertedReliquaryPiece.templateId(variant));
+            check(helper, template.isPresent() && template.get().getSize().equals(size),
+                    "The " + variant + " reliquary template must load as " + size + " from "
+                            + "data/maledict/structure/inverted_reliquary/" + variant + ".nbt (1.21's template folder is singular); got "
+                            + template.map(loaded -> loaded.getSize().toString()).orElse("no such template"));
+        }
+        var turned = new InvertedReliquaryPiece(templates, BlockPos.ZERO, Rotation.CLOCKWISE_90, "intact").getBoundingBox();
+        check(helper, turned.maxX() - turned.minX() + 1 == InvertedReliquaryStructure.SIZE
+                        && turned.maxZ() - turned.minZ() + 1 == InvertedReliquaryStructure.SIZE
+                        && turned.maxY() - turned.minY() + 1 == InvertedReliquaryStructure.HEIGHT,
+                "A quarter-turned reliquary must stay inside its own footprint around the pivot; got " + turned);
         helper.succeed();
+    }
+
+    private static boolean blightedGround(BlockState state) {
+        return state.is(MalumBlocks.BLIGHTED_EARTH.get()) || state.is(MalumBlocks.TAINTED_ROCK.get())
+                || state.is(MalumBlocks.BLIGHTED_SOULWOOD.get()) || state.is(MalumBlocks.SOULWOOD_LOG.get())
+                || state.is(BlockTags.LEAVES);
+    }
+
+    /** 出现即说明表面规则没跑：矿石、地衣、水这些后置装饰步骤放上去的方块都不在此列。 */
+    private static boolean vanillaSurface(BlockState state) {
+        return state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.DIRT) || state.is(Blocks.COARSE_DIRT)
+                || state.is(Blocks.ROOTED_DIRT) || state.is(Blocks.PODZOL) || state.is(Blocks.MYCELIUM)
+                || state.is(Blocks.STONE) || state.is(Blocks.DEEPSLATE) || state.is(Blocks.GRANITE)
+                || state.is(Blocks.DIORITE) || state.is(Blocks.ANDESITE) || state.is(Blocks.TUFF)
+                || state.is(Blocks.SAND) || state.is(Blocks.GRAVEL) || state.is(Blocks.CLAY)
+                || state.is(Blocks.POWDER_SNOW) || state.is(Blocks.SNOW_BLOCK) || state.is(Blocks.PACKED_ICE);
     }
 
     @GameTest(template = "test_empty", batch = "blighted_realm", timeoutTicks = 400)

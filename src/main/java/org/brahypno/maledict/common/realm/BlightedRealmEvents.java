@@ -1,20 +1,26 @@
 package org.brahypno.maledict.common.realm;
 
 import com.sammy.malum.registry.common.block.MalumBlocks;
+import com.sammy.malum.registry.common.item.MalumItems;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.event.tick.*;
 import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerSetSpawnEvent;
 import net.neoforged.bus.api.Event;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.registry.MaledictItems;
 
 import java.util.Set;
 
@@ -60,6 +66,31 @@ public final class BlightedRealmEvents {
     @SubscribeEvent
     public static void noRespawn(PlayerSetSpawnEvent event) {
         if (event.getSpawnLevel().equals(BlightedRealm.LEVEL)) event.setCanceled(true);
+    }
+
+    /**
+     * The realm hands its visitors its own book: Malum's Encyclopedia Esoterica becomes the
+     * Lightfall Codex, whose Arcana view keeps the same entries and adds the Void and Lightfall
+     * pages. The swap is in place, so the slot and count stay where they were.
+     *
+     * <p>1.20.1 是「新堆叠 + {@code setTag(stack.getTag().copy())}」——1.21 没有根 NBT，
+     * 换 {@link ItemStack#transmuteCopy} 更准：它换物品与数量、把原件上的组件补丁整份搬过去，
+     * 自定义名、附魔光效之类都不会丢，正是 1.20.1 那句 {@code copy()} 的意图。
+     */
+    @SubscribeEvent
+    public static void replaceCodexOnEntry(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (!event.getTo().equals(BlightedRealm.LEVEL) || !(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        Inventory inventory = player.getInventory();
+        boolean replaced = false;
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (!stack.is(MalumItems.ENCYCLOPEDIA_ESOTERICA.get())) continue;
+            inventory.setItem(slot, stack.transmuteCopy(MaledictItems.LIGHTFALL_CODEX.get(), stack.getCount()));
+            replaced = true;
+        }
+        if (replaced) inventory.setChanged();
     }
 
     @SubscribeEvent

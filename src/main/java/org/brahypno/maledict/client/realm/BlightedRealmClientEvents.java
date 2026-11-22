@@ -48,7 +48,7 @@ public final class BlightedRealmClientEvents {
         BlockPos origin = minecraft.player.blockPosition();
         if (level.getGameTime() % 8 == 0) {
             BlockPos leaf = origin.offset(random.nextInt(17) - 8, random.nextInt(9), random.nextInt(17) - 8);
-            if (level.hasChunkAt(leaf) && level.getBlockState(leaf).is(BlockTags.LEAVES) && level.isEmptyBlock(leaf.below())) {
+            if (level.isLoaded(leaf) && level.getBlockState(leaf).is(BlockTags.LEAVES) && level.isEmptyBlock(leaf.below())) {
                 level.addParticle(new BlockParticleOption(ParticleTypes.FALLING_DUST, level.getBlockState(leaf)),
                         leaf.getX() + random.nextDouble(), leaf.getY() - 0.05, leaf.getZ() + random.nextDouble(), 0, 0, 0);
             }
@@ -59,7 +59,7 @@ public final class BlightedRealmClientEvents {
         // Only actual nearby water, wood and leaves emit positional sounds.
         for (int attempt = 0; attempt < 20; attempt++) {
             BlockPos source = origin.offset(random.nextInt(17) - 8, random.nextInt(7) - 3, random.nextInt(17) - 8);
-            if (!level.hasChunkAt(source)) continue;
+            if (!level.isLoaded(source)) continue;
             var state = level.getBlockState(source);
             var sound = state.getFluidState().is(FluidTags.WATER) ? SoundEvents.WATER_AMBIENT
                     : state.is(BlockTags.LOGS) ? SoundEvents.BAMBOO_WOOD_HIT

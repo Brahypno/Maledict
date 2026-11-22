@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import org.brahypno.maledict.registry.MaledictBlocks;
 
 import java.util.Optional;
 
@@ -112,7 +113,7 @@ final class WellPlacement {
             BlockPos center = new BlockPos(x, 0, z);
             if (!level.getWorldBorder().isWithinBounds(center.offset(-7, 0, -7))
                     || !level.getWorldBorder().isWithinBounds(center.offset(7, 0, 7))
-                    || links.hasWellNear(level.dimension(), center, 20)) continue;
+                    || links.hasIntactWellNear(level, center, 20)) continue;
             level.getChunk(x >> 4, z >> 4);
             int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             while (surface > level.getMinBuildHeight() + 16
@@ -146,12 +147,19 @@ final class WellPlacement {
     }
 
     private static boolean natural(BlockState state) {
+        // 1.20.1 的白名单里还有四种 Maledict 自己的地表装饰块；它们由本 realm 的 feature 大量生成，
+        // 少了它们，压在装饰块上的井址一律判 blocked 并挪位（叠加缺失的 adopt 路径后更容易直接建不出来）。
+        // BLIGHTED_SOIL 不再列：Malum 1.8.2 已删掉这个方块。
         return state.isAir() || state.canBeReplaced() || !state.getFluidState().isEmpty()
                 || state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.DIRT) || state.is(BlockTags.SAND)
                 || state.is(BlockTags.LOGS) || state.is(BlockTags.LEAVES) || state.is(Blocks.GRAVEL)
                 || state.is(net.neoforged.neoforge.common.Tags.Blocks.ORES)
                 || state.is(Blocks.CLAY) || state.is(Blocks.SNOW_BLOCK) || state.is(Blocks.ICE)
                 || state.is(Blocks.PACKED_ICE) || state.is(MalumBlocks.BLIGHTED_EARTH.get())
+                || state.is(MaledictBlocks.WITHERED_LEAF_LITTER.get())
+                || state.is(MaledictBlocks.EXPOSED_SOULWOOD_ROOTS.get())
+                || state.is(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES.get())
+                || state.is(MaledictBlocks.WITHERLIGHT_MUSHROOM.get())
                 || state.is(MalumBlocks.BLIGHTED_GROWTH.get())
                 || state.is(MalumBlocks.CLINGING_BLIGHT.get()) || state.is(MalumBlocks.TAINTED_ROCK.get())
                 || state.is(MalumBlocks.TWISTED_ROCK.get())

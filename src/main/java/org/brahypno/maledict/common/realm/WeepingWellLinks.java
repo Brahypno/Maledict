@@ -45,10 +45,17 @@ public final class WeepingWellLinks extends SavedData {
         return links.get(core);
     }
 
-    public boolean hasWellNear(ResourceKey<Level> dimension, BlockPos center, int separation) {
+    /**
+     * True only when a recorded well still stands this close. A destroyed endpoint keeps its pairing — that is
+     * how the other side knows where to resurrect it — but it must not reserve its own site: the rebuild tries
+     * the recorded X/Z first, the way a broken Nether portal is relit where it stood. The distance gate runs
+     * before the block lookup so far-away pairs never force a chunk load.
+     */
+    public boolean hasIntactWellNear(ServerLevel level, BlockPos center, int separation) {
         long squared = (long) separation * separation;
-        return links.keySet().stream().anyMatch(pos -> pos.dimension().equals(dimension)
-                && horizontalDistanceSquared(pos.pos(), center) < squared);
+        return links.keySet().stream().anyMatch(pos -> pos.dimension().equals(level.dimension())
+                && horizontalDistanceSquared(pos.pos(), center) < squared
+                && WellPlacement.isWell(level.getBlockState(pos.pos())));
     }
 
     public void replaceEndpoint(Link old, Endpoint replacement) {

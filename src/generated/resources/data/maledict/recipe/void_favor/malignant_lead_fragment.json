@@ -1,0 +1,10 @@
+{
+  "type": "malum:void_favor",
+  "input": {
+    "item": "malum:cthonic_gold_fragment"
+  },
+  "result": {
+    "count": 1,
+    "id": "maledict:malignant_lead_fragment"
+  }
+}
