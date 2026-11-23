@@ -14,10 +14,13 @@ import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import org.brahypno.maledict.Maledict;
@@ -50,6 +53,44 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 6)
                 .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "meltfall_axe"));
 
+        // 腐枯凋灵的召唤材料：哭泣石两种 + 腐枯头颅。
+        new SpiritInfusionRecipeBuilder(MalumItems.TAINTED_ROCK.get(), 4, MaledictItems.CRYING_TAINTED_ROCK.get(), 4)
+                .addExtraItem(Items.CRYING_OBSIDIAN.asItem(), 4)
+                .addSpirit(MalumSpiritTypes.SACRED_SPIRIT, 6)
+                .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 4)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "crying_tainted_rock"));
+        new SpiritInfusionRecipeBuilder(MalumItems.TWISTED_ROCK.get(), 4, MaledictItems.CRYING_TWISTED_ROCK.get(), 4)
+                .addExtraItem(Items.CRYING_OBSIDIAN.asItem(), 4)
+                .addSpirit(MalumSpiritTypes.WICKED_SPIRIT, 6)
+                .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 4)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "crying_twisted_rock"));
+        new SpiritInfusionRecipeBuilder(Items.WITHER_SKELETON_SKULL.asItem(), 1, MaledictItems.BLIGHTED_WITHER_SKULL.get(), 1)
+                .addExtraItem(MalumItems.BLIGHTED_GUNK.get(), 6)
+                .addSpirit(MalumSpiritTypes.SACRED_SPIRIT, 6)
+                .addSpirit(MalumSpiritTypes.WICKED_SPIRIT, 6)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "blighted_wither_skull"));
+
+        // 伯爵的礼杖：图腾杖灌入虚空盐与扭曲石，风与水的精魂各 16。
+        new SpiritInfusionRecipeBuilder(MalumItems.TOTEMIC_STAFF.get(), 1, MaledictItems.BARON_CEREMONIAL_STAFF.get(), 1)
+                .addExtraItem(MalumItems.VOID_SALTS.get(), 4)
+                .addExtraItem(MalumItems.TWISTED_ROCK.get(), 4)
+                .addSpirit(MalumSpiritTypes.AQUEOUS_SPIRIT, 16)
+                .addSpirit(MalumSpiritTypes.AERIAL_SPIRIT, 16)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "baron_ceremonial_staff"));
+
+        // 拘魂：封印由精炼灵魂石灌注而成；多余卷轴可以拆回纸。
+        new SpiritInfusionRecipeBuilder(MalumItems.REFINED_SOULSTONE.get(), 1, MaledictItems.SOULBINDING_SEAL.get(), 1)
+                .addExtraItem(MalumItems.HEX_ASH.get(), 4)
+                .addExtraItem(MalumItems.VOID_SALTS.get(), 4)
+                .addSpirit(MalumSpiritTypes.ELDRITCH_SPIRIT, 16)
+                .addSpirit(MalumSpiritTypes.WICKED_SPIRIT, 16)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "soulbinding_seal"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, Items.PAPER, 3)
+                              .requires(MaledictItems.SOULBINDING_SCROLL.get())
+                              .unlockedBy("has_soulbinding_scroll", has(MaledictItems.SOULBINDING_SCROLL.get()))
+                              .save(recipes, ResourceLocation.fromNamespaceAndPath(
+                                      Maledict.MODID, "paper_from_soulbinding_scroll"));
+
         new SpiritRepairRecipeBuilder(new SizedIngredient(Ingredient.of(MalumItems.SOUL_STAINED_STEEL_INGOT.get()), 2), 0.75f)
                 .withValidItem(MaledictItems.MELTFALL_AXE.get())
                 .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 8)
@@ -58,7 +99,7 @@ public final class MaledictRecipes extends RecipeProvider {
                 .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "meltfall_axe"));
 
         new SpiritInfusionRecipeBuilder(MaledictItems.MELTFALL_AXE.get(), 1, MaledictItems.LOVER_AXE.get(), 1)
-                .addExtraItem(MalumItems.MALIGNANT_PEWTER_INGOT.get(), 4)
+                .addExtraItem(MalumItems.MALIGNANT_PEWTER_INGOT.get(), 6)
                 .addExtraItem(MalumItems.FUSED_CONSCIOUSNESS.get(), 1)
                 .addExtraItem(MalumItems.BLOCK_OF_NULL_SLATE.get(), 3)
                 .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 18)
@@ -76,9 +117,54 @@ public final class MaledictRecipes extends RecipeProvider {
                 .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "lover_axe"));
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, MalumItems.MALIGNANT_LEAD.get())
-                .requires(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 8)
+                .requires(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 9)
                 .unlockedBy("has_malignant_lead_fragment", has(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get()))
                 .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "malignant_lead_from_fragments"));
+
+        SimpleCookingRecipeBuilder.smelting(Ingredient.of(MaledictItems.LUMENFALL_BISMUTH_ORE.get()),
+                                            RecipeCategory.MISC, MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 2.0F, 200)
+                                  .unlockedBy("has_lumenfall_bismuth_ore", has(MaledictItems.LUMENFALL_BISMUTH_ORE.get()))
+                                  .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
+                                          "lumenfall_bismuth_ingot_from_smelting_lumenfall_bismuth_ore"));
+        SimpleCookingRecipeBuilder.blasting(Ingredient.of(MaledictItems.LUMENFALL_BISMUTH_ORE.get()),
+                                            RecipeCategory.MISC, MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 2.0F, 100)
+                                  .unlockedBy("has_lumenfall_bismuth_ore", has(MaledictItems.LUMENFALL_BISMUTH_ORE.get()))
+                                  .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
+                                          "lumenfall_bismuth_ingot_from_blasting_lumenfall_bismuth_ore"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, MaledictItems.LUMENFALL_BISMUTH_BLOCK.get())
+                           .define('#', MaledictItems.LUMENFALL_BISMUTH_INGOT.get())
+                           .pattern("###").pattern("###").pattern("###")
+                           .group("lumenfall_bismuth_block")
+                           .unlockedBy("has_lumenfall_bismuth_ingot", has(MaledictItems.LUMENFALL_BISMUTH_INGOT.get()))
+                           .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "lumenfall_bismuth_block"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 9)
+                              .requires(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get())
+                              .group("lumenfall_bismuth_ingot")
+                              .unlockedBy("has_lumenfall_bismuth_block", has(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get()))
+                              .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
+                                      "lumenfall_bismuth_ingot_from_block"));
+
+        new SpiritInfusionRecipeBuilder(Items.AMETHYST_SHARD, 4, MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get(), 1)
+                .addExtraItem(MalumItems.MALIGNANT_LEAD.get(), 1)
+                .addExtraItem(MalumItems.AURIC_EMBERS.get(), 2)
+                .addExtraItem(MaledictItems.LUMENFALL_BISMUTH_INGOT.get(), 3)
+                .addSpirit(MalumSpiritTypes.WICKED_SPIRIT, 16)
+                .addSpirit(MalumSpiritTypes.SACRED_SPIRIT, 16)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "refracted_lead_bismuth_eutectic"));
+
+        new VoidFavorRecipeBuilder(MalumItems.CTHONIC_GOLD_FRAGMENT.get(), MaledictItems.MALIGNANT_LEAD_FRAGMENT.get(), 1)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "malignant_lead_fragment"));
+
+        lightwardArmorRecipes(recipes, MalumItems.SOUL_STAINED_STEEL_HELMET.get(),
+                MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get(), "aufheben_lightward_helmet");
+        lightwardArmorRecipes(recipes, MalumItems.SOUL_STAINED_STEEL_CHESTPLATE.get(),
+                MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get(), "aufheben_lightward_chestplate");
+        lightwardArmorRecipes(recipes, MalumItems.SOUL_STAINED_STEEL_LEGGINGS.get(),
+                MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS.get(), "aufheben_lightward_leggings");
+        lightwardArmorRecipes(recipes, MalumItems.SOUL_STAINED_STEEL_BOOTS.get(),
+                MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get(), "aufheben_lightward_boots");
 
         for (SpiritArrowType arrowType : SpiritArrowType.values()) {
             ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, MaledictItems.getSpiritArrow(arrowType).get(), 1)
@@ -108,6 +194,23 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 32)
                 .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID,
                                                                     "eidolon_of_the_high_priestess"));
+
+        // 蛋壳中的皇帝：一块光屑灌五槽各 4 枚蛋（1.20.1 那条配方也是五条同样的蛋条目，原样保留），
+        // 三种后期精魂各 16。1.21 的 addExtraItem 收 TagKey，所以蛋照旧按标签写。
+        new SpiritInfusionRecipeBuilder(MaledictItems.LIGHT_FRAGMENT.get(), 1,
+                                       MaledictItems.EMPEROR_IN_THE_EGGSHELL.get(), 1)
+                .addExtraItem(Tags.Items.EGGS, 4)
+                .addExtraItem(Tags.Items.EGGS, 4)
+                .addExtraItem(Tags.Items.EGGS, 4)
+                .addExtraItem(Tags.Items.EGGS, 4)
+                .addExtraItem(Tags.Items.EGGS, 4)
+                .addSpirit(MalumSpiritTypes.WICKED_SPIRIT, 16)
+                .addSpirit(MalumSpiritTypes.SACRED_SPIRIT, 16)
+                .addSpirit(MalumSpiritTypes.INFERNAL_SPIRIT, 16)
+                // 1.21 的构建器自己拼 getRecipeSubfolder()，id 只写名字；照 1.20.1 写成
+                // 「spirit_infusion/xxx」会落成 spirit_infusion/spirit_infusion/xxx。
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(
+                        Maledict.MODID, "emperor_in_the_eggshell"));
 
         new VoidFavorRecipeBuilder(
                 DataComponentIngredient.of(true, new ItemStack(MaledictItems.HANGMAN_FOOL.get())), HangmanFoolItem.create(1))
@@ -210,25 +313,14 @@ public final class MaledictRecipes extends RecipeProvider {
                 .setSecondaryInput(MalumSpiritTypes.SACRED_SPIRIT, 32)
                 .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "rune_of_ripening"));
 
-        new SpiritInfusionRecipeBuilder(
-                MalumItems.MALIGNANT_PEWTER_PLATING.get(), 4, MaledictItems.MALIGNANT_PEWTER_TABLET.get(), 2)
-                .addExtraItem(MalumItems.MNEMONIC_FRAGMENT.get(), 4)
-                .addSpirit(MalumSpiritTypes.AQUEOUS_SPIRIT, 8)
-                .addSpirit(MalumSpiritTypes.EARTHEN_SPIRIT, 8)
-                .addSpirit(MalumSpiritTypes.WICKED_SPIRIT, 8)
-                .addSpirit(MalumSpiritTypes.SACRED_SPIRIT, 8)
-                .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 8)
-                .save(recipes, ResourceLocation.fromNamespaceAndPath(
-                        Maledict.MODID, "malignant_pewter_tablet"));
-
         new RunicWorkbenchRecipeBuilder(com.sammy.malum.registry.common.MalumSoundEvents.RUNIC_WORKBENCH_SHAPES_RUNE_GENERIC, MaledictItems.RUNE_OF_STAGNANT_EVOLUTION.get(), 1)
-                .setPrimaryInput(MaledictItems.MALIGNANT_PEWTER_TABLET.get(), 1)
+                .setPrimaryInput(MalumItems.MALIGNANT_PEWTER_INGOT.get(), 2)
                 .setSecondaryInput(MalumItems.FUSED_CONSCIOUSNESS.get(), 2)
                 .save(recipes, ResourceLocation.fromNamespaceAndPath(
                         Maledict.MODID, "rune_of_stagnant_evolution"));
 
         new RunicWorkbenchRecipeBuilder(com.sammy.malum.registry.common.MalumSoundEvents.RUNIC_WORKBENCH_SHAPES_RUNE_GENERIC, MaledictItems.RUNE_OF_ROTTEN_BONE.get(), 1)
-                .setPrimaryInput(MaledictItems.MALIGNANT_PEWTER_TABLET.get(), 1)
+                .setPrimaryInput(MalumItems.MALIGNANT_PEWTER_INGOT.get(), 2)
                 .setSecondaryInput(MalumItems.LIVING_FLESH.get(), 64)
                 .save(recipes, ResourceLocation.fromNamespaceAndPath(
                         Maledict.MODID, "rune_of_rotten_bone"));
@@ -250,7 +342,7 @@ public final class MaledictRecipes extends RecipeProvider {
                         Maledict.MODID, "rune_of_bliss"));
 
         new RunicWorkbenchRecipeBuilder(com.sammy.malum.registry.common.MalumSoundEvents.RUNIC_WORKBENCH_SHAPES_RUNE_GENERIC, MaledictItems.RUNE_OF_THE_FALLEN.get(), 1)
-                .setPrimaryInput(MaledictItems.MALIGNANT_PEWTER_TABLET.get(), 1)
+                .setPrimaryInput(MalumItems.MALIGNANT_PEWTER_INGOT.get(), 2)
                 .setSecondaryInput(MalumItems.AURIC_EMBERS.get(), 64)
                 .save(recipes, ResourceLocation.fromNamespaceAndPath(
                         Maledict.MODID, "rune_of_the_fallen"));
@@ -261,6 +353,24 @@ public final class MaledictRecipes extends RecipeProvider {
                 .addSpirit(MalumSpiritTypes.ELDRITCH_SPIRIT, 11)
                 .addSpirit(MalumSpiritTypes.INFERNAL_SPIRIT, 11)
                 .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, "elegy_bow"));
+    }
+
+    private static void lightwardArmorRecipes(RecipeOutput recipes, Item soulStainedSteel,
+                                              Item lightward, String name) {
+        new SpiritInfusionRecipeBuilder(soulStainedSteel, 1, lightward, 1)
+                .addExtraItem(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get(), 3)
+                .addExtraItem(Items.NETHER_STAR, 1)
+                .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 32)
+                .addSpirit(MalumSpiritTypes.ELDRITCH_SPIRIT, 16)
+                .addSpirit(MalumSpiritTypes.INFERNAL_SPIRIT, 16)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, name));
+        new SpiritRepairRecipeBuilder(new SizedIngredient(Ingredient.of(
+                MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get()), 1), 1.0f)
+                .withValidItem(lightward)
+                .addSpirit(MalumSpiritTypes.ARCANE_SPIRIT, 32)
+                .addSpirit(MalumSpiritTypes.ELDRITCH_SPIRIT, 16)
+                .addSpirit(MalumSpiritTypes.INFERNAL_SPIRIT, 16)
+                .save(recipes, ResourceLocation.fromNamespaceAndPath(Maledict.MODID, name));
     }
 
 }

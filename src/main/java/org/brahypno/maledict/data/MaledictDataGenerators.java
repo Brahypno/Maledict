@@ -6,6 +6,8 @@ import org.brahypno.maledict.data.loot.MaledictBlockLoot;
 import org.brahypno.maledict.data.loot.MaledictRealmLoot;
 import org.brahypno.maledict.data.client.MaledictBlockStates;
 import org.brahypno.maledict.data.tags.MaledictBlockTags;
+import org.brahypno.maledict.data.tags.MaledictEntityTypeTags;
+import org.brahypno.maledict.data.tags.MaledictDamageTypeTags;
 import org.brahypno.maledict.data.loot.MaledictEntityLoot;
 import org.brahypno.maledict.data.client.MaledictItemModels;
 import org.brahypno.maledict.data.tags.MaledictItemTags;
@@ -49,6 +51,15 @@ public final class MaledictDataGenerators {
         generator.addProvider(event.includeServer(), worldgen);
         generator.addProvider(event.includeServer(), new MaledictBiomeTags(output, worldgen.getRegistryProvider(), existingFiles));
         generator.addProvider(event.includeServer(), new MaledictBiomeModifiers(output));
+        generator.addProvider(event.includeServer(), new MaledictSpiritData(output));
+        // 伤害类型与它们的标签：JSON 只从这两个 provider 出，别手写进 src/main/resources。
+        // 标签必须读 entries provider 打补丁后的 registry lookup，否则 tags 阶段还看不到自家的伤害类型。
+        MaledictDamageTypeEntries damageTypes = new MaledictDamageTypeEntries(output, event.getLookupProvider());
+        generator.addProvider(event.includeServer(), damageTypes);
+        generator.addProvider(event.includeServer(), new MaledictDamageTypeTags(
+                output, damageTypes.getRegistryProvider(), existingFiles));
+        // 三份 35×20×35 的 .nbt 只由这里写出：几何源码在 MaledictReliquaryTemplates，生成物在 data/maledict/structures。
+        generator.addProvider(event.includeServer(), new MaledictReliquaryTemplates(output));
         generator.addProvider(event.includeServer(), new LootTableProvider(
                 output,
                 Set.of(),
@@ -70,6 +81,8 @@ public final class MaledictDataGenerators {
         generator.addProvider(event.includeServer(), blockTags);
         generator.addProvider(event.includeServer(), new MaledictItemTags(
                 output, event.getLookupProvider(), blockTags.contentsGetter(), existingFiles));
+        generator.addProvider(event.includeServer(), new MaledictEntityTypeTags(
+                output, event.getLookupProvider(), existingFiles));
     }
 
     private MaledictDataGenerators() {

@@ -1,8 +1,8 @@
 {
   "type": "malum:runeworking",
   "input": {
-    "count": 1,
-    "item": "maledict:malignant_pewter_tablet"
+    "count": 2,
+    "item": "malum:malignant_pewter_ingot"
   },
   "result": {
     "count": 1,

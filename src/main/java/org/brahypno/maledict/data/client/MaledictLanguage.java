@@ -17,6 +17,15 @@ public final class MaledictLanguage extends LanguageProvider {
     @Override
     protected void addTranslations() {
         addInvocationTranslations();
+        addDemiurgeTranslations();
+        addWeepingWitherTranslations();
+        addSoulbindingTranslations();
+        addAufhebenLightwardTranslations();
+        addBaronStaffTranslations();
+        addInvertedReliquaryTranslations();
+        addLightfallCodexTranslations();
+        addMaidBondTranslations();
+        addOwnDamageDeathMessages();
         if ("zh_cn".equals(locale)){
             add("maledict.codex.arrow_index", "精魂箭目录");
             add("maledict.codex.rune_index", "符文目录");
@@ -26,7 +35,8 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES, "灵魂木折枝");
             addBlock(MaledictBlocks.WITHERLIGHT_LAMP, "枯枝蕈灯");
             add("book.maledict.realm.station", "井站残记");
-            add("book.maledict.realm.station.1", "井已经干了。我们沿旧梯下到井室，把从采掘点带回的铅碎片留在侧间。梁上的缺口与那边木架上的一样，看来先走的人也曾在这里歇脚。");
+            add("book.maledict.realm.station.1",
+                "井已经干了。我们沿旧梯下到井室，把从采掘点带回的铅碎片留在侧间。梁上的缺口与那边木架上的一样，看来先走的人也曾在这里歇脚。");
             add("book.maledict.realm.station.2", "祭址那边又没有回应。回来时，井沿的刻痕还在，折枝旁的白蕈也亮着。");
             add("book.maledict.realm.station.3", "我用捡来的枝条托起蕈簇，放在梯口。光比单独的蕈亮，至少能看清下一根横档。");
             add("book.maledict.realm.station.4", "旧侧廊塌了，我们没有再挖。剩下的碎片收进箱里，灯留在井室。若有人循着祭址的记号来到这里，先检查梯子，别径直跳下去。");
@@ -42,6 +52,10 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE, "污秽石恶念之铅矿石");
             addBlock(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE, "扭曲石恶念之铅矿石");
             addItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT, "恶念之铅碎片");
+            addBlock(MaledictBlocks.LUMENFALL_BISMUTH_ORE, "沉辉铋矿");
+            addBlock(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK, "沉辉铋块");
+            addItem(MaledictItems.LUMENFALL_BISMUTH_INGOT, "沉辉铋锭");
+            addItem(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC, "折辉铅铋共晶");
             add("message.maledict.well_unavailable", "彼端无处落足，深井将你拒回。");
             add("message.maledict.vicissitude_rite.warning", "仪式已聆听你的呼唤。然而，回应你的存在必不听命于你。");
             add("message.maledict.vicissitude_rite.confirm", "再次右键，承担随之而来的后果。");
@@ -51,11 +65,11 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.HANGMAN_FOOL, "倒吊人的愚见");
             addItem(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS, "女祭司之灵相");
             add("entity.maledict.soul_echo", "灵魂残影");
-            add("malum.gui.curio.effect.maledict.high_priestess.life_manifestation",
+            add("malum.effect.maledict.high_priestess.life_manifestation",
                 "生命显影：看见16格内生物的轮廓，包括隔墙与隐身的生物，仅自己可见。");
-            add("malum.gui.curio.effect.maledict.high_priestess.soul_displacement",
+            add("malum.effect.maledict.high_priestess.soul_displacement",
                 "灵魂离位：法术命中使目标在原地留下3秒残影。法术击中残影会伤及本体，但不会刷新残影。");
-            add("malum.gui.curio.effect.maledict.high_priestess.wound_yet_to_come",
+            add("malum.effect.maledict.high_priestess.wound_yet_to_come",
                 "未至之伤：伤害与治疗缓慢结算。造成伤害时获得等量治疗，先抵消待结算伤害，余量再缓慢回复生命。");
             add("tooltip.maledict.hangman_fool.flavor.0", "献出力量，以求取人智");
             add("tooltip.maledict.hangman_fool.flavor.1", "智性虽有缺陷，却并非谬误");
@@ -79,6 +93,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("enchantment.maledict.ectoplasm", "灵质");
             add("enchantment.maledict.reminiscence", "追忆");
             add("enchantment.maledict.aftertaste", "回味");
+            add("enchantment.maledict.diplopia", "复视");
             add("enchantment.maledict.ectoplasm.desc",
                 "每级使射出的箭矢速度提高 8%，每发消耗背包中（等级 + 1）÷ 2 枚精魂；精魂不足时不生效。");
             add("enchantment.maledict.reminiscence.desc",
@@ -86,6 +101,9 @@ public final class MaledictLanguage extends LanguageProvider {
             add("enchantment.maledict.aftertaste.desc",
                 "镰刀命中时，按这一击占目标最大生命的比例，尝到其掉落物本可提供的饥饿与饱食度；"
                 + "1 至 3 级分别回复 50%、60%、70%，掉落物附带的食物效果也会一并生效。");
+            add("enchantment.maledict.diplopia.desc",
+                "回旋投掷的镰刀每级额外多出一把幻影，从不同角度飞出，只造成 50% 的伤害；"
+                + "幻影在返程时消散，不会回到手中。");
             addItem(MaledictItems.INCURSUS_BLADE, "神侵恶刃");
             addItem(MaledictItems.LOVER_AXE, "恋人之斧");
             addItem(MaledictItems.MELTFALL_AXE, "熔坠之斧");
@@ -224,7 +242,6 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.BLEEDING_EYE, "流血之眼");
             add("tooltip.maledict.bleeding_eye", "鲜红");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "保管凭证");
-            addItem(MaledictItems.MALIGNANT_PEWTER_TABLET, "恶念白镴符板");
             addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG, "无常刷怪蛋（一阶段）");
             addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_TWO_SPAWN_EGG, "无常刷怪蛋（二阶段）");
             addItem(MaledictItems.RUNE_OF_SATIATION, "饱食符文");
@@ -236,6 +253,10 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.RUNE_OF_MELANCHOLIA, "抑郁符文");
             addItem(MaledictItems.RUNE_OF_BLISS, "无忧符文");
             addItem(MaledictItems.RUNE_OF_THE_FALLEN, "堕落符文");
+            addItem(MaledictItems.EMPEROR_IN_THE_EGGSHELL, "蛋壳中的皇帝");
+            add("malum.effect.maledict.emperor_in_the_eggshell.window", "受击后获得 %s tick 的特殊无敌帧");
+            add("malum.effect.maledict.emperor_in_the_eggshell.guard",
+                "受到的伤害不会超过最大生命的 %s%%");
             add("effect.maledict.age_of_enlightenment", "启蒙之年");
             add("effect.maledict.age_of_darkness", "黑暗时代");
             add("effect.maledict.age_of_enlightenment.description",
@@ -306,7 +327,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("sounds.maledict.item.incursus_blade.slash", "神侵恶刃：侵蚀");
             add("sounds.maledict.item.incursus_blade.crit", "神侵恶刃：狂喜咆哮");
             add("tooltip.maledict.incursus_blade.description", "吞噬精魂成长，向周身挥出锋刃的凶邪镰刀。");
-            add("tooltip.maledict.incursus_blade.medium_unlock_hint", "精魂之力到达神圣之数会解锁更本征的力量");
+            add("tooltip.maledict.incursus_blade.unlock_hint", "精魂之力到达神圣之数会解锁更本征的力量");
             add("tooltip.maledict.incursus_blade.hold_shift", "按住 Shift 查看精魂详情");
             add("tooltip.maledict.incursus_blade.infusion", "在背包中拿精魂右键此物品以永久注入：");
             add("tooltip.maledict.incursus_blade.spirit.earthen", "大地 %s（%s/%s）：攻击力");
@@ -384,22 +405,34 @@ public final class MaledictLanguage extends LanguageProvider {
             addBlock(MaledictBlocks.FALLEN_SOULWOOD_BRANCHES, "Fallen Soulwood Branches");
             addBlock(MaledictBlocks.WITHERLIGHT_LAMP, "Witherlight Branch Lamp");
             add("book.maledict.realm.station", "Well Station Notes");
-            add("book.maledict.realm.station.1", "The well is dry. We took the old ladder down and stored the lead fragments from the dig in the side room. The beams bear the same notches as the timber frame there. Others must have rested here before us.");
-            add("book.maledict.realm.station.2", "Still no answer at the rite site. Back here, the marks on the rim remain; pale mushrooms glow by the branches.");
-            add("book.maledict.realm.station.3", "I made a stand of fallen twigs for a cluster and set it by the ladder. Brighter than a lone mushroom. Enough to see the next rung.");
-            add("book.maledict.realm.station.4", "The old side passage collapsed. We left it alone. The remaining fragments are in the chest; the lamps stay below. If you followed the rite site's marks here, check the ladder first. Do not jump straight down.");
+            add("book.maledict.realm.station.1",
+                "The well is dry. We took the old ladder down and stored the lead fragments from the dig in the side room. The beams bear the same notches as the timber frame there. Others must have rested here before us.");
+            add("book.maledict.realm.station.2",
+                "Still no answer at the rite site. Back here, the marks on the rim remain; pale mushrooms glow by the branches.");
+            add("book.maledict.realm.station.3",
+                "I made a stand of fallen twigs for a cluster and set it by the ladder. Brighter than a lone mushroom. Enough to see the next rung.");
+            add("book.maledict.realm.station.4",
+                "The old side passage collapsed. We left it alone. The remaining fragments are in the chest; the lamps stay below. If you followed the rite site's marks here, check the ladder first. Do not jump straight down.");
             addBlock(MaledictBlocks.WITHERLIGHT_MUSHROOM, "Witherlight Mushroom");
             add("tooltip.maledict.witherlight_mushroom", "Gives off a faint light. Bone meal spreads it onto nearby empty ground.");
             add("book.maledict.realm.rite", "Notes from a Failed Rite");
-            add("book.maledict.realm.rite.1", "The poles have been taken down. The stone beneath the base is still warm, but the last spirit gave no answer. We left the materials for another attempt tomorrow.");
-            add("book.maledict.realm.rite.2", "Back again. The mark by the well remains, though roots have entered the stonework. Pale mushrooms grow beside the fallen branches. I took a few with me.");
+            add("book.maledict.realm.rite.1",
+                "The poles have been taken down. The stone beneath the base is still warm, but the last spirit gave no answer. We left the materials for another attempt tomorrow.");
+            add("book.maledict.realm.rite.2",
+                "Back again. The mark by the well remains, though roots have entered the stonework. Pale mushrooms grow beside the fallen branches. I took a few with me.");
             add("book.maledict.realm.dig", "Notes from an Abandoned Dig");
-            add("book.maledict.realm.dig.1", "We followed the vein as before. The place we marked yielded the same dull, heavy fragments. The crate says gold. It is full of lead.");
-            add("book.maledict.realm.dig.2", "The supports are splitting. We left our tools in the shallow pit and followed the river back to the well. Whoever comes after us can still take that road.");
+            add("book.maledict.realm.dig.1",
+                "We followed the vein as before. The place we marked yielded the same dull, heavy fragments. The crate says gold. It is full of lead.");
+            add("book.maledict.realm.dig.2",
+                "The supports are splitting. We left our tools in the shallow pit and followed the river back to the well. Whoever comes after us can still take that road.");
             add("biome.maledict.blighted_wastes", "Blighted Wastes");
             addBlock(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE, "Tainted Malignant Lead Ore");
             addBlock(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE, "Twisted Malignant Lead Ore");
             addItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT, "Malignant Lead Fragment");
+            addBlock(MaledictBlocks.LUMENFALL_BISMUTH_ORE, "Lumenfall Bismuth Ore");
+            addBlock(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK, "Block of Lumenfall Bismuth");
+            addItem(MaledictItems.LUMENFALL_BISMUTH_INGOT, "Lumenfall Bismuth Ingot");
+            addItem(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC, "Refracted Lead–Bismuth Eutectic");
             add("message.maledict.well_unavailable", "There is no safe passage beyond. The well rejects you.");
             add("message.maledict.vicissitude_rite.warning", "The ritual has heard your call. What answers will not obey you.");
             add("message.maledict.vicissitude_rite.confirm", "Right-click again to embrace the consequences.");
@@ -435,6 +468,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("enchantment.maledict.ectoplasm", "Ectoplasm");
             add("enchantment.maledict.reminiscence", "Reminiscence");
             add("enchantment.maledict.aftertaste", "Aftertaste");
+            add("enchantment.maledict.diplopia", "Diplopia");
             add("enchantment.maledict.ectoplasm.desc",
                 "Each level increases arrow speed by 8%. Each shot consumes (level + 1) / 2 spirits from your inventory; "
                 + "the enchantment has no effect without enough spirits.");
@@ -444,6 +478,10 @@ public final class MaledictLanguage extends LanguageProvider {
                 "When a scythe strikes, you taste the hunger and saturation that the target's drops would restore, scaled "
                 + "by the damage dealt as a fraction of its maximum health. Levels 1 to 3 restore 50%, 60% and 70% of that "
                 + "amount, respectively. Any food effects from those drops also apply.");
+            add("enchantment.maledict.diplopia.desc",
+                "Each level throws one additional phantom scythe alongside a Rebound throw. A phantom leaves from a "
+                + "different angle and deals 50% of the original damage; it fades on the return trip and never returns "
+                + "to your hand.");
             addItem(MaledictItems.INCURSUS_BLADE, "The Incursus Blade");
             addItem(MaledictItems.LOVER_AXE, "The Lover's AX");
             addItem(MaledictItems.MELTFALL_AXE, "Meltfall Axe");
@@ -612,7 +650,6 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.BLEEDING_EYE, "Bleeding Eye");
             add("tooltip.maledict.bleeding_eye", "Bright red");
             addItem(MaledictItems.CURIO_RETURN_TOKEN, "Custody Token");
-            addItem(MaledictItems.MALIGNANT_PEWTER_TABLET, "Malignant Pewter Tablet");
             addItem(MaledictItems.FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG, "Vicissitude Spawn Egg (Phase One)");
             add("entity.maledict.raven", "The Raven");
             add("entity.maledict.raven_feather", "Raven Feather");
@@ -628,6 +665,11 @@ public final class MaledictLanguage extends LanguageProvider {
             addItem(MaledictItems.RUNE_OF_MELANCHOLIA, "Rune of Melancholia");
             addItem(MaledictItems.RUNE_OF_BLISS, "Rune of Bliss");
             addItem(MaledictItems.RUNE_OF_THE_FALLEN, "Rune of the Fallen");
+            addItem(MaledictItems.EMPEROR_IN_THE_EGGSHELL, "The Emperor within the Eggshell");
+            add("malum.effect.maledict.emperor_in_the_eggshell.window",
+                "Gain %s ticks of special invulnerability after being hit");
+            add("malum.effect.maledict.emperor_in_the_eggshell.guard",
+                "Damage taken per hit cannot exceed %s%% of max health");
             add("effect.maledict.age_of_enlightenment", "Age of Enlightenment");
             add("effect.maledict.age_of_darkness", "Age of Darkness");
             add("effect.maledict.age_of_enlightenment.description",
@@ -722,7 +764,7 @@ public final class MaledictLanguage extends LanguageProvider {
             add("sounds.maledict.item.incursus_blade.crit", "Incursus Blade: Ecstatic Roar");
             add("tooltip.maledict.incursus_blade.description",
                 "A sinister scythe that grows by devouring spirits and sweeps its blade around the wielder.");
-            add("tooltip.maledict.incursus_blade.medium_unlock_hint",
+            add("tooltip.maledict.incursus_blade.unlock_hint",
                 "When spirit power reaches the sacred number, a more intrinsic power is unlocked.");
             add("tooltip.maledict.incursus_blade.hold_shift", "Hold Shift for spirit details");
             add("tooltip.maledict.incursus_blade.infusion", "Right-click this item with spirits in the inventory to infuse them permanently:");
@@ -830,6 +872,324 @@ public final class MaledictLanguage extends LanguageProvider {
         add("malum.gui.book.entry.page.text." + identifier + ".1", text);
     }
 
+    /**
+     * 亚大伯斯之石像那一组：实体名、两件物品、两颗刷怪蛋、怒吼字幕与沉睡蛋的提示。
+     */
+    private void addSoulbindingTranslations() {
+        boolean chinese = "zh_cn".equals(locale);
+        addItem(MaledictItems.SOULBINDING_SCROLL, chinese ? "拘魂卷轴" : "Soulbinding Scroll");
+        addItem(MaledictItems.SOULBINDING_SEAL, chinese ? "拘魂封印" : "Soulbinding Seal");
+        add("tooltip.maledict.soulbinding.armed", chinese ? "[待拘魂]" : "[Awaiting Binding]");
+        add("tooltip.maledict.soulbinding.vacant", chinese ? "精魂封印：空缺" : "Soul Seal: Vacant");
+        add("tooltip.maledict.soulbinding.next_kill",
+            chinese ? "下一次有效击杀将决定封印对象" : "The next valid kill will decide the bound spirit");
+        add("tooltip.maledict.soulbinding.bound", chinese ? "[已封印]" : "[Bound]");
+        add("tooltip.maledict.soulbinding.spirit", chinese ? "精魂封印：%s" : "Soul Seal: %s");
+        add("tooltip.maledict.soulbinding.unknown", chinese ? "未知精魂" : "Unknown Spirit");
+
+        add("message.maledict.soulbinding.already_known",
+            chinese ? "你已经懂得了拘魂仪式。" : "You already know the Rite of Soulbinding.");
+        add("message.maledict.soulbinding.learned",
+            chinese ? "你已习得拘魂仪式。" : "You have learned the Rite of Soulbinding.");
+        add("message.maledict.soulbinding.no_advancement",
+            chinese ? "你尚未习得拘魂仪式。" : "You have not learned the Rite of Soulbinding.");
+        add("message.maledict.soulbinding.invalid_tool",
+            chinese ? "主手必须持有一件可封印的工具。" : "Your main hand must hold a bindable tool.");
+        add("message.maledict.soulbinding.already_armed",
+            chinese ? "这件工具已经可以封印精魂或已封印精魂。"
+                    : "This tool is already awaiting a spirit or already holds one.");
+        add("message.maledict.soulbinding.no_seal",
+            chinese ? "副手需要一枚拘魂封印。" : "A Soulbinding Seal is required in your offhand.");
+        add("message.maledict.soulbinding.not_armed",
+            chinese ? "主手的工具没有可解除的拘魂。" : "The main-hand tool has no binding to release.");
+        add("message.maledict.soulbinding.cannot_use",
+            chinese ? "此处无法启动拘魂仪式。" : "The Rite of Soulbinding cannot be started here.");
+
+        add("malum.gui.rite.maledict_soulbinding_rite", chinese ? "拘魂仪式" : "Rite of Soulbinding");
+        add("malum.gui.rite.corrupted_maledict_soulbinding_rite", chinese ? "拘魂仪式" : "Rite of Soulbinding");
+        add("malum.gui.book.entry.page.text.maledict_soulbinding_rite.hover",
+            chinese ? "副手持一枚拘魂封印，主手工具持有已经封印的工具，解除工具的精魂封印。"
+                    : "Releases a tool's bound spirit on Runewood.");
+        add("malum.gui.book.entry.page.text.corrupt_maledict_soulbinding_rite.hover",
+            chinese ? "副手持一枚拘魂封印，主手工具持有合适的工具，使工具在下一次击杀时能够封印生物的精魂。"
+                    : "On Soulwood, spends a Soulbinding Seal to ready the main-hand tool for its next kill.");
+
+        add("malum.gui.book.entry.void.maledict.soulbinding_rite",
+            chinese ? "拘魂仪式" : "The Rite of Soulbinding");
+        add("malum.gui.book.entry.void.maledict.soulbinding_rite.description",
+            chinese ? "一缕精魂，封于器物" : "One spirit, sealed in a vessel");
+        add("malum.gui.book.entry.page.headline.void.maledict.soulbinding_rite",
+            chinese ? "拘魂之术" : "The Binding of Souls");
+        add("malum.gui.book.entry.page.text.void.maledict.soulbinding_rite.1",
+            chinese
+            ? "在研究遗迹中残留的卷轴后， 我发现它记载了一份腐枯界居 民特有的技艺。这种技艺与沉 "
+              + "辉铋本质是同样的恶行。封印 来自他者的光，并把这份光用 作己用。"
+            : "The scroll I found among the ruins records a craft known only to the people of the Blighted "
+              + "Realm. It is the same transgression as Lumenfall Bismuth: sealing away another's light to "
+              + "make it my own.");
+        add("malum.gui.book.entry.page.text.corrupt_maledict_soulbinding_rite",
+            chinese
+            ? "施行这种腐枯秘仪极其简单： 副手拿着精魂封印，主手拿着 "
+              + "工具，就这么一拍。工具就做 好了吸收灵魂的准备。"
+            : "The blighted rite is simple. Hold a Soulbinding Seal in your off hand and a tool in your main "
+              + "hand, then tap the totem. The tool is now ready to take in a soul.");
+        add("malum.gui.book.entry.page.text.maledict_soulbinding_rite",
+            chinese
+            ? "我改良了一下，同样的仪式， 也能用来释放灵魂。"
+            : "With a small change, I found the same rite could also release the soul.");
+    }
+
+    private void addDemiurgeTranslations() {
+        boolean chinese = "zh_cn".equals(locale);
+        add("entity.maledict.demiurge_statue", chinese ? "亚大伯斯之石像" : "Yaldabaoth Statue");
+        add("item.maledict.blighted_star", chinese ? "腐枯之星" : "Blighted Star");
+        add("item.maledict.light_fragment", chinese ? "光的残片" : "Fragment of Light");
+        add("item.maledict.demiurge_statue_spawn_egg",
+            chinese ? "亚大伯斯之石像刷怪蛋（未激活）" : "Yaldabaoth Statue Spawn Egg (Dormant)");
+        add("item.maledict.demiurge_statue_awakened_spawn_egg",
+            chinese ? "亚大伯斯之石像刷怪蛋（激活）" : "Yaldabaoth Statue Spawn Egg (Awakened)");
+        add("sounds.maledict.entity.demiurge.awakening_roar",
+            chinese ? "亚大伯斯之石像怒吼" : "Yaldabaoth Statue roars");
+        add("tooltip.maledict.demiurge_statue_spawn_egg",
+            chinese ? "落地时是沉睡的雕像；手持腐枯之星右键将其唤醒。"
+                    : "Spawns the statue dormant; right-click it with a Blighted Star to awaken it.");
+    }
+
+
+    /**
+     * 腐枯凋灵那一组：三个方块、两枚刷怪蛋、三个实体名与法典词条。
+     * <p>腐枯之星与光的残片的键已经在 {@link #addDemiurgeTranslations()} 里加过；{@code add}
+     * 遇到重复键会抛异常，所以这里不重复。
+     */
+    /**
+     * 扬弃逐光护甲：四件物品名、套装 tooltip 与法典五页。
+     * <p>1.20.1 这个方法里还有两条 {@code death.attack.lightward_transfer} 死亡信息，那是武器顶补
+     * （第 7 组裂隙/神侵恶刃那条线）的键，等那组落地时一起补。
+     */
+    private void addAufhebenLightwardTranslations() {
+        boolean chinese = "zh_cn".equals(locale);
+        addItem(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET, chinese ? "扬弃逐光头盔" : "Aufheben Lightward Helmet");
+        addItem(MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE,
+                chinese ? "扬弃逐光胸甲" : "Aufheben Lightward Chestplate");
+        addItem(MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS,
+                chinese ? "扬弃逐光护腿" : "Aufheben Lightward Leggings");
+        addItem(MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS, chinese ? "扬弃逐光靴子" : "Aufheben Lightward Boots");
+        add("tooltip.maledict.aufheben_lightward.set",
+            chinese ? "套装效果（%s/6）" : "Set effect (%s/6)");
+        add("tooltip.maledict.aufheben_lightward.composition",
+            chinese ? "扬弃逐光套装组成：" : "Aufheben Lightward set:");
+        add("tooltip.maledict.aufheben_lightward.composition.armor",
+            chinese ? "扬弃逐光头盔，扬弃逐光胸甲，扬弃逐光护腿，扬弃逐光靴子"
+                    : "Aufheben Lightward Helmet, Aufheben Lightward Chestplate, Aufheben Lightward Leggings, "
+                      + "Aufheben Lightward Boots");
+        add("tooltip.maledict.aufheben_lightward.composition.weapons",
+            chinese ? "神侵恶刃，熔坠之斧，恋人之斧"
+                    : "The Incursus Blade, Meltfall Axe, Lover's Axe");
+        add("tooltip.maledict.aufheben_lightward.effect.2",
+            chinese ? "2：弃形：灵魂护盾尚存时移动速度 +15%"
+                    : "2: Abnegation of Flesh: +15% movement speed while the Soul Ward holds");
+        add("tooltip.maledict.aufheben_lightward.effect.3",
+            chinese ? "3：以魂代形：灵魂护盾尚存时额外抵消 %s%% 的最终伤害"
+                    : "3: Soul over Flesh: absorb a further %s%% of the final damage while the Soul Ward holds");
+        add("tooltip.maledict.aufheben_lightward.effect.4",
+            chinese ? "4：未竟飞升：附魔等级按灵魂护盾充盈度 +1 / +2 / +3"
+                    : "4: Unfulfilled Ascension: enchantment levels +1 / +2 / +3 by Soul Ward fill");
+        add("tooltip.maledict.aufheben_lightward.effect.5",
+            chinese ? "5：武器攻击更加真实" : "5: Weapon attacks land more truly");
+        add("tooltip.maledict.aufheben_lightward.enchantment",
+            chinese ? "%s（%s+%s）" : "%s (%s+%s)");
+
+        add("malum.gui.book.entry.void.maledict.aufheben_lightward",
+            chinese ? "扬弃逐光盔甲" : "Aufheben Lightward Armor");
+        add("malum.gui.book.entry.void.maledict.aufheben_lightward.description",
+            chinese ? "未竟的飞升" : "Ascension unfulfilled");
+        add("malum.gui.book.entry.page.headline.void.maledict.aufheben_lightward",
+            chinese ? "扬弃逐光盔甲" : "Aufheben Lightward Armor");
+        add("malum.gui.book.entry.page.text.void.maledict.aufheben_lightward.1",
+            chinese
+            ? "魂染钢曾以灵魂庇护肉体。我 以折辉铅铋共晶重塑其甲胄， 又将一颗下界之星纳入锻造。"
+            : "Soulstained Steel once sheltered the flesh through the strength of the soul. I have reshaped "
+              + "that armor with Refracted Lead–Bismuth Eutectic and worked a Nether Star into its forging.");
+        add("malum.gui.book.entry.page.text.void.maledict.aufheben_lightward.2",
+            chinese
+            ? "这份庇护由此走向更为激进的 形态：舍去一部分血肉的防御 ，将更多伤害托付给灵魂承担 。"
+              + "这副盔甲呈银色，晶体 表面的青紫折辉隐约流转。"
+            : "That protection now takes a more radical form: surrender a measure of the body's defenses, and "
+              + "entrust more of its suffering to the soul. The armor is silver with crystalline surfaces "
+              + "touched by faint refractions of violet and cyan.");
+        add("malum.gui.book.entry.page.text.void.maledict.aufheben_lightward.3",
+            chinese
+            ? "头盔之上的冠冕始终无法闭合 ，胸前的光则仿佛被封存在残 缺的圣龛中。那不是已经完成 的飞升，"
+              + "而是对飞升不肯止息 的渴望。"
+            : "The crown above its helm can never quite close; the light upon its breast seems sealed within a "
+              + "broken reliquary. This is not ascension fulfilled, but a longing for ascension that refuses to "
+              + "cease.");
+        add("malum.gui.book.entry.page.text.void.maledict.aufheben_lightward.4",
+            chinese
+            ? "穿戴者没有因披上它而脱离堕 落。肉体依旧脆弱，灵魂的庇 护也终有耗尽之时。唯有当灵 魂趋近完整，"
+              + "刻印于器物之上 的魔咒才得以越过原有的界限 。"
+            : "The wearer is not freed from the Fall by donning it. Flesh remains frail, and even the soul's "
+              + "ward can be exhausted. Only as the soul approaches wholeness do the enchantments inscribed upon "
+              + "one's possessions reach beyond their former limits.");
+        add("malum.gui.book.entry.page.text.void.maledict.aufheben_lightward.5",
+            chinese
+            ? "我将这套甲胄称为扬弃逐光： 所弃者是对肉体的依赖，所扬 者是灵魂对圆满的追求。因为 圆满尚未抵达，"
+              + "逐光便不能停 止。"
+            : "I call this armor AUFHEBEN_LIGHTWARD: the relinquishing of reliance upon flesh, and the "
+              + "elevation of the soul's longing for the Pleroma. So long as wholeness remains beyond reach, the "
+              + "pursuit of light must continue.");
+        add("malum.gui.book.entry.void.maledict.lumenfall_bismuth",
+            chinese ? "沉辉铋" : "Lumenfall Bismuth");
+        add("malum.gui.book.entry.void.maledict.lumenfall_bismuth.description",
+            chinese ? "光曾抵达的证明" : "Proof that light once reached here");
+        add("malum.gui.book.entry.page.headline.void.maledict.lumenfall_bismuth",
+            chinese ? "沉辉铋" : "Lumenfall Bismuth");
+        add("malum.gui.book.entry.page.text.void.maledict.lumenfall_bismuth.1",
+            chinese
+            ? "腐枯界早已无力孕生属于自己 的光。然而，从主世界坠入此 地的事物，仍携带着微不足道 的光辉。"
+              + "它们无法使这片行将 枯竭的土地重获光明。"
+            : "The withering realm has long since lost the power to bring forth light of its own. Yet the "
+              + "things that fall into it from the Overworld still carry the faintest traces of radiance. They "
+              + "cannot restore the dying land.");
+        add("malum.gui.book.entry.page.text.void.maledict.lumenfall_bismuth.2",
+            chinese
+            ? "那些光从坠落之物中缓缓逸散 ，沉入岩层，历经漫长的积聚 ，终于凝结为灰白色的晶体。 晶体的外表黯淡，"
+              + "近乎枯骨与 冷却的灰烬。唯有经过冶炼， 其内部的虹彩才逐渐显露。"
+            : "Instead, that light slowly escapes its fallen vessels, sinks into the strata below, and, over "
+              + "countless years, condenses into pale, ash-white crystals. Their surfaces are dull, resembling "
+              + "old bone and cold ash. Only under the heat of the crucible do their hidden colors emerge.");
+        add("malum.gui.book.entry.page.text.void.maledict.lumenfall_bismuth.3",
+            chinese
+            ? "紫、青与金色交错于晶面，仿 佛一些不属于此界的光，仍拒 绝彻底消失。它们无法拯救腐 枯界，"
+              + "却证明光曾经抵达这里 。我将这种晶体称为沉辉铋。"
+            : "Violet, cyan, and gold pass across crystalline facets, as though some remnant of a foreign light "
+              + "still refuses to vanish. These crystals cannot save the realm. They are proof, however, that "
+              + "light once reached it. I call them Lumenfall Bismuth.");
+        add("malum.gui.book.entry.void.maledict.refracted_lead_bismuth_eutectic",
+            chinese ? "折辉铅铋共晶" : "Refracted Lead–Bismuth Eutectic");
+        add("malum.gui.book.entry.void.maledict.refracted_lead_bismuth_eutectic.description",
+            chinese ? "否定而不归于虚无" : "Negated, yet not reduced to nothing");
+        add("malum.gui.book.entry.page.headline.void.maledict.refracted_lead_bismuth_eutectic",
+            chinese ? "折辉铅铋共晶" : "Refracted Lead–Bismuth Eutectic");
+        add("malum.gui.book.entry.page.text.void.maledict.refracted_lead_bismuth_eutectic.1",
+            chinese
+            ? "沉辉铋保存着异乡坠落之物所 遗留的微光，恶念之铅则承载 着截然不同的沉重本质。我以 "
+              + "灵气余焰促使二者熔合，借紫 水晶碎片引导其结晶，并以邪 恶与神圣的精魂完成灌注。"
+            : "Lumenfall Bismuth preserves the faint light left behind by things fallen from another world. "
+              + "Malignant Lead bears a different, far heavier nature. I bring the two together with Auric "
+              + "Embers, guide their crystallization with Amethyst Shards, and complete the infusion with Wicked "
+              + "and Sacred Spirits.");
+        add("malum.gui.book.entry.page.text.void.maledict.refracted_lead_bismuth_eutectic.2",
+            chinese
+            ? "最终所得并非寻常金属，而是 一种深银色的共晶：其晶面在 暗处近乎铅黑，转动时却显现 青紫交错的折辉。"
+              + "光未曾驱逐 恶念，恶念亦未曾吞没光。二 者原本的形态遭到否定，却没 有被彻底抹去。"
+            : "What emerges is no ordinary metal, but a dark-silver eutectic crystal: nearly lead-black in "
+              + "shadow, yet alive with refracted violet and cyan when turned toward the light. The light has "
+              + "not driven out the malice, nor has the malice swallowed the light. "
+              + "Their former states are negated, but neither is simply erased.");
+        add("malum.gui.book.entry.page.text.void.maledict.refracted_lead_bismuth_eutectic.3",
+            chinese
+            ? "它们在新的晶体中得以保存， 也因这种结合而发生改变。我 借用「扬弃」来理解这一过程 ："
+              + "否定而不归于虚无，保存而 不拘泥于原状。然而，这种晶 体既不宣称救赎，也不许诺圆 满。"
+              + "它只是将矛盾留在自身的 结构之中。"
+            : "Both are preserved within a new crystalline structure, and both are changed by their union. I "
+              + "understand this transformation through Aufheben: to negate without reducing to nothing, to "
+              + "preserve without leaving unchanged. Yet the crystal promises neither salvation nor perfection. "
+              + "It merely holds the contradiction within itself.");
+    }
+
+    private void addBaronStaffTranslations() {
+        boolean chinese = "zh_cn".equals(locale);
+        addItem(MaledictItems.BARON_CEREMONIAL_STAFF,
+                chinese ? "男爵的礼杖" : "Ceremonial Staff of the Baron");
+        add("tooltip.maledict.baron_ceremonial_staff.concealment",
+            chinese ? "手持时降低生物 %s%% 仇恨范围。"
+                    : "In either hand: mobs only notice you within %s%% of their detection range.");
+    }
+
+    private void addInvertedReliquaryTranslations() {
+        boolean chinese = "zh_cn".equals(locale);
+        addBlock(MaledictBlocks.RELIQUARY_ALTAR, chinese ? "倒悬灵柩祭坛" : "Inverted Reliquary Altar");
+    }
+
+    private void addWeepingWitherTranslations() {
+        boolean chinese = "zh_cn".equals(locale);
+        addBlock(MaledictBlocks.CRYING_TAINTED_ROCK, chinese ? "哭泣的污秽石" : "Crying Tainted Rock");
+        addBlock(MaledictBlocks.CRYING_TWISTED_ROCK, chinese ? "哭泣的扭曲石" : "Crying Twisted Rock");
+        addBlock(MaledictBlocks.BLIGHTED_WITHER_SKULL, chinese ? "腐枯凋灵头颅" : "Blighted Wither Skull");
+        add("entity.maledict.weeping_wither", chinese ? "腐枯凋灵" : "Weeping Wither");
+        add("entity.maledict.weeping_wither_skull", chinese ? "腐枯凋灵之首" : "Weeping Wither Skull");
+        add("entity.maledict.weeping_wither_skeleton", chinese ? "腐枯凋灵骷髅" : "Weeping Wither Skeleton");
+        addItem(MaledictItems.WEEPING_WITHER_SPAWN_EGG,
+                chinese ? "腐枯凋灵刷怪蛋" : "Weeping Wither Spawn Egg");
+        addItem(MaledictItems.WEEPING_WITHER_SKELETON_SPAWN_EGG,
+                chinese ? "腐枯凋灵骷髅刷怪蛋" : "Weeping Wither Skeleton Spawn Egg");
+
+        add("malum.gui.book.entry.void.maledict.weeping_wither",
+            chinese ? "腐枯凋灵" : "Weeping Wither");
+        add("malum.gui.book.entry.void.maledict.weeping_wither.description",
+            chinese ? "世界遗留的悲伤" : "The sorrow the world left behind");
+        add("malum.gui.book.entry.page.headline.void.maledict.weeping_wither",
+            chinese ? "腐枯凋灵" : "Weeping Wither");
+        add("malum.gui.book.entry.page.text.void.maledict.weeping_wither.1",
+            chinese
+            ? "在这个已经堕入腐枯的世界地 下，我找到了这种残存的生物 。它十分像是在下界见过的凋 灵，"
+              + "只是由于世界已然腐枯， 这种凋灵承载了世界遗留的悲 伤，从而变得更加强大。"
+            : "Beneath this world, already fallen to blight, I found this surviving creature. It closely "
+              + "resembles the Withers I once saw in the Nether. Yet, as the world has fallen to blight, this "
+              + "Wither bears the sorrow the world left behind, and has become all the stronger for it.");
+        add("malum.gui.book.entry.page.text.void.maledict.weeping_wither.2",
+            chinese
+            ? "将世界的泪水灌注于凋灵骷髅 的头颅中，我们可以用这种腐 枯的头颅和哭泣的石头们召唤 腐枯凋灵。"
+            : "By infusing the tears of the world into Wither Skeleton skulls, we can use these blighted skulls "
+              + "and crying stones to summon a Weeping Wither.");
+        add("malum.gui.book.entry.page.text.void.maledict.weeping_wither.summoning",
+            chinese
+            ? "如同召唤普通凋灵，先摆出石 头的Ｔ型：横排中间放哭泣的 污秽石，两侧和下方放哭泣的 扭曲石。"
+              + "底层两侧留空，再在 顶上并排放置三个腐枯凋灵头 颅。击败它，便能获得腐枯之 星。"
+            : "As with an ordinary Wither, arrange the stones in a T. Place Crying Tainted Rock at the center "
+              + "of the crossbar, with Crying Twisted Rock to either side and beneath it. Leave air beside the "
+              + "stem. Place three Blighted Wither Skulls across the top. Defeat it to claim a Blighted Star.");
+    }
+
+    /**
+     * 坠光秘典那一组：物品名与两个跳转节点的标题（节点本身只有贴图，标题用在这条条目的提示框上）。
+     *
+     * <p>三个键的文案与 1.20.1 生成物逐字相同。条目正文（腐枯凋灵、拘魂仪式、扬弃逐光）
+     * 早就随第 2/3/6 组落进本文件了，这一组只差这三个。
+     */
+    private void addLightfallCodexTranslations() {
+        boolean chinese = "zh_cn".equals(locale);
+        addItem(MaledictItems.LIGHTFALL_CODEX, chinese ? "坠光秘典" : "Lightfall Codex");
+        add("malum.gui.book.entry.maledict.lightfall.descent", chinese ? "降临别传" : "The Descent");
+        add("malum.gui.book.entry.maledict.lightfall.descent.description",
+            chinese ? "光不在的故事" : "The Tale Without Light");
+    }
+
+    /**
+     * 女仆羁绊那一组：两把剑的物品名、三次拒绝时的台词、羁绊证明与「弃约」专用的一行。
+     *
+     * <p>文案与 1.20.1 的 {@code addMaidBondTranslations()} 逐字相同；键名一个都没改，所以从
+     * 1.20.1 带上来的存档与资源包仍然对得上。
+     */
+    private void addMaidBondTranslations() {
+        boolean chinese = "zh_cn".equals(locale);
+        addItem(MaledictItems.YEARNING_SWORD, chinese ? "眷恋" : "Yearning");
+        addItem(MaledictItems.FORSAKEN_VOW, chinese ? "弃约" : "Forsaken Vow");
+        add("message.maledict.maid_bond.death_1",
+            chinese ? "「主人……是我做错了什么吗？」" : "\"Master... did I do something wrong?\"");
+        add("message.maledict.maid_bond.death_2",
+            chinese ? "「请不要这样……我会听话的。」" : "\"Please don't... I will be obedient.\"");
+        add("message.maledict.maid_bond.death_3",
+            chinese ? "「……即使如此，我也依然爱着您。」" : "\"...Even so, I still love you.\"");
+        add("tooltip.maledict.maid_bond.original",
+            chinese ? "羁绊证明：%s 与 %s" : "Proof of the bond between %s and %s");
+        add("tooltip.maledict.maid_bond.forsaken",
+            chinese ? "%s的魂魄仍在此痛苦的哀嚎" : "%s's soul still wails here in agony");
+        add("tooltip.maledict.maid_bond.unknown_owner", chinese ? "未知主人" : "Unknown owner");
+        add("tooltip.maledict.maid_bond.unknown_maid", chinese ? "未知女仆" : "Unknown maid");
+    }
+
     private void addInvocationTranslations() {
         boolean chinese = "zh_cn".equals(locale);
         addItem(MaledictItems.INVOCATION_SIGIL, chinese ? "召唤印记" : "Invocation Sigil");
@@ -857,16 +1217,38 @@ public final class MaledictLanguage extends LanguageProvider {
                 {"malum.gui.book.entry.maledict.invocation_sigil.description", "形态封于印记，生命凝于精魂", "A form remembered, a life recalled"},
                 {"malum.gui.book.entry.page.headline.maledict.invocation_sigil", "召唤印记", "Invocation Sigils"}
         };
-        for (String[] translation : translations) add(translation[0], translation[chinese ? 1 : 2]);
+        for (String[] translation : translations)
+            add(translation[0], translation[chinese ? 1 : 2]);
         add("malum.gui.book.entry.page.text.maledict.invocation_sigil.1", chinese
-                ? "精魂灌注能够将生物的形态封 入召唤印记。主手手持印记并 进行对应的图腾仪式，条件满 足后立即消耗一枚，精魂随之 凝聚为活物。"
-                : "Spirit infusion can seal a creature's form within an invocation sigil. Hold the sigil in your main hand and perform the matching totemic rite. Once its conditions are met, one sigil is consumed immediately, and the spirits gather into a living creature.");
+                                                                          ? "精魂灌注能够将生物的形态封 入召唤印记。主手手持印记并 进行对应的图腾仪式，条件满 足后立即消耗一枚，精魂随之 凝聚为活物。"
+                                                                          :
+                                                                          "Spirit infusion can seal a creature's form within an invocation sigil. Hold the sigil in your main hand and perform the matching totemic rite. Once its conditions are met, one sigil is consumed immediately, and the spirits gather into a living creature.");
         add("malum.gui.book.entry.page.text.maledict.invocation_sigil.2", chinese
-                ? "自下而上排列奥术、大地、神 圣、澄空精魂。中立与友善生 物使用符文木，怪物使用灵魂 木。图腾前方需留出空间；水 生生物需要水，附着生物需要 坚实支撑与足够的活动空间。"
-                : "From bottom to top, arrange Arcane, Earthen, Sacred and Aerial spirits. Use Runewood for neutral and friendly creatures, Soulwood for hostile mobs. Leave room in front of the totem. Aquatic creatures need water; creatures that attach to surfaces need solid support and enough room to move.");
+                                                                          ?
+                                                                          "自下而上排列奥术、大地、神 圣、澄空精魂。中立与友善生 物使用符文木，怪物使用灵魂 木。图腾前方需留出空间；水 生生物需要水，附着生物需要 坚实支撑与足够的活动空间。"
+                                                                          :
+                                                                          "From bottom to top, arrange Arcane, Earthen, Sacred and Aerial spirits. Use Runewood for neutral and friendly creatures, Soulwood for hostile mobs. Leave room in front of the totem. Aquatic creatures need water; creatures that attach to surfaces need solid support and enough room to move.");
         add("malum.gui.book.entry.page.text.maledict.invocation_sigil.3", chinese
-                ? "仪式开始后，无需继续手持印 记。若仪式中断或召唤失败， 已消耗的印记会在原图腾附近 作为掉落物返还。图腾可反复 使用，每次仪式消耗一枚印记 。"
-                : "Once the rite has begun, you may put the sigil away. If the rite is interrupted or the summoning fails, the consumed sigil drops near the original totem. The totem can be reused; each rite consumes one sigil.");
+                                                                          ? "仪式开始后，无需继续手持印 记。若仪式中断或召唤失败， 已消耗的印记会在原图腾附近 作为掉落物返还。图腾可反复 使用，每次仪式消耗一枚印记 。"
+                                                                          :
+                                                                          "Once the rite has begun, you may put the sigil away. If the rite is interrupted or the summoning fails, the consumed sigil drops near the original totem. The totem can be reused; each rite consumes one sigil.");
+    }
+
+    /**
+     * 沉辉/反照的击杀文案。两种自有伤害类型还在（{@code MaledictDamageTypes}），原版按
+     * {@code death.attack.<message_id>} 与 {@code .player} 两个键取文案，缺了就直接打印原始键。
+     * 文案与 1.20.1 逐字相同。
+     */
+    private void addOwnDamageDeathMessages() {
+        boolean chinese = "zh_cn".equals(locale);
+        add("death.attack.lumenfall_release",
+            chinese ? "%1$s被残光吞没" : "%1$s was consumed by lingering light");
+        add("death.attack.lumenfall_release.player",
+            chinese ? "%1$s被%2$s的残光吞没" : "%1$s was consumed by %2$s's lingering light");
+        add("death.attack.refulgence",
+            chinese ? "%1$s被折辉反照" : "%1$s was struck by refracted light");
+        add("death.attack.refulgence.player",
+            chinese ? "%1$s被%2$s的折辉反照" : "%1$s was struck by %2$s's refracted light");
     }
 
     private static final String OBELISKS_ENTRY = "void.maledict.obelisks";

@@ -3,6 +3,7 @@ package org.brahypno.maledict.data.worldgen;
 import com.sammy.malum.registry.common.block.MalumBlocks;
 import com.sammy.malum.registry.common.worldgen.MalumFeatures;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
@@ -28,20 +29,32 @@ import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguratio
 import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.*;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
+import net.minecraft.world.level.levelgen.structure.StructureSpawnOverride;
+import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
+import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
+import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
 import net.minecraft.world.level.levelgen.structure.templatesystem.BlockMatchTest;
+import net.minecraft.util.random.WeightedRandomList;
 import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.realm.BlightedRealm;
+import org.brahypno.maledict.common.realm.reliquary.InvertedReliquaryStructure;
 import org.brahypno.maledict.registry.MaledictBlocks;
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictRealmFeatures;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
+    public static final ResourceKey<Structure> RELIQUARY = ResourceKey.create(Registries.STRUCTURE, id("inverted_reliquary"));
+    public static final ResourceKey<StructureSet> RELIQUARIES = ResourceKey.create(Registries.STRUCTURE_SET, id("inverted_reliquaries"));
     private static final ResourceLocation TREES_ID = id("blighted_soulwood");
     private static final ResourceLocation GROWTH_ID = id("blighted_growth");
     public static final ResourceKey<ConfiguredFeature<?, ?>> TREES = ResourceKey.create(Registries.CONFIGURED_FEATURE, TREES_ID);
@@ -51,6 +64,15 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
     public static final ResourceKey<ConfiguredFeature<?, ?>> LEAD_ORE = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("ore_malignant_lead"));
     public static final ResourceKey<PlacedFeature> PLACED_LEAD_ORE = ResourceKey.create(Registries.PLACED_FEATURE, id("ore_malignant_lead"));
     public static final ResourceKey<PlacedFeature> PLACED_LEAD_ORE_LOWER = ResourceKey.create(Registries.PLACED_FEATURE, id("ore_malignant_lead_lower"));
+    // 照远古残骸的两档矿脉：SCATTERED_ORE 会丢弃所有与空气相邻的方块。
+    public static final ResourceKey<ConfiguredFeature<?, ?>> LUMENFALL_BISMUTH_ORE_LARGE =
+            ResourceKey.create(Registries.CONFIGURED_FEATURE, id("ore_lumenfall_bismuth_large"));
+    public static final ResourceKey<ConfiguredFeature<?, ?>> LUMENFALL_BISMUTH_ORE_SMALL =
+            ResourceKey.create(Registries.CONFIGURED_FEATURE, id("ore_lumenfall_bismuth_small"));
+    public static final ResourceKey<PlacedFeature> PLACED_LUMENFALL_BISMUTH_ORE_LARGE =
+            ResourceKey.create(Registries.PLACED_FEATURE, id("ore_lumenfall_bismuth_large"));
+    public static final ResourceKey<PlacedFeature> PLACED_LUMENFALL_BISMUTH_ORE_SMALL =
+            ResourceKey.create(Registries.PLACED_FEATURE, id("ore_lumenfall_bismuth_small"));
     public static final ResourceKey<ConfiguredFeature<?, ?>> DETAILS = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("blighted_details"));
     public static final ResourceKey<ConfiguredFeature<?, ?>> FALLEN_TREE = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("fallen_soulwood"));
     public static final ResourceKey<ConfiguredFeature<?, ?>> FAILED_RITE = ResourceKey.create(Registries.CONFIGURED_FEATURE, id("failed_rite"));
@@ -67,9 +89,31 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                 .add(Registries.CONFIGURED_FEATURE, MaledictWorldgen::features)
                 .add(Registries.PLACED_FEATURE, MaledictWorldgen::placements)
                 .add(Registries.BIOME, MaledictWorldgen::biomes)
+                .add(Registries.STRUCTURE, MaledictWorldgen::structures)
+                .add(Registries.STRUCTURE_SET, MaledictWorldgen::structureSets)
                 .add(Registries.NOISE_SETTINGS, MaledictWorldgen::noise)
                 .add(Registries.DIMENSION_TYPE, MaledictWorldgen::dimensionType)
                 .add(Registries.LEVEL_STEM, MaledictWorldgen::dimension), Set.of(Maledict.MODID));
+    }
+
+    private static void structures(BootstrapContext<Structure> context) {
+        // 地宫里一只自然刷新的怪都不要：整座地宫的敌人只来自祭坛与模板里的刷怪点。
+        Map<MobCategory, StructureSpawnOverride> noNaturalSpawns = new EnumMap<>(MobCategory.class);
+        for (MobCategory category : MobCategory.values()) {
+            if (category != MobCategory.MISC) {
+                noNaturalSpawns.put(category, new StructureSpawnOverride(
+                        StructureSpawnOverride.BoundingBoxType.STRUCTURE, WeightedRandomList.create()));
+            }
+        }
+        context.register(RELIQUARY, new InvertedReliquaryStructure(new Structure.StructureSettings(
+                HolderSet.direct(context.lookup(Registries.BIOME).getOrThrow(BlightedRealm.WASTES)),
+                noNaturalSpawns, GenerationStep.Decoration.UNDERGROUND_STRUCTURES, TerrainAdjustment.NONE)));
+    }
+
+    private static void structureSets(BootstrapContext<StructureSet> context) {
+        // 间距 64 / 间隔 24 / 线性散布，与 1.20.1 同参数同盐值：换数值会让已有世界的落点整体偏移。
+        context.register(RELIQUARIES, new StructureSet(context.lookup(Registries.STRUCTURE).getOrThrow(RELIQUARY),
+                new RandomSpreadStructurePlacement(64, 24, RandomSpreadType.LINEAR, 94781362)));
     }
 
     private static void features(BootstrapContext<ConfiguredFeature<?, ?>> context) {
@@ -88,6 +132,15 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                 OreConfiguration.target(new BlockMatchTest(MalumBlocks.TWISTED_ROCK.get()),
                         MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get().defaultBlockState())),
                 9, 0.5F)));
+        // 远古残骸式的散矿：每块都丢弃与空气相邻的方块。
+        context.register(LUMENFALL_BISMUTH_ORE_LARGE, new ConfiguredFeature<>(Feature.SCATTERED_ORE, new OreConfiguration(List.of(
+                OreConfiguration.target(new BlockMatchTest(MalumBlocks.TWISTED_ROCK.get()),
+                        MaledictBlocks.LUMENFALL_BISMUTH_ORE.get().defaultBlockState())),
+                3, 1.0F)));
+        context.register(LUMENFALL_BISMUTH_ORE_SMALL, new ConfiguredFeature<>(Feature.SCATTERED_ORE, new OreConfiguration(List.of(
+                OreConfiguration.target(new BlockMatchTest(MalumBlocks.TWISTED_ROCK.get()),
+                        MaledictBlocks.LUMENFALL_BISMUTH_ORE.get().defaultBlockState())),
+                2, 1.0F)));
     }
 
     private static void placements(BootstrapContext<PlacedFeature> context) {
@@ -124,6 +177,17 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                 List.of(CountPlacement.of(UniformInt.of(0, 1)), InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(VerticalAnchor.absolute(-64), VerticalAnchor.absolute(-48)),
                         BiomeFilter.biome())));
+        // 每区块各一次尝试，限定在扭曲石层，与 1.20.1 的两条 placed feature 同参数。
+        context.register(PLACED_LUMENFALL_BISMUTH_ORE_LARGE, new PlacedFeature(
+                features.getOrThrow(LUMENFALL_BISMUTH_ORE_LARGE),
+                List.of(InSquarePlacement.spread(),
+                        HeightRangePlacement.triangle(VerticalAnchor.aboveBottom(8), VerticalAnchor.aboveBottom(24)),
+                        BiomeFilter.biome())));
+        context.register(PLACED_LUMENFALL_BISMUTH_ORE_SMALL, new PlacedFeature(
+                features.getOrThrow(LUMENFALL_BISMUTH_ORE_SMALL),
+                List.of(InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(VerticalAnchor.aboveBottom(8), VerticalAnchor.absolute(0)),
+                        BiomeFilter.biome())));
     }
 
     private static void biomes(BootstrapContext<Biome> context) {
@@ -149,6 +213,8 @@ public final class MaledictWorldgen extends DatapackBuiltinEntriesProvider {
                         : feature.is(OrePlacements.ORE_GOLD_LOWER) ? placements.getOrThrow(PLACED_LEAD_ORE_LOWER) : feature);
             }
         }
+        generation.addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, PLACED_LUMENFALL_BISMUTH_ORE_LARGE);
+        generation.addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, PLACED_LUMENFALL_BISMUTH_ORE_SMALL);
         generation.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, PLACED_FAILED_RITE);
         generation.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, PLACED_ABANDONED_DIG);
         generation.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, PLACED_WELL_STATION);

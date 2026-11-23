@@ -10,7 +10,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.neoforge.client.model.generators.BlockModelBuilder;
 import net.neoforged.neoforge.client.model.generators.ConfiguredModel;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.entity.wither.BlightedWitherSkullBlock;
 import org.brahypno.maledict.registry.MaledictBlocks;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public final class MaledictBlockStates extends BlockStateProvider {
     public MaledictBlockStates(PackOutput output, ExistingFileHelper existingFiles) {
@@ -21,7 +25,19 @@ public final class MaledictBlockStates extends BlockStateProvider {
     protected void registerStatesAndModels() {
         leadOre(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), "tainted/tainted_rock");
         leadOre(MaledictBlocks.TWISTED_MALIGNANT_LEAD_ORE.get(), "twisted/twisted_rock");
+        simpleBlockWithItem(MaledictBlocks.LUMENFALL_BISMUTH_ORE.get(),
+                cubeAll(MaledictBlocks.LUMENFALL_BISMUTH_ORE.get()));
+        simpleBlockWithItem(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get(),
+                cubeAll(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get()));
         groundcoverModels();
+        simpleBlockWithItem(MaledictBlocks.CRYING_TAINTED_ROCK.get(), cubeAll(MaledictBlocks.CRYING_TAINTED_ROCK.get()));
+        simpleBlockWithItem(MaledictBlocks.CRYING_TWISTED_ROCK.get(), cubeAll(MaledictBlocks.CRYING_TWISTED_ROCK.get()));
+        // 祭坛没有方块物品（见 MaledictBlocks.RELIQUARY_ALTAR 的说明），所以只出 blockstates 与 models/block：
+        // 顶面用原版哭泣黑曜石、侧面用 Malum 的符文污秽石砖贴图，与 1.20.1 同一套。
+        simpleBlock(MaledictBlocks.RELIQUARY_ALTAR.get(), models().cubeBottomTop("reliquary_altar",
+                ResourceLocation.fromNamespaceAndPath("malum", "block/arcane_rock/tainted/runic_tainted_rock_bricks"),
+                mcLoc("block/end_stone_bricks"), mcLoc("block/crying_obsidian")));
+        blightedWitherSkull();
 
         ModelFile mnemonic = models().getBuilder("mnemonic_obelisk")
                 .parent(new ModelFile.UncheckedModelFile(
@@ -88,6 +104,38 @@ public final class MaledictBlockStates extends BlockStateProvider {
         piece(lamp, 3, 10, 3, 13, 12, 13, "cap");
         piece(lamp, 5, 12, 5, 11, 13, 11, "cap");
         cover(MaledictBlocks.WITHERLIGHT_LAMP.get(), lamp);
+    }
+
+    /**
+     * 腐枯头颅：每个面把首领主头的 UV 摊成整张贴图，避免透明 atlas 渗色。
+     * 方块状态只能按 90 度旋转，22.5 度的细分偏移由元素旋转补上。
+     */
+    private void blightedWitherSkull() {
+        Map<Integer, ModelFile> offsets = new HashMap<>();
+        for (int offset = -2; offset <= 1; offset++) {
+            String name = offset == 0 ? "blighted_wither_skull" : "blighted_wither_skull_offset_" + (offset + 2);
+            var model = models().getBuilder(name)
+                    .parent(new ModelFile.UncheckedModelFile(mcLoc("block/block")))
+                    .ao(false)
+                    .texture("particle", modLoc("block/blighted_wither_skull/north"));
+            var head = model.element().from(4, 0, 4).to(12, 8, 12);
+            if (offset != 0)
+                head.rotation().origin(8, 0, 8)
+                        .axis(net.minecraft.core.Direction.Axis.Y).angle(-offset * 22.5F).end();
+            for (var direction : net.minecraft.core.Direction.values()) {
+                String face = direction.getName();
+                model.texture(face, modLoc("block/blighted_wither_skull/" + face));
+                head.face(direction).texture("#" + face).uvs(0, 0, 16, 16).end();
+            }
+            head.end();
+            offsets.put(offset, model);
+        }
+        getVariantBuilder(MaledictBlocks.BLIGHTED_WITHER_SKULL.get()).forAllStates(state -> {
+            int rotation = state.getValue(BlightedWitherSkullBlock.ROTATION);
+            int quadrant = (rotation + 2) / 4;
+            return new ConfiguredModel[]{new ConfiguredModel(offsets.get(rotation - quadrant * 4),
+                    0, quadrant % 4 * 90, false)};
+        });
     }
 
     private BlockModelBuilder woodCover(String name) {

@@ -1,11 +1,15 @@
 package org.brahypno.maledict.data.client;
 
+import com.google.gson.JsonObject;
 import net.minecraft.data.PackOutput;
+import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.neoforged.neoforge.client.model.generators.ItemModelBuilder;
 import net.neoforged.neoforge.client.model.generators.ItemModelProvider;
 import net.neoforged.neoforge.client.model.generators.ModelFile;
+import net.neoforged.neoforge.client.model.generators.loaders.ItemLayerModelBuilder;
+import net.neoforged.neoforge.client.model.generators.loaders.ObjModelBuilder;
 import net.neoforged.neoforge.client.model.generators.loaders.SeparateTransformsModelBuilder;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import org.brahypno.maledict.Maledict;
@@ -43,7 +47,12 @@ public final class MaledictItemModels extends ItemModelProvider {
         basicItem(MaledictItems.EIDOLON_OF_THE_HIGH_PRIESTESS.get());
 
         basicItem(MaledictItems.BLEEDING_EYE.get());
+        basicItem(MaledictItems.BLIGHTED_STAR.get());
+        registerLightFragmentModel();
         basicItem(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get());
+        basicItem(MaledictItems.LIGHTFALL_CODEX.get());
+        basicItem(MaledictItems.LUMENFALL_BISMUTH_INGOT.get());
+        basicItem(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get());
 
         withExistingParent("raven_feather", mcLoc("item/generated"))
                 .texture("layer0", modLoc("entity/raven_feather"));
@@ -51,6 +60,30 @@ public final class MaledictItemModels extends ItemModelProvider {
         getBuilder("curio_return_token")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", modLoc("item/curio_return_token"));
+
+        getBuilder("soulbinding_scroll")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/soulbinding_scroll"));
+        getBuilder("soulbinding_seal")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/soulbinding_seal"));
+
+        basicItem(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get());
+        basicItem(MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get());
+        basicItem(MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS.get());
+        basicItem(MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get());
+
+        withExistingParent("baron_ceremonial_staff", mcLoc("item/handheld"))
+                .texture("layer0", modLoc("item/baron_ceremonial_staff"))
+                .transforms()
+                // Match the raised arm pose (BaronStaffArmPose) and align the grip just above the
+                // sprite's midpoint with the fist.
+                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(15, -75, 45).translation(0, -4, 0).scale(1.4F).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND).rotation(15, -75, -45).translation(0, -4, 0).scale(1.4F).end()
+                // The sprite runs at 45 degrees. Tilt the raised head outward from the crosshair in either hand.
+                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(-10, -30, 35).translation(-1.5F, 0, -1.75F).scale(0.9F).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(-10, -30, -55).translation(-1.5F, 0, -1.75F).scale(0.9F).end()
+                .end();
 
         getBuilder("rune_of_satiation")
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
@@ -88,9 +121,7 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
                 .texture("layer0", modLoc("item/runes/rune_of_the_fallen"));
 
-        getBuilder("malignant_pewter_tablet")
-                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
-                .texture("layer0", modLoc("item/malignant_pewter_tablet"));
+        basicItem(MaledictItems.EMPEROR_IN_THE_EGGSHELL.get());
 
         getBuilder("mnemonic_obelisk")
                 .parent(new ModelFile.UncheckedModelFile(
@@ -101,9 +132,79 @@ public final class MaledictItemModels extends ItemModelProvider {
                         ResourceLocation.fromNamespaceAndPath("malum", "item/runewood_obelisk")))
                 .texture("0", modLoc("block/runewood_obelisk"));
 
+        // 方块模型的物品：1.20.1 显式写了七个 ItemDisplayContext 变换，port 丢了，于是手持与展示框里
+        // 只是一个未变换的方块。数值逐条照抄参考分支。
+        getBuilder("blighted_wither_skull")
+                .parent(new ModelFile.UncheckedModelFile(modLoc("block/blighted_wither_skull")))
+                .transforms()
+                .transform(ItemDisplayContext.GUI).rotation(30, 225, 0).translation(0, 3, 0).scale(1).end()
+                .transform(ItemDisplayContext.FIXED).rotation(0, 0, 0).translation(0, 4, 0).scale(1).end()
+                .transform(ItemDisplayContext.GROUND).rotation(0, 180, 0).translation(0, 3, 0).scale(0.5F).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(45, 225, 0).translation(0, 3, 0).scale(0.5F).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND).rotation(45, 225, 0).translation(0, 3, 0).scale(0.5F).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(0, 180, 0).scale(1).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND).rotation(0, 180, 0).scale(1).end()
+                .end();
+
         registerSpawnEggModel("first_vicissitude_phase_one_spawn_egg");
         registerSpawnEggModel("raven_spawn_egg");
         registerSpawnEggModel("first_vicissitude_phase_two_spawn_egg");
+        registerSpawnEggModel("weeping_wither_spawn_egg");
+        registerSpawnEggModel("weeping_wither_skeleton_spawn_egg");
+        registerSpawnEggModel("demiurge_statue_spawn_egg");
+        registerSpawnEggModel("demiurge_statue_awakened_spawn_egg");
+
+        registerMaidBondSwordModels();
+    }
+
+    /**
+     * 女仆羁绊的两把剑。眷恋之剑沿用 1.20.1 的 3D OBJ（{@code forge:obj} + {@code forge:separate_transforms}），
+     * 1.21 的对应物是 {@code neoforge:obj} + {@code neoforge:separate_transforms}，两个 loader 与
+     * ObjModelBuilder 的方法都还在，所以模型可以逐项照搬而不是降级成 2D 图标。
+     *
+     * <p>display 变换也照 1.20.1 生成物抄下来：OBJ 模型没有 parent，不写这几项的话手持姿态是单位矩阵，
+     * 剑会插在手里原地不动。
+     */
+    private void registerMaidBondSwordModels() {
+        withExistingParent("forsaken_vow", mcLoc("item/handheld"))
+                .texture("layer0", modLoc("item/forsaken_vow"));
+
+        ItemModelBuilder held = getBuilder("yearning_sword_held")
+                .guiLight(BlockModel.GuiLight.FRONT)
+                .texture("surface", modLoc("item/yearning_sword_3d"))
+                .texture("particle", "#surface");
+        held.customLoader(ObjModelBuilder::begin)
+            .modelLocation(modLoc("models/item/yearning_sword.obj"))
+            .automaticCulling(false)
+            .flipV(true)
+            .emissiveAmbient(false);
+
+        ItemModelBuilder.TransformsBuilder transforms = held.transforms();
+        transforms.transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND)
+                 .rotation(0, -52, 10).translation(0, 6.5F, 0.6F).scale(0.92F).end();
+        transforms.transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND)
+                 .rotation(0, 52, -10).translation(0, 6.5F, 0.6F).scale(0.92F).end();
+        transforms.transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND)
+                 .rotation(-45, -52, -20).translation(1.5F, 3.65F, -4.38F).scale(0.95F).end();
+        transforms.transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND)
+                 .rotation(-45, 52, 20).translation(1.5F, 3.65F, -4.38F).scale(0.95F).end();
+        transforms.transform(ItemDisplayContext.HEAD)
+                 .rotation(0, 180, 45).translation(0, 12F, 7F).scale(0.72F).end();
+        transforms.transform(ItemDisplayContext.GROUND)
+                 .rotation(0, 0, -60).translation(0, 3.6F, 0).scale(0.43F).end();
+        transforms.transform(ItemDisplayContext.FIXED)
+                 .rotation(0, 180, 45).translation(-1.9F, -1.5F, 0).scale(0.67F).end();
+        transforms.end();
+
+        // 物品栏里退回 2D 图标：3D 模型在 GUI 那一格里看不清剑身。只有 GUI 一档退回——
+        // Fixed（展示框）在 1.20.1 用的是 3D 模型自己的 display 变换，照旧保留。
+        ItemModelBuilder gui = withExistingParent("yearning_sword_gui", mcLoc("item/handheld"))
+                .texture("layer0", modLoc("item/yearning_sword"));
+        ItemModelBuilder sword = withExistingParent("yearning_sword", mcLoc("item/handheld"))
+                .texture("particle", modLoc("item/yearning_sword"));
+        sword.customLoader(SeparateTransformsModelBuilder::begin)
+             .base(held)
+             .perspective(ItemDisplayContext.GUI, gui);
     }
 
     private void registerHangmanFoolModels() {
@@ -161,6 +262,28 @@ public final class MaledictItemModels extends ItemModelProvider {
                 .perspective(ItemDisplayContext.GUI, inventory)
                 .perspective(ItemDisplayContext.FIXED, inventory);
         return model;
+    }
+
+    /**
+     * 发光碎片：底层贴图 + 自发光覆盖层。{@code emissive} 给出 15/15 亮度，但 builder 没有逐层 AO
+     * 开关，所以照 1.20.1 的做法在 {@code toJson} 里补一条 {@code ambient_occlusion=false}；
+     * NeoForge 的键是 {@code neoforge_data}（1.20.1 时代是 {@code forge_data}）。
+     */
+    private void registerLightFragmentModel() {
+        getBuilder("light_fragment")
+                .parent(new ModelFile.UncheckedModelFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("item/light_fragment"))
+                .texture("layer1", modLoc("item/light_fragment_glow"))
+                .customLoader((parent, helper) -> new ItemLayerModelBuilder<ItemModelBuilder>(parent, helper) {
+                    @Override
+                    public JsonObject toJson(JsonObject json) {
+                        JsonObject model = super.toJson(json);
+                        model.getAsJsonObject("neoforge_data").getAsJsonObject("layers")
+                             .getAsJsonObject("1").addProperty("ambient_occlusion", false);
+                        return model;
+                    }
+                })
+                .emissive(15, 15, 1);
     }
 
     private void registerSpawnEggModel(String name) {
