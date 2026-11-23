@@ -3,9 +3,11 @@ package org.brahypno.maledict.registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.compat.maid.MaledictMaidIntegration;
 
 public final class MaledictCreativeTabs {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS =
@@ -29,13 +31,36 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.TAINTED_MALIGNANT_LEAD_ORE.get());
                                output.accept(MaledictItems.TWISTED_MALIGNANT_LEAD_ORE.get());
                                output.accept(MaledictItems.MALIGNANT_LEAD_FRAGMENT.get());
+                               output.accept(MaledictItems.LUMENFALL_BISMUTH_ORE.get());
+                               output.accept(MaledictItems.LUMENFALL_BISMUTH_BLOCK.get());
+                               output.accept(MaledictItems.LUMENFALL_BISMUTH_INGOT.get());
+                               output.accept(MaledictItems.REFRACTED_LEAD_BISMUTH_EUTECTIC.get());
                                output.accept(MaledictItems.WITHERED_LEAF_LITTER.get());
                                output.accept(MaledictItems.EXPOSED_SOULWOOD_ROOTS.get());
                                output.accept(MaledictItems.FALLEN_SOULWOOD_BRANCHES.get());
                                output.accept(MaledictItems.WITHERLIGHT_MUSHROOM.get());
                                output.accept(MaledictItems.WITHERLIGHT_LAMP.get());
                                output.accept(MaledictItems.RAVEN_SPAWN_EGG.get());
+        output.accept(MaledictItems.CRYING_TAINTED_ROCK.get());
+        output.accept(MaledictItems.CRYING_TWISTED_ROCK.get());
+        output.accept(MaledictItems.BLIGHTED_WITHER_SKULL.get());
+        output.accept(MaledictItems.WEEPING_WITHER_SPAWN_EGG.get());
+        output.accept(MaledictItems.WEEPING_WITHER_SKELETON_SPAWN_EGG.get());
+        output.accept(MaledictItems.BLIGHTED_STAR.get());
+        output.accept(MaledictItems.LIGHT_FRAGMENT.get());
+        output.accept(MaledictItems.DEMIURGE_STATUE_SPAWN_EGG.get());
+        output.accept(MaledictItems.DEMIURGE_STATUE_AWAKENED_SPAWN_EGG.get());
+        // 无常两个阶段只有刷怪蛋这一条获取途径（没有配方、没有掉落），创造标签必须收它们。
+        output.accept(MaledictItems.FIRST_VICISSITUDE_PHASE_ONE_SPAWN_EGG.get());
+        output.accept(MaledictItems.FIRST_VICISSITUDE_PHASE_TWO_SPAWN_EGG.get());
                                output.accept(MaledictItems.RAVEN_FEATHER.get());
+        output.accept(MaledictItems.SOULBINDING_SCROLL.get());
+        output.accept(MaledictItems.SOULBINDING_SEAL.get());
+        output.accept(MaledictItems.AUFHEBEN_LIGHTWARD_HELMET.get());
+        output.accept(MaledictItems.AUFHEBEN_LIGHTWARD_CHESTPLATE.get());
+        output.accept(MaledictItems.AUFHEBEN_LIGHTWARD_LEGGINGS.get());
+        output.accept(MaledictItems.AUFHEBEN_LIGHTWARD_BOOTS.get());
+        output.accept(MaledictItems.BARON_CEREMONIAL_STAFF.get());
                                output.accept(MaledictItems.SACRED_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.WICKED_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.ARCANE_SPIRIT_ARROW.get());
@@ -45,6 +70,7 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.EARTHEN_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.INFERNAL_SPIRIT_ARROW.get());
                                output.accept(MaledictItems.AGE_OF_ENLIGHTENMENT.get());
+                               output.accept(MaledictItems.EMPEROR_IN_THE_EGGSHELL.get());
                                for (int stage = 0; stage <= 3; stage++) {
                                    output.accept(org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem.create(stage));
                                }
@@ -52,7 +78,6 @@ public final class MaledictCreativeTabs {
                                    output.accept(org.brahypno.maledict.common.item.curio.priestess.EidolonOfTheHighPriestessItem.create(stage));
                                }
                                output.accept(MaledictItems.BLEEDING_EYE.get());
-                               output.accept(MaledictItems.MALIGNANT_PEWTER_TABLET.get());
                                output.accept(MaledictItems.RUNE_OF_SATIATION.get());
                                output.accept(MaledictItems.RUNE_OF_DECAY.get());
                                output.accept(MaledictItems.RUNE_OF_THE_PACK.get());
@@ -62,6 +87,14 @@ public final class MaledictCreativeTabs {
                                output.accept(MaledictItems.RUNE_OF_MELANCHOLIA.get());
                                output.accept(MaledictItems.RUNE_OF_BLISS.get());
                                output.accept(MaledictItems.RUNE_OF_THE_FALLEN.get());
+                               output.accept(MaledictItems.LIGHTFALL_CODEX.get());
+                               // 女仆羁绊的两把剑只有 TLM 在场才有意义：剑要靠它的成长事件赠送、
+                               // 它的击杀升级，缺席时摆进创造栏只会多出两件永远拿不到的物品。
+                               // 与 1.20.1 一致，物品本身照常注册，这里的闸门只管展示。
+                               if (ModList.get().isLoaded(MaledictMaidIntegration.MAID_MOD_ID)){
+                                   output.accept(MaledictItems.YEARNING_SWORD.get());
+                                   output.accept(MaledictItems.FORSAKEN_VOW.get());
+                               }
                            })
                            .build());
 

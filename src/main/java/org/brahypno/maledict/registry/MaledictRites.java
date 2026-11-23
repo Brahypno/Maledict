@@ -35,10 +35,31 @@ public final class MaledictRites {
     public static final RiteHolder<InvocationRite> CORRUPTED_INVOCATION = RITES.register("corrupted_maledict_invocation_rite", () ->
             new InvocationRite(INVOCATION_EFFECT, true));
 
+    // 1.20.1 的牺牲仪式是一条注册、内部按木头分派两半；1.8.2 的 matches() 先比 totem.corrupted 再比精魂序列，
+    // 所以这里成对注册：自然那条（符文木）挂空效果——柱子照常点亮、随即熄回闲置，但什么都不发生。
+    private static final com.sammy.malum.core.systems.registry.rite.RiteEffectHolder<OneShotRiteEffect> SACRIFICE_REFUSED =
+            EFFECTS.register("sacrifice_rite_refused", () -> new OneShotRiteEffect((totem, level) -> {
+            }));
     private static final com.sammy.malum.core.systems.registry.rite.RiteEffectHolder<OneShotRiteEffect> SACRIFICE_CORRUPTED =
             EFFECTS.register("sacrifice_rite_corrupted", () -> new OneShotRiteEffect(SacrificeRite::offer));
+    public static final RiteHolder<SacrificeRiteType> SACRIFICE = RITES.register("sacrifice_rite", () ->
+            new SacrificeRiteType(SACRIFICE_REFUSED, false, sacrificeSpirits()));
     public static final RiteHolder<SacrificeRiteType> CORRUPTED_SACRIFICE = RITES.register("corrupted_sacrifice_rite", () ->
-            new SacrificeRiteType(SACRIFICE_CORRUPTED, sacrificeSpirits()));
+            new SacrificeRiteType(SACRIFICE_CORRUPTED, true, sacrificeSpirits()));
+
+    // 拘魂仪式的两个木头变体都不在仪式结束时做事：状态改动发生在激活那一刻（SoulbindingRitual），
+    // 所以这里的 effect 只负责让一次性仪式照常收尾。
+    private static final com.sammy.malum.core.systems.registry.rite.RiteEffectHolder<OneShotRiteEffect> SOULBINDING_EFFECT =
+            EFFECTS.register("soulbinding", () -> new OneShotRiteEffect((totem, level) -> {
+            }));
+    public static final RiteHolder<org.brahypno.maledict.common.ritual.soulbinding.SoulbindingRite> SOULBINDING =
+            RITES.register(org.brahypno.maledict.common.ritual.soulbinding.SoulbindingRite.IDENTIFIER,
+                           () -> new org.brahypno.maledict.common.ritual.soulbinding.SoulbindingRite(
+                                   SOULBINDING_EFFECT, false));
+    public static final RiteHolder<org.brahypno.maledict.common.ritual.soulbinding.SoulbindingRite> CORRUPTED_SOULBINDING =
+            RITES.register(org.brahypno.maledict.common.ritual.soulbinding.SoulbindingRite.CORRUPTED_IDENTIFIER,
+                           () -> new org.brahypno.maledict.common.ritual.soulbinding.SoulbindingRite(
+                                   SOULBINDING_EFFECT, true));
 
     static {
         registerSummoning("vicissitude_rite", BossDifficulty.SIMPLE, 3, 0);

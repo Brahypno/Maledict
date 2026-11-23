@@ -11,6 +11,9 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
+import org.brahypno.maledict.common.entity.demiurge.DemiurgePillarEntity;
+import org.brahypno.maledict.common.entity.demiurge.DemiurgeStatueEntity;
+import org.brahypno.maledict.common.entity.demiurge.DemiurgeTearEntity;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity;
 import org.brahypno.maledict.common.entity.raven.RavenEntity;
 import org.brahypno.maledict.common.entity.raven.RavenFeatherEntity;
@@ -20,11 +23,33 @@ import org.brahypno.maledict.common.item.curio.priestess.SoulEchoEntity;
 import org.brahypno.maledict.common.entity.vicissitude.VicissitudeLightOrbEntity;
 import org.brahypno.maledict.common.entity.vicissitude.VicissitudeScytheProjectileEntity;
 import org.brahypno.maledict.common.entity.vicissitude.VicissitudeSpiritBoltEntity;
+import org.brahypno.maledict.common.entity.wither.OssuaryFangs;
+import org.brahypno.maledict.common.entity.wither.WeepingWitherEntity;
+import org.brahypno.maledict.common.entity.wither.WeepingWitherSkeletonEntity;
+import org.brahypno.maledict.common.entity.wither.WeepingWitherSkull;
 
 @EventBusSubscriber(modid = Maledict.MODID)
 public final class MaledictEntities {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
             DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, Maledict.MODID);
+
+    public static final DeferredHolder<EntityType<?>, EntityType<DemiurgeStatueEntity>> DEMIURGE_STATUE =
+            ENTITY_TYPES.register("demiurge_statue", () -> EntityType.Builder
+                    .of(DemiurgeStatueEntity::new, MobCategory.MISC)
+                    .sized(5.1F, 4.2F).clientTrackingRange(12).fireImmune()
+                    .build("demiurge_statue"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<DemiurgeTearEntity>> DEMIURGE_TEAR =
+            ENTITY_TYPES.register("demiurge_tear", () -> EntityType.Builder
+                    .of(DemiurgeTearEntity::new, MobCategory.MISC)
+                    .sized(.2F, .6F).clientTrackingRange(10).updateInterval(1).noSave().noSummon().fireImmune()
+                    .build("demiurge_tear"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<DemiurgePillarEntity>> DEMIURGE_PILLAR =
+            ENTITY_TYPES.register("demiurge_pillar", () -> EntityType.Builder
+                    .of(DemiurgePillarEntity::new, MobCategory.MISC)
+                    .sized(1.25F, 3.5F).clientTrackingRange(8).updateInterval(1).noSave().noSummon().fireImmune()
+                    .build("demiurge_pillar"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<SoulEchoEntity>> SOUL_ECHO =
             ENTITY_TYPES.register("soul_echo", () -> EntityType.Builder
@@ -98,10 +123,48 @@ public final class MaledictEntities {
                     .fireImmune()
                     .build("vicissitude_light_orb"));
 
+    /** Vanilla evoker-fang type dimensions, tracked the same way; it is not a Mob, so no attributes. */
+    public static final DeferredHolder<EntityType<?>, EntityType<OssuaryFangs>> OSSUARY_FANGS =
+            ENTITY_TYPES.register("ossuary_fangs", () -> EntityType.Builder
+                    .<OssuaryFangs>of(OssuaryFangs::new, MobCategory.MISC)
+                    .sized(0.5F, 0.8F)
+                    .clientTrackingRange(6)
+                    .updateInterval(2)
+                    .build("ossuary_fangs"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<WeepingWitherEntity>> WEEPING_WITHER =
+            ENTITY_TYPES.register("weeping_wither", () -> EntityType.Builder
+                    .of(WeepingWitherEntity::new, MobCategory.MONSTER)
+                    .sized(1.08F, 4.2F)
+                    .clientTrackingRange(10)
+                    .fireImmune()
+                    .build("weeping_wither"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<WeepingWitherSkull>> WEEPING_WITHER_SKULL =
+            ENTITY_TYPES.register("weeping_wither_skull", () -> EntityType.Builder
+                    .<WeepingWitherSkull>of(WeepingWitherSkull::new, MobCategory.MISC)
+                    .sized(0.3125F, 0.3125F)
+                    .clientTrackingRange(4)
+                    .updateInterval(10)
+                    .fireImmune()
+                    .build("weeping_wither_skull"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<WeepingWitherSkeletonEntity>>
+            WEEPING_WITHER_SKELETON =
+            ENTITY_TYPES.register("weeping_wither_skeleton", () -> EntityType.Builder
+                    .of(WeepingWitherSkeletonEntity::new, MobCategory.MONSTER)
+                    .sized(0.7F, 2.4F)
+                    .clientTrackingRange(8)
+                    .fireImmune()
+                    .build("weeping_wither_skeleton"));
+
     @SubscribeEvent
     public static void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(SOUL_ECHO.get(), SoulEchoEntity.createLivingAttributes().build());
         event.put(FIRST_VICISSITUDE.get(), FirstVicissitudeBossEntity.createAttributes().build());
+        event.put(DEMIURGE_STATUE.get(), DemiurgeStatueEntity.createAttributes().build());
+        event.put(WEEPING_WITHER.get(), WeepingWitherEntity.createAttributes().build());
+        event.put(WEEPING_WITHER_SKELETON.get(), WeepingWitherSkeletonEntity.createAttributes().build());
         event.put(RAVEN.get(), RavenEntity.createAttributes().build());
     }
 

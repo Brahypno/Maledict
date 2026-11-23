@@ -18,9 +18,11 @@ import org.brahypno.maledict.common.block.SoulwoodObeliskBlockEntity;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossDifficulty;
 import org.brahypno.maledict.common.entity.vicissitude.FirstVicissitudeBossEntity.BossSpawnPhase;
 import org.brahypno.maledict.common.entity.vicissitude.VicissitudeSpawnEggItem;
+import org.brahypno.maledict.common.entity.wither.WeepingWitherSpawnEggItem;
 import org.brahypno.maledict.common.item.weapon.remembrance.SpiritArrowItem;
 import org.brahypno.maledict.common.item.weapon.remembrance.SpiritArrowType;
 import org.brahypno.maledict.common.item.curio.enlightenment.AgeOfEnlightenmentItem;
+import org.brahypno.maledict.common.item.curio.eggshell.EmperorInTheEggshellItem;
 import org.brahypno.maledict.common.entity.vicissitude.curio.CurioReturnTokenItem;
 import org.brahypno.maledict.common.item.curio.hangman.HangmanFoolItem;
 import org.brahypno.maledict.common.item.curio.rune.*;
@@ -59,6 +61,14 @@ public final class MaledictItems {
                 }
             });
 
+    public static final DeferredHolder<Item, Item> CRYING_TAINTED_ROCK = ITEMS.register("crying_tainted_rock",
+            () -> new BlockItem(MaledictBlocks.CRYING_TAINTED_ROCK.get(), new Item.Properties()));
+    public static final DeferredHolder<Item, Item> CRYING_TWISTED_ROCK = ITEMS.register("crying_twisted_rock",
+            () -> new BlockItem(MaledictBlocks.CRYING_TWISTED_ROCK.get(), new Item.Properties()));
+    public static final DeferredHolder<Item, Item> BLIGHTED_WITHER_SKULL = ITEMS.register("blighted_wither_skull",
+            () -> new BlockItem(MaledictBlocks.BLIGHTED_WITHER_SKULL.get(),
+                    new Item.Properties().rarity(Rarity.RARE)));
+
     public static final DeferredHolder<Item, Item> TAINTED_MALIGNANT_LEAD_ORE = ITEMS.register("tainted_malignant_lead_ore",
             () -> new BlockItem(MaledictBlocks.TAINTED_MALIGNANT_LEAD_ORE.get(), new Item.Properties()));
     public static final DeferredHolder<Item, Item> TWISTED_MALIGNANT_LEAD_ORE = ITEMS.register("twisted_malignant_lead_ore",
@@ -68,13 +78,68 @@ public final class MaledictItems {
 
     public static final DeferredHolder<Item, Item> RAVEN_SPAWN_EGG = ITEMS.register("raven_spawn_egg", () ->
             new DeferredSpawnEggItem(MaledictEntities.RAVEN, 0x151820, 0xB80F22, new Item.Properties()));
+    public static final DeferredHolder<Item, Item> WEEPING_WITHER_SPAWN_EGG = ITEMS.register("weeping_wither_spawn_egg", () ->
+            new WeepingWitherSpawnEggItem(MaledictEntities.WEEPING_WITHER, 0x2A2232, 0xB03CE0,
+                    new Item.Properties(), true));
+    public static final DeferredHolder<Item, Item> WEEPING_WITHER_SKELETON_SPAWN_EGG =
+            ITEMS.register("weeping_wither_skeleton_spawn_egg", () ->
+                    new DeferredSpawnEggItem(MaledictEntities.WEEPING_WITHER_SKELETON,
+                            0xC9C5CB, 0x5A2E7A, new Item.Properties()));
     public static final DeferredHolder<Item, Item> RAVEN_FEATHER = ITEMS.register("raven_feather", () ->
             new Item(new Item.Properties()));
 
+    /**
+     * 扬弃逐光四件套。1.21 把耐久从材质挪到了物品属性上，所以每件自带 {@code durability}；
+     * 不挂任何隐藏组件 —— {@code HIDE_ADDITIONAL_TOOLTIP} 只挡 {@code appendHoverText}，
+     * 既遮不住原版附魔行（那行由 {@code ItemStack#getTooltipLines} 另写），本套装又没有别的
+     * hover 文案可挡。套装 tooltip 由 {@code LightwardTooltips} 在事件里补，原版那几行附魔也在那里摘掉。
+     */
+    public static final DeferredHolder<Item, Item> AUFHEBEN_LIGHTWARD_HELMET = ITEMS.register("aufheben_lightward_helmet",
+            () -> new org.brahypno.maledict.common.item.equipment.lightward.LightwardArmorItem(
+                    MaledictArmorMaterials.LIGHTWARD, ArmorItem.Type.HELMET, lightwardProperties(ArmorItem.Type.HELMET)));
+    public static final DeferredHolder<Item, Item> AUFHEBEN_LIGHTWARD_CHESTPLATE = ITEMS.register("aufheben_lightward_chestplate",
+            () -> new org.brahypno.maledict.common.item.equipment.lightward.LightwardArmorItem(
+                    MaledictArmorMaterials.LIGHTWARD, ArmorItem.Type.CHESTPLATE, lightwardProperties(ArmorItem.Type.CHESTPLATE)));
+    public static final DeferredHolder<Item, Item> AUFHEBEN_LIGHTWARD_LEGGINGS = ITEMS.register("aufheben_lightward_leggings",
+            () -> new org.brahypno.maledict.common.item.equipment.lightward.LightwardArmorItem(
+                    MaledictArmorMaterials.LIGHTWARD, ArmorItem.Type.LEGGINGS, lightwardProperties(ArmorItem.Type.LEGGINGS)));
+    public static final DeferredHolder<Item, Item> AUFHEBEN_LIGHTWARD_BOOTS = ITEMS.register("aufheben_lightward_boots",
+            () -> new org.brahypno.maledict.common.item.equipment.lightward.LightwardArmorItem(
+                    MaledictArmorMaterials.LIGHTWARD, ArmorItem.Type.BOOTS, lightwardProperties(ArmorItem.Type.BOOTS)));
+
+    private static Item.Properties lightwardProperties(ArmorItem.Type type) {
+        return new Item.Properties().rarity(Rarity.EPIC).fireResistant()
+                .durability(org.brahypno.maledict.common.item.equipment.lightward.LightwardArmorItem.durabilityFor(type));
+    }
+
+    public static final DeferredHolder<Item, Item> LUMENFALL_BISMUTH_ORE = ITEMS.register("lumenfall_bismuth_ore",
+            () -> new BlockItem(MaledictBlocks.LUMENFALL_BISMUTH_ORE.get(), new Item.Properties()));
+    public static final DeferredHolder<Item, Item> LUMENFALL_BISMUTH_BLOCK = ITEMS.register("lumenfall_bismuth_block",
+            () -> new BlockItem(MaledictBlocks.LUMENFALL_BISMUTH_BLOCK.get(), new Item.Properties()));
+    public static final DeferredHolder<Item, Item> LUMENFALL_BISMUTH_INGOT = ITEMS.register("lumenfall_bismuth_ingot",
+            () -> new Item(new Item.Properties()));
+
+    /**
+     * 折辉铅铋共晶：沉辉铋与恶念之铅经精魂灌注后析出的共晶宝石，与恶念白镴并列而非其升级品。
+     * 名字里刻意不带「锭」——它是晶体，不是可再锻的金属锭。
+     */
+    public static final DeferredHolder<Item, Item> REFRACTED_LEAD_BISMUTH_EUTECTIC =
+            ITEMS.register("refracted_lead_bismuth_eutectic", () -> new Item(new Item.Properties()));
+
+    /** 伯爵的礼杖：铁剑档的仪式用剑，主/副手持有都给移速与可见度乘数。 */
+    public static final DeferredHolder<Item, Item> BARON_CEREMONIAL_STAFF = ITEMS.register("baron_ceremonial_staff",
+            org.brahypno.maledict.common.item.weapon.baron.BaronStaffItem::new);
+
+    /** 拘魂卷轴：使用一次即习得拘魂仪式。 */
+    public static final DeferredHolder<Item, Item> SOULBINDING_SCROLL =
+            ITEMS.register("soulbinding_scroll", org.brahypno.maledict.common.ritual.soulbinding.SoulbindingScrollItem::new);
+    /** 拘魂封印：灵魂木拘魂仪式的副手消耗品。 */
+    public static final DeferredHolder<Item, Item> SOULBINDING_SEAL =
+            ITEMS.register("soulbinding_seal", () -> new Item(new Item.Properties()));
+
     public static final DeferredHolder<Item, Item> INCURSUS_BLADE = ITEMS.register("incursus_blade", () ->
             new IncursusBladeItem(MaledictItemTiers.INCURSUS, new team.lodestar.lodestone.systems.item.LodestoneItemProperties().rarity(Rarity.EPIC)));
-    public static final DeferredHolder<Item, Item> LOVER_AXE = ITEMS.register("lover_axe", () -> new LoverAxeItem());
-    public static final DeferredHolder<Item, Item> MELTFALL_AXE = ITEMS.register("meltfall_axe", () -> new LoverAxeItem(false));
+    public static final DeferredHolder<Item, Item> LOVER_AXE = ITEMS.register("lover_axe", () -> new LoverAxeItem());    public static final DeferredHolder<Item, Item> MELTFALL_AXE = ITEMS.register("meltfall_axe", () -> new LoverAxeItem(false));
     public static final DeferredHolder<Item, Item> REMEMBRANCE_BOW = ITEMS.register("remembrance_bow", () ->
             new RemembranceBowItem(new Item.Properties().durability(384).rarity(Rarity.RARE), false));
     public static final DeferredHolder<Item, Item> ELEGY_BOW = ITEMS.register("elegy_bow", () ->
@@ -87,6 +152,14 @@ public final class MaledictItems {
     public static final DeferredHolder<Item, Item> HANGMAN_FOOL = ITEMS.register("hangman_fool", HangmanFoolItem::new);
     public static final DeferredHolder<Item, Item> EIDOLON_OF_THE_HIGH_PRIESTESS =
             ITEMS.register("eidolon_of_the_high_priestess", EidolonOfTheHighPriestessItem::new);
+
+    /**
+     * 蛋壳中的皇帝：护符（charm 槽）。佩戴时把单次受击压在最大生命的一定比例内，并叠一条受击后的
+     * 时间窗；代价是方块与实体交互距离各 -50%。层挂在实体身上、由物品自锁，见
+     * {@link EmperorInTheEggshellItem} 与 {@code MaledictConfig} 的 {@code emperorInTheEggshell} 段。
+     */
+    public static final DeferredHolder<Item, Item> EMPEROR_IN_THE_EGGSHELL =
+            ITEMS.register("emperor_in_the_eggshell", EmperorInTheEggshellItem::new);
 
     public static final DeferredHolder<Item, Item> BLEEDING_EYE = ITEMS.register("bleeding_eye", () ->
             new Item(new Item.Properties()) {
@@ -105,9 +178,6 @@ public final class MaledictItems {
      * Claim ticket for confiscated curios that could not be delivered automatically.
      */
     public static final DeferredHolder<Item, Item> CURIO_RETURN_TOKEN = ITEMS.register("curio_return_token", CurioReturnTokenItem::new);
-
-    public static final DeferredHolder<Item, Item> MALIGNANT_PEWTER_TABLET = ITEMS.register("malignant_pewter_tablet",
-                                                                                            () -> new Item(new Item.Properties()));
 
     /**
      * Curio rune (rune slot) that keeps the Blessing of Life on its wearer.
@@ -185,7 +255,7 @@ public final class MaledictItems {
                                                      MalumSpiritTypes.UMBRAL_SPIRIT));
 
     /**
-     * 堕落符文：白镴档（恶念白镴符板）的第三枚，与演进凝滞、朽骨同一档。命中给目标落下 {@code Fallen}
+     * 堕落符文：白镴档的第三枚，与演进凝滞、朽骨同用恶念白镴锭。命中给目标落下 {@code Fallen}
      * （堕落窗口），窗口里目标每回复一次生命就积攒休眠腐败（每次把旧的一半转成活性），再次命中时把活性
      * 腐败收走 —— 收永远不致死，致命的那一下仍旧由这一记普通攻击完成。
      * 见 {@link RuneOfTheFallenItem} 与 {@code CorruptionRuneEvents}。
@@ -240,6 +310,58 @@ public final class MaledictItems {
             case INFERNAL -> INFERNAL_SPIRIT_ARROW;
         };
     }
+
+    /**
+     * 苏醒雕像用的腐枯之星：消耗一颗，把石像从“沉睡”拨到完整觉醒后的状态。
+     * <p>1.21 没有 {@code SimpleFoiledItem}，附魔光效改成 {@code minecraft:enchantment_glint_override} 组件。
+     */
+    public static final DeferredHolder<Item, Item> BLIGHTED_STAR = ITEMS.register("blighted_star",
+            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON).fireResistant()
+                                            .component(net.minecraft.core.component.DataComponents
+                                                               .ENCHANTMENT_GLINT_OVERRIDE, true)));
+
+    /**
+     * 雕像死亡时必定掉落的碎片（不走掉落表，与下界之星同款处理）。
+     */
+    public static final DeferredHolder<Item, Item> LIGHT_FRAGMENT = ITEMS.register("light_fragment",
+            () -> new Item(new Item.Properties().rarity(Rarity.RARE).fireResistant()
+                                            .component(net.minecraft.core.component.DataComponents
+                                                               .ENCHANTMENT_GLINT_OVERRIDE, true)));
+
+    /** 未激活的石像：落地是沉睡态，要拿腐枯之星去唤醒。 */
+    public static final DeferredHolder<Item, Item> DEMIURGE_STATUE_SPAWN_EGG =
+            ITEMS.register("demiurge_statue_spawn_egg",
+                    () -> new org.brahypno.maledict.common.entity.demiurge.DemiurgeSpawnEggItem(
+                            MaledictEntities.DEMIURGE_STATUE, 0x6A6472, 0xC2BCC8,
+                            new Item.Properties(), true, false));
+
+    /** 直接是觉醒后的地面站姿：跳过五秒苏醒与那场雨。 */
+    public static final DeferredHolder<Item, Item> DEMIURGE_STATUE_AWAKENED_SPAWN_EGG =
+            ITEMS.register("demiurge_statue_awakened_spawn_egg",
+                    () -> new org.brahypno.maledict.common.entity.demiurge.DemiurgeSpawnEggItem(
+                            MaledictEntities.DEMIURGE_STATUE, 0x9A6BD6, 0xE8C8FF,
+                            new Item.Properties(), true, true));
+
+    /**
+     * 坠光秘典：本模组自己的法典，右键打开。
+     *
+     * <p>1.20.1 的 {@code LightfallCodexItem} 原样搬语义，只是开屏那一趟改由
+     * {@code MaledictNetwork#openLightfallCodex} 发出 1.21 的自定义报文。
+     */
+    public static final DeferredHolder<Item, Item> LIGHTFALL_CODEX =
+            ITEMS.register("lightfall_codex", org.brahypno.maledict.common.item.codex.LightfallCodexItem::new);
+
+    /**
+     * 东方女仆联动：赠礼之剑（眷恋）与其拘魂转化形态（弃约）。
+     *
+     * <p>两件物品本身**不依赖女仆模组**（{@code MaidBondSwordItem} 与 {@code MaidBondData} 都不 import
+     * 任何 TLM 类，只按注册名认人），所以无条件注册：剑被扔在地上、存档进一个没装 TLM 的整合包，
+     * 也还能正常读出来。它们只在创造栏里受 TLM 在场与否控制，与 1.20.1 一致。
+     */
+    public static final DeferredHolder<Item, Item> YEARNING_SWORD =
+            ITEMS.register("yearning_sword", () -> new org.brahypno.maledict.compat.maid.MaidBondSwordItem(false));
+    public static final DeferredHolder<Item, Item> FORSAKEN_VOW =
+            ITEMS.register("forsaken_vow", () -> new org.brahypno.maledict.compat.maid.MaidBondSwordItem(true));
 
     private MaledictItems() {
     }

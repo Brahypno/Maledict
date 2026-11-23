@@ -32,6 +32,37 @@ public final class MaledictConfig {
     public static final ModConfigSpec.IntValue HANGMAN_TRAP_LIFETIME;
     public static final ModConfigSpec.DoubleValue HANGMAN_TRAP_RADIUS;
     public static final ModConfigSpec.DoubleValue OMEN_MINIMUM_SHARE;
+    public static final ModConfigSpec.BooleanValue LUMENFALL_SPREAD_RADIANCE;
+    public static final ModConfigSpec.IntValue LUMENFALL_SPREAD_RADIANCE_COOLDOWN_TICKS;
+    public static final ModConfigSpec.DoubleValue LUMENFALL_SPREAD_RADIANCE_STRENGTH;
+    public static final ModConfigSpec.DoubleValue LUMENFALL_RELEASE_RADIANCE_STRENGTH;
+    public static final ModConfigSpec.DoubleValue LUMENFALL_RELEASE_RADIANCE_RADIUS;
+    public static final ModConfigSpec.DoubleValue DEMIURGE_CHARGE_DAMAGE;
+    public static final ModConfigSpec.DoubleValue DEMIURGE_LASER_DAMAGE;
+    public static final ModConfigSpec.DoubleValue DEMIURGE_RAIN_DAMAGE;
+    public static final ModConfigSpec.DoubleValue DEMIURGE_SWEEP_DAMAGE;
+    public static final ModConfigSpec.DoubleValue DEMIURGE_PILLAR_RISE_DAMAGE;
+    public static final ModConfigSpec.DoubleValue DEMIURGE_PILLAR_EXPLOSION_DAMAGE;
+    public static final ModConfigSpec.DoubleValue DEMIURGE_PILLAR_EMPOWERED_DAMAGE;
+    public static final ModConfigSpec.IntValue DEMIURGE_PILLAR_HEALTH;
+    public static final ModConfigSpec.IntValue SOULBINDING_SPIRIT_SOUND_COOLDOWN;
+    public static final ModConfigSpec.DoubleValue LIGHTWARD_ABNEGATION_REDUCTION;
+    public static final ModConfigSpec.DoubleValue BARON_STAFF_VISIBILITY;
+    public static final ModConfigSpec.DoubleValue BARON_STAFF_SPEED;
+    public static final ModConfigSpec.IntValue EMPEROR_EGGSHELL_WINDOW_TICKS;
+    public static final ModConfigSpec.DoubleValue EMPEROR_EGGSHELL_GUARD_PERCENTAGE;
+    public static final ModConfigSpec.BooleanValue INCURSUS_RIFT_ENABLED;
+    public static final ModConfigSpec.BooleanValue INCURSUS_RIFT_SHADER;
+    public static final ModConfigSpec.IntValue INCURSUS_RIFT_LIFETIME;
+    public static final ModConfigSpec.DoubleValue INCURSUS_RIFT_FADE_START;
+    public static final ModConfigSpec.DoubleValue INCURSUS_RIFT_INTENSITY;
+    public static final ModConfigSpec.DoubleValue INCURSUS_RIFT_PETAL_SIZE;
+    public static final ModConfigSpec.DoubleValue INCURSUS_RIFT_RADIAL_SPEED;
+    public static final ModConfigSpec.IntValue INCURSUS_RIFT_PETALS;
+    public static final ModConfigSpec.IntValue INCURSUS_RIFT_MAX_INSTANCES;
+    public static final ModConfigSpec.DoubleValue INCURSUS_RIFT_WIDEN;
+    public static final ModConfigSpec.DoubleValue INCURSUS_RIFT_STARS;
+    public static final ModConfigSpec.BooleanValue INCURSUS_RIFT_DEPTH_TEST;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -121,6 +152,123 @@ public final class MaledictConfig {
                 .comment("Registry name of the entity the Vicissitude Rites create.")
                 .define("summoningRiteEntity", "maledict:first_vicissitude");
         builder.pop();
+        builder.push("demiurge");
+        DEMIURGE_CHARGE_DAMAGE = builder.comment("Base charge damage before the world difficulty multiplier.")
+                                        .defineInRange("chargeDamage", 7.0D, 0.0D, 10000.0D);
+        DEMIURGE_LASER_DAMAGE = builder.comment("Base damage per laser pulse before the world difficulty multiplier.")
+                                       .defineInRange("laserDamage", 6.0D, 0.0D, 10000.0D);
+        DEMIURGE_RAIN_DAMAGE = builder.comment("Base damage per tear before the world difficulty multiplier.")
+                                      .defineInRange("rainDamage", 8.0D, 0.0D, 10000.0D);
+        DEMIURGE_SWEEP_DAMAGE = builder.comment("Base damage of one serpent sweep before the world difficulty multiplier.")
+                                       .defineInRange("sweepDamage", 10.0D, 0.0D, 10000.0D);
+        DEMIURGE_PILLAR_RISE_DAMAGE = builder.comment("Base damage when a False Creation pillar rises through a target.")
+                                             .defineInRange("pillarRiseDamage", 8.0D, 0.0D, 10000.0D);
+        DEMIURGE_PILLAR_EXPLOSION_DAMAGE = builder.comment("Base damage of a pillar's normal timed explosion.")
+                                                  .defineInRange("pillarExplosionDamage", 8.0D, 0.0D, 10000.0D);
+        DEMIURGE_PILLAR_EMPOWERED_DAMAGE = builder.comment("Base damage of a sweep-triggered empowered pillar explosion.")
+                                                  .defineInRange("pillarEmpoweredDamage", 12.0D, 0.0D, 10000.0D);
+        // Durability was left open in the design. 24 lets an iron sword break a
+        // pillar in four full hits and a netherite sword in three, so clearing a
+        // pillar is a real but affordable alternative to using it as cover.
+        DEMIURGE_PILLAR_HEALTH = builder.comment("Health of one False Creation pillar; destroyed by player damage only.")
+                                        .defineInRange("pillarHealth", 24, 1, 10000);
+        builder.pop();
+        builder.push("soulbinding");
+        SOULBINDING_SPIRIT_SOUND_COOLDOWN = builder
+                .comment("Ticks during which a bound tool's spirit sound is not played again.",
+                         "The sound is only extra feedback on a hit that was really dealt: one",
+                         "swing can arrive as several hurts (the strike, sweep damage and the",
+                         "arcane bonus), and the cooldown folds them into one sound. It never",
+                         "suppresses damage, and 0 plays it for every hurt event.")
+                .defineInRange("spiritSoundCooldown", 10, 0, 200);
+        builder.pop();
+        builder.push("aufhebenLightward");
+        LIGHTWARD_ABNEGATION_REDUCTION = builder
+                .comment("The 3 piece effect, Soul over Flesh: while the wearer still has soul ward,",
+                         "this share of the final damage is absorbed once more. It runs on",
+                         "LivingDamageEvent, so the amount is what is left after armour, protection",
+                         "enchantments and absorption - the damage that would leave the health bar.",
+                         "Malum's own soul ward already ran earlier, on the hurt event; its 30%",
+                         "physical / 90% magic split is deliberately not repeated here, this is one",
+                         "uniform share on top. The absorbed part is paid from the soul ward at the",
+                         "ward's integrity rate, so the pool drains faster than the damage it stops.")
+                .defineInRange("abnegationReduction", 0.25D, 0.0D, 1.0D);
+        builder.pop();
+        builder.push("baronCeremonialStaff");
+        BARON_STAFF_VISIBILITY = builder
+                .comment("How visible the holder is while the staff is in either hand: a multiplier",
+                         "on the visibility vanilla already worked out (invisibility and mob-head",
+                         "disguises). Mobs compute their detection radius as",
+                         "max(followRange * visibility, 2 blocks), so 0.6 means they notice the",
+                         "holder only within 60% of their usual range, while the 2 block floor",
+                         "still lets them see anyone standing right next to them. The multiplier",
+                         "stacks with invisibility instead of replacing it. 1.0 turns the staff's",
+                         "concealment off.")
+                .defineInRange("visibilityMultiplier", 0.6D, 0.0D, 1.0D);
+        BARON_STAFF_SPEED = builder
+                .comment("Movement speed bonus while the staff is in either hand, 0.2 being +20%.",
+                         "The attribute modifier is ADD_MULTIPLIED_TOTAL, so the bonus multiplies",
+                         "with itself when one staff is held in each hand: the default 0.2 reads as",
+                         "+44% rather than +40%. 0.0 turns the bonus off. Attribute modifiers are",
+                         "only re-read when a creature's equipment changes, so a value edited while",
+                         "playing takes effect after the staff is taken out of the hand and held",
+                         "again (or after a rejoin).")
+                .defineInRange("speedBonus", 0.2D, 0.0D, 10.0D);
+        builder.pop();
+        builder.push("emperorInTheEggshell");
+        EMPEROR_EGGSHELL_WINDOW_TICKS = builder
+                .comment("How long the Eggshell Emperor's damage window lasts after a hit, in ticks.",
+                         "It is a ChangeLib time gate on the same guard layer as the cap below: after",
+                         "a hit really removes health, a hit inside the window may take only",
+                         "elapsed / windowTicks of the health it would otherwise remove. At 40, a hit",
+                         "20 ticks later takes 50% and a hit at 40 ticks is full again. A hit the",
+                         "window holds cannot restart it. Vanilla's own 20-tick i-frame stays in",
+                         "front of this one, so values at or below 20 have no visible effect; the",
+                         "minimum is 21.")
+                .defineInRange("windowTicks", 40, 21, 200);
+        EMPEROR_EGGSHELL_GUARD_PERCENTAGE = builder
+                .comment("The most health one hit may remove from the wearer, as a share of their max",
+                         "health: at 0.5 a 20 health wearer can never lose more than 10 health per",
+                         "hit. This is the same ChangeLib D4 guard layer as the window above, settled",
+                         "where the health write happens, so a source that skips the damage pipeline",
+                         "still sees it. It does not replace the window, which keeps scaling by",
+                         "elapsed ticks. 0 leaves the layer uncapped and keeps the window.")
+                .defineInRange("guardPercentage", 0.50D, 0.0D, 1.0D);
+        builder.pop();
+        builder.push("lumenfall");
+        LUMENFALL_SPREAD_RADIANCE = builder
+                .comment("Whether a Lumenfall death paints the radiance burst at the death spot.",
+                         "Maledict's own copy of Malum's weeping-well radiance scales with the strength",
+                         "below, so this is a plain on/off switch; the burst is additionally held to",
+                         "one per dimension per cooldown below, so a row of kills cannot stack it.")
+                .define("spreadRadiance", true);
+        LUMENFALL_SPREAD_RADIANCE_COOLDOWN_TICKS = builder
+                .comment("Minimum ticks between two spread bursts in the same dimension. 20 means at",
+                         "most one per second, so a row of kills cannot stack the big effect. 0",
+                         "removes the throttle (not recommended while the burst is enabled).")
+                .defineInRange("spreadRadianceCooldownTicks", 20, 0, 400);
+        LUMENFALL_SPREAD_RADIANCE_STRENGTH = builder
+                .comment("Strength of the radiance burst, 0.05 to 1.0. This is Maledict's own copy of",
+                         "Malum's weeping-well radiance (see LumenfallRadianceActor), so unlike the",
+                         "stock effect it scales: 1.0 is the full original burst, 0.5 halves the",
+                         "emitted bursts and shrinks the central sparkles, lower values fade to",
+                         "nothing.")
+                .defineInRange("spreadRadianceStrength", 0.5D, 0.05D, 1.0D);
+        LUMENFALL_RELEASE_RADIANCE_STRENGTH = builder
+                .comment("Strength of the smaller radiance burst painted on the target when the 80",
+                         "tick release fires without a kill - the single-target version of the death",
+                         "burst, same effect type at a much lower intensity. 0 turns the release",
+                         "visual off.")
+                .defineInRange("releaseRadianceStrength", 0.2D, 0.0D, 1.0D);
+        LUMENFALL_RELEASE_RADIANCE_RADIUS = builder
+                .comment("How far the release burst spreads, as a multiplier of the full death-burst",
+                         "extent. Strength above controls how many particles there are; this controls",
+                         "how wide they fly. The release is single target, so it must not fan out like",
+                         "the death spread: 0.35 keeps it a tight puff on the victim. Values below 0.9",
+                         "also drop the big central square flashes (fixed-size pieces that only",
+                         "belong to the full-size burst).")
+                .defineInRange("releaseRadianceRadius", 0.35D, 0.1D, 1.0D);
+        builder.pop();
         builder.pop();
         COMMON_SPEC = builder.build();
 
@@ -173,6 +321,77 @@ public final class MaledictConfig {
                          "and the threshold to 0 together leaves the picture untouched, since",
                          "nothing is dim enough to be caught.")
                 .defineInRange("grayscaleSoftness", 0.30D, 0.0D, 1.0D);
+        clientBuilder.pop();
+        clientBuilder.push("incursusRift");
+        INCURSUS_RIFT_ENABLED = clientBuilder
+                .comment("When true, the Incursus Blade's swing paints the Rift Bloom instead of the old",
+                         "Malum slash particles: the same eight crossed blade strokes, but each one is a",
+                         "cut into a starless void with a broken silver violet edge.",
+                         "Purely visual and client side. Turning this off restores the old particles.")
+                .define("enabled", true);
+        INCURSUS_RIFT_SHADER = clientBuilder
+                .comment("Whether the rift uses its own core shader (void body and star field).",
+                         "With this off the same mask and geometry are drawn with the vanilla",
+                         "position_tex_color shader in a flat near black, which is the fallback",
+                         "when the shader fails to load or another rendering mod breaks it.")
+                .define("shader", true);
+        INCURSUS_RIFT_LIFETIME = clientBuilder
+                .comment("How long one swing's rift lasts, in ticks. The old effect was 5 ticks of",
+                         "Malum's heavy slash at the project's 2.5x lifetime multiplier, so 12 ticks",
+                         "is the rhythm the current flower has; raise it for a slower unfold.")
+                .defineInRange("lifetimeTicks", 12, 4, 60);
+        INCURSUS_RIFT_FADE_START = clientBuilder
+                .comment("Where the fade out begins, as a share of the lifetime. The old particles were",
+                         "fully opaque the whole time and simply vanished at the end, so 0.95 is the",
+                         "faithful default. Lower it for an earlier, softer fade.")
+                .defineInRange("fadeStart", 0.95D, 0.10D, 0.95D);
+        INCURSUS_RIFT_INTENSITY = clientBuilder
+                .comment("Overall opacity multiplier, 1.0 as authored. Lower it to make the rift a",
+                         "lighter wash over the scene, raise it towards 2.0 for a denser black.")
+                .defineInRange("intensity", 1.0D, 0.0D, 2.0D);
+        INCURSUS_RIFT_PETAL_SIZE = clientBuilder
+                .comment("Half extent of one blade stroke's quad, in blocks, before the swing's",
+                         "radius multiplier. This is the thickness knob for the waist ring: the drawn",
+                         "stroke covers about five percent of its 64x64 texture and its fat middle is",
+                         "roughly a quarter of the quad, so a 3.5 block ring drawn with 3.75 leaves a",
+                         "band nearly two fifths as thick as the ring itself - eight of those on one",
+                         "circle read as a solid donut. 2.5 thins the band to about one block; push it",
+                         "much lower and the strokes stop overlapping each other around the circle.",
+                         "The old particles used 3.0 to 4.5 here, tuned while the petals were still",
+                         "scattered across thirteen percent of the radius.")
+                .defineInRange("petalSize", 2.5D, 0.5D, 12.0D);
+        INCURSUS_RIFT_RADIAL_SPEED = clientBuilder
+                .comment("Outward travel of each petal in blocks per tick, before the swing's scale",
+                         "multiplier. The old particles drifted 0.3 to 0.4 blocks per tick for their",
+                         "whole 12 tick life, so 0.35 reproduces the same opening.")
+                .defineInRange("radialSpeed", 0.35D, 0.0D, 2.0D);
+        INCURSUS_RIFT_PETALS = clientBuilder
+                .comment("How many blade strokes form the flower. 8 matches the old ring exactly;",
+                         "lower values are cheaper and read less like a flower, higher values fill the",
+                         "ring more densely.")
+                .defineInRange("petals", 8, 4, 16);
+        INCURSUS_RIFT_MAX_INSTANCES = clientBuilder
+                .comment("How many rifts may be alive at once. Fast successive swings overlap up to",
+                         "this many; the oldest is dropped first.")
+                .defineInRange("maxInstances", 6, 1, 32);
+        INCURSUS_RIFT_WIDEN = clientBuilder
+                .comment("How far the shader widens the hairline stroke, in texture UV. The quad is",
+                         "roughly 7.5 blocks wide, so one UV unit spans all of it: 0.10 turns every",
+                         "stroke into a three quarter block halo and eight of them merge into one",
+                         "slab, while 0.006 is about half a texture texel. 0 keeps exactly the",
+                         "original knife mark. This no longer adds a coloured outline; it only",
+                         "decides how wide the dark slit around the night sky is.")
+                .defineInRange("widen", 0.006D, 0.0D, 0.30D);
+        INCURSUS_RIFT_STARS = clientBuilder
+                .comment("Star field strength inside the void, 1.0 as authored. 0 leaves a pure black",
+                         "cut with no stars at all.")
+                .defineInRange("stars", 1.0D, 0.0D, 3.0D);
+        INCURSUS_RIFT_DEPTH_TEST = clientBuilder
+                .comment("Whether the rift is hidden by terrain and entities in front of it.",
+                         "The old slash particles used Malum's noClip particles, so the flower drew",
+                         "straight through walls; false keeps that behaviour and is the faithful",
+                         "default. Turn this on to make the rift respect world depth instead.")
+                .define("respectWorldDepth", false);
         clientBuilder.pop();
         CLIENT_SPEC = clientBuilder.build();
     }

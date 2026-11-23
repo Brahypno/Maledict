@@ -13,6 +13,7 @@ public final class MaledictEnchantments {
     public static final ResourceKey<Enchantment> ECTOPLASM = key("ectoplasm");
     public static final ResourceKey<Enchantment> REMINISCENCE = key("reminiscence");
     public static final ResourceKey<Enchantment> AFTERTASTE = key("aftertaste");
+    public static final ResourceKey<Enchantment> DIPLOPIA = key("diplopia");
 
     public static int level(ItemStack stack, ResourceKey<Enchantment> key) {
         for (var entry : stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).entrySet()) {

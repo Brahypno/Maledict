@@ -71,6 +71,12 @@ public final class MaledictSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> INCURSUS_BLADE_CRIT =
             register("item.incursus_blade.crit");
 
+    /**
+     * 雕像苏醒时的那声怒吼，5 秒时间线里在 64 tick 处响起，也是它每次咆哮攻击的音。
+     */
+    public static final DeferredHolder<SoundEvent, SoundEvent> DEMIURGE_AWAKENING_ROAR =
+            register("entity.demiurge.awakening_roar");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(
                 ResourceLocation.fromNamespaceAndPath(Maledict.MODID, name)));
