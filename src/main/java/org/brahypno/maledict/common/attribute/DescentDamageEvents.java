@@ -15,9 +15,17 @@ import org.brahypno.maledict.registry.MaledictAttributes;
 public final class DescentDamageEvents {
     private DescentDamageEvents() {}
 
-    // Lodestone's NORMAL listener rebuilds magic damage from original damage;
-    // run afterwards and before the LOWEST delayed pool consumes the remainder.
-    @SubscribeEvent(priority = EventPriority.LOW)
+    /**
+     * 1.20.1 这一档是 HIGH，早于所有伤害消费者。NeoForge 的 {@code Pre} 在护甲之后，而同一个事件还要
+     * 给「适应（乘法）→ 延迟生命池入队（LOW）→ 三个读取方（LOWEST）」排出固定台阶，所以这里取 NORMAL：
+     *
+     * <ul>
+     *   <li>与 Lodestone 的魔法缩放同档，按模组加载顺序排在它之后（本模组依赖 Lodestone）；</li>
+     *   <li>仍是乘法，与同档的适应倍率、Lodestone 的缩放交换，先后不影响结果；</li>
+     *   <li>严格早于 LOW 的延迟池，所以入队的量带着 Descent 的倍率（1.20.1 的顺序语义）。</li>
+     * </ul>
+     */
+    @SubscribeEvent(priority = EventPriority.NORMAL)
     public static void onLivingDamage(LivingDamageEvent.Pre event) {
         LivingEntity victim = event.getEntity();
         float amount = event.getNewDamage();

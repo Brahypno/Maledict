@@ -2,7 +2,7 @@
   "type": "malum:spirit_infusion",
   "extraInputs": [
     {
-      "count": 4,
+      "count": 6,
       "item": "malum:malignant_pewter_ingot"
     },
     {

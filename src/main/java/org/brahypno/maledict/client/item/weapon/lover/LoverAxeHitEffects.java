@@ -48,8 +48,8 @@ public final class LoverAxeHitEffects {
                 .enableNoClip()
                 .spawn(level, center.x, center.y, center.z);
         spawnResidue(level, target, center, packet.radius());
-        level.playLocalSound(center.x, center.y, center.z, MalumSoundEvents.TUNING_FORK_TINKER.get(),
-                SoundSource.PLAYERS, 0.45F, 1.35F, false);
+        // 1.20.1 只有这一声延迟 motifs；移植初版额外加了一声立即的 TUNING_FORK_TINKER，
+        // 参考树全树 grep 不到、AGENTS.md 也没记，属于多出来的一声，已删。
         minecraft.getSoundManager().playDelayed(new SimpleSoundInstance(MalumSoundEvents.MALIGNANT_METAL_MOTIF.get(),
                 SoundSource.PLAYERS, 0.25F, 0.65F, level.random, center.x, center.y, center.z), SPLIT_TICK);
     }

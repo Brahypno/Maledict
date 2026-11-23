@@ -20,6 +20,7 @@ import net.minecraft.world.item.TooltipFlag;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
+import org.brahypno.maledict.common.item.equipment.lightward.LightwardSet;
 import org.brahypno.maledict.registry.MaledictAttributes;
 import org.brahypno.maledict.network.MaledictNetwork;
 import team.lodestar.lodestone.registry.common.LodestoneAttributes;
@@ -67,7 +68,9 @@ public final class LoverAxeItem extends AxeItem {
             return false;
         }
         boolean fullyCharged = attacker.getAttackStrengthScale(0.5F) >= 0.9F;
-        var result = DamageProbe.mediumDamageMethod(target, source, amount);
+        // 5 级「武器攻击更加真实」与恶刃共用同一个门禁：主手是套装武器且件数够时补满。
+        var result = DamageProbe.mediumDamageMethod(
+                target, source, amount, LightwardSet.unlocksWeaponTopUp(attacker, weapon));
         if (!result.instantEffective()) {
             return false;
         }

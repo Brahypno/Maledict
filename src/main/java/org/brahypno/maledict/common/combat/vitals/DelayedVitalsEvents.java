@@ -36,8 +36,11 @@ public final class DelayedVitalsEvents {
      *
      * <p>1.21.1 使用 LivingDamageEvent.Pre（用户确认）。
      * 适应倍率现在作用于护甲后的伤害。
+     *
+     * <p>优先级保持默认（NORMAL）：1.20.1 这一档挂在 {@code LivingHurtEvent} 的默认优先级上，
+     * 而下面的入队与三个读取方分别是 LOW / LOWEST。三档必须拉开——同一优先级只按注册顺序跑。
      */
-    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOW)
+    @SubscribeEvent
     public static void onLivingHurt(LivingDamageEvent.Pre event) {
         LivingEntity victim = event.getEntity();
         if (victim.level().isClientSide() || event.getNewDamage() <= 0.0F) {
@@ -49,8 +52,14 @@ public final class DelayedVitalsEvents {
         event.setNewDamage(event.getNewDamage() * RuneOfMelancholiaItem.adaptationMultiplier(player, event.getSource()));
     }
 
-    /** 伤害入队：Pre 中先结算黄心，再把剩余伤害入队。 */
-    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
+    /**
+     * 伤害入队：Pre 中先结算黄心，再把剩余伤害入队。
+     *
+     * <p>必须是 LOW：1.20.1 就是「适应在默认优先级 → 队列在 LOW → 三个读取方（沉辉记账、反照、
+     * 无亏三件套减伤）在 LOWEST」的三段分工。移植初版把队列也放在 LOWEST，于是队列与三个读取方
+     * 之间只剩注册顺序，换一种注册次序读取方就会看到还没被清零的数值。
+     */
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOW)
     public static void onLivingDamage(LivingDamageEvent.Pre event) {
         LivingEntity victim = event.getEntity();
         if (victim.level().isClientSide() || event.getNewDamage() <= 0.0F) {
