@@ -22,6 +22,10 @@ import java.util.List;
  * The third book's Arcana view. It starts on the same soul-magic view as the Esoterica and
  * keeps the original Chronicles of the Void position, but that link now opens our own Void view
  * and records it. A new jump node sits directly below it.
+ *
+ * <p>It is the Arcana book's own entry table, mirrored whole: Malum's entries and the ones this
+ * mod adds to them. Only the Void link is swapped for ours; nothing is filtered out, because the
+ * filtered page read as an Arcana book that had lost part of its contents.
  */
 public final class LightfallArcanaScreen extends AbstractProgressionCodexScreen {
     private static final String VOID_LINK = "chronicles_of_the_void";
@@ -70,11 +74,9 @@ public final class LightfallArcanaScreen extends AbstractProgressionCodexScreen 
     private void buildEntries() {
         // The original Void link's slot, retargeted to our Void view.
         entries.add(buildVoidLink());
+        // The whole entry table, our own arcana entries included; entries are shared objects, not copies.
         for (PlacedBookEntry entry : ArcanaProgressionScreen.ENTRIES) {
             if (VOID_LINK.equals(entry.identifier)){
-                continue;
-            }
-            if (entry.identifier.startsWith("maledict.") || entry.identifier.startsWith("void.maledict.")){
                 continue;
             }
             entries.add(entry);

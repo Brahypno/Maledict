@@ -20,7 +20,8 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * The third book's Void view. It mirrors the Void book but its return link goes back to our
- * Arcana view, and it has one extra jump node below that link.
+ * Arcana view, and it has one extra jump node below that link. The mirror is literal: the whole
+ * Void entry table, this mod's own void entries included, with only the return link swapped.
  */
 public final class LightfallVoidScreen extends AbstractProgressionCodexScreen {
     private static final String SOUL_LINK = "chronicles_of_the_soul";
@@ -76,11 +77,9 @@ public final class LightfallVoidScreen extends AbstractProgressionCodexScreen {
 
     private void buildEntries() {
         entries.add(buildSoulLink());
+        // The whole entry table, our own void entries included; entries are shared objects, not copies.
         for (PlacedBookEntry entry : VoidProgressionScreen.VOID_ENTRIES) {
             if (SOUL_LINK.equals(entry.identifier)){
-                continue;
-            }
-            if (entry.identifier.startsWith("maledict.") || entry.identifier.startsWith("void.maledict.")){
                 continue;
             }
             entries.add(entry);
