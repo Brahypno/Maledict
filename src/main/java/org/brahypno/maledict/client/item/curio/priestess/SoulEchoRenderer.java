@@ -9,10 +9,10 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.inventory.InventoryMenu;
 import org.brahypno.maledict.common.item.curio.priestess.SoulEchoEntity;
 
 import java.util.IdentityHashMap;
@@ -68,7 +68,7 @@ public final class SoulEchoRenderer extends EntityRenderer<SoulEchoEntity> {
     @Override
     public ResourceLocation getTextureLocation(SoulEchoEntity echo) {
         LivingEntity body = echo.visualBody();
-        return body == null ? TextureAtlas.LOCATION_BLOCKS
+        return body == null ? InventoryMenu.BLOCK_ATLAS
                 : entityRenderDispatcher.getRenderer(body).getTextureLocation(body);
     }
 }

@@ -8,6 +8,9 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.changelib.DamageHelper.DamageProbe;
+import org.brahypno.changelib.DamageHelper.DamageProbeResult;
+import org.brahypno.changelib.DamageHelper.DamageRequestEvent;
+import org.brahypno.changelib.DamageHelper.DamageStage;
 import org.brahypno.maledict.Maledict;
 import org.brahypno.maledict.common.item.curio.rune.RuneOfBlissItem;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +41,42 @@ public final class BlissRuneEvents {
         float amount = event.getAmount() * multiplier;
         if (event.isCanceled()) force(victim, event.getSource(), amount);
         else event.setAmount(amount);
+    }
+
+    /**
+     * 佩戴者打出的<b>所有</b>探针与属性请求都抬一级；强制命中补打除外。
+     *
+     * <p>恋人之斧、精魂箭矢、飞镰、神侵恶刃的探针和碧水冻结属性请求都走这里，武器本身不需要
+     * 知道符文存在。只抬 {@code priority}/{@code strength}，不动 {@code amount}，也不改
+     * 补偿/改防御开关；排在 {@code LOW}，所以各武器的基准档（例如神侵恶刃的
+     * {@code applyFreezeAttributePolicy}）先落定，这里再抬。
+     *
+     * <p>1.20.1 就是这条规则；移植时曾把它缩成神侵恶刃自己的 {@code raisedByBliss}，于是别的
+     * 武器戴符文等于白戴，且刀在终档时抬不上去。
+     */
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onDamageRequest(DamageRequestEvent event) {
+        if (forcing) {
+            return;
+        }
+        LivingEntity attacker = event.attacker();
+        if (attacker == null || !RuneOfBlissItem.isEquipped(attacker)) {
+            return;
+        }
+        event.setPriority(raised(event.priority()));
+        event.setStrength(raised(event.strength()));
+    }
+
+    private static DamageStage raised(DamageStage stage) {
+        return DamageStage.byLevel(Math.min(5, stage.level() + 1));
+    }
+
+    private static DamageProbeResult.Penetration raised(DamageProbeResult.Penetration strength) {
+        return switch (strength) {
+            case RESPECT -> DamageProbeResult.Penetration.IGNORE_DECLARATION;
+            case IGNORE_DECLARATION -> DamageProbeResult.Penetration.BYPASS_GUARD;
+            case BYPASS_GUARD -> DamageProbeResult.Penetration.BYPASS_GUARD;
+        };
     }
 
     /**

@@ -43,7 +43,10 @@ public final class SoulDisplacementTest {
         SoulEchoEntity echo = echoes(helper, target).get(0);
         assertOffset(helper, target, echo);
         Vec3 origin = echo.position();
-        target.setPos(target.position().add(6, 0, 0));
+        // 身体要离锚点足够远（> 锚点偏移上限 0.8）才说明转发不靠位置，但 test_empty 是个 1×1×1 的
+        // 空结构：挪出加载区后 GameTest 会把身体按 DISCARDED 收走，20 tick 后就没得打了。2 格已经
+        // 足够证明「旧位置的锚点仍然命中身体」，也不会让夹具自己先崩。
+        target.setPos(target.position().add(2, 0, 0));
         helper.runAtTickTime(20, () -> {
             int remaining = echo.remainingTicks();
             float before = target.getHealth();
@@ -157,6 +160,9 @@ public final class SoulDisplacementTest {
     private static LivingEntity target(GameTestHelper helper) {
         var cow = helper.spawn(EntityType.COW, new BlockPos(3, 2, 3));
         cow.setNoAi(true);
+        // test_empty 没有地板：这一次要把身体挪离锚点，不带 noGravity 的物体会直接掉进虚空并在
+        // 20 tick 内被移除，前面那条「法术打到旧位置仍然命中身体」就变成了「身体已经不存在」。
+        cow.setNoGravity(true);
         cow.getAttribute(Attributes.MAX_HEALTH).setBaseValue(100);
         cow.setHealth(100);
         return cow;
