@@ -26,6 +26,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.bus.api.EventPriority;
@@ -53,7 +54,7 @@ public final class InvocationTest {
                     "default", true, profile, 0xB28DD1);
             assertEquals(definition, InvocationDefinition.CODEC.codec().parse(JsonOps.INSTANCE, InvocationDefinition.CODEC.codec().encodeStart(JsonOps.INSTANCE, definition).getOrThrow()).getOrThrow());
             var serializer = new InvocationDefinition.Serializer();
-            RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), TestSupport.registries());
+            RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), TestSupport.registries(), ConnectionType.NEOFORGE);
             try {
                 serializer.streamCodec().encode(buffer, definition);
                 assertEquals(definition, serializer.streamCodec().decode(buffer));

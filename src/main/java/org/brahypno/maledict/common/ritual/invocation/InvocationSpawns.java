@@ -18,6 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
+import org.brahypno.maledict.common.MaledictChunks;
 import net.minecraft.core.registries.BuiltInRegistries;
 
 /** Explicit adapters for the six supported entities; item NBT is never loaded onto a mob. */
@@ -67,7 +68,7 @@ public final class InvocationSpawns {
         BlockPos first = BlockPos.containing(box.minX, box.minY, box.minZ);
         BlockPos last = BlockPos.containing(Math.nextDown(box.maxX), Math.nextDown(box.maxY), Math.nextDown(box.maxZ));
         if (box.minY < level.getMinBuildHeight() || box.maxY > level.getMaxBuildHeight()
-                || !level.getWorldBorder().isWithinBounds(box) || !level.hasChunksAt(first.below(), last.above())
+                || !level.getWorldBorder().isWithinBounds(box) || !MaledictChunks.loaded(level, first.below(), last.above())
                 || !level.noCollision(mob, box)) return false;
         for (BlockPos pos : BlockPos.betweenClosed(first, last)) {
             BlockState state = level.getBlockState(pos);

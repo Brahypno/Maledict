@@ -94,7 +94,7 @@ public final class InvocationLedger extends SavedData {
             BlockPos pos = pair.getKey();
             Entry entry = pair.getValue();
             if (entry.settling || entries.get(pos) != entry) continue;
-            if (!entry.refund && (!level.hasChunkAt(pos) || !entry.structure.unchanged(level)
+            if (!entry.refund && (!level.isLoaded(pos) || !entry.structure.unchanged(level)
                     || !entry.structure.base().isActiveOrAssembling()
                     || level.getGameTime() - entry.started > 200)) {
                 entry.refund = true;
@@ -106,7 +106,7 @@ public final class InvocationLedger extends SavedData {
                     level.sendParticles(entry.definition.soulwood() ? ParticleTypes.SOUL : ParticleTypes.ENCHANT,
                             center.getX() + .5D, center.getY() + .6D, center.getZ() + .5D, 6, .6D, .5D, .6D, .01D);
                 }
-            } else if (level.hasChunkAt(pos)) {
+            } else if (level.isLoaded(pos)) {
                 if (entry.structure != null && level.getBlockEntity(pos) == entry.structure.base()
                         && entry.structure.base().isActiveOrAssembling()) {
                     entry.structure.base().setState(level, TotemBaseBlockEntity.TotemBaseState.INACTIVE);
@@ -125,7 +125,7 @@ public final class InvocationLedger extends SavedData {
                         if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) continue;
                         for (int dy : new int[]{1, 0, 2}) {
                             BlockPos candidate = pos.offset(dx, dy, dz);
-                            if (!level.hasChunkAt(candidate) || !level.isInWorldBounds(candidate)
+                            if (!level.isLoaded(candidate) || !level.isInWorldBounds(candidate)
                                     || !level.getWorldBorder().isWithinBounds(candidate)) continue;
                             ItemEntity drop = new ItemEntity(level, candidate.getX() + .5D, candidate.getY() + .25D,
                                     candidate.getZ() + .5D, entry.paid.copy());

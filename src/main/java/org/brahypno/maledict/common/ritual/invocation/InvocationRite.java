@@ -62,7 +62,7 @@ public final class InvocationRite extends SpiritRiteType {
         Direction direction = null;
         BlockPos pos = base.getBlockPos().above();
         while (pos.getY() < level.getMaxBuildHeight()) {
-            if (!level.hasChunkAt(pos)) return null;
+            if (!level.isLoaded(pos)) return null;
             if (!(level.getBlockEntity(pos) instanceof TotemPoleBlockEntity pole)) break;
             Direction facing = pole.getBlockState().getValue(BlockStateProperties.HORIZONTAL_FACING);
             if (direction == null) direction = facing;
