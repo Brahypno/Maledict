@@ -3,6 +3,7 @@ package org.brahypno.maledict.common.item.curio.enlightenment;
 import org.brahypno.maledict.common.item.curio.enlightenment.CooldownSpeed;
 import net.minecraft.core.Holder;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import com.sammy.malum.common.entity.activator.SpiritCollectionActivatorEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffect;
@@ -130,7 +131,7 @@ public final class AgeOfEnlightenmentEvents {
         LivingEntity next = nearestEnemy(serverLevel, carrier, source);
         if (next != null) {
             // 夹一次负数：等级乘数是 amplifier + 1，负等级会把减益翻成增益。
-            int level = Math.max(EnlightenmentLevel.FALLBACK, enlightenment.getAmplifier());
+            int level = EnlightenmentLevel.fromAmplifier(enlightenment.getAmplifier());
             grant(next, MaledictMobEffects.AGE_OF_DARKNESS, level);
         }
     }
@@ -163,16 +164,17 @@ public final class AgeOfEnlightenmentEvents {
      * direct / causing 两个位子，而法术通道、箭矢、爆炸的直接来源另有其人（或为空），不吃这一份。
      * 横扫也走 {@code player_attack}、直接来源同样是玩家，所以一起翻倍。
      *
-     * <p>挂在 {@code LivingDamageEvent.Pre} 上而不是 {@code CriticalHitEvent} 上：这里拿到的是护甲后的伤害，
-     * 与暴击倍率同一条口径，但不再强迫原版暴击——暴击粒子与音效没了，镰刀的横扫也不会再被压掉。
+     * <p>挂在 {@code LivingIncomingDamageEvent}（NeoForge 21.1 对 1.20.1 {@code LivingHurtEvent}
+     * 的接位：都在护甲吸收之前）上而不是 {@code CriticalHitEvent} 上：拿到的是护甲前的伤害，
+     * 与 1.20.1 同一条口径，但不再强迫原版暴击——暴击粒子与音效没了，镰刀的横扫也不会再被压掉。
      * 真落下来的原版暴击（下落攻击那种）照旧先乘 1.5，再被这一份放大。
      */
     @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOW)
-    public static void onMeleeHurt(LivingDamageEvent.Pre event) {
+    public static void onMeleeHurt(LivingIncomingDamageEvent event) {
         if (event.getEntity().level().isClientSide()) {
             return;
         }
-        if (event.getNewDamage() <= 0.0F) {
+        if (event.getAmount() <= 0.0F) {
             return;
         }
         if (!(event.getSource().getDirectEntity() instanceof Player attacker)) {
@@ -185,7 +187,7 @@ public final class AgeOfEnlightenmentEvents {
             return;
         }
 
-        event.setNewDamage(event.getNewDamage() * meleeDamageMultiplier());
+        event.setAmount(event.getAmount() * meleeDamageMultiplier());
     }
 
     /**

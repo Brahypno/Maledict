@@ -16,7 +16,15 @@ public final class EnlightenmentLevel {
             return FALLBACK;
         }
         // getInt 对缺失或非数字都返回 0，正好是退路；只有负数要单独夹一次。
-        return Math.max(FALLBACK, tag.getInt(TAG));
+        return fromAmplifier(tag.getInt(TAG));
+    }
+
+    /**
+     * 药水等级转护符等级：负等级会把减益翻成增益（等级乘数是 amplifier + 1），所以下限夹到
+     * {@link #FALLBACK}。传染给下一个敌人的黑暗年代也走这一道闸。
+     */
+    public static int fromAmplifier(int amplifier) {
+        return Math.max(FALLBACK, amplifier);
     }
 
     private EnlightenmentLevel() {

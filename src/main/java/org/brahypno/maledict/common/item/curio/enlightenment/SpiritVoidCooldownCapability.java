@@ -8,7 +8,11 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
 import org.jetbrains.annotations.Nullable;
 
-/** 魂息虚空的内置冷却，挂在目标实体身上做限流；状态不落盘（重新载入时从 0 开始即可）。 */
+/**
+ * 魂息虚空的内置冷却，挂在目标实体身上做限流；状态不落盘（重新载入时从 0 开始即可）。
+ *
+ * <p>挂在所有生物上，这样无论谁打中目标，查到的都是同一份记录。
+ */
 @EventBusSubscriber(modid = Maledict.MODID)
 public final class SpiritVoidCooldownCapability {
 
@@ -18,15 +22,34 @@ public final class SpiritVoidCooldownCapability {
     /** 剩余冷却；0 表示可以触发。 */
     private int cooldown;
 
-    /** 挂在所有生物上，这样无论谁打中目标，查到的都是同一份记录。 */
-
     @SubscribeEvent
     public static void tick(EntityTickEvent.Pre event) {
         if (!(event.getEntity() instanceof LivingEntity livingEntity)) return;
         SpiritVoidCooldownCapability capability = get(livingEntity);
-        if (capability != null && capability.cooldown > 0) {
-            capability.cooldown--;
+        if (capability != null) {
+            capability.tickDown();
         }
+    }
+
+    /** 状态机本体：没在冷却就占一次机会并重新挂满冷却。 */
+    boolean tryUse() {
+        if (cooldown > 0) {
+            return false;
+        }
+        cooldown = COOLDOWN_TICKS;
+        return true;
+    }
+
+    /** 冷却逐 tick 减一，不会减成负数。 */
+    void tickDown() {
+        if (cooldown > 0) {
+            cooldown--;
+        }
+    }
+
+    /** 剩余冷却，测试与诊断用。 */
+    int cooldown() {
+        return cooldown;
     }
 
     /** 未挂载（或客户端侧缺同步）时返回 {@code null}。 */
@@ -42,13 +65,6 @@ public final class SpiritVoidCooldownCapability {
      */
     public static boolean tryUse(LivingEntity target) {
         SpiritVoidCooldownCapability capability = get(target);
-        if (capability == null) {
-            return true;
-        }
-        if (capability.cooldown > 0) {
-            return false;
-        }
-        capability.cooldown = COOLDOWN_TICKS;
-        return true;
+        return capability == null || capability.tryUse();
     }
 }
