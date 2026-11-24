@@ -19,11 +19,9 @@
 
 ## 其他目录
 
-| 路径 | 内容 |
-| --- | --- |
-| `archive/` | 31 篇逐轮历史记录（00–28）。保留了当时的数值和取舍，**不要当作当前规格**。 |
-| `source/` | 用户提供的原始工作包，用于溯源。与正典冲突时以正典为准。 |
-| `references/` | 用户提供的原型参考图，只作设计参考，不作为游戏纹理或宣传素材导出。 |
+逐轮历史记录（00–28）、用户原始工作包与原型参考图已随实现完成删除，本目录只剩上面六份正典；
+要追某一轮改了什么，看 `git log`。造型与实测工具不在文档目录里：`art/first-vicissitude/tools/`、
+`tools/rig-probe/`。
 
 ## 三条硬规则
 
@@ -34,7 +32,8 @@
    想改威胁范围就改刀身长度或手臂姿态。见 [02 第 1 节](02_ANIMATION_AND_HITBOX.md)。
 3. **「未验证」是一种状态，不是懒惰。** [03 第 5 节](03_ENGINEERING_AND_VERIFICATION.md)
    列的是真的没测过的东西。不要因为代码看起来对就把它从那一节删掉——
-   删掉它的唯一方式是进游戏测过。
+   删掉它的方式是进游戏测过，或者把它换成一条**离线可量**的核对（量完写清量的是什么），
+   后者只能关掉几何/长度这类问题，关不掉观感与手感。
 
 ## 不要做（踩过的坑）
 
@@ -57,5 +56,5 @@
 | 难度、血量、时长 | [01 §1](01_SPEC.md) | `BossDifficulty` |
 | 掉落 | [01 §8](01_SPEC.md) | `MaledictEntityLoot` + `runData` |
 | 模型、贴图、UV | [01 §3](01_SPEC.md) | `art/first-vicissitude/` + `rig/VicissitudeRigData` |
-| 特效、粒子、震动 | [01 §3](01_SPEC.md) | `client/vicissitude/vfx/FirstVicissitudeEffects` |
+| 特效、粒子、震动 | [01 §3](01_SPEC.md) | `client/entity/vicissitude/vfx/FirstVicissitudeEffects` |
 | 饰品没收与返还 | [01 §9](01_SPEC.md) | `VicissitudeCurioReturns`、`VicissitudeCurioLedger` |

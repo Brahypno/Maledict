@@ -84,7 +84,5 @@ PNG 路径位于 `src/main/resources/assets/<namespace>/textures/...`，可以�
 游戏内检查：目标／非目标物品、Shift 展开、F3+H、不同 GUI 缩放、屏幕四角、透明纹理、两种模式。
 把模式切成 `REPLACE` 时应看到自定义中心底图，文字和内容图片位于贴图上方。
 
-Forge 源码依据：
-[RenderTooltipEvent](https://github.com/MinecraftForge/MinecraftForge/blob/1.20.x/src/main/java/net/minecraftforge/client/event/RenderTooltipEvent.java)、
-[GuiGraphics patch](https://github.com/MinecraftForge/MinecraftForge/blob/1.20.x/patches/minecraft/net/minecraft/client/gui/GuiGraphics.java.patch)。
-具体调用顺序已核对本地 47.4.23 sources，而不只依赖分支最新代码。
+NeoForge 源码依据：`net.neoforged.neoforge.client.event.RenderTooltipEvent` 及其 `Color` 子类、
+`GuiGraphics` 的工具提示补丁。具体调用顺序已核对本地 NeoForge 21.1.262 sources，而不只依赖分支最新代码。

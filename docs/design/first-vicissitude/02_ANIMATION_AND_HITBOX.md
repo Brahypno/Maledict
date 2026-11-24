@@ -10,7 +10,7 @@
 | 骨架、姿态求解、动作曲线、刀身几何 | `rig/VicissitudeRig.java` |
 | 关节与网格、UV 打包 | `rig/VicissitudeRigData.java` |
 | 动作调度、命中结算、瞄准锁定 | `common/entity/vicissitude/FirstVicissitudeBossEntity.java` |
-| 渲染姿态与特效锚点 | `client/vicissitude/model/FirstVicissitudeBossModel.java`、`client/vicissitude/vfx/FirstVicissitudeEffects.java` |
+| 渲染姿态与特效锚点 | `client/entity/vicissitude/model/FirstVicissitudeBossModel.java`、`client/entity/vicissitude/vfx/FirstVicissitudeEffects.java` |
 
 ---
 

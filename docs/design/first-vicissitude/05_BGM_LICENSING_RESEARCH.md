@@ -1228,31 +1228,28 @@ session** — check the current `TickableSoundInstance` interface in your mappin
 
 ✅ Structure verified against <https://minecraft.wiki/w/Sounds.json>:
 
-`src/main/resources/assets/maledict/sounds.json`:
+`src/main/resources/assets/maledict/sounds.json`（下面是本仓库实际落地的两条）：
 ```json
 {
-  "music.maledict.first_vicissitude.phase1": {
-    "subtitle": "sound.maledict.first_vicissitude.phase1",
+  "music.vicissitude.phase_one": {
+    "subtitle": "sounds.maledict.music.vicissitude.phase_one",
     "sounds": [
       {
-        "name": "maledict:music/first_vicissitude_phase1",
-        "stream": true,
-        "volume": 1.0,
-        "pitch": 1.0,
-        "weight": 1
+        "name": "maledict:music/vicissitude_phase_one",
+        "stream": true
       }
     ]
   },
-  "music.maledict.first_vicissitude.phase2": {
-    "subtitle": "sound.maledict.first_vicissitude.phase2",
+  "music.vicissitude.phase_two": {
+    "subtitle": "sounds.maledict.music.vicissitude.phase_two",
     "sounds": [
-      { "name": "maledict:music/first_vicissitude_phase2", "stream": true, "volume": 1.0, "pitch": 1.0 }
+      { "name": "maledict:music/vicissitude_phase_two", "stream": true }
     ]
   }
 }
 ```
 
-- File goes at `src/main/resources/assets/maledict/sounds/music/first_vicissitude_phase1.ogg`.
+- File goes at `src/main/resources/assets/maledict/sounds/music/vicissitude_phase_one.ogg`.
 - `name` is relative to `assets/<namespace>/sounds/`, **without the `.ogg` extension**, forward slashes,
   **no whitespace**.
 - ✅ `stream: true` — wiki: *"It is recommended that this is set to 'true' for sounds that have a duration
@@ -1610,7 +1607,6 @@ distribution footprint is worldwide.
 
 ### 6.5 Raw research files
 
-The un-condensed research output behind §2.4, §2.6 and this addendum is archived at
-`docs/design/first-vicissitude/source/research/` (`music-research-itchio-fma.md`, `musopen-research.md`,
-`imslp-alt-research.md`, `bgm-licensing-research.md`). It contains the per-item URL lists and the full
-rejection reasoning that this document summarises.
+The un-condensed research output behind §2.4, §2.6 and this addendum (per-item URL lists and the full
+rejection reasoning) was deleted together with the source working package. This document, `CREDITS.md`
+and the shipped tracks are what remain; §2.4 keeps the rejected candidates and why.

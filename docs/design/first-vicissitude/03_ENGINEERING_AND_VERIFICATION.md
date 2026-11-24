@@ -173,7 +173,7 @@ UV/法线、胸洞 12 条射线和环内缘 32 条射线检查通过；报告在
 | 命令 | 结果 |
 | --- | --- |
 | `.\gradlew compileJava --offline` | BUILD SUCCESSFUL（实现轮、第十轮、第十三轮、各资产轮、适应台词轮） |
-| `.\gradlew test --offline` | BUILD SUCCESSFUL；测试数随轮次从 5 项增长到 54 项，始终 0 失败 |
+| `.\gradlew test --offline` | BUILD SUCCESSFUL；测试数随轮次从 5 项增长到 52 项，始终 0 失败 |
 | `.\gradlew runData --offline` | BUILD SUCCESSFUL（实现轮、召唤仪式轮、掉落表轮、适应台词轮只改了语言文件） |
 | `javac` + `java RigArtGenerator` | 生成 base/emissive 贴图、凭证图标、bbmodel、预览图与尺寸报告 |
 | `javac` + `java RigMeshCheck` | 三条 PASS：光环保持面内、胸环刚性且与光环反向同速、翼顶点组合检查 |
@@ -197,8 +197,11 @@ UV/法线、胸洞 12 条射线和环内缘 32 条射线检查通过；报告在
 ## 3. 测试资产
 
 JUnit 测试与 GameTest 场景按生产包归类。Boss 的状态、伤害适应和实体场景位于
-`common/entity/vicissitude/`，饰品返还位于 `common/curio/vicissitude/`；
-`rig/` 验证骨架、刀刃可达范围与碰撞几何。
+`common/entity/vicissitude/`，饰品返还位于 `common/entity/vicissitude/curio/`；
+`rig/` 验证骨架、刀刃可达范围与碰撞几何。启蒙之年的两个纯状态机在
+`common/item/curio/enlightenment/`：`SpiritVoidCooldownCapabilityTest` 走一遍
+「占满 100 tick → 到 0 才再占 → 空计数器不递减成负数」，`EnlightenmentLevelTest`
+钉住「缺失/负数等级读成 0」这条夹取（负等级在药水里会把黑暗年代翻成增益），它不是枚举复述。
 
 保留已确认的适应窗口与同 tick 批次序列、真实生命账本和 NBT 往返、事件取消与重入、
 饰品所有权交接、世界碰撞脱困，以及实际图腾消耗场景。
@@ -224,20 +227,20 @@ JUnit 测试与 GameTest 场景按生产包归类。Boss 的状态、伤害适�
 `common/entity/vicissitude/VicissitudeBossEntity.java`、`common/entity/vicissitude/FirstVicissitudeBossEntity.java`、
 `common/entity/vicissitude/VicissitudeBossStage.java`、`common/entity/vicissitude/VicissitudeSpiritBoltEntity.java`、
 `common/entity/vicissitude/VicissitudeScytheProjectileEntity.java`、`common/entity/vicissitude/VicissitudeLightOrbEntity.java`；
-`common/curio/vicissitude/VicissitudeCurioLedger.java`、`common/curio/vicissitude/VicissitudeCurioReturns.java`、
-`common/item/curio/CurioReturnTokenItem.java`、`common/MaledictTags.java`；
-`client/vicissitude/model/FirstVicissitudeBossModel.java`、`client/vicissitude/model/VicissitudeBlenderMesh.java`、
-`client/vicissitude/render/FirstVicissitudeBossRenderer.java`、`client/vicissitude/vfx/FirstVicissitudeEffects.java`、
-`client/vicissitude/vfx/FirstVicissitudeClientEvents.java`、`client/vicissitude/render/VicissitudeSpiritBoltRenderer.java`、
-`client/vicissitude/render/VicissitudeScytheRenderer.java`、`client/vicissitude/render/VicissitudeLightOrbRenderer.java`；
-`network/clientbound/VicissitudeEffectPacket.java`；`common/rite/VicissitudeRiteType.java`、`common/rite/SummoningRite.java`；
+`common/entity/vicissitude/curio/VicissitudeCurioLedger.java`、`common/entity/vicissitude/curio/VicissitudeCurioReturns.java`、
+`common/entity/vicissitude/curio/CurioReturnTokenItem.java`、`common/MaledictTags.java`；
+`client/entity/vicissitude/model/FirstVicissitudeBossModel.java`、`client/entity/vicissitude/model/VicissitudeBlenderMesh.java`、
+`client/entity/vicissitude/render/FirstVicissitudeBossRenderer.java`、`client/entity/vicissitude/vfx/FirstVicissitudeEffects.java`、
+`client/entity/vicissitude/vfx/FirstVicissitudeClientEvents.java`、`client/entity/vicissitude/render/VicissitudeSpiritBoltRenderer.java`、
+`client/entity/vicissitude/render/VicissitudeScytheRenderer.java`、`client/entity/vicissitude/render/VicissitudeLightOrbRenderer.java`；
+`network/clientbound/VicissitudeEffectPacket.java`；`common/entity/vicissitude/rite/VicissitudeRiteType.java`、`common/entity/vicissitude/rite/SummoningRite.java`；
 资产 `assets/maledict/textures/entity/first_vicissitude.png`、`_emissive.png`、
 `assets/maledict/textures/item/curio_return_token.png`、`models/entity/first_vicissitude.mesh.json`。
 
 修改：`registry/MaledictEntities.java`、`registry/MaledictItems.java`、`registry/MaledictCreativeTabs.java`、
 `client/MaledictClientSetup.java`、`config/MaledictConfig.java`、`data/tags/MaledictItemTags.java`、
 `data/client/MaledictItemModels.java`、`data/loot/MaledictEntityLoot.java`、`data/client/MaledictLanguage.java`、
-`client/codex/MaledictCodexEntries.java`、`network/MaledictNetwork.java`、`Maledict.java`。
+`client/item/codex/MaledictCodexEntries.java`、`network/MaledictNetwork.java`、`Maledict.java`。
 
 ### 用户反馈修正（按主题归并，同一主题只留结论）
 
@@ -434,12 +437,23 @@ JUnit 测试与 GameTest 场景按生产包归类。Boss 的状态、伤害适�
     开关：`-Dmaledict.meleeTrace=true` 会逐 tick 打印 Boss 位置、刀身世界坐标、
     到目标的体积距离与命中与否，用来一次定位是站位、高度还是容差的问题。
     参数位置见 [02 第 4 节与第 7 节](02_ANIMATION_AND_HITBOX.md)。
-12. **刀身长度与渲染武器是否吻合**：`BLADE_LENGTH_MODEL_UNITS`（当前 44 单位 ≈ 2.75 格）
-    是按「命中帧刀尖够到设计上限 5 格」反推的，**没有和实际渲染出来的镰刀刃长核对过**。
-    进游戏第一件事就是站在 4–5 格看刀刃落点：刀尖明显超出刀刃就调小，明显够不到就调大；
-    改完重跑 `tools/rig-probe/` 并更新 02 第 7 节。
-13. 测试层面：`SpiritVoidCooldownCapability`（100 tick 自减计数器）、
-    `AgeOfEnlightenmentEvents#onDarknessBearerHurt` 都没有单测；
+12. **刀身长度与渲染武器**（已离线核对）：手持的是 1 格见方的平面图标
+    （`malum:item/handheld_large` 的生成模型），第三方手持显示缩放 1.45，渲染器再乘
+    `weaponScale`。量贴图里武器的最长跨度（32 texel = 1 格 = 16 模型单位）：
+    `maledict:incursus_blade` 38.3 texel、`malum:soul_stained_steel_scythe` 36.8、
+    `malum:edge_of_deliverance` 37.0；按 1.6 算分别是 **44.4 / 42.7 / 42.9 单位**，
+    而判定刀身是 44 单位（2.75 格，握点在刀身起点前 5 单位），三者差 < 4%。
+    **`malum:edge_of_deliverance` 原先不在 `weaponScale` 的 1.6 白名单里，掉进 1.15 兜底，
+    只画到 ≈30.9 单位、短约 0.8 格**：白名单从 `40b6e80` 起只列了两把，
+    `03c01b9` 在 `createWeaponForDifficulty` 里加出 DIFFICULT 这一档时没回头改渲染器；
+    本轮已补进去。图标是贴图不是几何，刀身方向、起止段是否真和判定重合仍只能进游戏看，
+    但「长度对不对」这一项不再是未知。
+13. 测试层面：`SpiritVoidCooldownCapability` 的计数器已补单测（`SpiritVoidCooldownCapabilityTest`）；
+    `onDarknessBearerHurt` 里唯一能脱离实体验证的一段（等级夹成非负）已抽成
+    `EnlightenmentLevel#fromAmplifier` 并有 `EnlightenmentLevelTest` 覆盖。
+    传染真正的判据仍没有测试覆盖——「携带者带黑暗年代 + 伤害源带启蒙之年才传、
+    等级取伤害源而不是受击者、传给它 16 格内最近的另一个敌人」需要真实世界，
+    只能靠 GameTest 或进游戏。
     Malum 是否真的加载 `spirit_data`（目录、主键、命名空间）只能进游戏验证；
     `DamageAdaptation` 的配置读取、清账时机与减伤档位在实体层，只能进游戏验证；
     适应台词（是否只在该触发时出现、10 秒冷却的手感、动作栏是否读得清）同样只在实体层。
@@ -452,10 +466,8 @@ JUnit 测试与 GameTest 场景按生产包归类。Boss 的状态、伤害适�
 
 - 原工作包 `fate_boss_agent_md_pack.zip`，SHA-256
   `0800AB1AB214132F380B9E9F272197278B6E0DC1197155D6CFCD8007F47500E4`。
-  原稿保存在 [`source/`](source/README.md) 用于溯源，**不再作为独立执行清单**。
-- 逐轮历史记录（含被取代的数值）在 [`archive/`](archive/)，只用于追溯某一轮改了什么。
-- 用户提供的原型参考图在 [`references/`](references/README.md)，
-  原作不是 Minecraft 模型，只作设计参考，不作为游戏纹理或宣传素材导出。
+  原稿、逐轮历史记录（含被取代的数值）与原型参考图在实现完成后已删除，**不再作为独立执行清单**；
+  追溯某一轮改了什么看 `git log`。
 - 工作约定：冲突以确认记录为准，不得把「建议」或未回复的问题标成已确认；
   影响技能、伤害、时长、碰撞或主题的改动必须同时更新 [01](01_SPEC.md)；
   `src/generated` 只能由 `runData` 更新，禁止手改；

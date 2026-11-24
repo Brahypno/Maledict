@@ -49,11 +49,11 @@
 | --- | --- |
 | 声音事件注册 | `registry/MaledictSounds.java`（在 `Maledict` 里注册） |
 | 声音定义 | `assets/maledict/sounds.json` + `sounds/music/vicissitude_phase_{one,two}.ogg` |
-| 客户端播放器 | `client/vicissitude/music/VicissitudeBossMusic.java` + `client/vicissitude/music/VicissitudeMusicSound.java` |
-| 挂载点 | `client/vicissitude/VicissitudeClientTickEvents.java`（复用它已有的 96 格扫描） |
+| 客户端播放器 | `client/entity/vicissitude/music/VicissitudeBossMusic.java` + `client/entity/vicissitude/music/VicissitudeMusicSound.java` |
+| 挂载点 | `client/entity/vicissitude/VicissitudeClientTickEvents.java`（复用它已有的 96 格扫描） |
 | 血条样式同步 | `network/clientbound/BossBarStylePacket.java` + `MaledictNetwork#sendBossBarStyle` |
 | 带皮肤号的血条 | `common/entity/vicissitude/VicissitudeBossEvent.java` |
-| 客户端重绘 | `client/vicissitude/VicissitudeBossBarOverlay.java` |
+| 客户端重绘 | `client/entity/vicissitude/VicissitudeBossBarOverlay.java` |
 | 接线 | `FirstVicissitudeBossEntity`（字段类型、`completeTransition()`、`readAdditionalSaveData()`） |
 | 配置 | `MaledictConfig.CLIENT_SPEC` 的 `bossMusic` / `bossMusicVolume` |
 | 字幕文案 | `MaledictLanguage`（生成器）→ `runData` → `src/generated/.../lang/*.json` |
@@ -180,7 +180,7 @@ MaledictSounds.SOUND_EVENTS.register(modBus);
 
 ### 1.4 客户端播放器
 
-新建 `org/brahypno/maledict/client/vicissitude/music/VicissitudeBossMusic.java`，并加一个 `AbstractTickableSoundInstance` 子类
+新建 `org/brahypno/maledict/client/entity/vicissitude/music/VicissitudeBossMusic.java`，并加一个 `AbstractTickableSoundInstance` 子类
 `VicissitudeMusicSound`。
 
 播放器的形状（照抄参考实现的骨架）：
@@ -266,8 +266,8 @@ VICISSITUDE_BOSS_MUSIC_VOLUME = clientBuilder
         .defineInRange("bossMusicVolume", 1.0D, 0.0D, 1.0D);
 ```
 
-README 的 Configuration 一节现在写着「`config/maledict-client.toml` holds the encounter's screenshake」，
-加完之后要一起改。
+两项都已落地，键名就是 `bossMusic` / `bossMusicVolume`（默认 `true` / `1.0`）。
+README 现在只讲构建与依赖，没有 Configuration 一节，这条不用再同步。
 
 ### 1.7 多只无常同时在场
 

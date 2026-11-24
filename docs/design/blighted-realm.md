@@ -182,3 +182,22 @@
 本轮未做客户端视觉验收，遗迹外观、实际照明与自然生成疏密仍需游戏内观察。
 井室加深至十二格后重跑 `runGameTestServer --offline`，50 项游戏测试通过，覆盖延长梯道、
 深层容器避让及井底通往储藏间的完整通路。
+
+## 倒置圣物匣「能定位却不生成」（2026-11-24）
+
+`/locate structure maledict:inverted_reliquary` 能返回坐标，但那一带一块方块都没有。
+
+原因是 1.21 把数据包里的结构模板目录从 `structures/` 改成了单数 `structure/`（`StructureTemplateManager`
+的 `FileToIdConverter("structure", ".nbt")`，原版 1180 份模板也都在 `data/minecraft/structure/` 下）。
+`MaledictReliquaryTemplates` 仍按 1.20.1 的复数目录产出，`StructureTemplateManager#getOrCreate` 查不到文件时
+**不抛异常**，只交出一份空模板：piece 照样成立（`StructureStart#isValid` 只看 piece 数量），`/locate` 因此
+照样能定位，但 `StructureTemplate#placeInWorld` 见 `palettes` 为空直接返回——放置阶段什么都不写。
+
+修法是让产物跟着单数目录走（`data/maledict/structure/inverted_reliquary/*.nbt`）。已存在于存档里的区块
+不会回填：那些区块的结构起点早已写好、方块早已跳过，只有新生成的区块才有地宫。三份模板现在都能被读成
+35×20×35，实测落一次完整地宫可见祭坛方块、以太火盆方块实体与 `maledict:chests/inverted_reliquary` 箱子。
+
+`dimensionAndNativeWorldgenLoad` 顺带补了这条回归口径：模板必须按 piece 自己的 id 读得出来，四分之一转向的
+piece 包围盒仍是 35×20×35。GameTest 服务端 `generateStructures=false`，所以那里查模板与包围盒，不查自然生成。
+同一用例的地表断言也从「单列必须是腐枯材料」改成「不出现原版地表材料且腐枯材料占多数」：矿脉生成在表面规则
+之后，露头矿石能在地表掏洞（原版主世界同样如此），旧断言红在一块 `minecraft:iron_ore` 上。

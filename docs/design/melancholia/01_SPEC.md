@@ -199,7 +199,8 @@ shellheart 是**额外血池**，所以它另起一行、并给 `gui.leftHeight`
 | 常量 | 值 | 说明 |
 | --- | --- | --- |
 | `ADAPTATION_LEVEL` | `1` | 窗口容量，写死 |
-| `RELEASE_PER_TICK` | `0.025` | 半衰期 ≈ 28 tick ≈ 1.4 秒；稳态池子 = 入队速率 / 0.025 |
+| `DAMAGE_RELEASE_PER_TICK` | `0.025` | 半衰期 ≈ 28 tick ≈ 1.4 秒；稳态池子 = 入队速率 / 0.025 |
+| `HEAL_RELEASE_PER_TICK` | `0.01` | 回血走更慢的比例（半衰期 ≈ 69 tick ≈ 3.5 秒），见 §9「回血在血条上炸开」 |
 | 池子上限 | 无 | 靠指数释放天然收敛 |
 | 适应衰减 / 计数封顶 | 无 | 靠窗口 1 格自挤 |
 
@@ -208,7 +209,8 @@ shellheart 是**额外血池**，所以它另起一行、并给 `gui.leftHeight`
 1. **我替用户写的几处文案**，等过目或替换：物品 tooltip 一行
    （`malum.gui.curio.effect.maledict.melancholia`）、两个条目的 description
    （「自由的创作」取自用户原文，「痛得慢一些」是我写的）、以及全部英文派生。
-2. **codex 坐标**：`UMBRAL_EXPERIMENT_X/Y = (4, 10)` 是按现有几页的间距估的，进游戏看着挤就挪。
+2. **codex 坐标**：`UMBRAL_EXPERIMENT_X/Y = (6, 12)`（原估的 (4,10) 撞了 Malum 的 `void.weight_of_worlds`，见 §9），
+   进游戏看着挤就再挪。
 3. **进游戏实测**：致命一击改走原版 `hurt` 之后要确认 —— 掉落只发生一次、死因与击杀归属正确、
    图腾能救、无敌帧不会把该还的账永远卡住。
 4. **血条配色**：现在是幽影紫 `(0.42, 0.29, 0.63, 0.85)` 与苍白绿 `(0.55, 0.88, 0.62, 0.85)`，
@@ -232,15 +234,15 @@ shellheart 是**额外血池**，所以它另起一行、并给 `gui.leftHeight`
 
 | 文件 | 作用 |
 | --- | --- |
-| `common/item/rune/RuneOfMelancholiaItem.java` | 符文物品；适应账本读写 stack NBT；消息键构造 |
-| `common/entity/vicissitude/DamageAdaptation.java` | 复用无常的窗口算法，新增「连次数一起恢复」的重载（旧行为不变） |
-| `common/vitals/DelayedVitalsPool.java` | 两个池子的纯数学 |
-| `common/vitals/DelayedVitalsHearts.java` | 血条染色段的半心数学 |
-| `common/vitals/DelayedVitals.java` | 挂在玩家身上的 capability（池子、来源、脏标记、`releasing`） |
-| `common/vitals/DelayedVitalsEvents.java` | 适应 / 入队 / 结算 / 死亡清除 / 进世界同步 |
+| `common/item/curio/rune/RuneOfMelancholiaItem.java` | 符文物品；适应账本读写 stack NBT；消息键构造 |
+| `common/combat/DamageAdaptation.java` | 复用无常的窗口算法，新增「连次数一起恢复」的重载（旧行为不变） |
+| `common/combat/vitals/DelayedVitalsPool.java` | 两个池子的纯数学 |
+| `common/combat/vitals/DelayedVitalsHearts.java` | 血条染色段的半心数学 |
+| `common/combat/vitals/DelayedVitals.java` | 挂在玩家身上的 capability（池子、来源、脏标记、`releasing`） |
+| `common/combat/vitals/DelayedVitalsEvents.java` | 适应 / 入队 / 结算 / 死亡清除 / 进世界同步 |
 | `network/clientbound/DelayedVitalsPacket.java` + `MaledictNetwork` | 3 号包，PLAY_TO_CLIENT |
-| `client/vitals/DelayedVitalsClient.java` | 收包覆盖 + 客户端本地推演 |
-| `client/vitals/DelayedVitalsOverlay.java` + `client/MaledictClientSetup.java` | 两条血条显示与注册 |
+| `client/combat/vitals/DelayedVitalsClient.java` | 收包覆盖 + 客户端本地推演 |
+| `client/combat/vitals/DelayedVitalsOverlay.java` + `client/MaledictClientSetup.java` | 两条血条显示与注册 |
 | `art/melancholia/tools/*.py` | 符文占位贴图与心形遮罩的生成脚本 |
 | 测试 | `DelayedVitalsPoolTest`、`DelayedVitalsHeartsTest`、`DamageAdaptationTest` 新增两条 |
 
@@ -249,7 +251,7 @@ shellheart 是**额外血池**，所以它另起一行、并给 `gui.leftHeight`
 | 症状 | 原因 | 处理 |
 | --- | --- | --- |
 | 创造栏里找不到这枚符文 | `MaledictCreativeTabs` 是一枚一枚 `output.accept` 列的，加物品时漏了这一行 | 补 `RUNE_OF_MELANCHOLIA` |
-| 饰品栏装不上（不算符文） | Curios 的槽位靠 `curios:rune` **物品标签**认，标签在 `MaledictItemTags` 里 | 补进 `CURIOS_RUNE`，重跑 `runData` 生成 `data/curios/tags/items/rune.json` |
+| 饰品栏装不上（不算符文） | Curios 的槽位靠 `curios:rune` **物品标签**认，标签在 `MaledictItemTags` 里 | 补进 `CURIOS_RUNE`，重跑 `runData` 生成 `data/curios/tags/item/rune.json` |
 | codex 新页与已有条目重叠 | `SetupMalumCodexEntriesEvent` **没有任何重叠判断**：它只是让你往 `VOID_ENTRIES` 里塞一个带 x/y 的条目，屏幕照着坐标画 | 原坐标 (4,10) 正好是 Malum 的 `void.weight_of_worlds`，挪到 (6,12)，接在自己 x=6 那一列下面 |
 | 装备着受伤会**一直停在受伤状态**，直到池子漏完 | 首版把「这一下会致死」的释放交回 `hurt`。池子是按 tick 放的，血量低于单次释放量时就变成每隔十几 tick 一次 `hurt`：受伤动画一直闪、无敌帧被反复续上（怪都打不动你），护甲又削掉每次那一点，血条卡在濒死线 | `deliver` 改回一律 `setHealth`，只有真把血压到 0 时才显式 `die(source)`；连带删掉 capability 上的 `releasing` 标志与三处守卫 |
 | 半颗心染色**错位到格子的左半边**（形状本身是对的，是右半心） | 遮罩图里左半心与右半心都从格子的第 0 列开始盖。左半心本来就该占第 0..4 列，右半心该占第 4..8 列（中间那列两边共用） | 生成脚本里右半心加 `RIGHT_HALF_INSET = 4` 的横向偏移，重跑脚本 |

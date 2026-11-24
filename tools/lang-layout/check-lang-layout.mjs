@@ -122,7 +122,8 @@ const PAGES = {
   "malum.gui.book.entry.page.text.maledict.remembrance_bow.2": "text",
   "malum.gui.book.entry.page.text.void.maledict.elegy_bow.1": "headlineItem",
   "malum.gui.book.entry.page.text.void.maledict.elegy_bow.2": "text",
-  "malum.gui.book.entry.page.text.maledict.totemic_runes_continued.combined": "headline",
+  "malum.gui.book.entry.page.text.maledict.totemic_runes_continued.1": "headlineItem",
+  "malum.gui.book.entry.page.text.maledict.totemic_runes_continued.2": "text",
   "malum.gui.book.entry.page.text.void.maledict.runeworking.1": "headlineItem",
   "malum.gui.book.entry.page.text.void.maledict.runeworking.2": "text",
   "malum.gui.book.entry.page.text.void.maledict.incursus_blade.1": "headlineItem",
@@ -145,11 +146,33 @@ const PAGES = {
   "malum.gui.book.entry.page.text.void.maledict.incursus_blade.4": "text",
   "malum.gui.book.entry.page.text.corrupt_sacrifice_rite": "spiritRite",
   "malum.gui.book.entry.page.text.corrupt_sacrifice_rite.2": "text",
+  // 1.20.1 的 LightfallCodexScreen 用 HeadlineTextPage + 两个 TextPage 排这一条；1.21 的法典页（第 12 组）照此接。
+  "malum.gui.book.entry.page.text.void.maledict.weeping_wither.1": "headline",
+  "malum.gui.book.entry.page.text.void.maledict.weeping_wither.2": "text",
+  "malum.gui.book.entry.page.text.void.maledict.weeping_wither.summoning": "text",
+  // 拘魂：首页是 HeadlineTextPage，附魔/解除两页是 SpiritRiteTextPage（容量 9 行）。
+  "malum.gui.book.entry.page.text.void.maledict.soulbinding_rite.1": "headline",
+  "malum.gui.book.entry.page.text.corrupt_maledict_soulbinding_rite": "spiritRite",
+  "malum.gui.book.entry.page.text.maledict_soulbinding_rite": "spiritRite",
+  // 扬弃逐光盔甲：首页 HeadlineTextItemPage（底部有物品展示，容量 9 行），其后四页 TextPage。
+  "malum.gui.book.entry.page.text.void.maledict.aufheben_lightward.1": "headlineItem",
+  "malum.gui.book.entry.page.text.void.maledict.aufheben_lightward.2": "text",
+  "malum.gui.book.entry.page.text.void.maledict.aufheben_lightward.3": "text",
+  "malum.gui.book.entry.page.text.void.maledict.aufheben_lightward.4": "text",
+  "malum.gui.book.entry.page.text.void.maledict.aufheben_lightward.5": "text",
   "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.1": "headlineItem",
   "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.2": "text",
   "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.hangman_fool.1": "headlineItem",
   "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.hangman_fool.2": "text",
   "malum.gui.book.entry.page.text.void.maledict.bleeding_eye.high_priestess.1": "headlineItem",
+  // 沉辉铋：条目页是 HeadlineTextItemPage（底部物品展示，容量 9 行），正文两页 TextPage。
+  "malum.gui.book.entry.page.text.void.maledict.lumenfall_bismuth.1": "headlineItem",
+  "malum.gui.book.entry.page.text.void.maledict.lumenfall_bismuth.2": "text",
+  "malum.gui.book.entry.page.text.void.maledict.lumenfall_bismuth.3": "text",
+  // 折辉铅铋共晶：条目页是 HeadlineTextPage，正文两页 TextPage。
+  "malum.gui.book.entry.page.text.void.maledict.refracted_lead_bismuth_eutectic.1": "headline",
+  "malum.gui.book.entry.page.text.void.maledict.refracted_lead_bismuth_eutectic.2": "text",
+  "malum.gui.book.entry.page.text.void.maledict.refracted_lead_bismuth_eutectic.3": "text",
 };
 
 function load(locale) {
@@ -183,9 +206,7 @@ for (const [key, type] of Object.entries(PAGES)) {
   const cap = PAGE_TYPES[type].capacity;
   const row = [];
   for (const [locale, table] of Object.entries(langs)) {
-    const text = key.endsWith("totemic_runes_continued.combined")
-      ? table[key.replace(/combined$/, "1")] + "\n" + table[key.replace(/combined$/, "2")]
-      : table[key];
+    const text = table[key];
     if (text === undefined) {
       row.push(`${locale}: MISSING`);
       failures++;

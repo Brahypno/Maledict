@@ -111,7 +111,7 @@ Java 常量对应的精魂类型与 `malum:xxx_spirit` 物品 ID 不应混作同
 建议以一个专用配方类型承载召唤定义，复用 `RecipeManager` 的数据包重载与配方同步。
 这类定义不参与普通工作台合成，也不作为第二份精魂灌注配方展示。
 
-路径示例：`data/maledict/recipes/invocation/sniffer.json`，其定义 ID 为 `maledict:invocation/sniffer`，
+路径示例：`data/maledict/recipe/invocation/sniffer.json`，其定义 ID 为 `maledict:invocation/sniffer`，
 与印记中的 `Id` 一致。灌注配方另用 `maledict:spirit_infusion/invocation_sniffer` 等独立 ID。
 
 ```json
@@ -375,7 +375,7 @@ Malum 组装完成后执行单次效果：
 | 蓝色美西螈 | `#718BE8` | 靛蓝 |
 | 潜影贝 | `#B28DD1` | 淡紫 |
 
-核心代码位于 `common/invocation`；配方生成入口为 `data/InvocationRecipes`。
+核心代码位于 `common/ritual/invocation`；配方生成入口为 `data/recipe/InvocationRecipes`。
 
 ## 13. 1.21.1 NeoForge 分支迁移
 

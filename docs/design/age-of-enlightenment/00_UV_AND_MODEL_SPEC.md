@@ -1,7 +1,9 @@
 # 启蒙之年（Age of Enlightenment）面具饰品
 
-护符类饰品（Curios `charm` 槽），戴上后在佩戴者头部渲染一张面具。**目前只做渲染部分**，
-实际效果待定。
+护符类饰品（Curios `charm` 槽），戴上后在佩戴者头部渲染一张面具。玩法已落地，在
+`common/item/curio/enlightenment/`：佩戴期间常驻冷却加速；击杀续上启蒙之年并把黑暗年代按给最近的敌人；
+近战打中半血目标刷魂息虚空；黑暗年代会在敌人之间传染；效果在身时近战翻倍（倍率口径见 `AGENTS.md`
+的 Age of Enlightenment 一条）。本文件只管**面具的 UV、几何与贴图生成**。
 
 ## 0. 分工：你画 8×8，对齐和厚度由生成器算
 
@@ -73,7 +75,8 @@ addBox(-5F, -9F, -5F, 10F, 10F, 5F)   // x -5~5, y -9~1, z -5~0
 | 路径 | 说明 |
 | --- | --- |
 | `assets/maledict/textures/curio/age_of_enlightenment.png` | 模型贴图，64×64，生成产物 |
-| `assets/maledict/textures/item/age_of_enlightenment.png` | 物品栏图标，8×8 **占位** |
+| `assets/maledict/textures/item/age_of_enlightenment.png` | 物品栏图标，32×32 |
+| `assets/maledict/textures/item/age_of_enlightenment_enlightened.png` | 效果在身时的物品栏图标，32×32 |
 
 **美术源文件**
 
@@ -88,9 +91,9 @@ addBox(-5F, -9F, -5F, 10F, 10F, 5F)   // x -5~5, y -9~1, z -5~0
 
 | 路径 | 说明 |
 | --- | --- |
-| `common/item/curio/AgeOfEnlightenmentItem.java` | 物品（`ICurioItem`，`stacksTo(1)`，RARE） |
-| `client/item/AgeOfEnlightenmentModel.java` | 面具模型，层名 `maledict:age_of_enlightenment` |
-| `client/item/AgeOfEnlightenmentCurioRenderer.java` | `ICurioRenderer`，`followHeadRotations` + `entityTranslucent` |
+| `common/item/curio/enlightenment/AgeOfEnlightenmentItem.java` | 物品（`ICurioItem`，`stacksTo(1)`，RARE） |
+| `client/item/curio/enlightenment/AgeOfEnlightenmentModel.java` | 面具模型，层名 `maledict:age_of_enlightenment` |
+| `client/item/curio/enlightenment/AgeOfEnlightenmentCurioRenderer.java` | `ICurioRenderer`，`followHeadRotations` + `entityTranslucent` |
 | `client/MaledictClientSetup.java` | `CuriosRendererRegistry.register` 绑定 |
 | `client/MaledictClientSetup.java` | 注册 layer definition + `AddLayers` 烘焙 |
 | `data/client/MaledictItemModels.java` | 物品模型（`item/generated`） |
@@ -119,7 +122,7 @@ java -cp build/mask-tool UpscalePng <in.png> <out.png> [倍数] # 放大预览
 
 ## 6. 待办
 
-- [ ] 玩法效果（佩戴加成、触发条件）—— 用户说明后再做
 - [ ] 美术确认：8×8 只画了上半部分，下半部分（下颌/牙）是否要重画
 - [ ] 可选外扩壳（描边/金属沿/发光）—— 需要美术出图
-- [ ] 物品图标目前是 8×8 占位，正式图标建议 16×16
+
+玩法（佩戴加成、触发条件）与物品图标都已落定，不在待办里。
