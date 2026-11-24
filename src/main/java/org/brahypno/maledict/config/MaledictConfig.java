@@ -42,7 +42,6 @@ public final class MaledictConfig {
     public static final ForgeConfigSpec.DoubleValue LUMENFALL_SPREAD_RADIANCE_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue LUMENFALL_RELEASE_RADIANCE_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue LUMENFALL_RELEASE_RADIANCE_RADIUS;
-    public static final ForgeConfigSpec.DoubleValue OMEN_MINIMUM_SHARE;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_CHARGE_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_LASER_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue DEMIURGE_RAIN_DAMAGE;
@@ -92,10 +91,6 @@ public final class MaledictConfig {
         DEMIURGE_EASY_DAMAGE_MULTIPLIER = builder.defineInRange("easyDamageMultiplier", 0.5D, 0.0D, 100.0D);
         DEMIURGE_NORMAL_DAMAGE_MULTIPLIER = builder.defineInRange("normalDamageMultiplier", 1.0D, 0.0D, 100.0D);
         DEMIURGE_HARD_DAMAGE_MULTIPLIER = builder.defineInRange("hardDamageMultiplier", 1.5D, 0.0D, 100.0D);
-        builder.pop();
-        builder.push("transcendOmen");
-        OMEN_MINIMUM_SHARE = builder.comment("Minimum share per active reverse route. Total shares may exceed 100%.")
-                                    .defineInRange("minimumShare", 0.01D, 0.0D, 1.0D);
         builder.pop();
         builder.push("hangmanFool");
         HANGMAN_REFLECTION_BASE = builder.comment("Base reflection chance, plus lost health fraction, capped at 100%.")
