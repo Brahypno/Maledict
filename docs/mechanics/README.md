@@ -14,6 +14,7 @@
 | [incursus-swing-rate.md](incursus-swing-rate.md) | 神侵恶刃的出手频率：一次按下=一刀，出伤层为什么不设频率闸 |
 | [lightward-transfer.md](lightward-transfer.md) | 扬弃逐光 5 级：恶刃打中认主的生物时，主人也吃同额的一刀 |
 | [age-of-enlightenment.md](age-of-enlightenment.md) | 启蒙时代：近战倍率，不是强制暴击 |
+| [emperor-in-the-eggshell.md](emperor-in-the-eggshell.md) | 蛋壳中的皇帝：限伤窗口与受击反馈 |
 | [transcend-omen.md](transcend-omen.md) | 超越预兆：恶念抵消、反向转化增幅与防御扣除 |
 
 约定：本目录的数字与代码不一致时**以代码为准并改本页**；改机制时同一次提交内更新对应页面。

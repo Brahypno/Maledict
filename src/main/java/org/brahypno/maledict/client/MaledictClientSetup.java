@@ -22,6 +22,8 @@ import org.brahypno.maledict.client.entity.raven.RavenRenderer;
 import org.brahypno.maledict.client.entity.raven.RavenShoulderLayer;
 import org.brahypno.maledict.client.entity.weepingWither.WeepingWitherRenderer;
 import org.brahypno.maledict.client.entity.weepingWither.WeepingWitherSkullRenderer;
+import org.brahypno.maledict.client.item.curio.eggshell.EggshellWardClient;
+import org.brahypno.maledict.client.item.curio.eggshell.EggshellWardOverlay;
 import org.brahypno.maledict.client.item.curio.enlightenment.AgeOfEnlightenmentCurioRenderer;
 import org.brahypno.maledict.client.item.curio.enlightenment.AgeOfEnlightenmentModel;
 import org.brahypno.maledict.client.item.curio.hangman.HangmanTrapRenderer;
@@ -158,6 +160,14 @@ public final class MaledictClientSetup {
     }
 
     /**
+     * 蛋壳皇帝的受击反馈：投递由 ChangeLib 负责，这里只在客户端注册一次表现入口。
+     */
+    @SubscribeEvent
+    public static void registerHitFeedback(FMLClientSetupEvent event) {
+        event.enqueueWork(EggshellWardClient::register);
+    }
+
+    /**
      * Curios 在 AddLayers 时冻结渲染器表，必须在客户端初始化阶段完成绑定。
      */
     @SubscribeEvent
@@ -167,10 +177,11 @@ public final class MaledictClientSetup {
     }
 
     /**
-     * 两条延迟池显示叠在原版红心之后、护甲之前，不占新的 HUD 行。
+     * 蛋壳纹画在快捷栏之前。两条延迟池显示叠在原版红心之后、护甲之前。
      */
     @SubscribeEvent
     public static void registerGuiOverlays(RegisterGuiOverlaysEvent event) {
+        event.registerBelow(VanillaGuiOverlay.HOTBAR.id(), "eggshell_ward", EggshellWardOverlay::render);
         event.registerAbove(VanillaGuiOverlay.PLAYER_HEALTH.id(), "delayed_vitals_heal",
                             DelayedVitalsOverlay.PENDING_HEAL);
         event.registerAbove(VanillaGuiOverlay.PLAYER_HEALTH.id(), "delayed_vitals_damage",

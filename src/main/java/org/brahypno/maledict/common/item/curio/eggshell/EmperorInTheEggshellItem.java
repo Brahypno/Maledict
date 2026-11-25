@@ -46,7 +46,7 @@ public final class EmperorInTheEggshellItem extends MalumCurioItem {
     /**
      * 这层的固定 key：重复装备会替换旧层而不是叠出第二层，卸下时按它找回同一层。
      */
-    static final String WARD_KEY = "maledict:emperor_in_the_eggshell/guard";
+    public static final String WARD_KEY = "maledict:emperor_in_the_eggshell/guard";
     /**
      * 这层的自锁令牌，只有本物品持有。带上它才能替换/撤掉这一层；别人拿到 key 也关不掉，
      * 外部 {@code unprotect} / {@code authorize} 也会被 ChangeLib 拒掉。
