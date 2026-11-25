@@ -31,7 +31,6 @@ public final class MaledictConfig {
     public static final ModConfigSpec.DoubleValue HANGMAN_REFLECTION_BASE;
     public static final ModConfigSpec.IntValue HANGMAN_TRAP_LIFETIME;
     public static final ModConfigSpec.DoubleValue HANGMAN_TRAP_RADIUS;
-    public static final ModConfigSpec.DoubleValue OMEN_MINIMUM_SHARE;
     public static final ModConfigSpec.BooleanValue LUMENFALL_SPREAD_RADIANCE;
     public static final ModConfigSpec.IntValue LUMENFALL_SPREAD_RADIANCE_COOLDOWN_TICKS;
     public static final ModConfigSpec.DoubleValue LUMENFALL_SPREAD_RADIANCE_STRENGTH;
@@ -66,10 +65,6 @@ public final class MaledictConfig {
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
-        builder.push("transcendOmen");
-        OMEN_MINIMUM_SHARE = builder.comment("Minimum share per active reverse route. Total shares may exceed 100%.")
-                .defineInRange("minimumShare", 0.01D, 0.0D, 1.0D);
-        builder.pop();
         builder.push("hangmanFool");
         HANGMAN_REFLECTION_BASE = builder.comment("Base reflection chance, plus lost health fraction, capped at 100%.")
                 .defineInRange("reflectionBaseChance", 0.25D, 0.0D, 1.0D);

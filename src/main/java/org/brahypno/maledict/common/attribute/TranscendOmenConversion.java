@@ -6,6 +6,7 @@ import com.sammy.malum.core.handlers.MalignantConversionHandler;
 import com.sammy.malum.core.listeners.MalignantConversionReloadListener;
 import com.sammy.malum.core.listeners.MalignantConversionReloadListener.MalignantConversionData;
 import com.sammy.malum.registry.common.MalumAttributes;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -16,13 +17,10 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.brahypno.maledict.Maledict;
-import org.brahypno.maledict.config.MaledictConfig;
 import org.brahypno.maledict.registry.MaledictAttributes;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -30,6 +28,12 @@ import java.util.WeakHashMap;
 /** The reverse half of Malum's signed conversion axis. Only the server owns modifiers. */
 @EventBusSubscriber(modid = Maledict.MODID)
 public final class TranscendOmenConversion {
+    // Shares are split as one over max(4, sources), so the four native Malum routes already spend the budget.
+    private static final int BASELINE_SOURCE_COUNT = 4;
+    // f(b) = 4b / (5 + b) approaches four without ever reaching it for a finite base.
+    private static final double SATURATION_LIMIT = 4;
+    private static final double HALF_SATURATION = 5;
+
     // Values contain attributes and numbers only, never a reference back to the entity.
     private static final Map<LivingEntity, State> STATES = new WeakHashMap<>();
 
@@ -65,10 +69,7 @@ public final class TranscendOmenConversion {
         state.rebuilding = false;
         var data = MalignantConversionReloadListener.CONVERSION_DATA;
         boolean dataChanged = !state.initialized || !state.data.equals(data);
-        double minimumShare = MaledictConfig.OMEN_MINIMUM_SHARE.get();
-        if (!dataChanged
-                && minimumShare == state.minimumShare
-                && snapshot(entity, state.watched).equals(state.snapshot)) {
+        if (!dataChanged && snapshot(entity, state.watched).equals(state.snapshot)) {
             return;
         }
 
@@ -100,7 +101,6 @@ public final class TranscendOmenConversion {
             }
             state.initialized = true;
         }
-        state.minimumShare = minimumShare;
         state.conversionInputs = conversionInputs(entity);
         state.rebuilding = true;
     }
@@ -124,16 +124,23 @@ public final class TranscendOmenConversion {
         }
         double strength = state.reverseStrength;
         AttributeInstance malignant = entity.getAttribute(MalumAttributes.MALIGNANT_CONVERSION);
-        if (strength <= 0 || (malignant != null && malignant.getValue() > 0)) {
+        if (!Double.isFinite(strength) || strength <= 0 || (malignant != null && malignant.getValue() > 0)) {
             state.snapshot = snapshot(entity, state.watched);
             return;
         }
 
-        List<Route> routes = new ArrayList<>();
-        for (var rule : state.data.values()) {
-            AttributeInstance source = entity.getAttribute(rule.sourceAttribute());
+        // One route per source. Malum keys its table by source, but extension code can inject aliases.
+        Map<Holder<Attribute>, Route> routes = new HashMap<>();
+        for (var entry : state.data.entrySet()) {
+            var rule = entry.getValue();
+            Holder<Attribute> source = rule.sourceAttribute();
+            AttributeInstance sourceInstance = entity.getAttribute(source);
             // Read the clean source before applying any reverse gain or consumption.
-            if (source == null || source.getValue() == rule.sourceAttribute().value().getDefaultValue()) {
+            if (sourceInstance == null) {
+                continue;
+            }
+            double sourceValue = sourceInstance.getValue();
+            if (!Double.isFinite(sourceValue) || sourceValue == source.value().getDefaultValue()) {
                 continue;
             }
             double base = Double.POSITIVE_INFINITY;
@@ -149,26 +156,31 @@ public final class TranscendOmenConversion {
                 if (isAegisAttribute(target.attribute()) && (instance == null || instance.getValue() == 0)) {
                     continue;
                 }
-                double candidate = instance == null ? 0 : instance.getValue() / ratio;
-                if (!Double.isFinite(candidate) || candidate <= 0) {
+                double value = instance == null ? 0 : instance.getValue();
+                if (!Double.isFinite(value) || value <= 0) {
                     base = 0;
                     break;
                 }
+                // A finite, positive quotient can overflow. Keep it above any finite bottleneck.
+                double candidate = Math.min(value / ratio, Double.MAX_VALUE);
                 base = Math.min(base, candidate);
                 targets.add(target.attribute());
             }
             if (Double.isFinite(base) && base > 0) {
-                routes.add(new Route(rule.sourceAttribute(), base, targets));
+                routes.merge(source, new Route(routeId(entry.getKey()), base, targets),
+                        TranscendOmenConversion::preferredRoute);
             }
         }
 
         if (!routes.isEmpty()) {
-            // A hard per-route floor may deliberately take the total budget above 100%.
-            double share = Math.max(1D / routes.size(), state.minimumShare);
             Set<Holder<Attribute>> consumed = new HashSet<>();
-            for (Route route : routes) {
-                apply(entity, state, route.source(), "gain", route.base() * strength * share,
-                        AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            for (var entry : routes.entrySet()) {
+                Route route = entry.getValue();
+                double gain = gainFor(route.base(), strength, routes.size());
+                if (gain > 0) {
+                    apply(entity, state, entry.getKey(), "gain", gain,
+                            AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+                }
                 consumed.addAll(route.targets());
             }
             // Confirmed option 2: all participating defense loses the full reverse percentage ONCE,
@@ -179,6 +191,25 @@ public final class TranscendOmenConversion {
             }
         }
         state.snapshot = snapshot(entity, state.watched);
+    }
+
+    // The table key is the only identity an injected alias shares with the canonical rule.
+    private static String routeId(Holder<Attribute> key) {
+        return key.unwrapKey().map(ResourceKey::location).map(ResourceLocation::toString).orElse("");
+    }
+
+    // Highest coefficient wins; equal coefficients settle on the lexicographically smallest full key.
+    private static Route preferredRoute(Route first, Route second) {
+        if (first.base() != second.base()) {
+            return first.base() > second.base() ? first : second;
+        }
+        return first.id().compareTo(second.id()) <= 0 ? first : second;
+    }
+
+    static double gainFor(double base, double strength, int sourceCount) {
+        // 4 * (b / (5 + b)) never multiplies by the base first, so an absurd ratio cannot overflow.
+        double saturated = SATURATION_LIMIT * (base / (HALF_SATURATION + base));
+        return saturated * strength / Math.max(BASELINE_SOURCE_COUNT, sourceCount);
     }
 
     private static boolean isAegisAttribute(Holder<Attribute> attribute) {
@@ -234,7 +265,7 @@ public final class TranscendOmenConversion {
         return values;
     }
 
-    private record Route(Holder<Attribute> source, double base, Set<Holder<Attribute>> targets) {}
+    private record Route(String id, double base, Set<Holder<Attribute>> targets) {}
     private record ModifierState(ResourceLocation id, double amount, AttributeModifier.Operation operation) {}
     private record AttributeState(double base, Set<ModifierState> modifiers) {}
 
@@ -242,7 +273,6 @@ public final class TranscendOmenConversion {
         boolean initialized;
         boolean rebuilding;
         double reverseStrength;
-        double minimumShare;
         Map<Holder<Attribute>, MalignantConversionData> data = Map.of();
         final Set<Holder<Attribute>> watched = new HashSet<>();
         final Map<Holder<Attribute>, Set<ResourceLocation>> applied = new HashMap<>();
