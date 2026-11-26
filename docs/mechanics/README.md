@@ -13,6 +13,7 @@
 | [incursus-swing-range.md](incursus-swing-range.md) | 神侵恶刃的近战范围：一个半径管命中与腰环，极端数值怎么收 |
 | [incursus-swing-rate.md](incursus-swing-rate.md) | 神侵恶刃的出手频率：一次按下=一刀，出伤层为什么不设频率闸 |
 | [lightward-transfer.md](lightward-transfer.md) | 扬弃逐光 5 级：恶刃打中认主的生物时，主人也吃同额的一刀 |
+| [wisdom-sacrifice.md](wisdom-sacrifice.md) | 牺牲仪式与渡鸦取眼：九天九夜的账、一次结清、成就何时到账 |
 | [age-of-enlightenment.md](age-of-enlightenment.md) | 启蒙时代：近战倍率，不是强制暴击 |
 | [emperor-in-the-eggshell.md](emperor-in-the-eggshell.md) | 蛋壳中的皇帝：限伤窗口与受击反馈 |
 | [transcend-omen.md](transcend-omen.md) | 超越预兆：恶念抵消、反向转化增幅与防御扣除 |

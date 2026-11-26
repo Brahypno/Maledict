@@ -31,9 +31,10 @@ import java.util.UUID;
  * 仪式由这里发放成就；额外栏位在获得成就时发放，包括指令授予。
  * 无 display 的独立父进度负责隐藏整个页签；仅靠 hidden 标记无法在完成后继续隐藏。
  *
- * <h2>发放条件：仪式来源、自然到期且存活</h2>
- * 只认「{@code maledict:sacrifice} 到期」是不够的：{@code /effect give}、别的模组的随机效果、清洗与
- * 转移效果之类的机制都能凭空塞一枚进来，所以这里要求仪式凭据与自然到期：
+ * <h2>两条发放路线</h2>
+ * <b>一、自然到期且存活</b>（下文这一段的默认路线）。只认「{@code maledict:sacrifice} 到期」是不够的：
+ * {@code /effect give}、别的模组的随机效果、清洗与转移效果之类的机制都能凭空塞一枚进来，所以这里要求
+ * 仪式凭据与自然到期：
  *
  * <ol>
  *     <li><b>凭据</b>：仪式真的把印记按上去时（{@link #markOffered}，只在 {@code addEffect} 返回 true 后
@@ -43,7 +44,11 @@ import java.util.UUID;
  *     牛奶与 {@code /effect clear} 走的是 {@code Remove}。</li>
  * </ol>
  *
- * <p>凭空来的效果没有仪式凭据，不发成就。自然到期、非自然移除和死亡都会清除凭据与触发进度；
+ * <b>二、渡鸦取眼</b>：见 {@link #settleByRaven}。成年渡鸦看见八格内戴着这枚印记的玩家就飞过去啄下眼睛，
+ * 把剩下的次数一次结清。这不是自然到期，但凭据与印记同样是真的，所以成就照发——而且必须排在那一笔结算
+ * 之前，否则人先死了，成就永远到不了账。
+ *
+ * <p>凭空来的效果没有仪式凭据，两条路线都不会发成就。自然到期、非自然移除和死亡都会清除凭据与触发进度；
  * 初始时长缩短或倒计时加速只提高固定伤害的频率。成就不检查实际受伤量。
  *
  * <p>栏位走 Curios 的永久槽位修饰符：它落在 {@code CurioStacksHandler} 的 persistentModifiers 上，尺寸由
@@ -159,6 +164,29 @@ public final class WisdomSacrifice {
     }
 
     /**
+     * 仪式按下的印记还在不在；渡鸦据此判断这名玩家是不是该挨这一啄。
+     */
+    public static boolean isOffered(ServerPlayer player) {
+        return player.getPersistentData().contains(OFFERED_KEY);
+    }
+
+    /**
+     * 渡鸦取眼：先发成就，再把剩下的全部献祭一次结清。
+     *
+     * <p>顺序不能反。一次结清就是几百点穿甲伤害，人基本当场就没了；成就若排在结算后面，尸体收不到奖励，
+     * 这枚印记也就白挨了。所以这里照 {@link #award} 的规矩先把它发出去，栏位、失明与奖励都由既有的
+     * 获得事件接管，然后才让 {@link SacrificeEffect#settleRemaining} 收账。
+     *
+     * <p>凭据在最后补摘一遍：{@code removeEffect} 发出的 {@code MobEffectEvent.Remove} 只带效果、不带实例，
+     * {@link #onEffectRemoved} 认不出来（它只认带实例的那条），等死亡去清又太迟。
+     */
+    public static void settleByRaven(ServerPlayer player) {
+        award(player);
+        SacrificeEffect.settleRemaining(player);
+        clearOffering(player);
+    }
+
+    /**
      * 发成就；栏位由获得成就的事件发放。
      */
     private static void award(ServerPlayer player) {
@@ -192,6 +220,9 @@ public final class WisdomSacrifice {
 
     /**
      * 两种原版效果持续六分钟；前六十 tick 的独立黑幕与它们同时开始。
+     *
+     * <p>渡鸦取眼那条路线是「先发成就、后结账」，玩家可能在同一 tick 就被那笔伤害打死；死人不必再挂
+     * 失明，重生的身体本来也不继承效果。
      */
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -199,6 +230,9 @@ public final class WisdomSacrifice {
             return;
         }
         for (ServerPlayer player : PENDING_SIGHT_LOSS) {
+            if (!player.isAlive()){
+                continue;
+            }
             player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, SIGHT_LOSS_TICKS));
             player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, SIGHT_LOSS_TICKS));
             MaledictNetwork.sendWisdomBlackout(player, BLACKOUT_TICKS);

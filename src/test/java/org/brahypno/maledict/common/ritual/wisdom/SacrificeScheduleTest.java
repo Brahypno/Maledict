@@ -19,6 +19,14 @@ class SacrificeScheduleTest {
         assertEquals(180, pulses);
         assertEquals(1080.0F, pulses * SacrificeSchedule.DAMAGE);
         assertEquals(pulses, SacrificeSchedule.targetPulses(initial, 0));
+
+        // 渡鸦取眼把这 180 次折成一笔：剩余次数 × 6，挨过一半就只剩 540，走完或超了都是 0。
+        assertEquals(1080.0F, SacrificeSchedule.remainingDamage(0));
+        assertEquals(540.0F, SacrificeSchedule.remainingDamage(90));
+        assertEquals(6.0F, SacrificeSchedule.remainingDamage(179));
+        assertEquals(0.0F, SacrificeSchedule.remainingDamage(180));
+        assertEquals(0.0F, SacrificeSchedule.remainingDamage(231));
+        assertEquals(1080.0F, SacrificeSchedule.remainingDamage(-5));
     }
 
     @Test

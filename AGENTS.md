@@ -177,6 +177,24 @@ The 5-level reading of the Aufheben Lightward set: a melee swing with the Incurs
 
 Page: `docs/mechanics/lightward-transfer.md`.
 
+### Sacrifice eye peck (`WisdomSacrifice#settleByRaven`)
+
+- **Award first, settle second.** Settling the rest of the rite is up to 1080 points of `malum:voodoo` (armor,
+  resistance and creative immunity all bypassed), so the player usually dies in the same tick; awarding after the
+  settlement loses the advancement on a corpse. `settleByRaven` is the only entry and it awards before it settles.
+- **Settling must retire the rite, not just pay it.** Remaining pulses go out as one hit, then the effect is removed
+  and the progress cleared. Otherwise `applyEffectTick` re-`start`s the schedule from the current duration and the
+  player owes the whole rite a second time; `SacrificeEffect`'s settled flag covers a mod cancelling
+  `MobEffectEvent.Remove`. That event carries no instance for `removeEffect`, so the credential is cleared
+  explicitly in `settleByRaven` rather than left to `onEffectRemoved`.
+- **One predicate decides who gets pecked.** `RavenEyePeck` owns the 8-block start, 16-block abandon and 1.6-block
+  eye reach plus the four vetoes (adult, ritual credential, not trusted, may be harmed). Creative and spectator are
+  exempt even though voodoo would hurt them — the same reading as `canAttack`.
+- **The damage is still the ritual's.** No attacker, same `voodoo` source and the same invulnerability handling as
+  the minute strikes; do not re-attribute it to the raven.
+
+Page: `docs/mechanics/wisdom-sacrifice.md`.
+
 ### Cancelled events never reach `@SubscribeEvent` handlers unless the annotation opts in
 
 `ASMEventHandler#invoke` checks `if (!event.isCanceled() || subInfo.receiveCanceled())` before calling the method, and

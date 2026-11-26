@@ -64,7 +64,9 @@ import javax.annotation.Nullable;
 
 import org.brahypno.maledict.registry.MaledictEntities;
 import org.brahypno.maledict.registry.MaledictItems;
+import org.brahypno.maledict.registry.MaledictMobEffects;
 import org.brahypno.maledict.registry.MaledictSounds;
+import org.brahypno.maledict.common.ritual.wisdom.WisdomSacrifice;
 import org.brahypno.maledict.common.entity.vicissitude.VicissitudeBossEntity;
 
 import java.util.Comparator;
@@ -142,6 +144,7 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
         goalSelector.addGoal(0, new EscapeDangerGoal());
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new AerialDodgeGoal());
+        goalSelector.addGoal(1, new PeckOutEyeGoal());
         goalSelector.addGoal(2, new AttackGoal());
         goalSelector.addGoal(3, new BreedGoal(this, 1.0D) {
             private int courtshipTicks;
@@ -597,6 +600,123 @@ public final class RavenEntity extends Animal implements FlyingAnimal {
                 setTarget(null);
                 requestLanding(null);
             }
+        }
+    }
+
+    /**
+     * 戴着仪式印记、又不是自己人的那一个玩家。
+     *
+     * <p>只认仪式凭据：{@code /effect give} 或别的模组塞进来的献祭效果没有凭证，不招渡鸦。信任与
+     * 创造/旁观的口径在 {@link RavenEyePeck#maySeek} 里。
+     */
+    private boolean isSacrificeWearer(ServerPlayer player) {
+        return player.isAlive() && player.level() == level()
+               && player.hasEffect(MaledictMobEffects.SACRIFICE.get())
+               && WisdomSacrifice.isOffered(player);
+    }
+
+    /**
+     * 啄眼走的是献祭的 voodoo，它穿透创造模式免疫；一啄就是一条命，所以这里沿用 {@link #canAttack} 的口径。
+     */
+    private static boolean mayBeHarmed(Player player) {
+        return !player.isCreative() && !player.isSpectator();
+    }
+
+    @Nullable
+    private ServerPlayer findSacrificeWearer() {
+        return level().getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(RavenEyePeck.SIGHT_RADIUS))
+                      .stream()
+                      .filter(player -> RavenEyePeck.maySeek(!isBaby(), isSacrificeWearer(player),
+                                                             trusts(player.getUUID()), mayBeHarmed(player),
+                                                             distanceToSqr(player),
+                                                             getSensing().hasLineOfSight(player)))
+                      .min(Comparator.comparingDouble(this::distanceToSqr))
+                      .orElse(null);
+    }
+
+    /**
+     * 献祭者身边：渡鸦飞到他脸前啄下眼睛，把剩下的献祭一次结清。
+     *
+     * <p>起手只看八格内有没有「仪式按了印记、又没被它信任」的玩家，不必先把他当攻击目标；创造与旁观
+     * 不啄。下嘴在 {@link RavenEyePeck#REACH} 以内，结算与成就在 {@link WisdomSacrifice#settleByRaven}。
+     */
+    private final class PeckOutEyeGoal extends Goal {
+        @Nullable
+        private ServerPlayer wearer;
+        private int pathCooldown;
+        private boolean pecked;
+
+        private PeckOutEyeGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (isBaby() || isLeashed() || isPassenger() || isInWater() || isInLava()){
+                return false;
+            }
+            wearer = findSacrificeWearer();
+            return wearer != null;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return !pecked && wearer != null
+                   && RavenEyePeck.mayContinue(!isBaby(), isSacrificeWearer(wearer),
+                                               trusts(wearer.getUUID()), mayBeHarmed(wearer),
+                                               distanceToSqr(wearer));
+        }
+
+        @Override
+        public void start() {
+            releaseCompanion();
+            landingRequested = false;
+            landingTarget = null;
+            setHovering(null);
+            setFlying(true);
+            navigation.stop();
+            pathCooldown = 0;
+            pecked = false;
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            if (wearer == null){
+                return;
+            }
+            getLookControl().setLookAt(wearer, 45.0F, 45.0F);
+            boolean visible = getSensing().hasLineOfSight(wearer);
+            if (visible && RavenEyePeck.inReach(getEyePosition().distanceToSqr(wearer.getEyePosition()))){
+                pecked = true;
+                entityData.set(PECK_TICKS, 6);
+                playSound(MaledictSounds.RAVEN_AMBIENT.get(), 1.0F, 0.55F);
+                WisdomSacrifice.settleByRaven(wearer);
+                return;
+            }
+            if (visible && distanceToSqr(wearer) <= 4.0D){
+                // 最后一截直接朝眼睛刹过去：飞行寻路的落点在人脚边，够不到脸。
+                moveControl.setWantedPosition(wearer.getX(), wearer.getEyeY() - 0.2D, wearer.getZ(), 0.9D);
+                return;
+            }
+            if (--pathCooldown <= 0){
+                navigation.moveTo(wearer.getX(), wearer.getEyeY() - 0.2D, wearer.getZ(), 1.1D);
+                pathCooldown = 8;
+            }
+        }
+
+        @Override
+        public void stop() {
+            navigation.stop();
+            if (!isRemoved() && isFlying() && getTarget() == null && !isInLove()){
+                requestLanding(null);
+            }
+            wearer = null;
+            pecked = false;
         }
     }
 
